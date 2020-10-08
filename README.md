@@ -33,8 +33,8 @@
 在安装此依赖库之前需要预先安装 Python 3.6+ 及 Tensorflow 1.11+ 版本。如果需要使用 GPU，请预先根据 Tensorflow 版本，安装指定的英伟达 CUDA 工具包，配置运行环境。
 
 ``` bash
-git clone https://git.code.oa.com/geyingli/uf
-cd uf
+git clone https://github.com/geyingli/unif
+cd unif
 python setup.py install
 ```
 

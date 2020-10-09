@@ -1,8 +1,8 @@
-[中文](README.md) | [English](README_EN.md)
+[中文](README_CN.md) | [English](README.md)
 
 <p align="center">
     <br>
-    	<img src="logo.png" style="zoom:100%"/>
+    	<img src="logo.png" style="zoom:70%"/>
     <br>
 <p>
 <p align="center">
@@ -21,19 +21,19 @@
 </p>
 
 
-有数据，想要快速实现你的想法？轻便、易使用的自然语言处理联合框架，支持快速搭建各类常用深度学习模型 (Transformer, GPT-2, BERT, RoBERTa, ALBERT, XLNet, ELECTRA)，同时对于 BERT 系列，支持高效用的蒸馏 (TinyBERT, FastBERT)。支持各类上下游任务 (语言模型、文本分类、文本生成、命名实体识别、机器阅读理解、机器翻译、序列标注等)。UniF is all you need。
+Abundant data and ideas on hand but having no way to implement immediately? UNIF, as a unified language processing framework, supports building deep learning models in a simple and efficient manner, including Transformer, GPT-2, BERT, RoBERTa, ALBERT, XLNet, ELECTRA and etc. For BERT-series models, you need nothing but a single hot key to distill the model for light usage. Feel free to run applications among language modeling, text classification, text generation, named entity recognition, machine reading comprehension, machine translation and sequence labeling. UNIF is all you need.
 
-### 特性
+### Features
 
-- 仿 Scikit-Learn API 设计，三行代码完成训练及推理
-- 支持快速迁入已训练完毕的模型
-- 支持对抗式训练等多项通用训练技巧
-- 支持一键设置多 GPU 并行
-- 易开发，易扩展，能高效支持更多 State-Of-The-Art 算法
+- Scikit-Learn like API design, train and predict in 3 lines of code
+- Supports transfering pretrained model
+- Support multiple deep learning tricks, e.g. adversarial training
+- Multi-GPU parallelization by just one key
+- Easy to develop and extend, chase after state-of-the-art algorithms
 
-### 安装
+### Install
 
-在安装此依赖库之前需要预先安装 Python 3.6+ 及 Tensorflow 1.11+ 版本。如果需要使用 GPU，请预先根据 Tensorflow 版本，安装指定的英伟达 CUDA 工具包，配置运行环境。
+Python 3.6+ and Tensorflow 1.11+ are required to install the repo. If you with to run the models on GPU, please install NVIDIA CUDA toolkit in advance (be careful on the selection of published version). 
 
 ``` bash
 git clone https://github.com/geyingli/unif
@@ -41,75 +41,75 @@ cd unif
 python setup.py install
 ```
 
-如果安装未获得权限，尝试 `python setup.py install --user`。
+If the installation if not authorized, try `python setup.py install --user`.
 
-### 快速上手
+### Quick Tour
 
-来看看如何在数行代码之内完成训练和推理。这里我们提供了必备的配置文件作为 demo，无需提前下载预训练模型包。在刚才的安装目录下输入 `ipython` 指令进入 Python 交互界面。
+See how we train and predict in just several lines. Since we provide demo configuration files, no pretrained model is pre-required. Input `ipython` in command line and enter the interactive interface of Python.
 
 ``` python
 import tensorflow as tf
 import uf
 
-# 许可日志打印
+# allow printing information
 tf.logging.set_verbosity(tf.logging.INFO)
 
-# 载入模型（使用 demo 配置文件进行示范）
+# load model (by using demo files)
 model = uf.BERTClassifier(config_file='demo/bert_config.json', vocab_file='demo/vocab.txt')
 
-# 定义训练样本
-X, y = ['久旱逢甘露', '他乡遇故知'], [1, 0]
+# define training samples
+X, y = ['Natural language processing', 'is the future star of AI.'], [1, 0]
 
-# 训练
+# training
 model.fit(X, y)
 
-# 推理
+# inference
 print(model.predict(X))
 ```
 
-包括 FAQ 及建模、训练等进一步的指导和说明，见 [tutorial.md](./tutorial.md)。
+For FAQs and more instructions about building and training, see [tutorial.md](./tutorial.md).
 
 ### API
 
-当前版本已开放的成熟 API 包括：
+Available APIs include:
 
 | API 				| 类别         | 说明                                                 |
 | ----------- | ------------ | ---------------------------------------------------- |
-| `BERTLM` 		| 语言模型 | 结合 MLM 和 NSP 任务，随机采样自下文及其他文档 |
-| `RoBERTaLM` 		| 语言模型 | 单独 MLM 任务，采样至填满 max_seq_length |
-| `ALBERTLM` 		| 语言模型 | 结合 MLM 和 SOP 任务，随机采样自上下文及其他文档 |
-| `ELECTRALM` 		| 语言模型 | 结合 MLM 和 RTD 任务，生成器与判别器联合训练 |
-| `GPT2LM` | 语言模型 | 自回归式文本生成 |
-| `BERTNER` 		| 命名实体识别 | 通过 BIESO 标签推导实体 |
-| `BERTCRFNER` 		| 命名实体识别 | 基于维特比解码，通过 BIESO 标签推导实体 |
-| `BERTCRFCascadeNER` | 命名实体识别 | 基于维特比解码，通过 BIESO 标签推导实体；<br>识别实体的同时对实体进行分类 |
-| `TransformerMT` | 机器翻译 | 共享词表，序列到序列建模 |
-| `BERTMRC` 		| 机器阅读理解 | 从输入中抽取一段完整的答案 |
-| `RoBERTaMRC` 		| 机器阅读理解 | 从输入中抽取一段完整的答案 |
-| `ALBERTMRC` 		| 机器阅读理解 | 从输入中抽取一段完整的答案 |
-| `ELECTRAMRC` 		| 机器阅读理解 | 从输入中抽取一段完整的答案 |
-| `BERTClassifier` 		| 单标签分类 | 每一个样本归属于一个唯一的类别 |
-| `XLNetClassifier` 		| 单标签分类 | 每一个样本归属于一个唯一的类别 |
-| `RoBERTaClassifier` 		| 单标签分类 | 每一个样本归属于一个唯一的类别 |
-| `ALBERTClassifier` 		| 单标签分类 | 每一个样本归属于一个唯一的类别 |
-| `ELECTRAClassifier` 		| 单标签分类 | 每一个样本归属于一个唯一的类别 |
-| `BERTBinaryClassifier` 		| 多标签分类 | 每一个样本可同时属于零个或多个类别 |
-| `XLNetBinaryClassifier` 		| 多标签分类 | 每一个样本可同时属于零个或多个类别 |
-| `RoBERTaBinaryClassifier` 		| 多标签分类 | 每一个样本可同时属于零个或多个类别 |
-| `ALBERTBinaryClassifier` 		| 多标签分类 | 每一个样本可同时属于零个或多个类别 |
-| `ELECTRABinaryClassifier` 		| 多标签分类 | 每一个样本可同时属于零个或多个类别 |
-| `BERTSeqClassifier` 		| 序列标注 | 每一个 token 都有唯一的类别 |
-| `XLNetSeqClassifier` 		| 序列标注 | 每一个 token 都有唯一的类别 |
-| `RoBERTaSeqClassifier` 		| 序列标注 | 每一个 token 都有唯一的类别 |
-| `ALBERTSeqClassifier` 		| 序列标注 | 每一个 token 都有唯一的类别 |
-| `ELECTRASeqClassifier` 		| 序列标注 | 每一个 token 都有唯一的类别 |
-| `TinyBERTClassifier` 		| 模型蒸馏 | 支持蒸馏除 XLNetClassifier 以外的所有单标签分类器 |
-| `FastBERTClassifier` 		| 模型蒸馏 | 支持蒸馏除 XLNetClassifier 以外的所有单标签分类器 |
+| `BERTLM` 		| Language Modeling | Combine MLM and NSP task, sample sentences from context or other documents |
+| `RoBERTaLM` 		| Language Modeling | Single MLM task, sample sentences to maximum sequence length |
+| `ALBERTLM` 		| Language Modeling | Combine MLM and SOP task, sample sentences from context or other documents |
+| `ELECTRALM` 		| Language Modeling | Combine MLM and RTD task, train generator and discriminator together |
+| `GPT2LM` | Language Modeling | Auto-regressive text generation |
+| `BERTNER` 		| Named Entity Recognition | Recognize entities through BIESO labels |
+| `BERTCRFNER` 		| Named Entity Recognition | Recognize entities through BIESO labels and Viterbi decoding |
+| `BERTCRFCascadeNER` | Named Entity Recognition | Recognize and classify entities through BIESO labels and Viterbi decoding |
+| `TransformerMT` | Machine Translation | Sequence in and sequence out, with shared vocabulary |
+| `BERTMRC` 		| Machine Reading Comprehension | Extract answer span from inputs |
+| `RoBERTaMRC` 		| Machine Reading Comprehension | Extract answer span from inputs |
+| `ALBERTMRC` 		| Machine Reading Comprehension | Extract answer span from inputs |
+| `ELECTRAMRC` 		| Machine Reading Comprehension | Extract answer span from inputs |
+| `BERTClassifier` 		| Single-label Classification | Each sample belongs to one class |
+| `XLNetClassifier` 		| Single-label Classification | Each sample belongs to one class |
+| `RoBERTaClassifier` 		| Single-label Classification | Each sample belongs to one class |
+| `ALBERTClassifier` 		| Single-label Classification | Each sample belongs to one class |
+| `ELECTRAClassifier` 		| Single-label Classification | Each sample belongs to one class |
+| `BERTBinaryClassifier` 		| Multi-label Classification | Each sample belongs to zero or multiple classes |
+| `XLNetBinaryClassifier` 		| Multi-label Classification | Each sample belongs to zero or multiple classes |
+| `RoBERTaBinaryClassifier` 		| Multi-label Classification | Each sample belongs to zero or multiple classes |
+| `ALBERTBinaryClassifier` 		| Multi-label Classification | Each sample belongs to zero or multiple classes |
+| `ELECTRABinaryClassifier` 		| Multi-label Classification | Each sample belongs to zero or multiple classes |
+| `BERTSeqClassifier` 		| Sequence Labeling | Each token belongs to one single class |
+| `XLNetSeqClassifier` 		| Sequence Labeling | Each token belongs to one single class |
+| `RoBERTaSeqClassifier` 		| Sequence Labeling | Each token belongs to one single class |
+| `ALBERTSeqClassifier` 		| Sequence Labeling | Each token belongs to one single class |
+| `ELECTRASeqClassifier` 		| Sequence Labeling | Each token belongs to one single class |
+| `TinyBERTClassifier` 		| Knowledge Distillation | Support knowledge distillation for all single-label classifiers except XLNetClassifier |
+| `FastBERTClassifier` 		| Knowledge Distillation | Support knowledge distillation for all single-label classifiers except XLNetClassifier |
 
-### 公开榜单评测
+### Public Learboards
 
-十月底前推出。
+...
 
-### 开发需知
+### Development
 
-十月底前推出。
+...

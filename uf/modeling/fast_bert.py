@@ -166,9 +166,8 @@ class FastBERTCLSDistillor(BaseDecoder, BERTEncoder):
                 per_example_loss = tf.reduce_sum(
                     cls_probs * (tf.log(cls_probs) - tf.log(probs)), axis=-1)
                 if sample_weight is not None:
-                    per_example_loss = \
-                        (tf.cast(sample_weight, dtype=tf.float32) *
-                         per_example_loss)
+                    per_example_loss *= tf.cast(
+                        sample_weight, dtype=tf.float32)
                 loss = tf.reduce_mean(per_example_loss)
                 losses.append(loss)
 

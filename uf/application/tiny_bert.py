@@ -80,7 +80,7 @@ class TinyBERTClassifier(BERTClassifier, ClassifierModule):
         assignment_map = {}
         for var in self.global_variables:
             if var.name.startswith('tiny/'):
-                assignment_map[var.name.replace('tiny/', '')] = var
+                assignment_map[var.name.replace('tiny/', '')[:-2]] = var
         saver = tf.train.Saver(assignment_map, max_to_keep=1000000)
         saver.save(self.sess, self.init_checkpoint)
 

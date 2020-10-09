@@ -1,4 +1,4 @@
-[中文](README_CN.md) | [English](README.md)
+[中文]() | [English](README.md)
 
 <p align="center">
     <br>
@@ -19,8 +19,6 @@
         <img src="https://img.shields.io/badge/license-Apache2.0-red">
     </a>
 </p>
-
-
 有数据，想要快速实现你的想法？轻便、易使用的自然语言处理联合框架，支持快速搭建各类常用深度学习模型 (Transformer, GPT-2, BERT, RoBERTa, ALBERT, XLNet, ELECTRA)，同时对于 BERT 系列，支持高效用的蒸馏 (TinyBERT, FastBERT)。支持各类上下游任务 (语言模型、文本分类、文本生成、命名实体识别、机器阅读理解、机器翻译、序列标注等)。UniF is all you need。
 
 ### 特性
@@ -109,8 +107,8 @@ print(model.predict(X))
 
 ### 公开榜单评测
 
-十月底前推出。
+...
 
 ### 开发需知
 
-十月底前推出。
+...

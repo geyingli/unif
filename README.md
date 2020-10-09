@@ -68,7 +68,7 @@ model.fit(X, y)
 print(model.predict(X))
 ```
 
-For FAQs and more instructions about building and training models, see [tutorial.md](./tutorial.md).
+For FAQs and more instructions about building and training models, see [tutorial.md](./tutorial.md) (English version will be released soon).
 
 ### API
 

@@ -28,7 +28,8 @@ Abundant data and ideas on hand but having no way to implement immediately? UNIF
 - Scikit-Learn like API design, train and predict in 3 lines of code
 - Supports transfering pretrained model
 - Support multiple deep learning tricks, e.g. adversarial training
-- Multi-GPU parallelization by just one key
+- Multi-GPU parallelization
+- Export SavedModel for industrial deployment
 - Easy to develop and extend, chase after state-of-the-art algorithms
 
 ### Install
@@ -106,7 +107,7 @@ Available APIs include:
 | `TinyBERTClassifier` 		| Knowledge Distillation | Support knowledge distillation for all single-label classifiers except XLNetClassifier |
 | `FastBERTClassifier` 		| Knowledge Distillation | Support knowledge distillation for all single-label classifiers except XLNetClassifier |
 
-### Public Learboards
+### Performance on Public Leaderboards
 
 ...
 

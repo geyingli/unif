@@ -10,7 +10,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-beta2.1.25-blue">
+        <img src="https://img.shields.io/badge/version-beta2.1.26-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-≥1.11.0-yellow">
@@ -19,7 +19,10 @@
         <img src="https://img.shields.io/badge/license-Apache2.0-red">
     </a>
 </p>
+
+
 Abundant data and ideas on hand but having no way to implement immediately? UNIF, as a unified language processing framework, supports building deep learning models in a simple and efficient manner, including Transformer, GPT-2, BERT, RoBERTa, ALBERT, XLNet, ELECTRA and etc. For BERT-series models, you need nothing but a single hot key to distill the model for light usage. Feel free to run applications among language modeling, text classification, text generation, named entity recognition, machine reading comprehension, machine translation and sequence labeling. UNIF is all you need.
+
 
 ### Features
 

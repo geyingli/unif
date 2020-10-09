@@ -21,10 +21,12 @@ import uf.utils as utils
 
 
 class ClassifierModule(BaseModule):
+    ''' Application class of classification. '''
     pass
 
 
 class NERModule(BaseModule):
+    ''' Application class of name entity recognition (NER). '''
 
     O_ID = 0
     B_ID = 1
@@ -127,6 +129,7 @@ class NERModule(BaseModule):
 
 
 class MRCModule(BaseModule):
+    ''' Application class of machine reading comprehension (MRC). '''
 
     def _get_em_and_f1(self, preds, labels):
         em = 0
@@ -166,6 +169,7 @@ class MRCModule(BaseModule):
 
 
 class MTModule(BaseModule):
+    ''' Application class of machine translation (MT). '''
 
     def _get_bleu(self, preds, labels, mask, max_gram=4):
         eos_id = self.tokenizer.convert_tokens_to_ids(['</s>'])[0]
@@ -240,6 +244,7 @@ class MTModule(BaseModule):
 
 
 class LMModule(BaseModule):
+    ''' Application class of language modeling (LM). '''
 
     def score(self, *args, **kwargs):
         raise AttributeError(

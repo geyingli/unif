@@ -1,6 +1,6 @@
 # Tutorial
 
-[toc]
+[TOC]
 
 ### 1. 模型搭建
 

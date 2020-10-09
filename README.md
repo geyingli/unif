@@ -79,7 +79,7 @@ print(model.predict(X))
 | `GPT2LM` | 语言模型 | 自回归式文本生成 |
 | `BERTNER` 		| 命名实体识别 | 通过 BIESO 标签推导实体 |
 | `BERTCRFNER` 		| 命名实体识别 | 基于维特比解码，通过 BIESO 标签推导实体 |
-| `BERTCRFCascadeNER` | 命名实体识别 | 基于维特比解码，通过 BIESO 标签推导实体；识别实体的同时对实体进行分类 |
+| `BERTCRFCascadeNER` | 命名实体识别 | 基于维特比解码，通过 BIESO 标签推导实体；<br>识别实体的同时对实体进行分类 |
 | `TransformerMT` | 机器翻译 | 共享词表，序列到序列建模 |
 | `BERTMRC` 		| 机器阅读理解 | 从输入中抽取一段完整的答案 |
 | `RoBERTaMRC` 		| 机器阅读理解 | 从输入中抽取一段完整的答案 |

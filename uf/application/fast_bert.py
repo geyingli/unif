@@ -23,6 +23,7 @@ import uf.utils as utils
 
 
 class FastBERTClassifier(BERTClassifier, ClassifierModule):
+    ''' Single-label classifier on FastBERT, a distillation model. '''
     _INFER_ATTRIBUTES = BERTClassifier._INFER_ATTRIBUTES
 
     def __init__(self,
@@ -57,6 +58,21 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
 
     def predict(self, X=None, X_tokenized=None,
                 batch_size=8, speed=0.1, ignore_cls=None):
+        ''' Inference on the model.
+
+        Args:
+            X: list. A list object consisting untokenized inputs.
+            X_tokenized: list. A list object consisting tokenized inputs.
+              Either `X` or `X_tokenized` should be None.
+            batch_size: int. The size of batch in each step.
+            speed: float. Threshold for leaving model in advance, which
+              should be within [0, 1].
+            ignore_cls: list. A list object of integers that stands for
+              the classifiers to ignore. The more classifier ignored, the
+              faster inference is.
+        Returns:
+            A dict object of model outputs.
+        '''
 
         if ignore_cls != self._ignore_cls:
             if not ignore_cls:
@@ -84,6 +100,23 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
 
     def score(self, X=None, y=None, sample_weight=None, X_tokenized=None,
                 batch_size=8, speed=0.1, ignore_cls=None):
+        ''' Inference on the model with scoring.
+
+        Args:
+            X: list. A list object consisting untokenized inputs.
+            y: list. A list object consisting labels.
+            sample_weight: list. A list object of float-convertable values.
+            X_tokenized: list. A list object consisting tokenized inputs.
+              Either `X` or `X_tokenized` should be None.
+            batch_size: int. The size of batch in each step.
+            speed: float. Threshold for leaving model in advance, which
+              should be within [0, 1].
+            ignore_cls: list. A list object of integers that stands for
+              the classifiers to ignore. The more classifier ignored, the
+              faster inference is.
+        Returns:
+            A dict object of output metrics.
+        '''
 
         if ignore_cls != self._ignore_cls:
             if not ignore_cls:

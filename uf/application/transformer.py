@@ -26,6 +26,7 @@ import uf.utils as utils
 
 
 class TransformerMT(MTModule):
+    ''' Machine translation on Transformer. '''
     _INFER_ATTRIBUTES = {
         'source_max_seq_length': (
             'An integer that defines max sequence length of source language '

@@ -25,6 +25,7 @@ import uf.utils as utils
 
 
 class DilatedLM(LMModule):
+    ''' Language modeling on DilatedBERT. '''
     _INFER_ATTRIBUTES = {
         'max_seq_length': (
             'An integer that defines max sequence length of input tokens, '
@@ -66,6 +67,17 @@ class DilatedLM(LMModule):
 
     def predict(self, X=None, X_tokenized=None,
                 batch_size=8, loop=1):
+        ''' Inference on the model.
+
+        Args:
+            X: list. A list object consisting untokenized inputs.
+            X_tokenized: list. A list object consisting tokenized inputs.
+              Either `X` or `X_tokenized` should be None.
+            batch_size: int. The size of batch in each step.
+            loop: int. Number of inference loop to rewrite the input.
+        Returns:
+            A dict object of model outputs.
+        '''
 
         if loop != self._loop:
             self._loop = loop

@@ -28,22 +28,27 @@ import uf.utils as utils
 
 
 class RoBERTaClassifier(BERTClassifier, ClassifierModule):
+    ''' Single-label classifier on RoBERTa. '''
     _INFER_ATTRIBUTES = BERTClassifier._INFER_ATTRIBUTES
 
 
 class RoBERTaBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
+    ''' Multi-label classifier on RoBERTa. '''
     _INFER_ATTRIBUTES = BERTBinaryClassifier._INFER_ATTRIBUTES
 
 
 class RoBERTaSeqClassifier(BERTSeqClassifier, ClassifierModule):
+    ''' Sequence labeling classifier on RoBERTa. '''
     _INFER_ATTRIBUTES = BERTSeqClassifier._INFER_ATTRIBUTES
 
 
 class RoBERTaMRC(BERTMRC, MRCModule):
+    ''' Machine reading comprehension on RoBERTa. '''
     _INFER_ATTRIBUTES = BERTMRC._INFER_ATTRIBUTES
 
 
 class RoBERTaLM(BERTLM, LMModule):
+    ''' Language modeling on RoBERTa. '''
     _INFER_ATTRIBUTES = BERTLM._INFER_ATTRIBUTES
 
     def __init__(self,

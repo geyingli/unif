@@ -33,6 +33,7 @@ import uf.utils as utils
 
 
 class ALBERTClassifier(BERTClassifier, ClassifierModule):
+    ''' Single-label classifier on ALBERT. '''
     _INFER_ATTRIBUTES = BERTClassifier._INFER_ATTRIBUTES
 
     def __init__(self,
@@ -89,6 +90,7 @@ class ALBERTClassifier(BERTClassifier, ClassifierModule):
 
 
 class ALBERTBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
+    ''' Multi-label classifier on ALBERT. '''
     _INFER_ATTRIBUTES = BERTBinaryClassifier._INFER_ATTRIBUTES
 
     def __init__(self,
@@ -148,6 +150,7 @@ class ALBERTBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
 
 
 class ALBERTSeqClassifier(BERTSeqClassifier, ClassifierModule):
+    ''' Sequence labeling classifier on ALBERT. '''
     _INFER_ATTRIBUTES = BERTSeqClassifier._INFER_ATTRIBUTES
 
     def __init__(self,
@@ -202,6 +205,7 @@ class ALBERTSeqClassifier(BERTSeqClassifier, ClassifierModule):
 
 
 class ALBERTMRC(BERTMRC, MRCModule):
+    ''' Machine reading comprehension on ALBERT. '''
     _INFER_ATTRIBUTES = BERTMRC._INFER_ATTRIBUTES
 
     def __init__(self,
@@ -252,6 +256,7 @@ class ALBERTMRC(BERTMRC, MRCModule):
 
 
 class ALBERTLM(BERTLM, LMModule):
+    ''' Language modeling on ALBERT. '''
     _INFER_ATTRIBUTES = BERTLM._INFER_ATTRIBUTES
 
     def __init__(self,

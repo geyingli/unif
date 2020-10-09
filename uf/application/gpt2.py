@@ -25,6 +25,7 @@ import uf.utils as utils
 
 
 class GPT2LM(LMModule):
+    ''' Language modeling on GPT-2. '''
     _INFER_ATTRIBUTES = {
         'max_seq_length': (
             'An integer that defines max sequence length of input tokens, '
@@ -67,6 +68,17 @@ class GPT2LM(LMModule):
 
     def predict(self, X=None, X_tokenized=None,
                 batch_size=8, given=1):
+        ''' Inference on the model.
+
+        Args:
+            X: list. A list object consisting untokenized inputs.
+            X_tokenized: list. A list object consisting tokenized inputs.
+              Either `X` or `X_tokenized` should be None.
+            batch_size: int. The size of batch in each step.
+            given: int. The number of already known tokens.
+        Returns:
+            A dict object of model outputs.
+        '''
 
         if given != self._given:
             self._given = given

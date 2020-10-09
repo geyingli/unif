@@ -32,6 +32,7 @@ import uf.utils as utils
 
 
 class BERTClassifier(ClassifierModule):
+    ''' Single-label classifier on BERT. '''
     _INFER_ATTRIBUTES = {
         'max_seq_length': (
             'An integer that defines max sequence length of input tokens, '
@@ -329,6 +330,7 @@ class BERTClassifier(ClassifierModule):
 
 
 class BERTBinaryClassifier(BERTClassifier, ClassifierModule):
+    ''' Multi-label classifier on BERT. '''
     _INFER_ATTRIBUTES = BERTClassifier._INFER_ATTRIBUTES
 
     def __init__(self,
@@ -473,6 +475,7 @@ class BERTBinaryClassifier(BERTClassifier, ClassifierModule):
 
 
 class BERTSeqClassifier(BERTClassifier, ClassifierModule):
+    ''' Sequence labeling classifier on BERT. '''
     _INFER_ATTRIBUTES = BERTClassifier._INFER_ATTRIBUTES
 
     def __init__(self,
@@ -739,6 +742,7 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
 
 
 class BERTNER(BERTClassifier, NERModule):
+    ''' Named entity recognition on BERT. '''
     _INFER_ATTRIBUTES = {
         'max_seq_length': (
             'An integer that defines max sequence length of input tokens, '
@@ -1005,6 +1009,7 @@ class BERTNER(BERTClassifier, NERModule):
 
 
 class BERTCRFNER(BERTNER, NERModule):
+    ''' Named entity recognization on BERT with CRF. '''
     _INFER_ATTRIBUTES = BERTNER._INFER_ATTRIBUTES
 
     def _forward(self, is_training, split_placeholders, **kwargs):
@@ -1145,6 +1150,7 @@ class BERTCRFNER(BERTNER, NERModule):
 
 
 class BERTCRFCascadeNER(BERTCRFNER, NERModule):
+    ''' Named entity recognization and classification on BERT with CRF. '''
     _INFER_ATTRIBUTES = {
         'max_seq_length': (
             'An integer that defines max sequence length of input tokens, '
@@ -1406,6 +1412,7 @@ class BERTCRFCascadeNER(BERTCRFNER, NERModule):
 
 
 class BERTMRC(BERTClassifier, MRCModule):
+    ''' Machine reading comprehension on BERT. '''
     _INFER_ATTRIBUTES = {
         'max_seq_length': (
             'An integer that defines max sequence length of input tokens, '
@@ -1641,6 +1648,7 @@ class BERTMRC(BERTClassifier, MRCModule):
 
 
 class BERTLM(LMModule):
+    ''' Language modeling on BERT. '''
     _INFER_ATTRIBUTES = {
         'max_seq_length': (
             'An integer that defines max sequence length of input tokens, '

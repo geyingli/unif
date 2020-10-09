@@ -32,6 +32,7 @@ import uf.utils as utils
 
 
 class ELECTRAClassifier(BERTClassifier, ClassifierModule):
+    ''' Single-label classifier on ELECTRA. '''
     _INFER_ATTRIBUTES = BERTClassifier._INFER_ATTRIBUTES
 
     def __init__(self,
@@ -86,6 +87,7 @@ class ELECTRAClassifier(BERTClassifier, ClassifierModule):
 
 
 class ELECTRABinaryClassifier(BERTBinaryClassifier, ClassifierModule):
+    ''' Multi-label classifier on ELECTRA. '''
     _INFER_ATTRIBUTES = BERTBinaryClassifier._INFER_ATTRIBUTES
 
     def __init__(self,
@@ -143,6 +145,7 @@ class ELECTRABinaryClassifier(BERTBinaryClassifier, ClassifierModule):
 
 
 class ELECTRASeqClassifier(BERTSeqClassifier, ClassifierModule):
+    ''' Sequence labeling classifier on ELECTRA. '''
     _INFER_ATTRIBUTES = BERTSeqClassifier._INFER_ATTRIBUTES
 
     def __init__(self,
@@ -198,6 +201,7 @@ class ELECTRASeqClassifier(BERTSeqClassifier, ClassifierModule):
 
 
 class ELECTRAMRC(BERTMRC, MRCModule):
+    ''' Machine reading comprehension on ELECTRA. '''
     _INFER_ATTRIBUTES = BERTMRC._INFER_ATTRIBUTES
 
     def __init__(self,
@@ -249,6 +253,7 @@ class ELECTRAMRC(BERTMRC, MRCModule):
 
 
 class ELECTRALM(BERTLM, LMModule):
+    ''' Language modeling on ELECTRA. '''
     _INFER_ATTRIBUTES = BERTLM._INFER_ATTRIBUTES
 
     def __init__(self,

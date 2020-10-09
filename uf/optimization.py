@@ -23,11 +23,7 @@ from .tools import tf
 
 
 class UnifiedOptimizer:
-    '''
-    A unified optimizer for GD, Adam, AdamW and LAMB optimizers.
-      - AdamW implementation is the implementation in BERT.
-      - LAMB implementation is based on arXiv v3 version on June, 2019.
-    '''
+    ''' A unified optimizer for GD, Adam, AdamW and LAMB optimizers. '''
     def __init__(self,
                  learning_rate,
                  weight_decay_rate=0.01,

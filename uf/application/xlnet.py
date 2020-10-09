@@ -53,6 +53,7 @@ EOD_ID = special_symbols['<eod>']
 
 
 class XLNetClassifier(BERTClassifier, ClassifierModule):
+    ''' Single-label classifier on XLNet. '''
     _INFER_ATTRIBUTES = BERTClassifier._INFER_ATTRIBUTES
 
     def __init__(self,
@@ -170,6 +171,7 @@ class XLNetClassifier(BERTClassifier, ClassifierModule):
 
 
 class XLNetBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
+    ''' Multi-label classifier on XLNet. '''
     _INFER_ATTRIBUTES = BERTBinaryClassifier._INFER_ATTRIBUTES
 
     def __init__(self,
@@ -291,6 +293,7 @@ class XLNetBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
 
 
 class XLNetSeqClassifier(BERTSeqClassifier, ClassifierModule):
+    ''' Sequence labeling classifier on XLNet. '''
     _INFER_ATTRIBUTES = BERTSeqClassifier._INFER_ATTRIBUTES
 
     def __init__(self,
@@ -411,6 +414,7 @@ class XLNetSeqClassifier(BERTSeqClassifier, ClassifierModule):
 
 
 class XLNetLM(BERTLM, LMModule):
+    ''' Language modeling on XLNet. '''
     _INFER_ATTRIBUTES = BERTLM._INFER_ATTRIBUTES
 
     def __init__(self,

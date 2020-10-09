@@ -26,6 +26,7 @@ import uf.utils as utils
 
 
 class TinyBERTClassifier(BERTClassifier, ClassifierModule):
+    ''' Single-label classifier on TinyBERT, a distillation model. '''
     _INFER_ATTRIBUTES = BERTClassifier._INFER_ATTRIBUTES
 
     def __init__(self,
@@ -62,6 +63,7 @@ class TinyBERTClassifier(BERTClassifier, ClassifierModule):
         self.tiny_bert_config.num_hidden_layers = num_hidden_layers
 
     def to_bert(self):
+        ''' Isolate student tiny_bert out of traing graph. '''
         if not self._graph_built:
             raise ValueError(
                 'Fit, predict or score before saving checkpoint.')

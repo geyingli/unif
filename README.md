@@ -46,7 +46,7 @@ If the installation if not authorized, try `python setup.py install --user`.
 
 ### Quick Tour
 
-See how we train and predict in just several lines. Since we provide demo configuration files, no pretrained model is pre-required. Input `ipython` in command line and enter the interactive interface of Python.
+See how we train and predict in just several lines. Since we provide demo configuration files, no pretrained model is required. Input `ipython` in command line and enter the interactive Python interface.
 
 ``` python
 import tensorflow as tf
@@ -59,7 +59,7 @@ tf.logging.set_verbosity(tf.logging.INFO)
 model = uf.BERTClassifier(config_file='demo/bert_config.json', vocab_file='demo/vocab.txt')
 
 # define training samples
-X, y = ['Natural language processing', 'is the future star of AI.'], [1, 0]
+X, y = ['Natural language processing', 'is the core of AI.'], [1, 0]
 
 # training
 model.fit(X, y)
@@ -68,7 +68,7 @@ model.fit(X, y)
 print(model.predict(X))
 ```
 
-For FAQs and more instructions about building and training, see [tutorial.md](./tutorial.md).
+For FAQs and more instructions about building and training models, see [tutorial.md](./tutorial.md).
 
 ### API
 

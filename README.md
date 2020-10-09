@@ -74,7 +74,7 @@ For FAQs and more instructions about building and training models, see [tutorial
 
 Available APIs include:
 
-| API 				| 类别         | 说明                                                 |
+| API 				| Application | Description                                       |
 | ----------- | ------------ | ---------------------------------------------------- |
 | `BERTLM` 		| Language Modeling | Combine MLM and NSP task, sample sentences from context or other documents |
 | `RoBERTaLM` 		| Language Modeling | Single MLM task, sample sentences to maximum sequence length |

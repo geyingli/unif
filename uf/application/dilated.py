@@ -108,6 +108,9 @@ class DilatedLM(LMModule):
 
         assert y is None, ('%s is unsupervised. `y` should be None.'
                            % self.__class__.__name__)
+        if '[CLS]' not in self.tokenizer.vocab:
+            self.tokenizer.add('[CLS]')
+            self.bert_config.n_vocab += 1
         if '<spad>' not in self.tokenizer.vocab:
             self.tokenizer.add('<spad>')
 

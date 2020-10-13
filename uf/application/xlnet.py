@@ -468,6 +468,12 @@ class XLNetLM(BERTLM, LMModule):
             assert y is None, (
                 'XLNet uses permutation language modeling, which is '
                 'unsupervised. `y` should be None.')
+        if '[CLS]' not in self.tokenizer.vocab:
+            self.tokenizer.add('[CLS]')
+            self.xlnet_config.n_token += 1
+        if '[SEP]' not in self.tokenizer.vocab:
+            self.tokenizer.add('[SEP]')
+            self.xlnet_config.n_token += 1
 
         n_inputs = None
         data = {}

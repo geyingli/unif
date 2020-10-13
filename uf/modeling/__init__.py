@@ -19,7 +19,6 @@ from .xlnet import XLNetEncoder
 from .albert import ALBERTEncoder, ALBERTDecoder
 from .electra import ELECTRA
 from .gpt2 import GPT2
-from .dilated import DLM
 from .tiny_bert import TinyBERTCLSDistillor
 from .fast_bert import FastBERTCLSDistillor
 from .base import CLSDecoder, BinaryCLSDecoder, SeqCLSDecoder, MRCDecoder
@@ -35,7 +34,6 @@ __all__ = [
     'ALBERTDecoder',
     'ELECTRA',
     'GPT2',
-    'DLM',
     'TinyBERTCLSDistillor',
     'FastBERTCLSDistillor',
     'CLSDecoder',

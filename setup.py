@@ -10,7 +10,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='uf',
-    version='2.1.27',
+    version='2.1.28',
     description='Unified framework for NLP tasks.',
     url='https://github.com/geyingli/unif',
     long_description=open('README.md', 'r', encoding='utf-8').read(),

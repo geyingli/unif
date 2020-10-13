@@ -75,6 +75,13 @@ class BERTClassifier(ClassifierModule):
                 is_training=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
 
+        if '[CLS]' not in self.tokenizer.vocab:
+            self.tokenizer.add('[CLS]')
+            self.bert_config.n_vocab += 1
+        if '[SEP]' not in self.tokenizer.vocab:
+            self.tokenizer.add('[SEP]')
+            self.bert_config.n_vocab += 1
+
         if is_training:
             assert y is not None, '`y` can\'t be None.'
 
@@ -509,6 +516,12 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
 
         if is_training:
             assert y is not None, '`y` can\'t be None.'
+        if '[CLS]' not in self.tokenizer.vocab:
+            self.tokenizer.add('[CLS]')
+            self.bert_config.n_vocab += 1
+        if '[SEP]' not in self.tokenizer.vocab:
+            self.tokenizer.add('[SEP]')
+            self.bert_config.n_vocab += 1
 
         n_inputs = None
         data = {}
@@ -780,6 +793,12 @@ class BERTNER(BERTClassifier, NERModule):
 
         if is_training:
             assert y is not None, '`y` can\'t be None.'
+        if '[CLS]' not in self.tokenizer.vocab:
+            self.tokenizer.add('[CLS]')
+            self.bert_config.n_vocab += 1
+        if '[SEP]' not in self.tokenizer.vocab:
+            self.tokenizer.add('[SEP]')
+            self.bert_config.n_vocab += 1
 
         n_inputs = None
         data = {}
@@ -1450,6 +1469,12 @@ class BERTMRC(BERTClassifier, MRCModule):
 
         if is_training:
             assert y is not None, '`y` can\'t be None.'
+        if '[CLS]' not in self.tokenizer.vocab:
+            self.tokenizer.add('[CLS]')
+            self.bert_config.n_vocab += 1
+        if '[SEP]' not in self.tokenizer.vocab:
+            self.tokenizer.add('[SEP]')
+            self.bert_config.n_vocab += 1
 
         n_inputs = None
         data = {}
@@ -1707,6 +1732,12 @@ class BERTLM(LMModule):
             else:
                 assert self._do_sample_sentence, (
                     '`y` cann\'t be None when `do_sample_sentence` is False.')
+        if '[CLS]' not in self.tokenizer.vocab:
+            self.tokenizer.add('[CLS]')
+            self.bert_config.n_vocab += 1
+        if '[SEP]' not in self.tokenizer.vocab:
+            self.tokenizer.add('[SEP]')
+            self.bert_config.n_vocab += 1
 
         n_inputs = None
         data = {}

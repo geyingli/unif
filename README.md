@@ -10,7 +10,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-beta2.1.27-blue">
+        <img src="https://img.shields.io/badge/version-beta2.1.28-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-≥1.11.0-yellow">
@@ -35,7 +35,7 @@ Abundant data and ideas on hand but having no way to implement immediately? UNIF
 
 ### Install
 
-Python 3.6+ and Tensorflow 1.11+ are required to install the repo. If you with to run the models on GPU, please install NVIDIA CUDA toolkit in advance (be careful on the selection of published version). 
+Python 3.6+ and Tensorflow 1.11+ are required to install the repo. If you with to run the models on GPU, please install NVIDIA CUDA toolkit in advance (be careful on the selection of published version).
 
 ``` bash
 git clone https://github.com/geyingli/unif

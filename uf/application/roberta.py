@@ -92,6 +92,12 @@ class RoBERTaLM(BERTLM, LMModule):
         assert y is None, (
             'RoBERTa is a masked language modeling model. '
             '`y` should be None.')
+        if '[CLS]' not in self.tokenizer.vocab:
+            self.tokenizer.add('[CLS]')
+            self.bert_config.n_vocab += 1
+        if '[SEP]' not in self.tokenizer.vocab:
+            self.tokenizer.add('[SEP]')
+            self.bert_config.n_vocab += 1
 
         n_inputs = None
         data = {}

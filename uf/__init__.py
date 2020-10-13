@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__version__ = '2.1.27'
+__version__ = '2.1.28'
 __date__ = '10/13/2020'
 
 
@@ -22,7 +22,6 @@ from .application.roberta import RoBERTaLM
 from .application.albert import ALBERTLM
 from .application.electra import ELECTRALM
 from .application.gpt2 import GPT2LM
-from .application.dilated import DilatedLM
 from .application.bert import BERTClassifier
 from .application.xlnet import XLNetClassifier
 from .application.roberta import RoBERTaClassifier
@@ -64,7 +63,6 @@ __all__ = [
     'ALBERTLM',
     'ELECTRALM',
     'GPT2LM',
-    'DilatedLM',
     'BERTClassifier',
     'XLNetClassifier',
     'RoBERTaClassifier',

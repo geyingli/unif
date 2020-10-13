@@ -297,6 +297,10 @@ class ELECTRALM(BERTLM, LMModule):
         assert y is None, (
             'ELECTRA uses masked language modeling and replaced token. '
             'prediction, which is unsupervised. `y` should be None.')
+        if '[CLS]' not in self.tokenizer.vocab:
+            self.tokenizer.add('[CLS]')
+        if '[SEP]' not in self.tokenizer.vocab:
+            self.tokenizer.add('[SEP]')
 
         n_inputs = None
         data = {}

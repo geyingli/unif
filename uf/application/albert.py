@@ -306,6 +306,14 @@ class ALBERTLM(BERTLM, LMModule):
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
                 is_training=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
+
+        if '[CLS]' not in self.tokenizer.vocab:
+            self.tokenizer.add('[CLS]')
+            self.albert_config.n_vocab += 1
+        if '[SEP]' not in self.tokenizer.vocab:
+            self.tokenizer.add('[SEP]')
+            self.albert_config.n_vocab += 1
+
         n_inputs = None
         data = {}
 

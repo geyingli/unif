@@ -87,6 +87,22 @@ class GPT2LM(LMModule):
         return super(LMModule, self).predict(
             X, X_tokenized, batch_size)
 
+    def export(self, export_dir, given=1):
+        ''' Export model into SavedModel files.
+
+        Args:
+            export_dir: str. Directory to which the model is saved.
+            given: int. The number of already known tokens.
+        Returns:
+            None
+        '''
+
+        if given != self._given:
+            self._given = given
+            self._graph_mode = None
+
+        return super(LMModule, self).export(export_dir)
+
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
                 is_training=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)

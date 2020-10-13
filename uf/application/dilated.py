@@ -86,6 +86,22 @@ class DilatedLM(LMModule):
         return super(LMModule, self).predict(
             X, X_tokenized, batch_size)
 
+    def export(self, export_dir, loop=1):
+        ''' Export model into SavedModel files.
+
+        Args:
+            export_dir: str. Directory to which the model is saved.
+            loop: int. Number of inference loop to rewrite the input.
+        Returns:
+            None
+        '''
+
+        if loop != self._loop:
+            self._loop = loop
+            self._graph_mode = None
+
+        return super(LMModule, self).export(export_dir)
+
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
                 is_training=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
@@ -158,7 +174,7 @@ class DilatedLM(LMModule):
                 _label_ids = []
                 for i, _input_id in enumerate(_input_ids):
                     _dilated_ids.extend([_input_id, 0])
-                    _dilated_mask.extend([_input_mask[i], _input_mask[i]])
+                    _dilated_mask.extend([_input_mask[i], 0])
                     _label_ids.extend([_input_id, 0])
 
                 # replace/add/subtract
@@ -249,7 +265,7 @@ class DilatedLM(LMModule):
         batch_preds = output_arrays[1]
         batch_mask = (batch_inputs != batch_labels)
         accuracy = np.sum((batch_preds == batch_labels) * batch_mask) / \
-            np.sum(batch_mask)
+            (np.sum(batch_mask) + 1e-6)
 
         # loss
         batch_losses = output_arrays[2]
@@ -327,7 +343,7 @@ def sample_wrong_tokens(_dilated_ids, _dilated_mask, _label_ids,
     # `subtract`, add wrong tokens for prediction of subtraction
     # e.g. 124 0 591 0 9521 -> 124 0 92 0 591
     for _ in range(max_subtract):
-        if _dilated_mask[-2] == 1:
+        if _dilated_mask[-2] == 1:  # no more space
             break
         cand_indicies = [i for i in range(1, len(_dilated_ids) - 1)
                          if _dilated_ids[i] == 0 and
@@ -344,7 +360,7 @@ def sample_wrong_tokens(_dilated_ids, _dilated_mask, _label_ids,
         _dilated_ids.pop()
         _dilated_ids.pop()
         _dilated_mask.insert(index, 1)
-        _dilated_mask.insert(index, 1)
+        _dilated_mask.insert(index, 0)
         _dilated_mask.pop()
         _dilated_mask.pop()
         _label_ids.insert(index, 0)

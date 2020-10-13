@@ -767,7 +767,7 @@ class ExportInference(BaseTask):
             utils.count_params(
                 module.global_variables, module.trainable_variables)
 
-    def run(self):
+    def run(self, export_dir):
         module = self.module
 
         if not module._graph_built:
@@ -780,24 +780,31 @@ class ExportInference(BaseTask):
 
         # define inputs
         inputs = {}
+        def set_input(key):
+            inputs[key] = tf.saved_model.utils.build_tensor_info(
+                module.placeholders[key])
+            tf.logging.info('Define input: %s, %s, %s' % (
+                key, module.placeholders[key].shape.as_list(),
+                module.placeholders[key].dtype.name))
         for key in module.placeholders:
             if key == 'sample_weight':
                 continue
-            inputs[key] = tf.saved_model.utils.build_tensor_info(
-                module.placeholders[key])
-            tf.logging.info(
-                'Define input: %s, %s, %s'
-                % (key, module.placeholders[key].shape.as_list(),
-                   module.placeholders[key].dtype.name))
+            set_input(key)
 
         # define outputs
         outputs = {}
-        for p_id, (name, _probs) in enumerate(list(module._probs.items())):
-            key = 'probabilities_%d' % name if p_id > 0 else 'probabilities'
-            outputs[key] = tf.saved_model.utils.build_tensor_info(_probs)
-            tf.logging.info(
-                'Define output: %s, %s, %s'
-                % (key, _probs.shape.as_list(), _probs.dtype.name))
+        def set_output(key, value):
+            outputs[key] = tf.saved_model.utils.build_tensor_info(value)
+            tf.logging.info('Define output: %s, %s, %s' % (
+                key, value.shape.as_list(), value.dtype.name))
+        for key, value in list(module._preds.items()):
+            if key in outputs:
+                key += '_preds'
+            set_output(key, value)
+        for key, value in list(module._probs.items()):
+            if key in outputs:
+                key += '_probs'
+            set_output(key, value)
 
         # build signature
         signature = tf.saved_model.signature_def_utils.build_signature_def(
@@ -809,8 +816,7 @@ class ExportInference(BaseTask):
         legacy_init_op = tf.group(
             tf.tables_initializer(), name='legacy_init_op')
         builder = tf.saved_model.builder.SavedModelBuilder(
-            os.path.join(module.output_dir,
-                         time.strftime('%Y%m%d.%H%M%S')))
+            os.path.join(export_dir, time.strftime('%Y%m%d.%H%M%S')))
         try:
             builder.add_meta_graph_and_variables(
                 module.sess, [tf.saved_model.tag_constants.SERVING],

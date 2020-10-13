@@ -95,7 +95,7 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
             self._speed = speed
             self._graph_mode = None
 
-        return super(FastBERTClassifier, self).predict(
+        return super(ClassifierModule, self).predict(
             X, X_tokenized, batch_size)
 
     def score(self, X=None, y=None, sample_weight=None, X_tokenized=None,
@@ -139,8 +139,45 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
             self._speed = speed
             self._graph_mode = None
 
-        return super(FastBERTClassifier, self).score(
+        return super(ClassifierModule, self).score(
             X, y, sample_weight, X_tokenized, batch_size)
+
+    def export(self, export_dir, speed=0.1, ignore_cls=None):
+        ''' Export model into SavedModel files.
+
+        Args:
+            export_dir: str. Directory to which the model is saved.
+            speed: float. Threshold for leaving model in advance, which
+              should be within [0, 1].
+            ignore_cls: list. A list object of integers that stands for
+              the classifiers to ignore. The more classifier ignored, the
+              faster inference is.
+        Returns:
+            None
+        '''
+
+        if ignore_cls != self._ignore_cls:
+            if not ignore_cls:
+                ignore_cls = self._ignore_cls
+            elif isinstance(ignore_cls, str):
+                ignore_cls = ignore_cls.replace(' ','').split(',')
+            elif isinstance(ignore_cls, list):
+                pass
+            else:
+                raise ValueError(
+                    '`ignore_cls` should be a list of child-classifier ids or '
+                    'a string seperated with commas.')
+            self._ignore_cls = ignore_cls
+            self._graph_mode = None
+
+        if speed != self._speed:
+            if not speed:
+                raise ValueError(
+                    '`speed` should be a float number between `0` and `1`.')
+            self._speed = speed
+            self._graph_mode = None
+
+        return super(ClassifierModule, self).export(export_dir)
 
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
                 is_training=False):

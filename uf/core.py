@@ -537,13 +537,15 @@ class BaseModule:
     def global_variables(self):
         return self.graph._collections.get('variables', [])
 
-    def export(self):
+    def export(self, export_dir):
         ''' Export model into SavedModel files.
 
-        The method is illegal if attribute `output_dir` is None.
+        Args:
+            export_dir: str. Directory to which the model is saved.
+        Returns:
+            None
         '''
-        if not self.output_dir:
-            raise ValueError('Attribute `output_dir` is None.')
+        tf.gfile.MakeDirs(export_dir)
 
         # Make sure necessary arguments are on spot.
         if not self._graph_built:
@@ -564,7 +566,7 @@ class BaseModule:
         # Build the graph, and then run.
         with self.graph.as_default(), \
                 tf.variable_scope('', reuse=tf.AUTO_REUSE):
-            self._build('export').run()
+            self._build('export').run(export_dir)
 
     @abstractmethod
     def convert(self, *args, **kwargs):

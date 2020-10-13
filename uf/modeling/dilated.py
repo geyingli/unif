@@ -67,7 +67,10 @@ class DLM(BaseDecoder, BERTEncoder):
                     label_ids, depth=bert_config.vocab_size)
                 per_token_loss = -tf.reduce_sum(
                     one_hot_labels * log_probs, axis=-1)
-                label_mask = tf.cast(input_mask, tf.float32)
+                input_length = tf.reduce_sum(
+                    input_mask, axis=-1)
+                label_mask = tf.sequence_mask(
+                    input_length, max_seq_length * 2, dtype=tf.float32)
                 per_example_loss = \
                     tf.reduce_sum(per_token_loss * label_mask, axis=-1) / \
                     tf.reduce_sum(label_mask, axis=-1)
@@ -91,12 +94,14 @@ class DLM(BaseDecoder, BERTEncoder):
                     output_ids = tf.argmax(logits, axis=-1)
                     output_ids = tf.cast(output_ids, dtype=tf.int32)
 
+                    # special padding (using `spad` token)
                     equal_zero = tf.cast(tf.equal(output_ids, 0), tf.int32)
                     equal_zero = tf.reduce_sum(equal_zero, axis=-1)
                     right_pad = spad_id * tf.sequence_mask(
                         equal_zero, dilated_seq_length, dtype=tf.int32)
-
                     paded = tf.concat([output_ids, right_pad], axis=-1)
+
+                    # extract ids of length `max_seq_length`
                     flattened_padded = tf.reshape(paded, [-1])
                     is_valid = tf.cast(
                         tf.greater(flattened_padded, 0), dtype=tf.int32)
@@ -106,20 +111,29 @@ class DLM(BaseDecoder, BERTEncoder):
                         flattened_valid, [batch_size, dilated_seq_length])
                     cutted_valid = valid[:, :max_seq_length]
 
-                    nonpad_mask = tf.cast(
+                    # replace `spad` token with `pad`
+                    non_spad_mask = tf.cast(
                         tf.not_equal(cutted_valid, spad_id), dtype=tf.int32)
-                    output_ids = cutted_valid * nonpad_mask
+                    output_ids = cutted_valid * non_spad_mask
+                    output_length = tf.reduce_sum(non_spad_mask, axis=-1)
 
-                    reshaped = tf.reshape(
+                    # dilate
+                    reshaped_ids = tf.reshape(
                         output_ids, [batch_size, max_seq_length, 1])
-                    concatenated = tf.concat(
-                        [reshaped, tf.zeros_like(reshaped)], axis=-1)
+                    reshaped_mask = tf.reshape(
+                        tf.sequence_mask(output_length, max_seq_length,
+                                         dtype=tf.int32),
+                        [batch_size, max_seq_length, 1])
+                    concat_ids = tf.concat(
+                        [reshaped_ids, tf.zeros_like(reshaped_ids)], axis=-1)
+                    concat_mask = tf.concat(
+                        [reshaped_mask, tf.zeros_like(
+                            reshaped_mask, dtype=tf.int32)],
+                         axis=-1)
                     dilated_ids = tf.reshape(
-                        concatenated, [batch_size, max_seq_length * 2])
-
-                    input_mask = tf.reduce_sum(nonpad_mask, axis=-1)
-                    dilated_mask = tf.sequence_mask(
-                        input_mask, dilated_seq_length, dtype=tf.int32)
+                        concat_ids, [batch_size, max_seq_length * 2])
+                    dilated_mask = tf.reshape(
+                        concat_mask, [batch_size, max_seq_length * 2])
 
                     return dilated_ids, dilated_mask
 
@@ -203,3 +217,19 @@ class DLM(BaseDecoder, BERTEncoder):
             logits, [-1, dilated_seq_length, bert_config.vocab_size])
 
         return logits
+
+    def create_attention_mask_from_input_mask(self,
+                                              input_mask,
+                                              batch_size,
+                                              max_seq_length,
+                                              dtype=tf.float32):
+        to_mask = tf.cast(tf.reshape(
+            input_mask, [batch_size, 1, max_seq_length]), dtype=dtype)
+        broadcast_ones = tf.ones(
+            shape=[batch_size, max_seq_length, 1], dtype=dtype)
+        broadcast_eye = tf.tile(
+            tf.reshape(tf.eye(max_seq_length), [1, max_seq_length, max_seq_length]),
+            [batch_size, 1, 1])
+        mask = broadcast_ones * to_mask + broadcast_eye
+        mask = tf.cast(tf.greater(mask, 0), dtype)
+        return mask

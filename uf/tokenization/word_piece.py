@@ -17,11 +17,21 @@
   See `https://github.com/google-research/bert`.
 '''
 
+import os
 import collections
 import unicodedata
 
 from uf.tools import tf
 
+
+
+def get_word_piece_tokenizer(vocab_file, do_lower_case=True):
+    if not os.path.exists(vocab_file):
+        raise ValueError(
+            'Can\'t find vocab_file \'%s\'. '
+            'Please pass the correct path of vocabulary file, '
+            'e.g.`vocab.txt`.' % vocab_file)
+    return WordPieceTokenizer(vocab_file, do_lower_case=do_lower_case)
 
 
 class WordPieceTokenizer:

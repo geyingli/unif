@@ -14,13 +14,12 @@
 # limitations under the License.
 ''' Applications based on BERT. '''
 
-import os
 import numpy as np
 
 from uf.tools import tf
 from .base import MTModule
 from uf.modeling.transformer import Transformer
-from uf.tokenization.word_piece import WordPieceTokenizer
+from uf.tokenization.word_piece import get_word_piece_tokenizer
 import uf.utils as utils
 
 
@@ -289,16 +288,6 @@ class TransformerMT(MTModule):
         outputs['loss'] = loss
 
         return outputs
-
-
-
-def get_word_piece_tokenizer(vocab_file, do_lower_case=True):
-    if not os.path.exists(vocab_file):
-        raise ValueError(
-            'Can\'t find vocab_file \'%s\'. '
-            'Please pass the correct path of vocabulary file, '
-            'e.g.`vocab.txt`.' % vocab_file)
-    return WordPieceTokenizer(vocab_file, do_lower_case=do_lower_case)
 
 
 def get_key_to_depths(num_hidden_layers):

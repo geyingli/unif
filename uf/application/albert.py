@@ -27,7 +27,7 @@ from .bert import (BERTClassifier, BERTBinaryClassifier, BERTSeqClassifier,
                    BERTMRC, BERTLM)
 from uf.modeling.base import (CLSDecoder, BinaryCLSDecoder, SeqCLSDecoder,
                               MRCDecoder)
-from uf.tokenization.word_piece import WordPieceTokenizer
+from uf.tokenization.word_piece import get_word_piece_tokenizer
 import uf.utils as utils
 
 
@@ -923,16 +923,6 @@ def get_albert_config(config_file=None):
             'e.g.`albert_config.json`. An example can be downloaded from '
             'https://github.com/google-research/albert.' % config_file)
     return ALBERTConfig.from_json_file(config_file)
-
-
-def get_word_piece_tokenizer(vocab_file, do_lower_case=True):
-    if not os.path.exists(vocab_file):
-        raise ValueError(
-            'Can\'t find vocab_file \'%s\'. '
-            'Please pass the correct path of vocabulary file, '
-            'e.g.`vocab.txt`. An example can be downloaded from '
-            'https://github.com/google-research/albert.' % vocab_file)
-    return WordPieceTokenizer(vocab_file, do_lower_case=do_lower_case)
 
 
 def get_key_to_depths(num_hidden_layers):

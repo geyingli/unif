@@ -24,7 +24,7 @@ from .bert import (
     BERTClassifier, BERTBinaryClassifier, BERTSeqClassifier, BERTLM)
 from uf.modeling.base import CLSDecoder, BinaryCLSDecoder, SeqCLSDecoder
 from uf.modeling.xlnet import XLNetEncoder, XLNet, XLNetConfig
-from uf.tokenization.sentence_piece import SentencePieceTokenizer
+from uf.tokenization.sentence_piece import get_sentence_piece_tokenizer
 import uf.utils as utils
 
 
@@ -684,16 +684,6 @@ def get_xlnet_config(config_file=None):
             'e.g.`xlnet_config.json`. An example can be downloaded from '
             'https://github.com/zihangdai/xlnet.' % config_file)
     return XLNetConfig(json_path=config_file)
-
-
-def get_sentence_piece_tokenizer(spm_file, do_lower_case=True):
-    if not os.path.exists(spm_file):
-        raise ValueError(
-            'Can\'t find vocab_file \'%s\'. '
-            'Please pass the correct path of sentence-piece model file, '
-            'e.g.`spiece.model`. An example can be downloaded from '
-            'https://github.com/zihangdai/xlnet.' % spm_file)
-    return SentencePieceTokenizer(spm_file, do_lower_case=do_lower_case)
 
 
 def get_key_to_depths(n_layer):

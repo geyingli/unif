@@ -22,8 +22,9 @@ from .base import ClassifierModule, MRCModule, LMModule
 from uf.modeling.bert import BERTEncoder, BERTDecoder
 from .bert import (BERTClassifier, BERTBinaryClassifier, BERTSeqClassifier,
                    BERTMRC, BERTLM,
-                   get_bert_config, get_word_piece_tokenizer,
-                   get_key_to_depths, create_masked_lm_predictions)
+                   get_bert_config, get_key_to_depths,
+                   create_masked_lm_predictions)
+from uf.tokenization.word_piece import get_word_piece_tokenizer
 import uf.utils as utils
 
 

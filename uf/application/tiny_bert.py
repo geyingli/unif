@@ -21,7 +21,8 @@ import numpy as np
 from uf.tools import tf
 from .base import ClassifierModule
 from uf.modeling.tiny_bert import TinyBERTCLSDistillor
-from .bert import BERTClassifier, get_bert_config, get_word_piece_tokenizer
+from .bert import BERTClassifier, get_bert_config
+from uf.tokenization.word_piece import get_word_piece_tokenizer
 import uf.utils as utils
 
 

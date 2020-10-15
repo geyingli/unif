@@ -66,11 +66,11 @@ class ALBERTClassifier(BERTClassifier, ClassifierModule):
     def _forward(self, is_training, split_placeholders, **kwargs):
 
         encoder = ALBERTEncoder(
-            config=self.albert_config,
+            albert_config=self.albert_config,
             is_training=is_training,
             input_ids=split_placeholders['input_ids'],
             input_mask=split_placeholders['input_mask'],
-            token_type_ids=split_placeholders['segment_ids'],
+            segment_ids=split_placeholders['segment_ids'],
             scope='bert',
             drop_pooler=self._drop_pooler,
             **kwargs)
@@ -82,7 +82,6 @@ class ALBERTClassifier(BERTClassifier, ClassifierModule):
             label_size=self.label_size,
             sample_weight=split_placeholders.get('sample_weight'),
             scope='cls/seq_relationship',
-            name='cls',
             **kwargs)
         (total_loss, losses, probs, preds) = decoder.get_forward_outputs()
         return (total_loss, losses, probs, preds)
@@ -125,11 +124,11 @@ class ALBERTBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
     def _forward(self, is_training, split_placeholders, **kwargs):
 
         encoder = ALBERTEncoder(
-            config=self.albert_config,
+            albert_config=self.albert_config,
             is_training=is_training,
             input_ids=split_placeholders['input_ids'],
             input_mask=split_placeholders['input_mask'],
-            token_type_ids=split_placeholders['segment_ids'],
+            segment_ids=split_placeholders['segment_ids'],
             scope='bert',
             drop_pooler=self._drop_pooler,
             **kwargs)
@@ -142,7 +141,6 @@ class ALBERTBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
             sample_weight=split_placeholders.get('sample_weight'),
             label_weight=self.label_weight,
             scope='cls/seq_relationship',
-            name='cls',
             **kwargs)
         (total_loss, losses, probs, preds) = decoder.get_forward_outputs()
         return (total_loss, losses, probs, preds)
@@ -181,11 +179,11 @@ class ALBERTSeqClassifier(BERTSeqClassifier, ClassifierModule):
     def _forward(self, is_training, split_placeholders, **kwargs):
 
         encoder = ALBERTEncoder(
-            config=self.albert_config,
+            albert_config=self.albert_config,
             is_training=is_training,
             input_ids=split_placeholders['input_ids'],
             input_mask=split_placeholders['input_mask'],
-            token_type_ids=split_placeholders['segment_ids'],
+            segment_ids=split_placeholders['segment_ids'],
             scope='bert',
             **kwargs)
         encoder_output = encoder.get_sequence_output()
@@ -197,7 +195,6 @@ class ALBERTSeqClassifier(BERTSeqClassifier, ClassifierModule):
             label_size=self.label_size,
             sample_weight=split_placeholders.get('sample_weight'),
             scope='cls/sequence',
-            name='cls',
             **kwargs)
         (total_loss, losses, probs, preds) = decoder.get_forward_outputs()
         return (total_loss, losses, probs, preds)
@@ -234,11 +231,11 @@ class ALBERTMRC(BERTMRC, MRCModule):
     def _forward(self, is_training, split_placeholders, **kwargs):
 
         encoder = ALBERTEncoder(
-            config=self.albert_config,
+            albert_config=self.albert_config,
             is_training=is_training,
             input_ids=split_placeholders['input_ids'],
             input_mask=split_placeholders['input_mask'],
-            token_type_ids=split_placeholders['segment_ids'],
+            segment_ids=split_placeholders['segment_ids'],
             scope='bert',
             **kwargs)
         encoder_output = encoder.get_sequence_output()
@@ -248,7 +245,6 @@ class ALBERTMRC(BERTMRC, MRCModule):
             label_ids=split_placeholders['label_ids'],
             sample_weight=split_placeholders.get('sample_weight'),
             scope='mrc',
-            name='mrc',
             **kwargs)
         (total_loss, losses, probs, preds) = decoder.get_forward_outputs()
         return (total_loss, losses, probs, preds)
@@ -526,11 +522,11 @@ class ALBERTLM(BERTLM, LMModule):
     def _forward(self, is_training, split_placeholders, **kwargs):
 
         encoder = ALBERTEncoder(
-            config=self.albert_config,
+            albert_config=self.albert_config,
             is_training=is_training,
             input_ids=split_placeholders['input_ids'],
             input_mask=split_placeholders['input_mask'],
-            token_type_ids=split_placeholders['segment_ids'],
+            segment_ids=split_placeholders['segment_ids'],
             scope='bert',
             drop_pooler=self._drop_pooler,
             **kwargs)
@@ -546,7 +542,6 @@ class ALBERTLM(BERTLM, LMModule):
             sample_weight=split_placeholders.get('sample_weight'),
             scope_lm='cls/predictions',
             scope_cls='cls/seq_relationship',
-            name='SOP',
             **kwargs)
         (total_loss, losses, probs, preds) = decoder.get_forward_outputs()
         return (total_loss, losses, probs, preds)

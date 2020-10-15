@@ -162,8 +162,6 @@ class XLNetClassifier(BERTClassifier, ClassifierModule):
             label_size=self.label_size,
             sample_weight=split_placeholders.get('sample_weight'),
             scope='cls/seq_relationship',
-            name='cls',
-            trainable=True,
             **kwargs)
         (total_loss, losses, probs, preds) = decoder.get_forward_outputs()
         return (total_loss, losses, probs, preds)
@@ -273,7 +271,6 @@ class XLNetBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
             input_ids=input_ids,
             seg_ids=segment_ids,
             input_mask=input_mask,
-            trainable=True,
             **kwargs)
         encoder_output = encoder.get_pooled_output()
         decoder = BinaryCLSDecoder(
@@ -284,8 +281,6 @@ class XLNetBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
             sample_weight=split_placeholders.get('sample_weight'),
             label_weight=self.label_weight,
             scope='cls/seq_relationship',
-            name='cls',
-            trainable=True,
             **kwargs)
         (total_loss, losses, probs, preds) = decoder.get_forward_outputs()
         return (total_loss, losses, probs, preds)
@@ -394,7 +389,6 @@ class XLNetSeqClassifier(BERTSeqClassifier, ClassifierModule):
             input_ids=input_ids,
             seg_ids=segment_ids,
             input_mask=input_mask,
-            trainable=True,
             **kwargs)
         encoder_output = encoder.get_sequence_output()
         decoder = SeqCLSDecoder(
@@ -405,8 +399,6 @@ class XLNetSeqClassifier(BERTSeqClassifier, ClassifierModule):
             label_size=self.label_size,
             sample_weight=split_placeholders.get('sample_weight'),
             scope='cls/sequence',
-            name='cls',
-            trainable=True,
             **kwargs)
         (total_loss, losses, probs, preds) = decoder.get_forward_outputs()
         return (total_loss, losses, probs, preds)

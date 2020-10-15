@@ -34,19 +34,18 @@ Inputs = collections.namedtuple(
 
 class ELECTRA(BaseDecoder):
     def __init__(self,
+                 vocab_size,
                  model_size,
                  is_training,
                  placeholders,
                  sample_weight,
-                 vocab,
                  electra_objective=False,
                  **kwargs):
         super().__init__()
 
         # set up configs
         self.config = PretrainingConfig(model_size=model_size, **kwargs)
-        self.bert_config = get_bert_config(
-            model_size, len(list(vocab.keys())))
+        self.bert_config = get_bert_config(model_size, vocab_size)
 
         # alert
         if is_training:

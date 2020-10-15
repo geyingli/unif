@@ -37,8 +37,6 @@ class Transformer(BaseDecoder, BaseEncoder):
                  num_attention_heads=12,
                  scope='transformer',
                  use_label_smoothing=False,
-                 use_tilda_embedding=False,
-                 trainable=True,
                  **kwargs):
         super().__init__()
 
@@ -54,6 +52,7 @@ class Transformer(BaseDecoder, BaseEncoder):
 
         # Tilda embeddings for SMART algorithm
         tilda_embeddings = None
+        use_tilda_embedding=kwargs.get('use_tilda_embedding')
         if use_tilda_embedding:
             with tf.variable_scope('', reuse=True):
                 tilda_embeddings = tf.get_variable('tilda_embeddings')

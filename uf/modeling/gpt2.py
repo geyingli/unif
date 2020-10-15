@@ -32,7 +32,6 @@ class GPT2(BaseDecoder, BaseEncoder):
                  sample_weight=None,
                  scope='model',
                  given=1,
-                 use_tilda_embedding=False,
                  **kwargs):
         super().__init__()
 
@@ -41,6 +40,7 @@ class GPT2(BaseDecoder, BaseEncoder):
 
         # Tilda embeddings for SMART algorithm
         tilda_embeddings = None
+        use_tilda_embedding=kwargs.get('use_tilda_embedding')
         if use_tilda_embedding:
             with tf.variable_scope('', reuse=True):
                 tilda_embeddings = tf.get_variable('tilda_embeddings')

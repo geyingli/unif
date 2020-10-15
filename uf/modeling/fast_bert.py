@@ -35,14 +35,12 @@ class FastBERTCLSDistillor(BaseDecoder, BERTEncoder):
                  segment_ids,
                  sample_weight=None,
                  scope='bert',
-                 name='',
                  dtype=tf.float32,
                  drop_pooler=False,
                  cls_model='self-attention',
                  label_size=2,
                  speed=0.1,
                  ignore_cls=None,
-                 trainable=True,
                  **kwargs):
         super(FastBERTCLSDistillor, self).__init__()
 
@@ -115,7 +113,6 @@ class FastBERTCLSDistillor(BaseDecoder, BERTEncoder):
                             bert_config.attention_probs_dropout_prob,
                         initializer_range=bert_config.initializer_range,
                         dtype=dtype,
-                        trainable=False,
                         cls_model=cls_model,
                         speed=speed,
                         ignore_cls=ignore_cls)
@@ -178,7 +175,7 @@ class FastBERTCLSDistillor(BaseDecoder, BERTEncoder):
         else:
             if bert_config.num_hidden_layers not in ignore_cls:
                 self.all_cls_layers[bert_config.num_hidden_layers] = probs
-            self.probs[name] = tf.concat(
+            self.probs['cls'] = tf.concat(
                 list(self.all_cls_layers.values()), axis=0, name='probs')
 
     def dynamic_transformer_model(self,
@@ -198,7 +195,6 @@ class FastBERTCLSDistillor(BaseDecoder, BERTEncoder):
                                   attention_probs_dropout_prob=0.1,
                                   initializer_range=0.02,
                                   dtype=tf.float32,
-                                  trainable=True,
                                   cls_model='self-attention',
                                   cls_hidden_size=128,
                                   cls_num_attention_heads=2,

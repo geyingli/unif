@@ -15,7 +15,7 @@ setup(
     url='https://github.com/geyingli/unif',
     long_description=open('README.md', 'r', encoding='utf-8').read(),
     long_description_content_type='text/markdown',
-    author='geyingli',
+    author='Geying Li',
     author_email='geyingli@tencent.com',
     license='Apache-2.0',
     packages=find_packages(),

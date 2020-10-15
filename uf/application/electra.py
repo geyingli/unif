@@ -79,7 +79,6 @@ class ELECTRAClassifier(BERTClassifier, ClassifierModule):
             label_size=self.label_size,
             sample_weight=split_placeholders.get('sample_weight'),
             scope='cls/seq_relationship',
-            name='cls',
             **kwargs)
         (total_loss, losses, probs, preds) = decoder.get_forward_outputs()
         return (total_loss, losses, probs, preds)
@@ -137,7 +136,6 @@ class ELECTRABinaryClassifier(BERTBinaryClassifier, ClassifierModule):
             sample_weight=split_placeholders.get('sample_weight'),
             label_weight=self.label_weight,
             scope='cls/seq_relationship',
-            name='cls',
             **kwargs)
         (total_loss, losses, probs, preds) = decoder.get_forward_outputs()
         return (total_loss, losses, probs, preds)
@@ -193,7 +191,6 @@ class ELECTRASeqClassifier(BERTSeqClassifier, ClassifierModule):
             label_size=self.label_size,
             sample_weight=split_placeholders.get('sample_weight'),
             scope='cls/sequence',
-            name='cls',
             **kwargs)
         (total_loss, losses, probs, preds) = decoder.get_forward_outputs()
         return (total_loss, losses, probs, preds)
@@ -245,7 +242,6 @@ class ELECTRAMRC(BERTMRC, MRCModule):
             label_ids=split_placeholders['label_ids'],
             sample_weight=split_placeholders.get('sample_weight'),
             scope='mrc',
-            name='mrc',
             **kwargs)
         (total_loss, losses, probs, preds) = decoder.get_forward_outputs()
         return (total_loss, losses, probs, preds)
@@ -479,11 +475,11 @@ class ELECTRALM(BERTLM, LMModule):
     def _forward(self, is_training, split_placeholders, **kwargs):
 
         model = ELECTRA(
+            vocab_size=len(self.tokenizer.vocab),
             model_size=self._model_size,
             is_training=is_training,
             placeholders=self.placeholders,
             sample_weight=self.placeholders.get('sample_weight'),
-            vocab=self.tokenizer.vocab,
             gen_weight=self._generator_weight,
             disc_weight=self._discriminator_weight,
             **kwargs)

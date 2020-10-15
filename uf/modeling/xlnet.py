@@ -39,12 +39,11 @@ class XLNetEncoder(BaseEncoder):
                  perm_mask=None,
                  target_mapping=None,
                  inp_q=None,
-                 use_tilda_embedding=False,
                  **kwargs):
         '''
         Args:
-          xlnet_config: XLNetConfig,
-          run_config: XLNetRunConfig,
+          xlnet_config: XLNetConfig.
+          is_training: bool, whether is training or not.
           input_ids: int32 Tensor in shape [len, bsz], the input token IDs.
           seg_ids: int32 Tensor in shape [len, bsz], the input segment IDs.
           input_mask: float32 Tensor in shape [len, bsz], the input mask.
@@ -82,9 +81,10 @@ class XLNetEncoder(BaseEncoder):
 
         # Tilda embeddings for SMART algorithm
         tilda_embeddings = None
+        use_tilda_embedding=kwargs.get('use_tilda_embedding')
         if use_tilda_embedding:
-          with tf.variable_scope('', reuse=True):
-            tilda_embeddings = tf.get_variable('tilda_embeddings')
+            with tf.variable_scope('', reuse=True):
+                tilda_embeddings = tf.get_variable('tilda_embeddings')
 
         tfm_args = dict(
             n_token=xlnet_config.n_token,

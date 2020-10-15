@@ -259,7 +259,6 @@ class BERTClassifier(ClassifierModule):
             label_size=self.label_size,
             sample_weight=split_placeholders.get('sample_weight'),
             scope='cls/seq_relationship',
-            name='cls',
             **kwargs)
         (total_loss, losses, probs, preds) = decoder.get_forward_outputs()
         return (total_loss, losses, probs, preds)
@@ -450,7 +449,6 @@ class BERTBinaryClassifier(BERTClassifier, ClassifierModule):
             sample_weight=split_placeholders.get('sample_weight'),
             label_weight=self.label_weight,
             scope='cls/seq_relationship',
-            name='cls',
             **kwargs)
         (total_loss, losses, probs, preds) = decoder.get_forward_outputs()
         return (total_loss, losses, probs, preds)
@@ -657,7 +655,6 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
             label_size=self.label_size,
             sample_weight=split_placeholders.get('sample_weight'),
             scope='cls/sequence',
-            name='cls',
             **kwargs)
         (total_loss, losses, probs, preds) = decoder.get_forward_outputs()
         return (total_loss, losses, probs, preds)
@@ -930,7 +927,6 @@ class BERTNER(BERTClassifier, NERModule):
             label_size=5,
             sample_weight=split_placeholders.get('sample_weight'),
             scope='cls/sequence',
-            name='cls',
             **kwargs)
         (total_loss, losses, probs, preds) = decoder.get_forward_outputs()
         return (total_loss, losses, probs, preds)
@@ -1050,7 +1046,6 @@ class BERTCRFNER(BERTNER, NERModule):
             label_size=5,
             sample_weight=split_placeholders.get('sample_weight'),
             scope='cls/sequence',
-            name='cls',
             **kwargs)
         (total_loss, losses, probs, preds) = decoder.get_forward_outputs()
         return (total_loss, losses, probs, preds)
@@ -1305,7 +1300,6 @@ class BERTCRFCascadeNER(BERTCRFNER, NERModule):
             label_size=1 + len(self.entity_types) * 4,
             sample_weight=split_placeholders.get('sample_weight'),
             scope='cls/sequence',
-            name='cls',
             **kwargs)
         (total_loss, losses, probs, preds) = decoder.get_forward_outputs()
         return (total_loss, losses, probs, preds)
@@ -1582,7 +1576,6 @@ class BERTMRC(BERTClassifier, MRCModule):
             label_ids=split_placeholders['label_ids'],
             sample_weight=split_placeholders.get('sample_weight'),
             scope='mrc',
-            name='mrc',
             **kwargs)
         (total_loss, losses, probs, preds) = decoder.get_forward_outputs()
         return (total_loss, losses, probs, preds)
@@ -2016,7 +2009,6 @@ class BERTLM(LMModule):
             sample_weight=split_placeholders.get('sample_weight'),
             scope_lm='cls/predictions',
             scope_cls='cls/seq_relationship',
-            name='NSP',
             **kwargs)
         (total_loss, losses, probs, preds) = decoder.get_forward_outputs()
         return (total_loss, losses, probs, preds)

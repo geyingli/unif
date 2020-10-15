@@ -32,9 +32,7 @@ class TinyBERTCLSDistillor(BaseDecoder):
                  label_ids=None,
                  sample_weight=None,
                  scope='bert',
-                 name='',
                  dtype=tf.float32,
-                 use_tilda_embedding=False,
                  drop_pooler=False,
                  label_size=2,
                  trainable=True,
@@ -61,6 +59,7 @@ class TinyBERTCLSDistillor(BaseDecoder):
                 logits = tf.nn.bias_add(logits, output_bias)
                 return logits
 
+        use_tilda_embedding=kwargs.get('use_tilda_embedding')
         student = BERTEncoder(
             bert_config=tiny_bert_config,
             is_training=is_training,
@@ -162,7 +161,7 @@ class TinyBERTCLSDistillor(BaseDecoder):
         else:
             student_probs = tf.nn.softmax(
                 student_logits, axis=-1, name='probs')
-            self.probs[name] = student_probs
+            self.probs['cls'] = student_probs
 
 
 

@@ -29,7 +29,6 @@ class CRFDecoder(BaseDecoder):
                  label_size=5,
                  sample_weight=None,
                  scope='cls/sequence',
-                 name='',
                  hidden_dropout_prob=0.1,
                  initializer_range=0.02,
                  trainable=True,
@@ -70,7 +69,7 @@ class CRFDecoder(BaseDecoder):
                     per_example_loss *= tf.cast(
                         sample_weight, dtype=tf.float32)
                 self.total_loss = tf.reduce_mean(per_example_loss)
-                self.losses[name] = per_example_loss
-                self.preds[name] = tf.argmax(logits, axis=-1)
+                self.losses['cls'] = per_example_loss
+                self.preds['cls'] = tf.argmax(logits, axis=-1)
                 self.probs['logits'] = logits
                 self.probs['transition_matrix'] = transition_matrix

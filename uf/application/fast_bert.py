@@ -232,7 +232,6 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
             segment_ids=split_placeholders['segment_ids'],
             sample_weight=split_placeholders.get('sample_weight'),
             scope='bert',
-            name='cls',
             drop_pooler=self._drop_pooler,
             speed=self._speed,
             ignore_cls=[] if is_training else self._ignore_cls,

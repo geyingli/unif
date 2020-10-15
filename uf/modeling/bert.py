@@ -34,8 +34,6 @@ class BERTEncoder(BaseEncoder):
                  input_mask,
                  segment_ids,
                  scope='bert',
-                 dtype=tf.float32,
-                 use_tilda_embedding=False,
                  drop_pooler=False,
                  trainable=True,
                  **kwargs):
@@ -51,6 +49,7 @@ class BERTEncoder(BaseEncoder):
 
         # Tilda embeddings for SMART algorithm
         tilda_embeddings = None
+        use_tilda_embedding=kwargs.get('use_tilda_embedding')
         if use_tilda_embedding:
             with tf.variable_scope('', reuse=True):
                 tilda_embeddings = tf.get_variable('tilda_embeddings')
@@ -67,9 +66,8 @@ class BERTEncoder(BaseEncoder):
                         embedding_size=bert_config.hidden_size,
                         initializer_range=bert_config.initializer_range,
                         word_embedding_name='word_embeddings',
-                        dtype=dtype,
-                        trainable=trainable,
-                        tilda_embeddings=tilda_embeddings)
+                        tilda_embeddings=tilda_embeddings,
+                        trainable=trainable)
 
                 # Add positional embeddings and token type embeddings
                 # layer normalize and perform dropout.
@@ -88,12 +86,11 @@ class BERTEncoder(BaseEncoder):
                     max_position_embeddings=\
                         bert_config.max_position_embeddings,
                     dropout_prob=bert_config.hidden_dropout_prob,
-                    dtype=dtype,
                     trainable=trainable)
 
             with tf.variable_scope('encoder'):
                 attention_mask = self.create_attention_mask_from_input_mask(
-                    input_mask, batch_size, max_seq_length, dtype=dtype)
+                    input_mask, batch_size, max_seq_length)
 
                 # stacked transformers
                 self.all_encoder_layers = self.transformer_model(
@@ -111,7 +108,6 @@ class BERTEncoder(BaseEncoder):
                     attention_probs_dropout_prob=\
                     bert_config.attention_probs_dropout_prob,
                     initializer_range=bert_config.initializer_range,
-                    dtype=dtype,
                     trainable=trainable)
 
             self.sequence_output = self.all_encoder_layers[-1]
@@ -512,7 +508,6 @@ class BERTDecoder(BaseDecoder):
                  sample_weight=None,
                  scope_lm='cls/predictions',
                  scope_cls='cls/seq_relationship',
-                 name='',
                  trainable=True,
                  **kwargs):
         super(BERTDecoder, self).__init__(**kwargs)
@@ -547,7 +542,8 @@ class BERTDecoder(BaseDecoder):
                 input_tensor = util.layer_norm(input_tensor)
             output_bias = tf.get_variable(
                 'output_bias', shape=[bert_config.vocab_size],
-                initializer=tf.zeros_initializer())
+                initializer=tf.zeros_initializer(),
+                trainable=trainable)
 
             logits = tf.matmul(
                 input_tensor, encoder.get_embedding_table(), transpose_b=True)
@@ -582,10 +578,12 @@ class BERTDecoder(BaseDecoder):
                     'output_weights',
                     shape=[2, bert_config.hidden_size],
                     initializer=util.create_initializer(
-                        bert_config.initializer_range))
+                        bert_config.initializer_range),
+                    trainable=trainable)
                 output_bias = tf.get_variable(
                     'output_bias', shape=[2],
-                    initializer=tf.zeros_initializer())
+                    initializer=tf.zeros_initializer(),
+                    trainable=trainable)
 
                 logits = tf.matmul(encoder.get_pooled_output(),
                                    output_weights, transpose_b=True)
@@ -604,9 +602,9 @@ class BERTDecoder(BaseDecoder):
                 loss = tf.reduce_mean(per_example_loss)
 
                 scalar_losses.append(loss)
-                self.losses[name] = per_example_loss
-                self.probs[name] = probs
-                self.preds[name] = tf.argmax(probs, axis=-1)
+                self.losses['NSP'] = per_example_loss
+                self.probs['NSP'] = probs
+                self.preds['NSP'] = tf.argmax(probs, axis=-1)
 
         self.total_loss = tf.add_n(scalar_losses)
 

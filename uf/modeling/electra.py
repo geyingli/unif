@@ -72,8 +72,8 @@ class ELECTRA(BaseDecoder):
         mlm_output = self._get_generator_output(
             masked_inputs, sample_weight, generator)
         self.total_loss = self.config.gen_weight * mlm_output.loss
-        self.losses['MLM'] = mlm_output.per_example_loss
-        self.preds['MLM'] = mlm_output.preds
+        self.losses['MLM_losses'] = mlm_output.per_example_loss
+        self.preds['MLM_preds'] = mlm_output.preds
 
         # Discriminator
         fake_data = self._get_fake_data(masked_inputs, mlm_output.logits)
@@ -92,9 +92,9 @@ class ELECTRA(BaseDecoder):
             fake_data.is_fake_tokens)
         if electra_objective:
             self.total_loss += self.config.disc_weight * disc_output.loss
-        self.losses['RTD'] = disc_output.per_example_loss
-        self.probs['RTD'] = disc_output.probs
-        self.preds['RTD'] = disc_output.preds
+        self.losses['RTD_losses'] = disc_output.per_example_loss
+        self.probs['RTD_probs'] = disc_output.probs
+        self.preds['RTD_preds'] = disc_output.preds
         self.preds['RTD_labels'] = disc_output.labels
 
     def _get_generator_output(self, inputs, sample_weight, generator):

@@ -767,7 +767,7 @@ class ExportInference(BaseTask):
             utils.count_params(
                 module.global_variables, module.trainable_variables)
 
-    def run(self, export_dir):
+    def run(self, export_dir, expire_outputs=None):
         module = self.module
 
         if not module._graph_built:
@@ -797,13 +797,12 @@ class ExportInference(BaseTask):
             outputs[key] = tf.saved_model.utils.build_tensor_info(value)
             tf.logging.info('Define output: %s, %s, %s' % (
                 key, value.shape.as_list(), value.dtype.name))
-        for key, value in list(module._preds.items()):
-            if key in outputs:
-                key += '_preds'
-            set_output(key, value)
-        for key, value in list(module._probs.items()):
-            if key in outputs:
-                key += '_probs'
+        if not expire_outputs:
+            expire_outputs = []
+        for key, value in (list(module._preds.items()) +
+                           list(module._probs.items())):
+            if key in expire_outputs:
+                continue
             set_output(key, value)
 
         # build signature
@@ -824,7 +823,9 @@ class ExportInference(BaseTask):
                 legacy_init_op=legacy_init_op)
         except:
             raise ValueError(
-                'Twice exportation is not allowed.')
+                'Twice exportation is not allowed. Try `.save()` and '
+                '`.reset()` method to save and reset the graph before '
+                'next exportation.')
         builder.save()
 
 

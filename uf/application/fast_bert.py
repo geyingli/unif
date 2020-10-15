@@ -242,7 +242,7 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
         return (total_loss, losses, probs, preds)
 
     def _get_fit_ops(self, as_feature=False):
-        return [self._train_op, self._losses['distill']]
+        return [self._train_op, self._losses['losses']]
 
     def _get_fit_info(self, output_arrays, feed_dict, as_feature=False):
 
@@ -256,7 +256,7 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
         return info
 
     def _get_predict_ops(self):
-        return [self._probs['cls']]
+        return [self._probs['probs']]
 
     def _get_predict_outputs(self, batch_outputs):
         n_inputs = len(list(self.data.values())[0])
@@ -320,7 +320,7 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
         return outputs
 
     def _get_score_ops(self):
-        return [self._probs['cls']]
+        return [self._probs['probs']]
 
     def _get_score_outputs(self, batch_outputs):
         n_inputs = len(list(self.data.values())[0])

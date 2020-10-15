@@ -82,8 +82,8 @@ class CLSDecoder(BaseDecoder):
             logits = tf.matmul(output_layer, output_weights, transpose_b=True)
             logits = tf.nn.bias_add(logits, output_bias)
 
-            self.preds['cls'] = tf.argmax(logits, axis=-1)
-            self.probs['cls'] = tf.nn.softmax(logits, axis=-1, name='probs')
+            self.preds['preds'] = tf.argmax(logits, axis=-1)
+            self.probs['probs'] = tf.nn.softmax(logits, axis=-1, name='probs')
 
             log_probs = tf.nn.log_softmax(logits, axis=-1)
             one_hot_labels = tf.one_hot(
@@ -94,7 +94,7 @@ class CLSDecoder(BaseDecoder):
                 per_example_loss = tf.cast(
                     sample_weight, dtype=tf.float32) * per_example_loss
 
-            self.losses['cls'] = per_example_loss
+            self.losses['losses'] = per_example_loss
             self.total_loss = tf.reduce_mean(per_example_loss)
 
 
@@ -132,8 +132,8 @@ class BinaryCLSDecoder(BaseDecoder):
             logits = tf.nn.bias_add(logits, output_bias)
             probs = tf.nn.sigmoid(logits, name='probs')
 
-            self.probs['cls'] = probs
-            self.preds['cls'] = tf.greater(probs, 0.5)
+            self.probs['probs'] = probs
+            self.preds['preds'] = tf.greater(probs, 0.5)
 
             per_example_loss = tf.nn.sigmoid_cross_entropy_with_logits(
                 logits=logits,
@@ -146,7 +146,7 @@ class BinaryCLSDecoder(BaseDecoder):
             if sample_weight is not None:
                 per_example_loss *= sample_weight
 
-            self.losses['cls'] = per_example_loss
+            self.losses['losses'] = per_example_loss
             self.total_loss = tf.reduce_mean(per_example_loss)
 
 
@@ -188,8 +188,8 @@ class SeqCLSDecoder(BaseDecoder):
             logits = tf.nn.bias_add(logits, output_bias)
             logits = tf.reshape(logits, [-1, seq_length, label_size])
 
-            self.preds['cls'] = tf.argmax(logits, axis=-1)
-            self.probs['cls'] = tf.nn.softmax(logits, axis=-1, name='probs')
+            self.preds['preds'] = tf.argmax(logits, axis=-1)
+            self.probs['probs'] = tf.nn.softmax(logits, axis=-1, name='probs')
 
             log_probs = tf.nn.log_softmax(logits, axis=-1)
             one_hot_labels = tf.one_hot(
@@ -206,7 +206,7 @@ class SeqCLSDecoder(BaseDecoder):
                 per_example_loss *= tf.cast(
                     sample_weight, dtype=tf.float32)
 
-            self.losses['cls'] = per_example_loss
+            self.losses['losses'] = per_example_loss
             self.total_loss = tf.reduce_mean(per_example_loss)
 
 
@@ -246,7 +246,7 @@ class MRCDecoder(BaseDecoder):
             logits = tf.reshape(logits, [-1, seq_length, 2])
             logits = tf.transpose(logits, [0, 2, 1])
             probs = tf.nn.softmax(logits, axis=-1, name='probs')
-            self.probs['mrc'] = probs
+            self.probs['probs'] = probs
 
             start_one_hot_labels = tf.one_hot(
                 label_ids[:, 0], depth=seq_length, dtype=tf.float32)
@@ -263,10 +263,10 @@ class MRCDecoder(BaseDecoder):
                 per_example_loss *= sample_weight
 
             self.total_loss = tf.reduce_mean(per_example_loss)
-            self.losses['mrc'] = per_example_loss
+            self.losses['losses'] = per_example_loss
 
             start_preds = tf.expand_dims(
                 tf.argmax(logits[:, 0, :], axis=-1), axis=-1)
             end_preds = tf.expand_dims(
                 tf.argmax(logits[:, 1, :], axis=-1), axis=-1)
-            self.preds['mrc'] = tf.concat([start_preds, end_preds], axis=-1)
+            self.preds['preds'] = tf.concat([start_preds, end_preds], axis=-1)

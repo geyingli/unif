@@ -311,7 +311,8 @@ class RoBERTaLM(BERTLM, LMModule):
         return (total_loss, losses, probs, preds)
 
     def _get_fit_ops(self, as_feature=False):
-        ops = [self._train_op, self._preds['MLM'], self._losses['MLM']]
+        ops = [self._train_op,
+               self._preds['MLM_preds'], self._losses['MLM_losses']]
         if as_feature:
             ops.extend(
                 [self.placeholders['masked_lm_positions'],
@@ -349,7 +350,7 @@ class RoBERTaLM(BERTLM, LMModule):
         return info
 
     def _get_predict_ops(self):
-        return [self._preds['MLM']]
+        return [self._preds['MLM_preds']]
 
     def _get_predict_outputs(self, batch_outputs):
         n_inputs = len(list(self.data.values())[0])

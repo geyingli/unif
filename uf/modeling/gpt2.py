@@ -91,7 +91,7 @@ class GPT2(BaseDecoder, BaseEncoder):
             if is_training:
                 (logits, _) = _forward(input_ids)
 
-                self.preds['LM'] = tf.argmax(logits, axis=-1)
+                self.preds['preds'] = tf.argmax(logits, axis=-1)
 
             # forward loop
             else:
@@ -105,7 +105,7 @@ class GPT2(BaseDecoder, BaseEncoder):
                     pred_ids = tf.cast(pred_ids, tf.int32)
                     input_ids = tf.concat([input_ids, pred_ids], axis=-1)
 
-                self.preds['LM'] = input_ids
+                self.preds['preds'] = input_ids
 
             # loss
             log_probs = tf.nn.log_softmax(logits, axis=-1)
@@ -120,7 +120,7 @@ class GPT2(BaseDecoder, BaseEncoder):
                 per_example_loss *= tf.expand_dims(sample_weight, axis=-1)
 
             self.total_loss = tf.reduce_mean(per_example_loss)
-            self.losses['LM'] = per_example_loss
+            self.losses['losses'] = per_example_loss
 
 
 

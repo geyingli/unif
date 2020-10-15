@@ -489,10 +489,10 @@ class ELECTRALM(BERTLM, LMModule):
 
     def _get_fit_ops(self, as_feature=False):
         ops = [self._train_op,
-               self._preds['MLM'],
-               self._preds['RTD'], self._preds['RTD_labels'],
-               self._losses['MLM'],
-               self._losses['RTD']]
+               self._preds['MLM_preds'],
+               self._preds['RTD_preds'], self._preds['RTD_labels'],
+               self._losses['MLM_losses'],
+               self._losses['RTD_losses']]
         if as_feature:
             ops.extend(
                 [self.placeholders['input_mask'],
@@ -547,7 +547,9 @@ class ELECTRALM(BERTLM, LMModule):
         return info
 
     def _get_predict_ops(self):
-        return [self._preds['MLM'], self._preds['RTD'], self._probs['RTD']]
+        return [self._preds['MLM_preds'],
+                self._preds['RTD_preds'],
+                self._probs['RTD_probs']]
 
     def _get_predict_outputs(self, batch_outputs):
         n_inputs = len(list(self.data.values())[0])

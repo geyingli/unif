@@ -228,9 +228,9 @@ class XLNet(BaseDecoder):
 
         self.total_loss = tf.reduce_sum(
             per_example_loss * target_mask) / tf.reduce_sum(target_mask)
-        self.losses['PLM'] = per_example_loss * target_mask
-        self.preds['PLM'] = preds
-        self.preds['PLM_mask'] = target_mask
+        self.losses['losses'] = per_example_loss * target_mask
+        self.preds['preds'] = preds
+        self.preds['mask'] = target_mask
 
 
 class XLNetRunConfig:

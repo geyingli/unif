@@ -170,12 +170,12 @@ class FastBERTCLSDistillor(BaseDecoder, BERTEncoder):
 
             distill_loss = tf.add_n(losses)
             self.total_loss = distill_loss
-            self.losses['distill'] = distill_loss
+            self.losses['losses'] = distill_loss
 
         else:
             if bert_config.num_hidden_layers not in ignore_cls:
                 self.all_cls_layers[bert_config.num_hidden_layers] = probs
-            self.probs['cls'] = tf.concat(
+            self.probs['probs'] = tf.concat(
                 list(self.all_cls_layers.values()), axis=0, name='probs')
 
     def dynamic_transformer_model(self,

@@ -59,6 +59,15 @@ class BaseModule:
                     'seperated with commas.')
             os.environ['CUDA_VISIBLE_DEVICES'] = ','.join(self._gpu_ids)
 
+        self.reset()
+
+    def reset(self):
+        ''' Reset existing session and graph. '''
+        try:
+            self.sess.close()
+        except AttributeError:
+            pass
+
         # initialize graph and session
         self.graph = tf.Graph()
         config = tf.ConfigProto(allow_soft_placement=True)
@@ -537,7 +546,7 @@ class BaseModule:
     def global_variables(self):
         return self.graph._collections.get('variables', [])
 
-    def export(self, export_dir):
+    def export(self, export_dir, expire_outputs=None):
         ''' Export model into SavedModel files.
 
         Args:
@@ -566,7 +575,7 @@ class BaseModule:
         # Build the graph, and then run.
         with self.graph.as_default(), \
                 tf.variable_scope('', reuse=tf.AUTO_REUSE):
-            self._build('export').run(export_dir)
+            self._build('export').run(export_dir, expire_outputs)
 
     @abstractmethod
     def convert(self, *args, **kwargs):

@@ -156,12 +156,13 @@ class TinyBERTCLSDistillor(BaseDecoder):
             distill_loss = (embedding_loss + attention_loss + hidden_loss +
                             pred_loss)
             self.total_loss = distill_loss
-            self.losses['distill'] = tf.reshape(distill_loss, [1])
+            self.losses['losses'] = tf.reshape(distill_loss, [1])
 
         else:
             student_probs = tf.nn.softmax(
                 student_logits, axis=-1, name='probs')
-            self.probs['cls'] = student_probs
+            self.probs['probs'] = student_probs
+            self.preds['preds'] = tf.argmax(student_probs, axis=-1)
 
 
 

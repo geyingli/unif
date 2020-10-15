@@ -624,8 +624,8 @@ class XLNetLM(BERTLM, LMModule):
 
     def _get_fit_ops(self, as_feature=False):
         ops = [self._train_op,
-               self._preds['PLM'], self._preds['PLM_mask'],
-               self._losses['PLM']]
+               self._preds['preds'], self._preds['mask'],
+               self._losses['losses']]
         if as_feature:
             ops.extend(
                 [self.placeholders['target']])
@@ -659,7 +659,7 @@ class XLNetLM(BERTLM, LMModule):
         return info
 
     def _get_predict_ops(self):
-        return [self._preds['PLM']]
+        return [self._preds['preds']]
 
     def _get_predict_outputs(self, batch_outputs):
         n_inputs = len(list(self.data.values())[0])

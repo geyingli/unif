@@ -548,8 +548,10 @@ class ALBERTLM(BERTLM, LMModule):
 
     def _get_fit_ops(self, as_feature=False):
         ops = [self._train_op,
-               self._preds['MLM'], self._preds['SOP'],
-               self._losses['MLM'], self._losses['SOP']]
+               self._preds['MLM_preds'],
+               self._preds['SOP_preds'],
+               self._losses['MLM_losses'],
+               self._losses['SOP_losses']]
         if as_feature:
             ops.extend(
                 [self.placeholders['masked_lm_positions'],
@@ -601,7 +603,9 @@ class ALBERTLM(BERTLM, LMModule):
         return info
 
     def _get_predict_ops(self):
-        return [self._preds['MLM'], self._preds['SOP'], self._probs['SOP']]
+        return [self._preds['MLM_preds'],
+                self._preds['SOP_preds'],
+                self._probs['SOP_probs']]
 
     def _get_predict_outputs(self, batch_outputs):
         n_inputs = len(list(self.data.values())[0])

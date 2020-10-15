@@ -478,8 +478,8 @@ class ELECTRALM(BERTLM, LMModule):
             vocab_size=len(self.tokenizer.vocab),
             model_size=self._model_size,
             is_training=is_training,
-            placeholders=self.placeholders,
-            sample_weight=self.placeholders.get('sample_weight'),
+            placeholders=split_placeholders,
+            sample_weight=split_placeholders.get('sample_weight'),
             gen_weight=self._generator_weight,
             disc_weight=self._discriminator_weight,
             **kwargs)
@@ -490,7 +490,8 @@ class ELECTRALM(BERTLM, LMModule):
     def _get_fit_ops(self, as_feature=False):
         ops = [self._train_op,
                self._preds['MLM_preds'],
-               self._preds['RTD_preds'], self._preds['RTD_labels'],
+               self._preds['RTD_preds'],
+               self._preds['RTD_labels'],
                self._losses['MLM_losses'],
                self._losses['RTD_losses']]
         if as_feature:

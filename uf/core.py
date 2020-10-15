@@ -71,9 +71,7 @@ class BaseModule:
         # initialize graph and session
         self.graph = tf.Graph()
         config = tf.ConfigProto(allow_soft_placement=True)
-        self.sess = tf.InteractiveSession(
-            graph=self.graph,
-            config=config)
+        self.sess = tf.Session(graph=self.graph, config=config)
 
         # Before we build the graph, `score` and fast `predict`
         # is now allowed.

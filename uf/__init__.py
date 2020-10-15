@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__version__ = '2.1.29'
+__version__ = '2.1.30'
 __date__ = '10/15/2020'
 
 

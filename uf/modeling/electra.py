@@ -51,7 +51,7 @@ class ELECTRA(BaseDecoder):
         if is_training:
             if electra_objective:
                 tf.logging.info(
-                    'Training on Generator and Discriminator together.')
+                    'Training on Generator and Discriminator.')
             else:
                 tf.logging.info(
                     'Training on Generator, with Discriminator frozen. '

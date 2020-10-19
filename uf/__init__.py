@@ -13,8 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__version__ = '2.1.30'
-__date__ = '10/15/2020'
+__version__ = '2.1.31'
+__date__ = '10/19/2020'
 
 
 from .application.bert import BERTLM

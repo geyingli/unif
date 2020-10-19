@@ -58,10 +58,10 @@ class TinyBERTClassifier(BERTClassifier, ClassifierModule):
         self.tokenizer = get_word_piece_tokenizer(vocab_file, do_lower_case)
         self._key_to_depths = 'unsupported'
 
-        self.tiny_bert_config = copy.deepcopy(self.bert_config)
-        self.tiny_bert_config.hidden_size = hidden_size
-        self.tiny_bert_config.intermediate_size = 4 * hidden_size
-        self.tiny_bert_config.num_hidden_layers = num_hidden_layers
+        self.student_config = copy.deepcopy(self.bert_config)
+        self.student_config.hidden_size = hidden_size
+        self.student_config.intermediate_size = 4 * hidden_size
+        self.student_config.num_hidden_layers = num_hidden_layers
 
     def to_bert(self):
         ''' Isolate student tiny_bert out of traing graph. '''
@@ -85,7 +85,7 @@ class TinyBERTClassifier(BERTClassifier, ClassifierModule):
         saver = tf.train.Saver(assignment_map, max_to_keep=1000000)
         saver.save(self.sess, self.init_checkpoint)
 
-        self.tiny_bert_config.to_json_file(
+        self.student_config.to_json_file(
             os.path.join(self.output_dir, 'bert_config.json'))
 
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
@@ -128,7 +128,7 @@ class TinyBERTClassifier(BERTClassifier, ClassifierModule):
     def _forward(self, is_training, split_placeholders, **kwargs):
 
         distillor = TinyBERTCLSDistillor(
-            tiny_bert_config=self.tiny_bert_config,
+            student_config=self.student_config,
             bert_config=self.bert_config,
             is_training=is_training,
             input_ids=split_placeholders['input_ids'],

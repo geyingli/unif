@@ -549,6 +549,7 @@ class BaseModule:
 
         Args:
             export_dir: str. Directory to which the model is saved.
+            expire_outputs: list. Name of outputs to expire.
         Returns:
             None
         '''

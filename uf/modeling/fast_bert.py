@@ -229,7 +229,7 @@ class FastBERTCLSDistillor(BaseDecoder, BERTEncoder):
                                 batch_size,
                                 max_seq_length,
                                 label_size,
-                                attention_mask=None,
+                                attention_mask=attention_mask,
                                 cls_hidden_size=cls_hidden_size,
                                 cls_num_attention_heads=\
                                     cls_num_attention_heads,
@@ -246,7 +246,7 @@ class FastBERTCLSDistillor(BaseDecoder, BERTEncoder):
                                 batch_size,
                                 max_seq_length,
                                 label_size,
-                                attention_mask=None,
+                                attention_mask=attention_mask,
                                 cls_hidden_size=cls_hidden_size,
                                 cls_num_attention_heads=\
                                     cls_num_attention_heads,

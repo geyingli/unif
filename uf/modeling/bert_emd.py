@@ -18,10 +18,11 @@
 from uf.tools import tf
 from .bert import BERTEncoder
 from .base import BaseDecoder
+from .tiny_bert import TinyBERTCLSDistillor
 from . import util
 
 
-class TinyBERTCLSDistillor(BaseDecoder):
+class BERTEMDCLSDistillor(BaseDecoder, TinyBERTCLSDistillor):
     def __init__(self,
                  student_config,
                  bert_config,
@@ -35,7 +36,7 @@ class TinyBERTCLSDistillor(BaseDecoder):
                  dtype=tf.float32,
                  drop_pooler=False,
                  label_size=2,
-                 trainable=True,
+                 pred_temporature=1.0,
                  **kwargs):
         super().__init__()
 
@@ -99,21 +100,21 @@ class TinyBERTCLSDistillor(BaseDecoder):
             embedding_loss = self._get_embedding_loss(
                 teacher, student, bert_config, weights)
 
-            # attention loss
-            attention_loss = self._get_attention_loss(
+            # attention emd
+            attention_emd = self._get_attention_emd(
                 teacher, student, bert_config, student_config, weights)
 
-            # hidden loss
-            hidden_loss = self._get_hidden_loss(
+            # hidden emd
+            hidden_emd = self._get_hidden_emd(
                 teacher, student, bert_config, student_config, weights)
 
             # prediction loss
             pred_loss = self._get_pred_loss(
-                teacher_logits, student_logits, weights)
+                teacher_logits, student_logits, weights, pred_temporature)
 
             # sum up
-            distill_loss = (embedding_loss + attention_loss +
-                            hidden_loss + pred_loss)
+            distill_loss = (embedding_loss + attention_emd +
+                            hidden_emd + pred_loss)
             self.total_loss = distill_loss
             self.losses['losses'] = distill_loss
 
@@ -123,63 +124,77 @@ class TinyBERTCLSDistillor(BaseDecoder):
             self.probs['probs'] = student_probs
             self.preds['preds'] = tf.argmax(student_probs, axis=-1)
 
-    def _get_embedding_loss(self, teacher, student, bert_config, weights):
-        teacher_embedding = teacher.get_embedding_output()
-        student_embedding = student.get_embedding_output()
-        with tf.variable_scope('embedding_loss'):
-            linear_trans = tf.layers.dense(
-                student_embedding,
-                bert_config.hidden_size,
-                kernel_initializer=util.create_initializer(
-                    bert_config.initializer_range))
-            embedding_loss = tf.losses.mean_squared_error(
-                linear_trans, teacher_embedding,
-                weights=tf.reshape(weights, [-1, 1, 1]))
-        return embedding_loss
-
-    def _get_attention_loss(self, teacher, student,
-                            bert_config, student_config, weights):
+    def _get_attention_emd(self, teacher, student,
+                           bert_config, student_config, weights):
         teacher_attention_scores = teacher.get_attention_scores()
         student_attention_scores = student.get_attention_scores()
-        num_teacher_hidden_layers = bert_config.num_hidden_layers
-        num_student_hidden_layers = student_config.num_hidden_layers
-        num_projections = \
-            int(num_teacher_hidden_layers / num_student_hidden_layers)
-        attention_losses = []
-        for i in range(num_student_hidden_layers):
-            attention_losses.append(tf.losses.mean_squared_error(
-                teacher_attention_scores[
-                    num_projections * i + num_projections - 1],
-                student_attention_scores[i],
-                weights=tf.reshape(weights, [-1, 1, 1, 1])),)
-        attention_loss = tf.add_n(attention_losses)
-        return attention_loss
+        M = len(teacher_attention_scores)
+        N = len(student_attention_scores)
 
-    def _get_hidden_loss(self, teacher, student,
-                         bert_config, student_config, weights):
+        with tf.variable_scope('attention_emd'):
+            flow = tf.get_variable(
+                'flow', shape=[M, N],
+                initializer=tf.ones_initializer())
+            flow_c1 = tf.cast(tf.clip_by_value(flow, 0, 1e6), tf.float32)
+            flow_c2 = None
+
+            distance = []
+            for m in range(M):
+                _distance = []
+                for n in range(N):
+                    mse = tf.losses.mean_squared_error(
+                        teacher_attention_scores[m],
+                        student_attention_scores[n],
+                        weights=tf.reshape(weights, [-1, 1, 1, 1]))
+                    mse = tf.reshape(mse, [1, 1])
+                    _distance.append(mse)
+                _distance = tf.concat(_distance, axis=-1)
+                distance.append(_distance)
+            distance = tf.concat(distance, axis=0)
+
+        attention_emd = tf.reduce_sum(flow * distance) / (
+            tf.reduce_sum(flow) + 1e-6)
+        return attention_emd
+
+    def _get_hidden_emd(self, teacher, student,
+                        bert_config, student_config, weights):
         teacher_hidden_layers = teacher.all_encoder_layers
         student_hidden_layers = student.all_encoder_layers
-        num_teacher_hidden_layers = bert_config.num_hidden_layers
-        num_student_hidden_layers = student_config.num_hidden_layers
-        num_projections = int(
-            num_teacher_hidden_layers / num_student_hidden_layers)
-        with tf.variable_scope('hidden_loss'):
-            hidden_losses = []
-            for i in range(num_student_hidden_layers):
-                hidden_losses.append(tf.losses.mean_squared_error(
-                    teacher_hidden_layers[
-                        num_projections * i + num_projections - 1],
-                    tf.layers.dense(
-                        student_hidden_layers[i], bert_config.hidden_size,
-                        kernel_initializer=util.create_initializer(
-                            bert_config.initializer_range)),
-                    weights=tf.reshape(weights, [-1, 1, 1])))
-            hidden_loss = tf.add_n(hidden_losses)
-        return hidden_loss
+        M = len(teacher_hidden_layers)
+        N = len(student_hidden_layers)
 
-    def _get_pred_loss(self, teacher_logits, student_logits, weights):
+        with tf.variable_scope('hidden_emd'):
+            flow = tf.get_variable(
+                'flow', shape=[M, N],
+                initializer=tf.ones_initializer())
+
+            distance = []
+            for m in range(M):
+                _distance = []
+                for n in range(N):
+                    linear_trans = tf.layers.dense(
+                        student_hidden_layers[n],
+                        bert_config.hidden_size,
+                        kernel_initializer=util.create_initializer(
+                            bert_config.initializer_range))
+                    mse = tf.losses.mean_squared_error(
+                        teacher_hidden_layers[m], linear_trans,
+                        weights=tf.reshape(weights, [-1, 1, 1]))
+                    mse = tf.reshape(mse, [1, 1])
+                    _distance.append(mse)
+                _distance = tf.concat(_distance, axis=-1)
+                distance.append(_distance)
+            distance = tf.concat(distance, axis=0)
+
+        hidden_emd = tf.reduce_sum(flow * distance) / (
+            tf.reduce_sum(flow) + 1e-6)
+        return hidden_emd
+
+    def _get_pred_loss(self, teacher_logits, student_logits, weights,
+                       pred_temporature):
         teacher_probs = tf.nn.softmax(teacher_logits, axis=-1)
-        student_log_probs = tf.nn.log_softmax(student_logits, axis=-1)
+        student_log_probs = \
+            tf.nn.log_softmax(student_logits, axis=-1) / pred_temporature
         pred_loss = (
             - tf.reduce_sum(teacher_probs * student_log_probs, axis=-1) *
             tf.reshape(weights, [-1, 1]))

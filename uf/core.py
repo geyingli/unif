@@ -422,8 +422,9 @@ class BaseModule:
         self.init_checkpoint = (
             self.output_dir + '/model.ckpt-%d' % self.step)
 
-        saver = tf.train.Saver(max_to_keep=1000000)
-        saver.save(self.sess, self.init_checkpoint)
+        with self.sess:
+            saver = tf.train.Saver(max_to_keep=1000000)
+            saver.save(self.sess, self.init_checkpoint)
 
     def cache(self, code, cache_file='./.cache'):
         ''' Save model configurations into cache file.
@@ -523,8 +524,9 @@ class BaseModule:
                     self.assignment_map[key] = assignment_map[key]
 
         self.assignment_map.update(assignment_map)
-        loader = tf.train.Saver(self.assignment_map)
-        loader.restore(self.sess, checkpoint_path)
+        with self.sess:
+            loader = tf.train.Saver(self.assignment_map)
+            loader.restore(self.sess, checkpoint_path)
         try:
             self.sess.run(tf.assign(self._global_step, self.step))
         except AttributeError:

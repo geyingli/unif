@@ -464,7 +464,7 @@ class BaseModule:
         cache_fp.close()
 
     @classmethod
-    def load(cls, code, cache_file='./.cache'):
+    def load(cls, code, cache_file='./.cache', **kwargs):
         ''' Load model from configurations saved in cache file.
 
         Args:
@@ -486,6 +486,8 @@ class BaseModule:
         for key, value in zip(
                 cache_json[code]['keys'], cache_json[code]['values']):
             args[key] = value
+            if key in kwargs:
+                args[key] = kwargs[key]
         return cls(**args)
 
     def reinit_from_checkpoint(self, init_checkpoint=None,

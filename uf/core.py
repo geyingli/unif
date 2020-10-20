@@ -422,7 +422,7 @@ class BaseModule:
         self.init_checkpoint = (
             self.output_dir + '/model.ckpt-%d' % self.step)
 
-        with self.sess:
+        with self.graph.as_default():
             saver = tf.train.Saver(max_to_keep=1000000)
             saver.save(self.sess, self.init_checkpoint)
 
@@ -524,7 +524,7 @@ class BaseModule:
                     self.assignment_map[key] = assignment_map[key]
 
         self.assignment_map.update(assignment_map)
-        with self.sess:
+        with self.graph.as_default():
             loader = tf.train.Saver(self.assignment_map)
             loader.restore(self.sess, checkpoint_path)
         try:

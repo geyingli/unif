@@ -213,13 +213,14 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
 
         if y:
             # convert y and sample_weight
-            label_ids = self._convert_y(y, n_inputs)
+            label_ids = self._convert_y(y)
             data['label_ids'] = np.array(label_ids, dtype=np.int32)
 
-        # convert sample_weight (fit, score)
-        sample_weight = self._convert_sample_weight(
-            sample_weight, n_inputs)
-        data['sample_weight'] = np.array(sample_weight, dtype=np.float32)
+        # convert sample_weight
+        if is_training or y:
+            sample_weight = self._convert_sample_weight(
+                sample_weight, n_inputs)
+            data['sample_weight'] = np.array(sample_weight, dtype=np.float32)
 
         return data
 

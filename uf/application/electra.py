@@ -326,8 +326,8 @@ class ELECTRALM(BERTLM, LMModule):
             if n_inputs < self.batch_size:
                 self.batch_size = max(n_inputs, len(self._gpu_ids))
 
-        # convert sample_weight (fit)
-        if is_training:
+        # convert sample_weight
+        if is_training or y:
             sample_weight = self._convert_sample_weight(
                 sample_weight, n_inputs)
             data['sample_weight'] = np.array(sample_weight, dtype=np.float32)

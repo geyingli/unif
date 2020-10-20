@@ -345,12 +345,12 @@ class ALBERTLM(BERTLM, LMModule):
 
         # convert y
         if y:
-            sentence_order_labels = self._convert_y(y, n_inputs)
+            sentence_order_labels = self._convert_y(y)
             data['sentence_order_labels'] = \
                 np.array(sentence_order_labels, dtype=np.int32)
 
-        # convert sample_weight (fit)
-        if is_training:
+        # convert sample_weight
+        if is_training or y:
             sample_weight = self._convert_sample_weight(
                 sample_weight, n_inputs)
             data['sample_weight'] = np.array(sample_weight, dtype=np.float32)

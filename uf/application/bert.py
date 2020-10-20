@@ -101,12 +101,13 @@ class BERTClassifier(ClassifierModule):
             if n_inputs < self.batch_size:
                 self.batch_size = max(n_inputs, len(self._gpu_ids))
 
+        # convert y
         if y:
-            # convert y and sample_weight
-            label_ids = self._convert_y(y, n_inputs)
+            label_ids = self._convert_y(y)
             data['label_ids'] = np.array(label_ids, dtype=np.int32)
 
-            # convert sample_weight (fit, score)
+        # convert sample_weight
+        if is_training or y:
             sample_weight = self._convert_sample_weight(
                 sample_weight, n_inputs)
             data['sample_weight'] = np.array(sample_weight, dtype=np.float32)
@@ -187,38 +188,35 @@ class BERTClassifier(ClassifierModule):
         # deal with tokenized and multiple inputs
         return x
 
-    def _convert_y(self, y, n_inputs=None):
-        if y:
-            label_set = set(y)
+    def _convert_y(self, y):
+        label_set = set(y)
 
-            # automatically set `label_size`
-            if self.label_size:
-                assert len(label_set) <= self.label_size, (
-                    'Number of unique `y`s exceeds `label_size`.')
-            else:
-                self.label_size = len(label_set)
+        # automatically set `label_size`
+        if self.label_size:
+            assert len(label_set) <= self.label_size, (
+                'Number of unique `y`s exceeds `label_size`.')
+        else:
+            self.label_size = len(label_set)
 
-            # automatically set `id_to_label`
-            if not self._id_to_label:
-                self._id_to_label = list(label_set)
-                try:
-                    # Allign if user inputs continual integers.
-                    # e.g. [2, 0, 1]
-                    self._id_to_label = list(sorted(self._id_to_label))
-                except Exception:
-                    pass
-                if len(self._id_to_label) < self.label_size:
-                    for i in range(len(self._id_to_label), self.label_size):
-                        self._id_to_label.append(i)
+        # automatically set `id_to_label`
+        if not self._id_to_label:
+            self._id_to_label = list(label_set)
+            try:
+                # Allign if user inputs continual integers.
+                # e.g. [2, 0, 1]
+                self._id_to_label = list(sorted(self._id_to_label))
+            except Exception:
+                pass
+            if len(self._id_to_label) < self.label_size:
+                for i in range(len(self._id_to_label), self.label_size):
+                    self._id_to_label.append(i)
 
-            # automatically set `label_to_id` for prediction
-            self._label_to_id = {
-                label: index for index, label in enumerate(self._id_to_label)}
+        # automatically set `label_to_id` for prediction
+        self._label_to_id = {
+            label: index for index, label in enumerate(self._id_to_label)}
 
-            label_ids = [self._label_to_id[label] for label in y]
-            return label_ids
-
-        return [0 for _ in range(n_inputs)]
+        label_ids = [self._label_to_id[label] for label in y]
+        return label_ids
 
     def _set_placeholders(self, target, on_export=False):
         self.placeholders = {
@@ -368,46 +366,43 @@ class BERTBinaryClassifier(BERTClassifier, ClassifierModule):
         self._key_to_depths = get_key_to_depths(
             self.bert_config.num_hidden_layers)
 
-    def _convert_y(self, y, n_inputs=None):
-        if y:
+    def _convert_y(self, y):
+        try:
+            label_set = set()
+            for sample in y:
+                for _y in sample:
+                    label_set.add(_y)
+        except:
+            raise ValueError(
+                'The element of `y` should be a list of labels.')
+
+        # automatically set `label_size`
+        if self.label_size:
+            assert len(label_set) <= self.label_size, (
+                'Number of unique labels exceeds `label_size`.')
+        else:
+            self.label_size = len(label_set)
+
+        # automatically set `id_to_label`
+        if not self._id_to_label:
+            self._id_to_label = list(label_set)
             try:
-                label_set = set()
-                for sample in y:
-                    for _y in sample:
-                        label_set.add(_y)
-            except:
-                raise ValueError(
-                    'The element of `y` should be a list of labels.')
+                # Allign if user inputs continual integers.
+                # e.g. [2, 0, 1]
+                self._id_to_label = list(sorted(self._id_to_label))
+            except Exception:
+                pass
+            if len(self._id_to_label) < self.label_size:
+                for i in range(len(self._id_to_label), self.label_size):
+                    self._id_to_label.append(i)
 
-            # automatically set `label_size`
-            if self.label_size:
-                assert len(label_set) <= self.label_size, (
-                    'Number of unique labels exceeds `label_size`.')
-            else:
-                self.label_size = len(label_set)
+        # automatically set `label_to_id` for prediction
+        self._label_to_id = {
+            label: index for index, label in enumerate(self._id_to_label)}
 
-            # automatically set `id_to_label`
-            if not self._id_to_label:
-                self._id_to_label = list(label_set)
-                try:
-                    # Allign if user inputs continual integers.
-                    # e.g. [2, 0, 1]
-                    self._id_to_label = list(sorted(self._id_to_label))
-                except Exception:
-                    pass
-                if len(self._id_to_label) < self.label_size:
-                    for i in range(len(self._id_to_label), self.label_size):
-                        self._id_to_label.append(i)
-
-            # automatically set `label_to_id` for prediction
-            self._label_to_id = {
-                label: index for index, label in enumerate(self._id_to_label)}
-
-            label_ids = [[1 if self._id_to_label[i] in sample else 0
-                          for i in range(self.label_size)] for sample in y]
-            return label_ids
-
-        return [[0 for _ in range(self.label_size)] for _ in range(n_inputs)]
+        label_ids = [[1 if self._id_to_label[i] in sample else 0
+                      for i in range(self.label_size)] for sample in y]
+        return label_ids
 
     def _set_placeholders(self, target, on_export=False):
         self.placeholders = {
@@ -539,10 +534,11 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
 
         if y:
             # convert y and sample_weight
-            label_ids = self._convert_y(y, n_inputs)
+            label_ids = self._convert_y(y)
             data['label_ids'] = np.array(label_ids, dtype=np.int32)
 
-            # convert sample_weight (fit, score)
+        # convert sample_weight
+        if is_training or y:
             sample_weight = self._convert_sample_weight(
                 sample_weight, n_inputs)
             data['sample_weight'] = np.array(sample_weight, dtype=np.float32)
@@ -563,58 +559,54 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
         raise ValueError(
             'Sequence classifier does not support multi-segment inputs.')
 
-    def _convert_y(self, y, n_inputs=None):
-        if y:
-            try:
-                label_set = set()
-                for sample in y:
-                    for _y in sample:
-                        label_set.add(_y)
-            except:
-                raise ValueError(
-                    'The element of `y` should be a list of labels.')
-
-            # automatically set `label_size`
-            if self.label_size:
-                assert len(label_set) <= self.label_size, (
-                    'Number of unique `y`s exceeds `label_size`.')
-            else:
-                self.label_size = len(label_set)
-
-            # automatically set `id_to_label`
-            if not self._id_to_label:
-                self._id_to_label = list(label_set)
-                try:
-                    # Allign if user inputs continual integers.
-                    # e.g. [2, 0, 1]
-                    self._id_to_label = list(sorted(self._id_to_label))
-                except Exception:
-                    pass
-                if len(self._id_to_label) < self.label_size:
-                    for i in range(len(self._id_to_label), self.label_size):
-                        self._id_to_label.append(i)
-
-            # automatically set `label_to_id` for prediction
-            self._label_to_id = {
-                label: index for index, label in enumerate(self._id_to_label)}
-
-            label_ids = []
+    def _convert_y(self, y):
+        try:
+            label_set = set()
             for sample in y:
-                num_labels = len(sample)
-                if num_labels < self.max_seq_length - 2:
-                    sample.extend([0] * (self.max_seq_length - 2 - num_labels))
-                elif num_labels > self.max_seq_length - 2:
-                    sample = sample[:self.max_seq_length - 2]
+                for _y in sample:
+                    label_set.add(_y)
+        except:
+            raise ValueError(
+                'The element of `y` should be a list of labels.')
 
-                _label_ids = [0]
-                _label_ids.extend(
-                    [self._label_to_id[label] for label in sample])
-                _label_ids.append(0)
-                label_ids.append(_label_ids)
-            return label_ids
+        # automatically set `label_size`
+        if self.label_size:
+            assert len(label_set) <= self.label_size, (
+                'Number of unique `y`s exceeds `label_size`.')
+        else:
+            self.label_size = len(label_set)
 
-        return [[0 for _ in range(self.max_seq_length)]
-                for _ in range(n_inputs)]
+        # automatically set `id_to_label`
+        if not self._id_to_label:
+            self._id_to_label = list(label_set)
+            try:
+                # Allign if user inputs continual integers.
+                # e.g. [2, 0, 1]
+                self._id_to_label = list(sorted(self._id_to_label))
+            except Exception:
+                pass
+            if len(self._id_to_label) < self.label_size:
+                for i in range(len(self._id_to_label), self.label_size):
+                    self._id_to_label.append(i)
+
+        # automatically set `label_to_id` for prediction
+        self._label_to_id = {
+            label: index for index, label in enumerate(self._id_to_label)}
+
+        label_ids = []
+        for sample in y:
+            num_labels = len(sample)
+            if num_labels < self.max_seq_length - 2:
+                sample.extend([0] * (self.max_seq_length - 2 - num_labels))
+            elif num_labels > self.max_seq_length - 2:
+                sample = sample[:self.max_seq_length - 2]
+
+            _label_ids = [0]
+            _label_ids.extend(
+                [self._label_to_id[label] for label in sample])
+            _label_ids.append(0)
+            label_ids.append(_label_ids)
+        return label_ids
 
     def _set_placeholders(self, target, on_export=False):
         self.placeholders = {
@@ -813,80 +805,78 @@ class BERTNER(BERTClassifier, NERModule):
             if n_inputs < self.batch_size:
                 self.batch_size = max(n_inputs, len(self._gpu_ids))
 
+        # convert y
         if y:
-            # convert y and sample_weight
-            label_ids = self._convert_y(y, input_ids, n_inputs, tokenized)
+            label_ids = self._convert_y(y, input_ids, tokenized)
             data['label_ids'] = np.array(label_ids, dtype=np.int32)
 
-            # convert sample_weight (fit, score)
+        # convert sample_weight
+        if is_training or y:
             sample_weight = self._convert_sample_weight(
                 sample_weight, n_inputs)
             data['sample_weight'] = np.array(sample_weight, dtype=np.float32)
 
         return data
 
-    def _convert_y(self, y, input_ids, n_inputs=None, tokenized=False):
-        if y:
-            label_ids = []
+    def _convert_y(self, y, input_ids, tokenized=False):
+        label_ids = []
 
-            for ex_id, (_y, _input_ids) in enumerate(zip(y, input_ids)):
-                if not _y:
-                    label_ids.append([self.O_ID] * self.max_seq_length)
-                    continue
+        for ex_id, (_y, _input_ids) in enumerate(zip(y, input_ids)):
+            if not _y:
+                label_ids.append([self.O_ID] * self.max_seq_length)
+                continue
 
-                if isinstance(_y, str):
-                    _entity_tokens = self.tokenizer.tokenize(_y)
-                    _entity_ids = [self.tokenizer.convert_tokens_to_ids(
-                        _entity_tokens)]
-                elif isinstance(_y, list):
-                    if isinstance(_y[0], str):
-                        if tokenized:
-                            _entity_ids = \
-                                [self.tokenizer.convert_tokens_to_ids(_y)]
-                        else:
-                            _entity_ids = []
-                            for _entity in _y:
-                                _entity_ids.append(
-                                    self.tokenizer.convert_tokens_to_ids(
-                                        self.tokenizer.tokenize(_entity)))
-                    elif isinstance(_y[0], list):
+            if isinstance(_y, str):
+                _entity_tokens = self.tokenizer.tokenize(_y)
+                _entity_ids = [self.tokenizer.convert_tokens_to_ids(
+                    _entity_tokens)]
+            elif isinstance(_y, list):
+                if isinstance(_y[0], str):
+                    if tokenized:
+                        _entity_ids = \
+                            [self.tokenizer.convert_tokens_to_ids(_y)]
+                    else:
                         _entity_ids = []
                         for _entity in _y:
                             _entity_ids.append(
-                                self.tokenizer.convert_tokens_to_ids(_entity))
-                else:
-                    raise ValueError(
-                        '`y` should be a list of entity strings.')
+                                self.tokenizer.convert_tokens_to_ids(
+                                    self.tokenizer.tokenize(_entity)))
+                elif isinstance(_y[0], list):
+                    _entity_ids = []
+                    for _entity in _y:
+                        _entity_ids.append(
+                            self.tokenizer.convert_tokens_to_ids(_entity))
+            else:
+                raise ValueError(
+                    '`y` should be a list of entity strings.')
 
-                # tagging
-                _label_ids = [self.O_ID for _ in range(self.max_seq_length)]
-                for _entity in _entity_ids:
-                    start_positions = utils.find_all_boyer_moore(
-                        _input_ids, _entity)
-                    if not start_positions:
-                        tf.logging.warning(
-                            'Failed to find the mapping of entity to '
-                            'inputs at line %d. A possible reason is '
-                            'that the entity span is truncated due '
-                            'to the `max_seq_length` setting.'
-                            % (ex_id))
-                        continue
+            # tagging
+            _label_ids = [self.O_ID for _ in range(self.max_seq_length)]
+            for _entity in _entity_ids:
+                start_positions = utils.find_all_boyer_moore(
+                    _input_ids, _entity)
+                if not start_positions:
+                    tf.logging.warning(
+                        'Failed to find the mapping of entity to '
+                        'inputs at line %d. A possible reason is '
+                        'that the entity span is truncated due '
+                        'to the `max_seq_length` setting.'
+                        % (ex_id))
+                    continue
 
-                    for start_position in start_positions:
-                        end_position = start_position + len(_entity) - 1
-                        if start_position == end_position:
-                            _label_ids[start_position] = self.S_ID
-                        else:
-                            for i in range(start_position, end_position + 1):
-                                _label_ids[i] = self.I_ID
-                            _label_ids[start_position] = self.B_ID
-                            _label_ids[end_position] = self.E_ID
+                for start_position in start_positions:
+                    end_position = start_position + len(_entity) - 1
+                    if start_position == end_position:
+                        _label_ids[start_position] = self.S_ID
+                    else:
+                        for i in range(start_position, end_position + 1):
+                            _label_ids[i] = self.I_ID
+                        _label_ids[start_position] = self.B_ID
+                        _label_ids[end_position] = self.E_ID
 
-                label_ids.append(_label_ids)
+            label_ids.append(_label_ids)
 
-            return label_ids
-
-        return [[self.O_ID] * self.max_seq_length for _ in range(n_inputs)]
+        return label_ids
 
     def _set_placeholders(self, target, on_export=False):
         self.placeholders = {
@@ -1200,10 +1190,7 @@ class BERTCRFCascadeNER(BERTCRFNER, NERModule):
         self._key_to_depths = get_key_to_depths(
             self.bert_config.num_hidden_layers)
 
-    def _convert_y(self, y, input_ids, n_inputs=None, tokenized=False):
-        if not y:
-            return [[self.O_ID] * self.max_seq_length for _ in range(n_inputs)]
-
+    def _convert_y(self, y, input_ids, tokenized=False):
         label_ids = []
 
         if not self.entity_types:
@@ -1486,58 +1473,56 @@ class BERTMRC(BERTClassifier, MRCModule):
             if n_inputs < self.batch_size:
                 self.batch_size = max(n_inputs, len(self._gpu_ids))
 
+        # convert y
         if y:
-            # convert y and sample_weight
-            label_ids = self._convert_y(y, input_ids, n_inputs, tokenized)
+            label_ids = self._convert_y(y, input_ids, tokenized)
             data['label_ids'] = np.array(label_ids, dtype=np.int32)
 
-            # convert sample_weight (fit, score)
+        # convert sample_weight
+        if is_training or y:
             sample_weight = self._convert_sample_weight(
                 sample_weight, n_inputs)
             data['sample_weight'] = np.array(sample_weight, dtype=np.float32)
 
         return data
 
-    def _convert_y(self, y, input_ids, n_inputs=None, tokenized=False):
-        if y:
-            label_ids = []
+    def _convert_y(self, y, input_ids, tokenized=False):
+        label_ids = []
 
-            for ex_id, (_y, _input_ids) in enumerate(zip(y, input_ids)):
-                if not _y:
-                    label_ids.append([0, 0])
-                    continue
+        for ex_id, (_y, _input_ids) in enumerate(zip(y, input_ids)):
+            if not _y:
+                label_ids.append([0, 0])
+                continue
 
-                if isinstance(_y, str):
-                    _answer_tokens = self.tokenizer.tokenize(_y)
-                    _answer_ids = self.tokenizer.convert_tokens_to_ids(
-                        _answer_tokens)
-                elif isinstance(_y, list):
-                    assert tokenized, (
-                        '%s does not support multiple answers.'
-                        % self.__class__.__name__)
-                    _answer_ids = self.tokenizer.convert_tokens_to_ids(
-                        _y)
-                else:
-                    raise ValueError(
-                        '`y` should be a list of answer strings.')
+            if isinstance(_y, str):
+                _answer_tokens = self.tokenizer.tokenize(_y)
+                _answer_ids = self.tokenizer.convert_tokens_to_ids(
+                    _answer_tokens)
+            elif isinstance(_y, list):
+                assert tokenized, (
+                    '%s does not support multiple answers.'
+                    % self.__class__.__name__)
+                _answer_ids = self.tokenizer.convert_tokens_to_ids(
+                    _y)
+            else:
+                raise ValueError(
+                    '`y` should be a list of answer strings.')
 
-                start_position = utils.find_boyer_moore(
-                    _input_ids, _answer_ids)
-                if start_position == -1:
-                    tf.logging.warning(
-                        'Failed to find the mapping of answer to inputs at '
-                        'line %d. A possible reason is that the answer span '
-                        'is truncated due to the `max_seq_length` setting.'
-                        % (ex_id))
-                    label_ids.append([0, 0])
-                    continue
+            start_position = utils.find_boyer_moore(
+                _input_ids, _answer_ids)
+            if start_position == -1:
+                tf.logging.warning(
+                    'Failed to find the mapping of answer to inputs at '
+                    'line %d. A possible reason is that the answer span '
+                    'is truncated due to the `max_seq_length` setting.'
+                    % (ex_id))
+                label_ids.append([0, 0])
+                continue
 
-                end_position = start_position + len(_answer_ids) - 1
-                label_ids.append([start_position, end_position])
+            end_position = start_position + len(_answer_ids) - 1
+            label_ids.append([start_position, end_position])
 
-            return label_ids
-
-        return [[0, 0] for _ in range(n_inputs)]
+        return label_ids
 
     def _set_placeholders(self, target, on_export=False):
         self.placeholders = {
@@ -1765,14 +1750,14 @@ class BERTLM(LMModule):
             if n_inputs < self.batch_size:
                 self.batch_size = max(n_inputs, len(self._gpu_ids))
 
+        # convert y
         if y:
-            # convert y
-            next_sentence_labels = self._convert_y(y, n_inputs)
+            next_sentence_labels = self._convert_y(y)
             data['next_sentence_labels'] = \
                 np.array(next_sentence_labels, dtype=np.int32)
 
-        # convert sample_weight (fit)
-        if is_training:
+        # convert sample_weight
+        if is_training or y:
             sample_weight = self._convert_sample_weight(
                 sample_weight, n_inputs)
             data['sample_weight'] = np.array(sample_weight, dtype=np.float32)
@@ -1923,38 +1908,35 @@ class BERTLM(LMModule):
         # deal with tokenized and multiple inputs
         return x
 
-    def _convert_y(self, y, n_inputs=None):
-        if y:
-            label_set = set(y)
+    def _convert_y(self, y):
+        label_set = set(y)
 
-            # automatically set `label_size`
-            if self.label_size:
-                assert len(label_set) <= self.label_size, (
-                    'Number of unique `y`s exceeds `label_size`.')
-            else:
-                self.label_size = len(label_set)
+        # automatically set `label_size`
+        if self.label_size:
+            assert len(label_set) <= self.label_size, (
+                'Number of unique `y`s exceeds `label_size`.')
+        else:
+            self.label_size = len(label_set)
 
-            # automatically set `id_to_label`
-            if not self._id_to_label:
-                self._id_to_label = list(label_set)
-                try:
-                    # Allign if user inputs continual integers.
-                    # e.g. [2, 0, 1]
-                    self._id_to_label = list(sorted(self._id_to_label))
-                except Exception:
-                    pass
-                if len(self._id_to_label) < self.label_size:
-                    for i in range(len(self._id_to_label), self.label_size):
-                        self._id_to_label.append(i)
+        # automatically set `id_to_label`
+        if not self._id_to_label:
+            self._id_to_label = list(label_set)
+            try:
+                # Allign if user inputs continual integers.
+                # e.g. [2, 0, 1]
+                self._id_to_label = list(sorted(self._id_to_label))
+            except Exception:
+                pass
+            if len(self._id_to_label) < self.label_size:
+                for i in range(len(self._id_to_label), self.label_size):
+                    self._id_to_label.append(i)
 
-            # automatically set `label_to_id` for prediction
-            self._label_to_id = {
-                label: index for index, label in enumerate(self._id_to_label)}
+        # automatically set `label_to_id` for prediction
+        self._label_to_id = {
+            label: index for index, label in enumerate(self._id_to_label)}
 
-            label_ids = [self._label_to_id[label] for label in y]
-            return label_ids
-
-        return [0 for _ in range(n_inputs)]
+        label_ids = [self._label_to_id[label] for label in y]
+        return label_ids
 
     def _set_placeholders(self, target, on_export=False):
         self.placeholders = {

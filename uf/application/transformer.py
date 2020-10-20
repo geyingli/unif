@@ -92,12 +92,13 @@ class TransformerMT(MTModule):
             if n_inputs < self.batch_size:
                 self.batch_size = max(n_inputs, len(self._gpu_ids))
 
+        # convert y
         if y:
-            # convert y and sample_weight
-            target_ids = self._convert_y(y, n_inputs)
+            target_ids = self._convert_y(y)
             data['target_ids'] = np.array(target_ids, dtype=np.int32)
 
-            # convert sample_weight (fit, score)
+        # convert sample_weight
+        if is_training or y:
             sample_weight = self._convert_sample_weight(
                 sample_weight, n_inputs)
             data['sample_weight'] = np.array(sample_weight, dtype=np.float32)
@@ -141,7 +142,7 @@ class TransformerMT(MTModule):
         raise ValueError(
             'Machine translation module only supports single sentence inputs.')
 
-    def _convert_y(self, y, n_inputs=None):
+    def _convert_y(self, y):
         target_ids = []
         sos_id = self.tokenizer.convert_tokens_to_ids(['<s>'])[0]
         eos_id = self.tokenizer.convert_tokens_to_ids(['</s>'])[0]

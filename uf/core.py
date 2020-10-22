@@ -451,15 +451,13 @@ class BaseModule:
 
         _cache_json = {
             'model': self.__class__.__name__,
-            'keys': [],
-            'values': []}
+            '__init__': {}}
         for key in self.__class__.__init__.__code__.co_varnames[1:]:
             try:
                 value = self.__getattribute__(key)
             except:
                 value = self.__init_args__[key]
-            _cache_json['keys'].append(key)
-            _cache_json['values'].append(value)
+            _cache_json['__init__'][key] = value
         cache_json[code] = _cache_json
 
         cache_fp = open(cache_file, 'w', encoding='utf-8')
@@ -484,10 +482,17 @@ class BaseModule:
 
         if code not in cache_json.keys():
             raise ValueError(
-                'No cached configs found with `code = %s`.' % code)
+                'No cached configs found with code `%s`.' % code)
         args = collections.OrderedDict()
-        for key, value in zip(
-                cache_json[code]['keys'], cache_json[code]['values']):
+
+        # unif >= beta v2.1.35
+        if '__init__' in cache_json[code]:
+            zips = cache_json[code]['__init__'].items()
+        # unif < beta v2.1.35
+        elif 'keys' in cache_json[code]:
+            zips = zip(cache_json[code]['keys'], cache_json[code]['values'])
+
+        for key, value in zips:
             args[key] = value
             if key in kwargs:
                 args[key] = kwargs[key]

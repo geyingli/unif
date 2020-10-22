@@ -491,6 +491,8 @@ class BaseModule:
         # unif < beta v2.1.35
         elif 'keys' in cache_json[code]:
             zips = zip(cache_json[code]['keys'], cache_json[code]['values'])
+        else:
+            raise ValueError('Wrong format of cache file.')
 
         for key, value in zips:
             args[key] = value

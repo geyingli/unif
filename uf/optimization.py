@@ -30,7 +30,6 @@ class UnifiedOptimizer:
                  beta_1=0.9,
                  beta_2=0.98,
                  exclude_from_weight_decay=None,
-                 layerwise_lr_decay=False,
                  optimizer='adamw',
                  **kwargs):
         self.learning_rate = learning_rate
@@ -38,7 +37,6 @@ class UnifiedOptimizer:
         self.beta_1 = tf.cast(beta_1, dtype=tf.float32)
         self.beta_2 = tf.cast(beta_2, dtype=tf.float32)
         self.exclude_from_weight_decay = exclude_from_weight_decay
-        self.layerwise_lr_decay = layerwise_lr_decay
         self.optimizer = optimizer.lower()
         self.kwargs = kwargs
 
@@ -113,7 +111,7 @@ class UnifiedOptimizer:
         ''' Apply computed gradients to parameters. '''
 
         # layer-wise learning rate decay
-        if self.layerwise_lr_decay:
+        if isinstance(self.learning_rate, dict):
 
             key_to_grads_and_vars = {}
             for grad, var in grads_and_vars:
@@ -210,7 +208,6 @@ def get_optimizer(init_lr, global_step, num_train_steps,
     optimizer = UnifiedOptimizer(
         learning_rate=learning_rate,
         exclude_from_weight_decay=['LayerNorm', 'layer_norm', 'bias'],
-        layerwise_lr_decay=bool(layerwise_lr_decay_ratio),
         **kwargs)
 
     return optimizer

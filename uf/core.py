@@ -449,7 +449,10 @@ class BaseModule:
         else:
             cache_json = {}
 
-        _cache_json = {'keys': [], 'values': []}
+        _cache_json = {
+            'model': self.__class__.__name__,
+            'keys': [],
+            'values': []}
         for key in self.__class__.__init__.__code__.co_varnames[1:]:
             try:
                 value = self.__getattribute__(key)

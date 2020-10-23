@@ -10,7 +10,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-beta2.1.35-blue">
+        <img src="https://img.shields.io/badge/version-beta2.1.36-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-≥1.11.0-yellow">
@@ -105,8 +105,9 @@ Available APIs include:
 | `RoBERTaSeqClassifier` 		| Sequence Labeling | Each token belongs to one single class |
 | `ALBERTSeqClassifier` 		| Sequence Labeling | Each token belongs to one single class |
 | `ELECTRASeqClassifier` 		| Sequence Labeling | Each token belongs to one single class |
-| `TinyBERTClassifier` 		| Knowledge Distillation | Support knowledge distillation for all single-label classifiers except XLNetClassifier |
-| `FastBERTClassifier` 		| Knowledge Distillation | Support knowledge distillation for all single-label classifiers except XLNetClassifier |
+| `TinyBERTClassifier` 		| Knowledge Distillation | Support distillation for all BERTClassifier, RoBERTaClassifier and ELECTRAClassifier |
+| `FastBERTClassifier` 		| Knowledge Distillation | Support distillation for all BERTClassifier, RoBERTaClassifier and ELECTRAClassifier |
+| `BERTEMDClassifier` | Knowledge Distillation | Support distillation for all BERTClassifier, RoBERTaClassifier and ELECTRAClassifier |
 
 ### Performance on Public Leaderboards
 

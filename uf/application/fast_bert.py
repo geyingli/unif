@@ -45,11 +45,11 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
         self.batch_size = 0
         self.max_seq_length = max_seq_length
         self.label_size = label_size
+        self.truncate_method = truncate_method
         self._cls_model = cls_model
         self._ignore_cls = []
         self._speed = 0.1
         self._drop_pooler = drop_pooler
-        self.truncate_method = truncate_method
         self._id_to_label = None
         self.__init_args__ = locals()
 

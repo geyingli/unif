@@ -10,7 +10,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-beta2.1.35-blue">
+        <img src="https://img.shields.io/badge/version-beta2.1.36-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-≥1.11.0-yellow">
@@ -103,8 +103,9 @@ print(model.predict(X))
 | `RoBERTaSeqClassifier` 		| 序列标注 | 每一个 token 都有唯一的类别 |
 | `ALBERTSeqClassifier` 		| 序列标注 | 每一个 token 都有唯一的类别 |
 | `ELECTRASeqClassifier` 		| 序列标注 | 每一个 token 都有唯一的类别 |
-| `TinyBERTClassifier` 		| 模型蒸馏 | 支持蒸馏除 XLNetClassifier 以外的所有单标签分类器 |
-| `FastBERTClassifier` 		| 模型蒸馏 | 支持蒸馏除 XLNetClassifier 以外的所有单标签分类器 |
+| `TinyBERTClassifier` 		| 模型蒸馏 | 可蒸馏 BERTClassifier、RoBERTaClassifier 及 ELECTRAClassifier |
+| `FastBERTClassifier` 		| 模型蒸馏 | 可蒸馏 BERTClassifier、RoBERTaClassifier 及 ELECTRAClassifier |
+| `BERTEMDClassifier` | 模型蒸馏 | 可蒸馏 BERTClassifier、RoBERTaClassifier 及 ELECTRAClassifier |
 
 ### 公开榜单评测
 

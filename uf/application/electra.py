@@ -272,14 +272,14 @@ class ELECTRALM(BERTLM, LMModule):
 
         self.batch_size = 0
         self.max_seq_length = max_seq_length
-        self._model_size = model_size
-        self._generator_weight = generator_weight
-        self._discriminator_weight = discriminator_weight
-        self._max_predictions_per_seq = max_predictions_per_seq
-        self._dupe_factor = dupe_factor
-        self._masked_lm_prob = masked_lm_prob
-        self._do_whole_word_mask = do_whole_word_mask
+        self.generator_weight = generator_weight
+        self.discriminator_weight = discriminator_weight
+        self.dupe_factor = dupe_factor
+        self.masked_lm_prob = masked_lm_prob
+        self.do_whole_word_mask = do_whole_word_mask
         self.truncate_method = truncate_method
+        self._model_size = model_size
+        self._max_predictions_per_seq = max_predictions_per_seq
         self._id_to_label = None
         self.__init_args__ = locals()
 
@@ -368,9 +368,9 @@ class ELECTRALM(BERTLM, LMModule):
         masked_lm_weights = []
 
         # duplicate raw inputs
-        if is_training and self._dupe_factor > 1:
+        if is_training and self.dupe_factor > 1:
             new_segment_input_tokens = []
-            for _ in range(self._dupe_factor):
+            for _ in range(self.dupe_factor):
                 new_segment_input_tokens.extend(
                     copy.deepcopy(segment_input_tokens))
             segment_input_tokens = new_segment_input_tokens
@@ -399,10 +399,10 @@ class ELECTRALM(BERTLM, LMModule):
                 (_input_tokens, _masked_lm_positions, _masked_lm_labels) = \
                     create_masked_lm_predictions(
                         tokens=_input_tokens,
-                        masked_lm_prob=self._masked_lm_prob,
+                        masked_lm_prob=self.masked_lm_prob,
                         max_predictions_per_seq=self._max_predictions_per_seq,
                         vocab_words=list(self.tokenizer.vocab.keys()),
-                        do_whole_word_mask=self._do_whole_word_mask)
+                        do_whole_word_mask=self.do_whole_word_mask)
                 _masked_lm_ids = \
                     self.tokenizer.convert_tokens_to_ids(_masked_lm_labels)
                 _masked_lm_weights = [1.0] * len(_masked_lm_positions)
@@ -480,8 +480,8 @@ class ELECTRALM(BERTLM, LMModule):
             is_training=is_training,
             placeholders=split_placeholders,
             sample_weight=split_placeholders.get('sample_weight'),
-            gen_weight=self._generator_weight,
-            disc_weight=self._discriminator_weight,
+            gen_weight=self.generator_weight,
+            disc_weight=self.discriminator_weight,
             **kwargs)
 
         (total_loss, losses, probs, preds) = model.get_forward_outputs()

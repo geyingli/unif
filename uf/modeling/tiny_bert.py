@@ -12,8 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-''' TinyBERT, a self-distillation model combining BERT with dynamic inference.
-'''
+''' TinyBERT, a distillation model of BERT. '''
 
 from uf.tools import tf
 from .bert import BERTEncoder

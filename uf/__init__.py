@@ -13,8 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__version__ = '2.1.35'
-__date__ = '10/22/2020'
+__version__ = '2.1.36'
+__date__ = '10/23/2020'
 
 
 from .application.bert import BERTLM
@@ -29,6 +29,7 @@ from .application.albert import ALBERTClassifier
 from .application.electra import ELECTRAClassifier
 from .application.tiny_bert import TinyBERTClassifier
 from .application.fast_bert import FastBERTClassifier
+from .application.bert_emd import BERTEMDClassifier
 from .application.bert import BERTBinaryClassifier
 from .application.xlnet import XLNetBinaryClassifier
 from .application.roberta import RoBERTaBinaryClassifier
@@ -70,6 +71,7 @@ __all__ = [
     'ELECTRAClassifier',
     'TinyBERTClassifier',
     'FastBERTClassifier',
+    'BERTEMDClassifier',
     'BERTBinaryClassifier',
     'XLNetBinaryClassifier',
     'RoBERTaBinaryClassifier',

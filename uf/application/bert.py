@@ -61,8 +61,8 @@ class BERTClassifier(ClassifierModule):
         self.batch_size = 0
         self.max_seq_length = max_seq_length
         self.label_size = label_size
-        self._drop_pooler = drop_pooler
         self.truncate_method = truncate_method
+        self._drop_pooler = drop_pooler
         self._id_to_label = None
         self.__init_args__ = locals()
 
@@ -356,8 +356,8 @@ class BERTBinaryClassifier(BERTClassifier, ClassifierModule):
         self.max_seq_length = max_seq_length
         self.label_size = label_size
         self.label_weight = label_weight
-        self._drop_pooler = drop_pooler
         self.truncate_method = truncate_method
+        self._drop_pooler = drop_pooler
         self._id_to_label = None
         self.__init_args__ = locals()
 
@@ -1683,14 +1683,14 @@ class BERTLM(LMModule):
         self.batch_size = 0
         self.max_seq_length = max_seq_length
         self.label_size = 2
-        self._drop_pooler = drop_pooler
-        self._do_sample_sentence = do_sample_sentence
-        self._max_predictions_per_seq = max_predictions_per_seq
-        self._dupe_factor = dupe_factor
-        self._masked_lm_prob = masked_lm_prob
-        self._short_seq_prob = short_seq_prob
-        self._do_whole_word_mask = do_whole_word_mask
+        self.do_sample_sentence = do_sample_sentence
+        self.dupe_factor = dupe_factor
+        self.masked_lm_prob = masked_lm_prob
+        self.short_seq_prob = short_seq_prob
+        self.do_whole_word_mask = do_whole_word_mask
         self.truncate_method = truncate_method
+        self._drop_pooler = drop_pooler
+        self._max_predictions_per_seq = max_predictions_per_seq
         self._id_to_label = None
         self.__init_args__ = locals()
 
@@ -1705,10 +1705,10 @@ class BERTLM(LMModule):
 
         if is_training:
             if y is not None:
-                assert not self._do_sample_sentence, (
+                assert not self.do_sample_sentence, (
                     '`y` should be None when `do_sample_sentence` is True.')
             else:
-                assert self._do_sample_sentence, (
+                assert self.do_sample_sentence, (
                     '`y` can\'t be None when `do_sample_sentence` is False.')
         if '[CLS]' not in self.tokenizer.vocab:
             self.tokenizer.add('[CLS]')
@@ -1742,7 +1742,7 @@ class BERTLM(LMModule):
                 data['masked_lm_weights'] = \
                     np.array(masked_lm_weights, dtype=np.float32)
 
-            if is_training and self._do_sample_sentence:
+            if is_training and self.do_sample_sentence:
                 data['next_sentence_labels'] = \
                     np.array(next_sentence_labels, dtype=np.int32)
 
@@ -1799,24 +1799,24 @@ class BERTLM(LMModule):
         next_sentence_labels = []
 
         # duplicate raw inputs
-        if is_training and self._dupe_factor > 1:
+        if is_training and self.dupe_factor > 1:
             new_segment_input_tokens = []
-            for _ in range(self._dupe_factor):
+            for _ in range(self.dupe_factor):
                 new_segment_input_tokens.extend(
                     copy.deepcopy(segment_input_tokens))
             segment_input_tokens = new_segment_input_tokens
 
         # random sampling of next sentence
-        if is_training and self._do_sample_sentence:
+        if is_training and self.do_sample_sentence:
             new_segment_input_tokens = []
             for ex_id in range(len(segment_input_tokens)):
                 instances = create_instances_from_document(
                     all_documents=segment_input_tokens,
                     document_index=ex_id,
                     max_seq_length=self.max_seq_length - 3,
-                    masked_lm_prob=self._masked_lm_prob,
+                    masked_lm_prob=self.masked_lm_prob,
                     max_predictions_per_seq=self._max_predictions_per_seq,
-                    short_seq_prob=self._short_seq_prob,
+                    short_seq_prob=self.short_seq_prob,
                     vocab_words=list(self.tokenizer.vocab.keys()))
                 for (segments, is_random_next) in instances:
                     new_segment_input_tokens.append(segments)
@@ -1847,10 +1847,10 @@ class BERTLM(LMModule):
                 (_input_tokens, _masked_lm_positions, _masked_lm_labels) = \
                     create_masked_lm_predictions(
                         tokens=_input_tokens,
-                        masked_lm_prob=self._masked_lm_prob,
+                        masked_lm_prob=self.masked_lm_prob,
                         max_predictions_per_seq=self._max_predictions_per_seq,
                         vocab_words=list(self.tokenizer.vocab.keys()),
-                        do_whole_word_mask=self._do_whole_word_mask)
+                        do_whole_word_mask=self.do_whole_word_mask)
                 _masked_lm_ids = \
                     self.tokenizer.convert_tokens_to_ids(_masked_lm_labels)
                 _masked_lm_weights = [1.0] * len(_masked_lm_positions)

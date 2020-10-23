@@ -72,12 +72,12 @@ class RoBERTaLM(BERTLM, LMModule):
         self.batch_size = 0
         self.max_seq_length = max_seq_length
         self.label_size = 2
+        self.dupe_factor = dupe_factor
+        self.masked_lm_prob = masked_lm_prob
+        self.do_whole_word_mask = do_whole_word_mask
+        self.truncate_method = truncate_method
         self._drop_pooler = drop_pooler
         self._max_predictions_per_seq = max_predictions_per_seq
-        self._dupe_factor = dupe_factor
-        self._masked_lm_prob = masked_lm_prob
-        self._do_whole_word_mask = do_whole_word_mask
-        self.truncate_method = truncate_method
         self._id_to_label = None
         self.__init_args__ = locals()
 
@@ -170,9 +170,9 @@ class RoBERTaLM(BERTLM, LMModule):
         masked_lm_weights = []
 
         # duplicate raw inputs
-        if is_training and self._dupe_factor > 1:
+        if is_training and self.dupe_factor > 1:
             new_segment_input_tokens = []
-            for _ in range(self._dupe_factor):
+            for _ in range(self.dupe_factor):
                 new_segment_input_tokens.extend(
                     copy.deepcopy(segment_input_tokens))
             segment_input_tokens = new_segment_input_tokens
@@ -185,7 +185,7 @@ class RoBERTaLM(BERTLM, LMModule):
                     all_documents=segment_input_tokens,
                     document_index=ex_id,
                     max_seq_length=self.max_seq_length - 2,
-                    masked_lm_prob=self._masked_lm_prob,
+                    masked_lm_prob=self.masked_lm_prob,
                     max_predictions_per_seq=self._max_predictions_per_seq,
                     vocab_words=list(self.tokenizer.vocab.keys()))
                 for segments in instances:
@@ -216,10 +216,10 @@ class RoBERTaLM(BERTLM, LMModule):
                 (_input_tokens, _masked_lm_positions, _masked_lm_labels) = \
                     create_masked_lm_predictions(
                         tokens=_input_tokens,
-                        masked_lm_prob=self._masked_lm_prob,
+                        masked_lm_prob=self.masked_lm_prob,
                         max_predictions_per_seq=self._max_predictions_per_seq,
                         vocab_words=list(self.tokenizer.vocab.keys()),
-                        do_whole_word_mask=self._do_whole_word_mask)
+                        do_whole_word_mask=self.do_whole_word_mask)
                 _masked_lm_ids = \
                     self.tokenizer.convert_tokens_to_ids(_masked_lm_labels)
                 _masked_lm_weights = [1.0] * len(_masked_lm_positions)

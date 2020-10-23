@@ -435,11 +435,11 @@ class XLNetLM(BERTLM, LMModule):
             reuse_seq_length if reuse_seq_length else max_seq_length // 2
         self.perm_size = \
             perm_size if perm_size else max_seq_length // 2
+        self.truncate_method = truncate_method
         self._mems = None
         self._mask_alpha = mask_alpha
         self._mask_beta = mask_beta
         self._num_predict = None
-        self.truncate_method = truncate_method
         self._id_to_label = None
         self.__init_args__ = locals()
 

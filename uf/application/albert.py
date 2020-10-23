@@ -53,8 +53,8 @@ class ALBERTClassifier(BERTClassifier, ClassifierModule):
         self.batch_size = 0
         self.max_seq_length = max_seq_length
         self.label_size = label_size
-        self._drop_pooler = drop_pooler
         self.truncate_method = truncate_method
+        self._drop_pooler = drop_pooler
         self._id_to_label = None
         self.__init_args__ = locals()
 
@@ -111,8 +111,8 @@ class ALBERTBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
         self.max_seq_length = max_seq_length
         self.label_size = label_size
         self.label_weight = label_weight
-        self._drop_pooler = drop_pooler
         self.truncate_method = truncate_method
+        self._drop_pooler = drop_pooler
         self._id_to_label = None
         self.__init_args__ = locals()
 
@@ -269,7 +269,7 @@ class ALBERTLM(BERTLM, LMModule):
                  masked_lm_prob=0.15,
                  short_seq_prob=0.1,
                  n_gram=3,
-                 favor_shorter_ngram=True,
+                 favor_shorterngram=True,
                  do_permutation=False,
                  do_whole_word_mask=True,
                  do_lower_case=True,
@@ -280,17 +280,17 @@ class ALBERTLM(BERTLM, LMModule):
         self.batch_size = 0
         self.max_seq_length = max_seq_length
         self.label_size = 2
-        self._drop_pooler = drop_pooler
-        self._do_sample_sentence = do_sample_sentence
-        self._max_predictions_per_seq = max_predictions_per_seq
-        self._dupe_factor = dupe_factor
-        self._masked_lm_prob = masked_lm_prob
-        self._short_seq_prob = short_seq_prob
-        self._ngram = n_gram
-        self._favor_shorter_ngram = favor_shorter_ngram
-        self._do_permutation = do_permutation
-        self._do_whole_word_mask = do_whole_word_mask
+        self.do_sample_sentence = do_sample_sentence
+        self.dupe_factor = dupe_factor
+        self.masked_lm_prob = masked_lm_prob
+        self.short_seq_prob = short_seq_prob
+        self.ngram = n_gram
+        self.favor_shorter_ngram = favor_shorterngram
+        self.do_whole_word_mask = do_whole_word_mask
         self.truncate_method = truncate_method
+        self._drop_pooler = drop_pooler
+        self._max_predictions_per_seq = max_predictions_per_seq
+        self._do_permutation = do_permutation
         self._id_to_label = None
         self.__init_args__ = locals()
 
@@ -335,7 +335,7 @@ class ALBERTLM(BERTLM, LMModule):
                 data['masked_lm_weights'] = \
                     np.array(masked_lm_weights, dtype=np.float32)
 
-            if is_training and self._do_sample_sentence:
+            if is_training and self.do_sample_sentence:
                 data['sentence_order_labels'] = \
                     np.array(sentence_order_labels, dtype=np.int32)
 
@@ -392,24 +392,24 @@ class ALBERTLM(BERTLM, LMModule):
         sentence_order_labels = []
 
         # duplicate raw inputs
-        if is_training and self._dupe_factor > 1:
+        if is_training and self.dupe_factor > 1:
             new_segment_input_tokens = []
-            for _ in range(self._dupe_factor):
+            for _ in range(self.dupe_factor):
                 new_segment_input_tokens.extend(
                     copy.deepcopy(segment_input_tokens))
             segment_input_tokens = new_segment_input_tokens
 
         # random sampling of next sentence
-        if is_training and self._do_sample_sentence:
+        if is_training and self.do_sample_sentence:
             new_segment_input_tokens = []
             for ex_id in range(len(segment_input_tokens)):
                 instances = create_instances_from_document(
                     all_documents=segment_input_tokens,
                     document_index=ex_id,
                     max_seq_length=self.max_seq_length - 3,
-                    masked_lm_prob=self._masked_lm_prob,
+                    masked_lm_prob=self.masked_lm_prob,
                     max_predictions_per_seq=self._max_predictions_per_seq,
-                    short_seq_prob=self._short_seq_prob,
+                    short_seq_prob=self.short_seq_prob,
                     vocab_words=list(self.tokenizer.vocab.keys()))
                 for (segments, is_random_next) in instances:
                     new_segment_input_tokens.append(segments)
@@ -440,13 +440,13 @@ class ALBERTLM(BERTLM, LMModule):
                 (_input_tokens, _masked_lm_positions, _masked_lm_labels) = \
                     create_masked_lm_predictions(
                         tokens=_input_tokens,
-                        masked_lm_prob=self._masked_lm_prob,
+                        masked_lm_prob=self.masked_lm_prob,
                         max_predictions_per_seq=self._max_predictions_per_seq,
                         vocab_words=list(self.tokenizer.vocab.keys()),
-                        ngram=self._ngram,
-                        favor_shorter_ngram=self._favor_shorter_ngram,
+                        ngram=self.ngram,
+                        favor_shorterngram=self.favor_shorter_ngram,
                         do_permutation=self._do_permutation,
-                        do_whole_word_mask=self._do_whole_word_mask)
+                        do_whole_word_mask=self.do_whole_word_mask)
                 _masked_lm_ids = \
                     self.tokenizer.convert_tokens_to_ids(_masked_lm_labels)
                 _masked_lm_weights = [1.0] * len(_masked_lm_positions)
@@ -466,7 +466,8 @@ class ALBERTLM(BERTLM, LMModule):
                         _masked_lm_positions.append(i)
 
                 # padding
-                for _ in range(self._max_predictions_per_seq -
+                for _ in range(self._max_predictions_per_seq *
+                               (1 + self._do_permutation) -
                                len(_masked_lm_positions)):
                     _masked_lm_positions.append(0)
 
@@ -502,13 +503,16 @@ class ALBERTLM(BERTLM, LMModule):
                 [None, self.max_seq_length], tf.int32),
             'masked_lm_positions': utils.get_placeholder(
                 target, 'masked_lm_positions',
-                [None, self._max_predictions_per_seq], tf.int32),
+                [None, self._max_predictions_per_seq * (
+                    1 + self._do_permutation)], tf.int32),
             'masked_lm_ids': utils.get_placeholder(
                 target, 'masked_lm_ids',
-                [None, self._max_predictions_per_seq], tf.int32),
+                [None, self._max_predictions_per_seq * (
+                    1 + self._do_permutation)], tf.int32),
             'masked_lm_weights': utils.get_placeholder(
                 target, 'masked_lm_weights',
-                [None, self._max_predictions_per_seq], tf.float32),
+                [None, self._max_predictions_per_seq * (
+                    1 + self._do_permutation)], tf.float32),
             'sentence_order_labels': utils.get_placeholder(
                 target, 'sentence_order_labels',
                 [None], tf.int32),
@@ -739,7 +743,7 @@ def create_masked_lm_predictions(tokens,
                                  max_predictions_per_seq,
                                  vocab_words,
                                  ngram=3,
-                                 favor_shorter_ngram=True,
+                                 favor_shorterngram=True,
                                  do_permutation=False,
                                  do_whole_word_mask=True):
     cand_indexes = []
@@ -780,7 +784,7 @@ def create_masked_lm_predictions(tokens,
     pvals = 1. / np.arange(1, ngram + 1)
     pvals /= pvals.sum(keepdims=True)
 
-    if not favor_shorter_ngram:
+    if not favor_shorterngram:
         pvals = pvals[::-1]
 
     ngram_indexes = []

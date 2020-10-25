@@ -93,7 +93,7 @@ class TinyBERTClassifier(BERTClassifier, ClassifierModule):
         self._assert_legal(X, y, sample_weight, X_tokenized)
 
         if is_training:
-            assert not y, (
+            assert y is None, (
                 'Training of %s is unsupervised. `y` should be None.'
                 % self.__class__.__name__)
 

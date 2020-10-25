@@ -91,8 +91,8 @@ class RoBERTaLM(BERTLM, LMModule):
         self._assert_legal(X, y, sample_weight, X_tokenized)
 
         assert y is None, (
-            'RoBERTa is a masked language modeling model. '
-            '`y` should be None.')
+            'Training of %s is unsupervised. `y` should be None.'
+            % self.__class__.__name__)
         if '[CLS]' not in self.tokenizer.vocab:
             self.tokenizer.add('[CLS]')
             self.bert_config.n_vocab += 1

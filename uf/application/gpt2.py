@@ -106,7 +106,9 @@ class GPT2LM(LMModule):
                 is_training=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
 
-        assert y is None, 'GPT2 is unsupervised. `y` should be None.'
+        assert y is None, (
+            'Training of %s is unsupervised. `y` should be None.'
+            % self.__class__.__name__)
         if '<eos>' not in self.tokenizer.vocab:
             self.tokenizer.add('<eos>')
             self.gpt2_config.n_vocab += 1

@@ -291,8 +291,9 @@ class ELECTRALM(BERTLM, LMModule):
         self._assert_legal(X, y, sample_weight, X_tokenized)
 
         assert y is None, (
-            'ELECTRA uses masked language modeling and replaced token. '
-            'prediction, which is unsupervised. `y` should be None.')
+            'Training of %s is unsupervised. `y` should be None.'
+            % self.__class__.__name__)
+
         if '[CLS]' not in self.tokenizer.vocab:
             self.tokenizer.add('[CLS]')
         if '[SEP]' not in self.tokenizer.vocab:

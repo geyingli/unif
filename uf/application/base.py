@@ -151,11 +151,15 @@ class MRCModule(BaseModule):
                 continue
 
             # answer prediction
-            tp += max(0, end_pred + 1 - start_label)
-            _fp = (max(0, end_pred - end_label) +
-                   max(0, start_label - start_pred))
-            _fn = (max(0, start_pred - start_label) +
-                   max(0, end_label - end_pred))
+            if start_pred > end_label or end_pred < start_label:
+                _fp = end_pred + 1 - start_pred
+                _fn = end_label + 1 - start_label
+            else:
+                tp += max(0, end_pred + 1 - start_label)
+                _fp = (max(0, end_pred - end_label) +
+                       max(0, start_label - start_pred))
+                _fn = (max(0, start_pred - start_label) +
+                       max(0, end_label - end_pred))
             if _fp + _fn == 0:
                 em += 1
             fp += _fp

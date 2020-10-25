@@ -194,8 +194,9 @@ class BERTEMDCLSDistillor(TinyBERTCLSDistillor):
             # \sum_j f_{ij} <= w_i^teacher
             ceil = teacher_weight
             weight = tf.reduce_sum(flow, axis=1)
-            nominator = tf.expand_dims(
-                tf.where(weight < ceil, weight, ceil), axis=1)
+            nominator = tf.expand_dims(ceil, axis=1)
+#            nominator = tf.expand_dims(
+#                tf.where(weight < ceil, weight, ceil), axis=1)
             denominator = tf.expand_dims(weight, axis=1)
             flow *= nominator / (denominator + 1e-6)
 
@@ -204,8 +205,9 @@ class BERTEMDCLSDistillor(TinyBERTCLSDistillor):
             # \sum_i f_{ij} <= w_j^student
             ceil = student_weight
             weight = tf.reduce_sum(flow, axis=0)
-            nominator = tf.expand_dims(
-                tf.where(weight < ceil, weight, ceil), axis=0)
+            nominator = tf.expand_dims(ceil, axis=0)
+#            nominator = tf.expand_dims(
+#                tf.where(weight < ceil, weight, ceil), axis=0)
             denominator = tf.expand_dims(weight, axis=0)
             flow *= nominator / (denominator + 1e-6)
 
@@ -271,8 +273,9 @@ class BERTEMDCLSDistillor(TinyBERTCLSDistillor):
             # \sum_j f_{ij} <= w_i^teacher
             ceil = teacher_weight
             weight = tf.reduce_sum(flow, axis=1)
-            nominator = tf.expand_dims(
-                tf.where(weight < ceil, weight, ceil), axis=1)
+            nominator = tf.expand_dims(ceil, axis=1)
+#            nominator = tf.expand_dims(
+#                tf.where(weight < ceil, weight, ceil), axis=1)
             denominator = tf.expand_dims(weight, axis=1)
             flow *= nominator / (denominator + 1e-6)
 
@@ -281,8 +284,9 @@ class BERTEMDCLSDistillor(TinyBERTCLSDistillor):
             # \sum_i f_{ij} <= w_j^student
             ceil = student_weight
             weight = tf.reduce_sum(flow, axis=0)
-            nominator = tf.expand_dims(
-                tf.where(weight < ceil, weight, ceil), axis=0)
+            nominator = tf.expand_dims(ceil, axis=0)
+#            nominator = tf.expand_dims(
+#                tf.where(weight < ceil, weight, ceil), axis=0)
             denominator = tf.expand_dims(weight, axis=0)
             flow *= nominator / (denominator + 1e-6)
 

@@ -13,9 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__version__ = '2.1.36'
-__date__ = '10/23/2020'
+__version__ = '2.1.37'
+__date__ = '10/25/2020'
 
+
+from .utils import get_checkpoint_path
+from .utils import get_assignment_map
+from .utils import set_log
+from .utils import unimported_module
+
+from . import modeling
+from . import tokenization
 
 from .application.bert import BERTLM
 from .application.roberta import RoBERTaLM
@@ -23,7 +31,6 @@ from .application.albert import ALBERTLM
 from .application.electra import ELECTRALM
 from .application.gpt2 import GPT2LM
 from .application.bert import BERTClassifier
-from .application.xlnet import XLNetClassifier
 from .application.roberta import RoBERTaClassifier
 from .application.albert import ALBERTClassifier
 from .application.electra import ELECTRAClassifier
@@ -31,7 +38,6 @@ from .application.tiny_bert import TinyBERTClassifier
 from .application.fast_bert import FastBERTClassifier
 from .application.bert_emd import BERTEMDClassifier
 from .application.bert import BERTBinaryClassifier
-from .application.xlnet import XLNetBinaryClassifier
 from .application.roberta import RoBERTaBinaryClassifier
 from .application.albert import ALBERTBinaryClassifier
 from .application.electra import ELECTRABinaryClassifier
@@ -48,12 +54,17 @@ from .application.albert import ALBERTMRC
 from .application.electra import ELECTRAMRC
 from .application.transformer import TransformerMT
 
-from .utils import get_checkpoint_path
-from .utils import get_assignment_map
-from .utils import set_log
+# sentencepiece==0.1.85
+try:
+    from .application.xlnet import XLNetClassifier
+    from .application.xlnet import XLNetBinaryClassifier
+except ModuleNotFoundError:
+    XLNetClassifier = unimported_module(
+        'XLNetClassifier', 'sentencepiece')
+    XLNetBinaryClassifier = unimported_module(
+        'XLNetBinaryClassifier', 'sentencepiece')
 
-from . import modeling
-from . import tokenization
+del unimported_module
 
 
 __all__ = [

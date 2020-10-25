@@ -23,6 +23,7 @@ from .tiny_bert import TinyBERTClassifier
 from uf.tokenization.word_piece import get_word_piece_tokenizer
 
 
+
 class BERTEMDClassifier(TinyBERTClassifier, ClassifierModule):
     ''' Single-label classifier on BERT-EMD, an advanced distillation model
     of TinyBERT. '''

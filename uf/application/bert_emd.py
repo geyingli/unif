@@ -21,6 +21,7 @@ from uf.modeling.bert_emd import BERTEMDCLSDistillor
 from .bert import get_bert_config
 from .tiny_bert import TinyBERTClassifier
 from uf.tokenization.word_piece import get_word_piece_tokenizer
+from pyemd import emd_with_flow
 
 
 
@@ -42,7 +43,7 @@ class BERTEMDClassifier(TinyBERTClassifier, ClassifierModule):
                  num_hidden_layers=4,
                  pred_temporature=1.0,
                  emd_temporature=1.0,
-                 beta=1.0,
+                 beta=0.01,
                  do_lower_case=True,
                  truncate_method='LIFO'):
         super(ClassifierModule, self).__init__(
@@ -89,5 +90,7 @@ class BERTEMDClassifier(TinyBERTClassifier, ClassifierModule):
             emd_temporature=self.emd_temporature,
             beta=self.beta,
             **kwargs)
+        if is_training:
+            self._emd_tensors = [emd_with_flow] + distillor.get_emd_tensors()
         (total_loss, losses, probs, preds) = distillor.get_forward_outputs()
         return (total_loss, losses, probs, preds)

@@ -13,8 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__version__ = '2.1.37'
-__date__ = '10/25/2020'
+__version__ = '2.1.38'
+__date__ = '10/26/2020'
 
 
 from .utils import get_checkpoint_path
@@ -36,7 +36,6 @@ from .application.albert import ALBERTClassifier
 from .application.electra import ELECTRAClassifier
 from .application.tiny_bert import TinyBERTClassifier
 from .application.fast_bert import FastBERTClassifier
-from .application.bert_emd import BERTEMDClassifier
 from .application.bert import BERTBinaryClassifier
 from .application.roberta import RoBERTaBinaryClassifier
 from .application.albert import ALBERTBinaryClassifier
@@ -63,6 +62,13 @@ except ModuleNotFoundError:
         'XLNetClassifier', 'sentencepiece')
     XLNetBinaryClassifier = unimported_module(
         'XLNetBinaryClassifier', 'sentencepiece')
+
+# pyemd
+try:
+    from .application.bert_emd import BERTEMDClassifier
+except ModuleNotFoundError:
+    BERTEMDClassifier = unimported_module(
+        'BERTEMDClassifier', 'pyemd')
 
 del unimported_module
 

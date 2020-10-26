@@ -20,9 +20,7 @@ import collections
 from abc import abstractmethod
 
 from .tools import tf
-from .processing import (BasicTraining, AdversarialTraining,
-                         BasicInference, ExportInference,
-                         BasicScoring)
+from . import processing
 from . import optimization
 from . import utils
 
@@ -641,16 +639,17 @@ class BaseModule:
         # training and inference are supported. Temporarily
         # not support running on TPUs.
         if work == 'fit':
+            if 'EMD' in self.__class__.__name__:
+                return processing.EMDTraining(self, **kwargs)
             if kwargs.get('adversarial'):
-                return AdversarialTraining(self, **kwargs)
-            else:
-                return BasicTraining(self, **kwargs)
+                return processing.AdversarialTraining(self, **kwargs)
+            return processing.BasicTraining(self, **kwargs)
         elif work == 'predict':
-            return BasicInference(self, **kwargs)
+            return processing.BasicInference(self, **kwargs)
         elif work == 'score':
-            return BasicScoring(self, **kwargs)
+            return processing.BasicScoring(self, **kwargs)
         elif work == 'export':
-            return ExportInference(self, **kwargs)
+            return processing.ExportInference(self, **kwargs)
 
     @abstractmethod
     def _set_placeholders(self, *args, **kwargs):

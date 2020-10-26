@@ -24,6 +24,7 @@ from .tools import tf, contrib
 from . import utils
 
 
+
 class BaseTask:
     ''' Parent class of `BasicTraining`, `AdversarialTraining`,
     `BasicInference`, `ExportInference` and `BasicScoring`.
@@ -109,6 +110,7 @@ class BaseTask:
             feed_dict[self.module.placeholders[key]] = batch
         self._ptr = ptr
         return feed_dict
+
 
 
 class BasicTraining(BaseTask):
@@ -248,16 +250,14 @@ class BasicTraining(BaseTask):
             feed_dict=feed_dict)
 
         # print
-        if time.time() - last_tic > print_per_secs \
-                or step == target_steps:
+        if time.time() - last_tic > print_per_secs or step == target_steps:
             info = 'step %d' % step
 
             # print processor-specific information
             info += module._get_fit_info(output_arrays, feed_dict, as_feature)
 
             # print training efficiency
-            if time.time() - last_tic > print_per_secs \
-                    or step == target_steps:
+            if time.time() - last_tic > print_per_secs or step == target_steps:
                 info += ', %.2f steps/sec' % (
                     (step - last_step) / (
                         time.time() - last_tic))
@@ -283,6 +283,7 @@ class BasicTraining(BaseTask):
             saver.save(module.sess, module.init_checkpoint)
 
         return last_tic, last_step
+
 
 
 class AdversarialTraining(BasicTraining):
@@ -672,6 +673,158 @@ class AdversarialTraining(BasicTraining):
             (1 - tilda_beta) * param + tilda_beta * tilda)
 
 
+
+class EMDTraining(BasicTraining):
+
+    def run(self, target_steps,
+            print_per_secs=60,
+            save_per_steps=1000):
+        module = self.module
+        shuffle = self._kwargs.get('shuffle', True)
+        adversarial = ''
+        if self._kwargs.get('adversarial'):
+            adversarial = self._kwargs.get('adversarial').lower()
+
+        if shuffle and not self.tfrecords_files:
+            self._shuffle()
+        self._ptr = 0
+        saver = tf.train.Saver(
+            max_to_keep=self._kwargs.get('max_to_keep', 1000000))
+
+        if not module._graph_built:
+            self._init_variables(module.global_variables)
+        else:
+            variables = []
+            for var in module.global_variables:
+                if var not in module._inited_vars:
+                    variables.append(var)
+            if variables:
+                self._init_variables(variables)
+
+        # We cannot straightly infer since the dropout in training stage
+        # creates fluctuations in outputs.
+        module._graph_mode = 'train'
+        module._graph_built = True
+
+        # print
+        if adversarial:
+            tf.logging.info(
+                'Running adversarial training `%s` on %d '
+                'samples (step %d -> %d)',
+                adversarial, self.n_inputs, module.step, target_steps)
+        else:
+            tf.logging.info(
+                'Running training on %d samples (step %d -> %d)',
+                self.n_inputs, module.step, target_steps)
+
+        # SMART: initialize tilda_embedding
+        if adversarial == 'smart':
+            module.sess.run(module._init_tilda_op)
+
+        last_tic = time.time()
+        last_step = module.step
+        for _ in range(target_steps - module.step):
+            last_tic, last_step = self._train_one_batch(
+                module.step + 1, last_tic, last_step, target_steps,
+                print_per_secs, save_per_steps, saver,
+                adversarial)
+            module.step += 1
+
+        if module.output_dir:
+            tf.logging.info(
+                'Saving checkpoint for %d into %s/model.ckpt'
+                % (module.step, module.output_dir))
+            module.init_checkpoint = \
+                module.output_dir + '/model.ckpt-%d' % module.step
+            saver.save(module.sess, module.init_checkpoint)
+
+    def _train_one_batch(self, step, last_tic, last_step, target_steps,
+                         print_per_secs, save_per_steps, saver,
+                         adversarial=None):
+        module = self.module
+        feed_dict = self._build_feed_dict()
+        as_feature = True if self.from_tfrecords else False
+        (emd_with_flow,
+         attention_flow, attention_distance,
+         attention_teacher_weight, attention_student_weight,
+         hidden_flow, hidden_distance,
+         hidden_teacher_weight, hidden_student_weight) = module._emd_tensors
+
+        output_arrays = module.sess.run(
+            module._get_fit_ops(as_feature) + [
+                attention_distance,
+                attention_teacher_weight,
+                attention_student_weight,
+                hidden_distance,
+                hidden_teacher_weight,
+                hidden_student_weight],
+            feed_dict=feed_dict)
+
+        # print
+        if time.time() - last_tic > print_per_secs or step == target_steps:
+            info = 'step %d' % step
+
+            # print processor-specific information
+            info += module._get_fit_info(output_arrays, feed_dict, as_feature)
+
+            # print training efficiency
+            if time.time() - last_tic > print_per_secs or step == target_steps:
+                info += ', %.2f steps/sec' % (
+                    (step - last_step) / (
+                        time.time() - last_tic))
+                info += ', %.2f examples/sec' % (
+                    (step - last_step) / (
+                        time.time() - last_tic) * module.batch_size)
+
+            tf.logging.info(info)
+            last_tic = time.time()
+            last_step = step
+
+        # SMART: update tilda_embedding
+        if step % module.steps_per_epoch == 0 and adversarial == 'smart':
+            module.sess.run(module._update_tilda_op)
+
+        # EMD: update weights
+        (_attention_distance,
+         _attention_teacher_weight, _attention_student_weight,
+         _hidden_distance,
+         _hidden_teacher_weight, _hidden_student_weight) = output_arrays[-6:]
+
+        def update(flow, teacher_weight, student_weight, distance):
+            M = len(teacher_weight)
+            N = len(student_weight)
+
+            _teacher_weight = np.concatenate((teacher_weight, np.zeros(N)))
+            _student_weight = np.concatenate((np.zeros(M), student_weight))
+            _distance = np.zeros((M + N, M + N))
+            _distance[:M, M:] = distance
+            _distance[M:, :M] = np.transpose(distance)
+
+            _, _flow = emd_with_flow(
+                _teacher_weight, _student_weight, _distance)
+            _flow = np.array(_flow)[:M, M:]
+
+            update_flow_op = tf.assign(flow, _flow)
+            module.sess.run(update_flow_op)
+
+        update(attention_flow, _attention_teacher_weight,
+               _attention_student_weight, _attention_distance)
+        update(hidden_flow, _hidden_teacher_weight,
+               _hidden_student_weight, _hidden_distance)
+
+        # save
+        if module.output_dir and step % save_per_steps == 0:
+            tf.logging.info(
+                'Saving checkpoint for %d into %s/model.ckpt'
+                % (step, module.output_dir))
+            module.init_checkpoint = (
+                module.output_dir + '/model.ckpt-%d' % step)
+            saver.save(module.sess, module.init_checkpoint)
+
+        return last_tic, last_step
+
+
+
 class BasicInference(BaseTask):
 
     def decorate(self, module):
@@ -755,6 +908,7 @@ class BasicInference(BaseTask):
             tf.logging.info(info)
 
 
+
 class ExportInference(BaseTask):
 
     def decorate(self, module):
@@ -827,6 +981,7 @@ class ExportInference(BaseTask):
                 '`.reset()` method to save and reset the graph before '
                 'next exportation.')
         builder.save()
+
 
 
 class BasicScoring(BaseTask):

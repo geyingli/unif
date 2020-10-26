@@ -143,7 +143,8 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
         return super(ClassifierModule, self).score(
             X, y, sample_weight, X_tokenized, batch_size)
 
-    def export(self, export_dir, speed=0.1, ignore_cls=None):
+    def export(self, export_dir, speed=0.1, ignore_cls=None,
+               rename_inputs=None, rename_outputs=None, ignore_outputs=None):
         ''' Export model into SavedModel files.
 
         Args:
@@ -153,6 +154,9 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
             ignore_cls: list. A list object of integers that stands for
               the classifiers to ignore. The more classifier ignored, the
               faster inference is.
+            rename_inputs: dict. Mapping of original name to target name.
+            rename_outputs: dict. Mapping of original name to target name.
+            ignore_outputs: list. Name of outputs to ignore.
         Returns:
             None
         '''
@@ -178,7 +182,8 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
             self._speed = speed
             self._graph_mode = None
 
-        return super(ClassifierModule, self).export(export_dir)
+        return super(ClassifierModule, self).export(
+            export_dir, rename_inputs, rename_outputs, ignore_outputs)
 
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
                 is_training=False):
@@ -264,6 +269,12 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
         n_inputs = len(list(self.data.values())[0])
         output_arrays = list(zip(*batch_outputs))
 
+        def _uncertainty(prob):
+            if prob < 1e-20 or 1 - prob < 1e-20:
+                prob = 1e-20
+            return (prob * np.log(prob) + (1 - prob) * np.log(1 - prob)) / \
+                np.log(1 / self.label_size)
+
         def _permutate(batch_probs):
             n_device = max(len(self._gpu_ids), 1)
             d_batch_size = self.batch_size // n_device
@@ -276,9 +287,6 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
                 in list(range(self.bert_config.num_hidden_layers + 1)) \
                 if cls_idx not in self._ignore_cls]
             i = 0
-            _uncertainty = lambda prob: (prob * np.log(prob) +
-                                         (1 - prob) * np.log(1 - prob)) / \
-                                        np.log(1 / self.label_size)
 
             for d in range(n_device):
                 unfinished = [k + i for k in range(d_batch_size)]
@@ -328,6 +336,12 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
         n_inputs = len(list(self.data.values())[0])
         output_arrays = list(zip(*batch_outputs))
 
+        def _uncertainty(prob):
+            if prob < 1e-20 or 1 - prob < 1e-20:
+                prob = 1e-20
+            return (prob * np.log(prob) + (1 - prob) * np.log(1 - prob)) / \
+                np.log(1 / self.label_size)
+
         def _permutate(batch_probs):
             n_device = max(len(self._gpu_ids), 1)
             d_batch_size = self.batch_size // n_device
@@ -340,9 +354,6 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
                 in list(range(self.bert_config.num_hidden_layers + 1)) \
                 if cls_idx not in self._ignore_cls]
             i = 0
-            _uncertainty = lambda prob: (prob * np.log(prob) +
-                                         (1 - prob) * np.log(1 - prob)) / \
-                                        np.log(1 / self.label_size)
 
             for d in range(n_device):
                 unfinished = [k + i for k in range(d_batch_size)]

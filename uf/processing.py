@@ -32,8 +32,9 @@ class BaseTask:
     This is an internal class that does not provide interface
     for outside requests.'''
 
-    # This method will be reimplemented by `BasicTraining` and
-    # `AdversarialTraining` but not `BasicInference` and `BasicScoring`
+    # This method will be reimplemented by `BasicTraining`,
+    # `AdversarialTraining` and `ExportInference` but not
+    # `BasicInference` and `BasicScoring`
     def __init__(self, module, **kwargs):
         self.module = module
         self.from_tfrecords = bool(kwargs.get('tfrecords_files'))
@@ -79,9 +80,8 @@ class BaseTask:
             if continual:
                 module.step = int(checkpoint_path.split('-')[-1])
 
-            (assignment_map, uninited_vars) = \
-                utils.get_assignment_map(
-                    checkpoint_path, variables, continual=continual)
+            (assignment_map, uninited_vars) = utils.get_assignment_map(
+                checkpoint_path, variables, continual=continual)
             module.assignment_map = assignment_map
             module.uninited_vars = uninited_vars
             if not module.assignment_map:
@@ -910,6 +910,13 @@ class BasicInference(BaseTask):
 
 
 class ExportInference(BaseTask):
+    def __init__(self, module, **kwargs):
+        self.module = module
+        self._kwargs = kwargs
+
+        # ignore redundant building of the work flow
+        if module._graph_mode not in ('predict', 'score'):
+            self.decorate(module)
 
     def decorate(self, module):
         module._set_placeholders('placeholder', on_export=True)
@@ -921,7 +928,8 @@ class ExportInference(BaseTask):
             utils.count_params(
                 module.global_variables, module.trainable_variables)
 
-    def run(self, export_dir, expire_outputs=None):
+    def run(self, export_dir, rename_inputs=None, rename_outputs=None,
+            ignore_outputs=None):
         module = self.module
 
         if not module._graph_built:
@@ -934,16 +942,16 @@ class ExportInference(BaseTask):
 
         # define inputs
         inputs = {}
-        def set_input(key):
-            inputs[key] = tf.saved_model.utils.build_tensor_info(
-                module.placeholders[key])
+        def set_input(key, value):
+            inputs[key] = tf.saved_model.utils.build_tensor_info(value)
             tf.logging.info('Define input: %s, %s, %s' % (
-                key, module.placeholders[key].shape.as_list(),
-                module.placeholders[key].dtype.name))
-        for key in module.placeholders:
+                key, value.shape.as_list(), value.dtype.name))
+        for key, value in list(module.placeholders.items()):
             if key == 'sample_weight':
                 continue
-            set_input(key)
+            if rename_inputs and key in rename_inputs:
+                key = rename_inputs[key]
+            set_input(key, value)
 
         # define outputs
         outputs = {}
@@ -951,12 +959,14 @@ class ExportInference(BaseTask):
             outputs[key] = tf.saved_model.utils.build_tensor_info(value)
             tf.logging.info('Define output: %s, %s, %s' % (
                 key, value.shape.as_list(), value.dtype.name))
-        if not expire_outputs:
-            expire_outputs = []
+        if not ignore_outputs:
+            ignore_outputs = []
         for key, value in (list(module._preds.items()) +
                            list(module._probs.items())):
-            if key in expire_outputs:
+            if key in ignore_outputs:
                 continue
+            if rename_outputs and key in rename_outputs:
+                key = rename_outputs[key]
             set_output(key, value)
 
         # build signature

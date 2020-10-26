@@ -313,6 +313,8 @@ class BaseModule:
         Returns:
             A dict object of model outputs.
         '''
+        # NOTE: This method is reimplemented by `FastBERTClassifier` and
+        # `GPT2LM`.
 
         # Make sure the arguments are correct.
         self.batch_size = batch_size
@@ -363,6 +365,8 @@ class BaseModule:
         Returns:
             A dict object of output metrics.
         '''
+        # NOTE: This method is reimplemented by `FastBERTClassifier` and
+        # `GPT2LM`.
         assert y is not None, '`y` can\'t be None.'
 
         # Make sure the arguments are correct.
@@ -556,15 +560,20 @@ class BaseModule:
     def global_variables(self):
         return self.graph._collections.get('variables', [])
 
-    def export(self, export_dir, expire_outputs=None):
+    def export(self, export_dir, rename_inputs=None, rename_outputs=None,
+               ignore_outputs=None):
         ''' Export model into SavedModel files.
 
         Args:
             export_dir: str. Directory to which the model is saved.
-            expire_outputs: list. Name of outputs to expire.
+            rename_inputs: dict. Mapping of original name to target name.
+            rename_outputs: dict. Mapping of original name to target name.
+            ignore_outputs: list. Name of outputs to ignore.
         Returns:
             None
         '''
+        # NOTE: This method is reimplemented by `FastBERTClassifier` and
+        # `GPT2LM`.
         tf.gfile.MakeDirs(export_dir)
 
         # Make sure necessary arguments are on spot.
@@ -586,7 +595,8 @@ class BaseModule:
         # Build the graph, and then run.
         with self.graph.as_default(), \
                 tf.variable_scope('', reuse=tf.AUTO_REUSE):
-            self._build('export').run(export_dir, expire_outputs)
+            self._build('export').run(
+                export_dir, rename_inputs, rename_outputs, ignore_outputs)
 
     @abstractmethod
     def convert(self, *args, **kwargs):

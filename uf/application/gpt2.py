@@ -86,12 +86,16 @@ class GPT2LM(LMModule):
         return super(LMModule, self).predict(
             X, X_tokenized, batch_size)
 
-    def export(self, export_dir, given=1):
+    def export(self, export_dir, given=1,
+               rename_inputs=None, rename_outputs=None, ignore_outputs=None):
         ''' Export model into SavedModel files.
 
         Args:
             export_dir: str. Directory to which the model is saved.
             given: int. The number of already known tokens.
+            rename_inputs: dict. Mapping of original name to target name.
+            rename_outputs: dict. Mapping of original name to target name.
+            ignore_outputs: list. Name of outputs to ignore.
         Returns:
             None
         '''
@@ -100,7 +104,8 @@ class GPT2LM(LMModule):
             self._given = given
             self._graph_mode = None
 
-        return super(LMModule, self).export(export_dir)
+        return super(LMModule, self).export(
+            export_dir, rename_inputs, rename_outputs, ignore_outputs)
 
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
                 is_training=False):

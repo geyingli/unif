@@ -1489,6 +1489,7 @@ class BERTMRC(BERTClassifier, MRCModule):
     def _convert_y(self, y, input_ids, tokenized=False):
         label_ids = []
 
+        invalid_ids = []
         for ex_id, (_y, _input_ids) in enumerate(zip(y, input_ids)):
             if not _y:
                 label_ids.append([0, 0])
@@ -1511,16 +1512,19 @@ class BERTMRC(BERTClassifier, MRCModule):
             start_position = utils.find_boyer_moore(
                 _input_ids, _answer_ids)
             if start_position == -1:
-                tf.logging.warning(
-                    'Failed to find the mapping of answer to inputs at '
-                    'line %d. A possible reason is that the answer span '
-                    'is truncated due to the `max_seq_length` setting.'
-                    % (ex_id))
                 label_ids.append([0, 0])
+                invalid_ids.append(ex_id)
                 continue
 
             end_position = start_position + len(_answer_ids) - 1
             label_ids.append([start_position, end_position])
+
+        if invalid_ids:
+            tf.logging.warning(
+                'Failed to find the mapping of answer to inputs at '
+                'line %s. A possible reason is that the answer spans '
+                'are truncated due to the `max_seq_length` setting.'
+                % invalid_ids)
 
         return label_ids
 

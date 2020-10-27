@@ -124,6 +124,7 @@ class TinyBERTCLSDistillor(BaseDecoder):
 
     def _get_embedding_loss(self, teacher, student, bert_config, weights):
         teacher_embedding = teacher.get_embedding_output()
+        teacher_embedding = tf.stop_gradient(teacher_embedding)
         student_embedding = student.get_embedding_output()
         with tf.variable_scope('embedding_loss'):
             linear_trans = tf.layers.dense(
@@ -139,6 +140,8 @@ class TinyBERTCLSDistillor(BaseDecoder):
     def _get_attention_loss(self, teacher, student,
                             bert_config, student_config, weights):
         teacher_attention_scores = teacher.get_attention_scores()
+        teacher_attention_scores = [tf.stop_gradient(value)
+                                    for value in teacher_attention_scores]
         student_attention_scores = student.get_attention_scores()
         num_teacher_hidden_layers = bert_config.num_hidden_layers
         num_student_hidden_layers = student_config.num_hidden_layers
@@ -157,6 +160,8 @@ class TinyBERTCLSDistillor(BaseDecoder):
     def _get_hidden_loss(self, teacher, student,
                          bert_config, student_config, weights):
         teacher_hidden_layers = teacher.all_encoder_layers
+        teacher_hidden_layers = [tf.stop_gradient(value)
+                                 for value in teacher_hidden_layers]
         student_hidden_layers = student.all_encoder_layers
         num_teacher_hidden_layers = bert_config.num_hidden_layers
         num_student_hidden_layers = student_config.num_hidden_layers
@@ -178,6 +183,7 @@ class TinyBERTCLSDistillor(BaseDecoder):
 
     def _get_pred_loss(self, teacher_logits, student_logits, weights):
         teacher_probs = tf.nn.softmax(teacher_logits, axis=-1)
+        teacher_probs = tf.stop_gradient(teacher_probs)
         student_log_probs = tf.nn.log_softmax(student_logits, axis=-1)
         pred_loss = (
             - tf.reduce_sum(teacher_probs * student_log_probs, axis=-1) *

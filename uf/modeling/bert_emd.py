@@ -133,6 +133,8 @@ class BERTEMDCLSDistillor(TinyBERTCLSDistillor):
     def _get_attention_emd(self, teacher, student,
                            sample_weight, emd_temporature):
         teacher_attention_scores = teacher.get_attention_scores()
+        teacher_attention_scores = [tf.stop_gradient(value)
+                                    for value in teacher_attention_scores]
         student_attention_scores = student.get_attention_scores()
         M = len(teacher_attention_scores)
         N = len(student_attention_scores)
@@ -205,6 +207,8 @@ class BERTEMDCLSDistillor(TinyBERTCLSDistillor):
     def _get_hidden_emd(self, teacher, student,
                         bert_config, sample_weight, emd_temporature):
         teacher_hidden_layers = teacher.all_encoder_layers
+        teacher_hidden_layers = [tf.stop_gradient(value)
+                                 for value in teacher_hidden_layers]
         student_hidden_layers = student.all_encoder_layers
         M = len(teacher_hidden_layers)
         N = len(student_hidden_layers)
@@ -281,6 +285,7 @@ class BERTEMDCLSDistillor(TinyBERTCLSDistillor):
     def _get_pred_loss(self, teacher_logits, student_logits, weights,
                        pred_temporature):
         teacher_probs = tf.nn.softmax(teacher_logits, axis=-1)
+        teacher_probs = tf.stop_gradient(teacher_probs)
         student_log_probs = \
             tf.nn.log_softmax(student_logits, axis=-1) / pred_temporature
         pred_loss = (

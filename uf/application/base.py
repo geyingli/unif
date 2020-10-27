@@ -132,16 +132,20 @@ class MRCModule(BaseModule):
     ''' Application class of machine reading comprehension (MRC). '''
 
     def _get_em_and_f1(self, preds, labels):
-        em = 0
+        em, em_base = 0, 0
         tp, fp, fn = 0, 0, 0
         for _preds, _labels in zip(preds, labels):
             start_pred, end_pred = int(_preds[0]), int(_preds[1])
             start_label, end_label = int(_labels[0]), int(_labels[1])
 
+            # no answer label
+            if start_label > 0:
+                em_base += 1
+
             # no answer prediction
             if start_pred == 0 and end_pred == 0:
-                if start_label == 0:
-                    em += 1
+                if start_label > 0:
+                    fn += (end_label + 1 - start_label)
                 continue
 
             # invalid prediction
@@ -155,17 +159,18 @@ class MRCModule(BaseModule):
                 _fp = end_pred + 1 - start_pred
                 _fn = end_label + 1 - start_label
             else:
-                tp += max(0, end_pred + 1 - start_label)
+                tp += (min(end_pred, end_label) + 1 -
+                       max(start_pred, start_label))
                 _fp = (max(0, end_pred - end_label) +
                        max(0, start_label - start_pred))
                 _fn = (max(0, start_pred - start_label) +
                        max(0, end_label - end_pred))
-            if _fp + _fn == 0:
-                em += 1
             fp += _fp
             fn += _fn
+            if _fp + _fn == 0:
+                em += 1
 
-        exact_match = em / len(labels)
+        exact_match = em / (em_base + 1e-6)
         precision = tp / (tp + fp + 1e-6)
         recall = tp / (tp + fn + 1e-6)
         f1 = 2 * precision * recall / (precision + recall + 1e-6)

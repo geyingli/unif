@@ -105,6 +105,7 @@ print(model.predict(X))
 | `ELECTRASeqClassifier` 		| 序列标注 | 每一个 token 都有唯一的类别 |
 | `TinyBERTClassifier` 		| 模型蒸馏 | 可蒸馏 BERTClassifier、RoBERTaClassifier 及 ELECTRAClassifier |
 | `FastBERTClassifier` 		| 模型蒸馏 | 可蒸馏 BERTClassifier、RoBERTaClassifier 及 ELECTRAClassifier |
+| `BERTEMDClassifier` 		| 模型蒸馏 | 可蒸馏 BERTClassifier、RoBERTaClassifier 及 ELECTRAClassifier |
 
 ### 公开榜单评测
 

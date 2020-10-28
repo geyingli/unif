@@ -1,4 +1,4 @@
-# coding:=utf-8
+em# coding:=utf-8
 # Copyright 2020 Tencent. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -649,6 +649,8 @@ class BaseModule:
         # training and inference are supported. Temporarily
         # not support running on TPUs.
         if work == 'fit':
+            if 'EMD' in self.__class__.__name__:
+                return processing.EMDTraining(self, **kwargs)
             if kwargs.get('adversarial'):
                 return processing.AdversarialTraining(self, **kwargs)
             return processing.BasicTraining(self, **kwargs)

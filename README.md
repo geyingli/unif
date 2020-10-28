@@ -107,6 +107,7 @@ Available APIs include:
 | `ELECTRASeqClassifier` 		| Sequence Labeling | Each token belongs to one single class |
 | `TinyBERTClassifier` 		| Knowledge Distillation | Support distillation for all BERTClassifier, RoBERTaClassifier and ELECTRAClassifier |
 | `FastBERTClassifier` 		| Knowledge Distillation | Support distillation for all BERTClassifier, RoBERTaClassifier and ELECTRAClassifier |
+| `BERTEMDClassifier` 		| Knowledge Distillation | Support distillation for all BERTClassifier, RoBERTaClassifier and ELECTRAClassifier |
 
 ### Performance on Public Leaderboards
 

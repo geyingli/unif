@@ -100,27 +100,55 @@ class BERTEMDCLSDistillor(TinyBERTCLSDistillor):
             embedding_loss = self._get_embedding_loss(
                 teacher, student, bert_config, weights)
 
+            # emd
+            M = bert_config.num_hidden_layers
+            N = student_config.num_hidden_layers
+            with tf.variable_scope('emd'):
+                teacher_weight = tf.get_variable(
+                    'teacher_weight', shape=[M],
+                    initializer=tf.constant_initializer(1 / M),
+                    trainable=False)
+                student_weight = tf.get_variable(
+                    'student_weight', shape=[N],
+                    initializer=tf.constant_initializer(1 / N),
+                    trainable=False)
+                self.teacher_weight = teacher_weight
+                self.student_weight = student_weight
+
             # attention emd
-            (attention_emd, update_attention_weight_op) = \
+            (attention_emd, new_attention_teacher_weight,
+             new_attention_student_weight) = \
                 self._get_attention_emd(
-                    teacher, student, weights, emd_temporature)
+                    teacher, student, teacher_weight, student_weight,
+                    weights, emd_temporature)
 
             # hidden emd
-            (hidden_emd, update_hidden_weight_op) = \
+            (hidden_emd, new_hidden_teacher_weight,
+             new_hidden_student_weight) = \
                 self._get_hidden_emd(
-                    teacher, student,
+                    teacher, student, teacher_weight, student_weight,
                     bert_config, weights, emd_temporature)
+
+            # update weights
+            new_teacher_weight = \
+                (new_attention_teacher_weight + new_hidden_teacher_weight) / 2
+            new_student_weight = \
+                (new_attention_student_weight + new_hidden_student_weight) / 2
+            update_teacher_weight_op = tf.assign(
+                teacher_weight, new_teacher_weight)
+            update_student_weight_op = tf.assign(
+                student_weight, new_student_weight)
 
             # prediction loss
             pred_loss = self._get_pred_loss(
                 teacher_logits, student_logits, weights, pred_temporature)
 
             # sum up
-            with tf.control_dependencies([update_attention_weight_op,
-                                          update_hidden_weight_op]):
-                distill_loss = (
-                    beta * (embedding_loss + attention_emd + hidden_emd) +
-                    pred_loss)
+            with tf.control_dependencies([update_teacher_weight_op,
+                                          update_student_weight_op]):
+                distill_loss = \
+                    beta * (embedding_loss + attention_emd + hidden_emd) + \
+                    pred_loss
             self.total_loss = distill_loss
             self.losses['losses'] = distill_loss
 
@@ -131,6 +159,7 @@ class BERTEMDCLSDistillor(TinyBERTCLSDistillor):
             self.preds['preds'] = tf.argmax(student_probs, axis=-1)
 
     def _get_attention_emd(self, teacher, student,
+                           teacher_weight, student_weight,
                            sample_weight, emd_temporature):
         teacher_attention_scores = teacher.get_attention_scores()
         teacher_attention_scores = [tf.stop_gradient(value)
@@ -143,14 +172,6 @@ class BERTEMDCLSDistillor(TinyBERTCLSDistillor):
             flow = tf.get_variable(
                 'flow', shape=[M, N],
                 initializer=tf.constant_initializer(1 / M / N),
-                trainable=False)
-            teacher_weight = tf.get_variable(
-                'teacher_weight', shape=[M],
-                initializer=tf.constant_initializer(1 / M),
-                trainable=False)
-            student_weight = tf.get_variable(
-                'student_weight', shape=[N],
-                initializer=tf.constant_initializer(1 / N),
                 trainable=False)
 
             # MSE
@@ -176,35 +197,27 @@ class BERTEMDCLSDistillor(TinyBERTCLSDistillor):
                             tf.reduce_sum(distance, axis=0) /
                             (student_weight + 1e-6))
 
-            # update weights
+            # new weights
             new_teacher_weight = tf.where(
-                teacher_cost != 0,
+                teacher_cost > 1e-12,
                 tf.reduce_sum(teacher_cost) / (teacher_cost + 1e-6),
-                teacher_cost)
+                teacher_weight)
             new_student_weight = tf.where(
-                student_cost != 0,
+                student_cost > 1e-12,
                 tf.reduce_sum(student_cost) / (student_cost + 1e-6),
-                student_cost)
+                student_weight)
             new_teacher_weight = tf.nn.softmax(
                 new_teacher_weight / emd_temporature)
             new_student_weight = tf.nn.softmax(
                 new_student_weight / emd_temporature)
-            update_teacher_weight_op = tf.assign(
-                teacher_weight, new_teacher_weight)
-            update_student_weight_op = tf.assign(
-                student_weight, new_student_weight)
-            with tf.control_dependencies([update_teacher_weight_op,
-                                          update_student_weight_op]):
-                update_attention_weight_op = tf.no_op()
 
         self.attention_flow = flow
         self.attention_distance = distance
-        self.attention_teacher_weight = teacher_weight
-        self.attention_student_weight = student_weight
         attention_emd = tf.reduce_sum(flow * distance)
-        return attention_emd, update_attention_weight_op
+        return attention_emd, new_teacher_weight, new_student_weight
 
     def _get_hidden_emd(self, teacher, student,
+                        teacher_weight, student_weight,
                         bert_config, sample_weight, emd_temporature):
         teacher_hidden_layers = teacher.all_encoder_layers
         teacher_hidden_layers = [tf.stop_gradient(value)
@@ -217,14 +230,6 @@ class BERTEMDCLSDistillor(TinyBERTCLSDistillor):
             flow = tf.get_variable(
                 'flow', shape=[M, N],
                 initializer=tf.constant_initializer(1 / M / N),
-                trainable=False)
-            teacher_weight = tf.get_variable(
-                'teacher_weight', shape=[M],
-                initializer=tf.constant_initializer(1 / M),
-                trainable=False)
-            student_weight = tf.get_variable(
-                'student_weight', shape=[N],
-                initializer=tf.constant_initializer(1 / N),
                 trainable=False)
 
             # MSE
@@ -254,33 +259,24 @@ class BERTEMDCLSDistillor(TinyBERTCLSDistillor):
                             tf.reduce_sum(distance, axis=0) /
                             (student_weight + 1e-6))
 
-            # update weights
+            # new weights
             new_teacher_weight = tf.where(
-                teacher_cost != 0,
+                teacher_cost > 1e-12,
                 tf.reduce_sum(teacher_cost) / (teacher_cost + 1e-6),
-                teacher_cost)
+                teacher_weight)
             new_student_weight = tf.where(
-                student_cost != 0,
+                student_cost > 1e-12,
                 tf.reduce_sum(student_cost) / (student_cost + 1e-6),
-                student_cost)
+                student_weight)
             new_teacher_weight = tf.nn.softmax(
                 new_teacher_weight / emd_temporature)
             new_student_weight = tf.nn.softmax(
                 new_student_weight / emd_temporature)
-            update_teacher_weight_op = tf.assign(
-                teacher_weight, new_teacher_weight)
-            update_student_weight_op = tf.assign(
-                student_weight, new_student_weight)
-            with tf.control_dependencies([update_teacher_weight_op,
-                                          update_student_weight_op]):
-                update_hidden_weight_op = tf.no_op()
 
         self.hidden_flow = flow
         self.hidden_distance = distance
-        self.hidden_teacher_weight = teacher_weight
-        self.hidden_student_weight = student_weight
         hidden_emd = tf.reduce_sum(flow * distance)
-        return hidden_emd, update_hidden_weight_op
+        return hidden_emd, new_teacher_weight, new_student_weight
 
     def _get_pred_loss(self, teacher_logits, student_logits, weights,
                        pred_temporature):
@@ -297,10 +293,8 @@ class BERTEMDCLSDistillor(TinyBERTCLSDistillor):
     def get_emd_tensors(self):
         return [self.attention_flow,
                 self.attention_distance,
-                self.attention_teacher_weight,
-                self.attention_student_weight,
                 self.hidden_flow,
                 self.hidden_distance,
-                self.hidden_teacher_weight,
-                self.hidden_student_weight]
+                self.teacher_weight,
+                self.student_weight,]
 

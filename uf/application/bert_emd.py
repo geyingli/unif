@@ -43,7 +43,7 @@ class BERTEMDClassifier(TinyBERTClassifier, ClassifierModule):
                  num_hidden_layers=4,
                  pred_temporature=1.0,
                  emd_temporature=1.0,
-                 beta=0.01,
+                 beta=1.0,
                  do_lower_case=True,
                  truncate_method='LIFO'):
         super(ClassifierModule, self).__init__(

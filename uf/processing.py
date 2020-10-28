@@ -745,19 +745,13 @@ class EMDTraining(BasicTraining):
         feed_dict = self._build_feed_dict()
         as_feature = True if self.from_tfrecords else False
         (emd_with_flow,
-         attention_flow, attention_distance,
-         attention_teacher_weight, attention_student_weight,
-         hidden_flow, hidden_distance,
-         hidden_teacher_weight, hidden_student_weight) = module._emd_tensors
+         attention_flow, attention_distance, hidden_flow, hidden_distance,
+         teacher_weight, student_weight) = module._emd_tensors
 
         output_arrays = module.sess.run(
             module._get_fit_ops(as_feature) + [
-                attention_distance,
-                attention_teacher_weight,
-                attention_student_weight,
-                hidden_distance,
-                hidden_teacher_weight,
-                hidden_student_weight],
+                attention_distance, hidden_distance,
+                teacher_weight, student_weight],
             feed_dict=feed_dict)
 
         # print
@@ -785,17 +779,16 @@ class EMDTraining(BasicTraining):
             module.sess.run(module._update_tilda_op)
 
         # EMD: update weights
-        (_attention_distance,
-         _attention_teacher_weight, _attention_student_weight,
-         _hidden_distance,
-         _hidden_teacher_weight, _hidden_student_weight) = output_arrays[-6:]
+        (_attention_distance, _hidden_distance,
+         _teacher_weight, _student_weight) = output_arrays[-4:]
 
-        def update(flow, teacher_weight, student_weight, distance):
-            M = len(teacher_weight)
-            N = len(student_weight)
+        M = len(_teacher_weight)
+        N = len(_student_weight)
+        _teacher_weight = np.concatenate((_teacher_weight, np.zeros(N)))
+        _student_weight = np.concatenate((np.zeros(M), _student_weight))
 
-            _teacher_weight = np.concatenate((teacher_weight, np.zeros(N)))
-            _student_weight = np.concatenate((np.zeros(M), student_weight))
+        def update(flow, distance):
+
             _distance = np.zeros((M + N, M + N))
             _distance[:M, M:] = distance
             _distance[M:, :M] = np.transpose(distance)
@@ -807,10 +800,10 @@ class EMDTraining(BasicTraining):
             update_flow_op = tf.assign(flow, _flow)
             module.sess.run(update_flow_op)
 
-        update(attention_flow, _attention_teacher_weight,
-               _attention_student_weight, _attention_distance)
-        update(hidden_flow, _hidden_teacher_weight,
-               _hidden_student_weight, _hidden_distance)
+        tf.logging.info('teacher_weight: %s, student_weight: %s'
+                        % (_teacher_weight[:M], _student_weight[M:]))
+        update(attention_flow, _attention_distance)
+        update(hidden_flow, _hidden_distance)
 
         # save
         if module.output_dir and step % save_per_steps == 0:

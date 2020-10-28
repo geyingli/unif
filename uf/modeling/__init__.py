@@ -21,7 +21,6 @@ from .electra import ELECTRA
 from .gpt2 import GPT2
 from .tiny_bert import TinyBERTCLSDistillor
 from .fast_bert import FastBERTCLSDistillor
-from .bert_emd import BERTEMDCLSDistillor
 from .base import CLSDecoder, BinaryCLSDecoder, SeqCLSDecoder, MRCDecoder
 from .crf import CRFDecoder
 from .transformer import Transformer
@@ -37,7 +36,6 @@ __all__ = [
     'GPT2',
     'TinyBERTCLSDistillor',
     'FastBERTCLSDistillor',
-    'BERTEMDCLSDistillor',
     'CLSDecoder',
     'BinaryCLSDecoder',
     'SeqCLSDecoder',

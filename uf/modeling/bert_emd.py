@@ -179,9 +179,16 @@ class BERTEMDCLSDistillor(TinyBERTCLSDistillor):
             for m in range(M):
                 cols = []
                 for n in range(N):
+                    teacher_matrix = tf.where(
+                        teacher_attention_scores[m] < -1e2,
+                        tf.zeros_like(teacher_attention_scores[m]),
+                        teacher_attention_scores[m])
+                    student_matrix = tf.where(
+                        student_attention_scores[n] < -1e2,
+                        tf.zeros_like(student_attention_scores[n]),
+                        student_attention_scores[n])
                     mse = tf.losses.mean_squared_error(
-                        teacher_attention_scores[m],
-                        student_attention_scores[n],
+                        teacher_matrix, student_matrix,
                         weights=tf.reshape(sample_weight, [-1, 1, 1, 1]))
                     col = tf.reshape(mse, [1, 1])
                     cols.append(col)

@@ -13,8 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__version__ = '2.1.40'
-__date__ = '10/27/2020'
+__version__ = '2.1.41'
+__date__ = '10/28/2020'
 
 
 from .utils import get_checkpoint_path

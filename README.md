@@ -10,7 +10,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-beta2.1.41-blue">
+        <img src="https://img.shields.io/badge/version-beta2.1.42-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-≥1.11.0-yellow">
@@ -87,6 +87,7 @@ Available APIs include:
 | `BERTCRFCascadeNER` | Named Entity Recognition | Recognize and classify entities through BIESO labels and Viterbi decoding |
 | `TransformerMT` | Machine Translation | Sequence in and sequence out, with shared vocabulary |
 | `BERTMRC` 		| Machine Reading Comprehension | Extract answer span from inputs |
+| `BERTVerifierMRC` | Machine Reading Comprehension | Extract answer span from inputs, with a verifier assisted to judge whether the question is answerable |
 | `RoBERTaMRC` 		| Machine Reading Comprehension | Extract answer span from inputs |
 | `ALBERTMRC` 		| Machine Reading Comprehension | Extract answer span from inputs |
 | `ELECTRAMRC` 		| Machine Reading Comprehension | Extract answer span from inputs |

@@ -1654,6 +1654,329 @@ class BERTMRC(BERTClassifier, MRCModule):
 
 
 
+class BERTVerifierMRC(BERTMRC, MRCModule):
+    ''' Machine reading comprehension on BERT, with a external front
+    verifier. '''
+    _INFER_ATTRIBUTES = BERTMRC._INFER_ATTRIBUTES
+
+    def __init__(self,
+                 config_file,
+                 vocab_file,
+                 max_seq_length=256,
+                 init_checkpoint=None,
+                 output_dir=None,
+                 gpu_ids=None,
+                 do_lower_case=True,
+                 drop_pooler=False,
+                 truncate_method='longer-FO'):
+        super(MRCModule, self).__init__(
+            init_checkpoint, output_dir, gpu_ids)
+
+        self.batch_size = 0
+        self.max_seq_length = max_seq_length
+        self.truncate_method = truncate_method
+        self._drop_pooler = drop_pooler
+        self.__init_args__ = locals()
+
+        self.bert_config = get_bert_config(config_file)
+        self.tokenizer = get_word_piece_tokenizer(vocab_file, do_lower_case)
+        self._key_to_depths = get_key_to_depths(
+            self.bert_config.num_hidden_layers)
+
+    def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
+                is_training=False):
+        self._assert_legal(X, y, sample_weight, X_tokenized)
+
+        if is_training:
+            assert y is not None, '`y` can\'t be None.'
+        if '[CLS]' not in self.tokenizer.vocab:
+            self.tokenizer.add('[CLS]')
+            self.bert_config.n_vocab += 1
+        if '[SEP]' not in self.tokenizer.vocab:
+            self.tokenizer.add('[SEP]')
+            self.bert_config.n_vocab += 1
+
+        n_inputs = None
+        data = {}
+
+        # convert X
+        if X or X_tokenized:
+            tokenized = False if X else X_tokenized
+            input_ids, input_mask, segment_ids = self._convert_X(
+                X_tokenized if tokenized else X, tokenized=tokenized)
+            data['input_ids'] = np.array(input_ids, dtype=np.int32)
+            data['input_mask'] = np.array(input_mask, dtype=np.int32)
+            data['segment_ids'] = np.array(segment_ids, dtype=np.int32)
+            n_inputs = len(input_ids)
+
+            if n_inputs < self.batch_size:
+                self.batch_size = max(n_inputs, len(self._gpu_ids))
+
+        # convert y
+        if y:
+            label_ids, has_answer = self._convert_y(y, input_ids, tokenized)
+            data['label_ids'] = np.array(label_ids, dtype=np.int32)
+            data['has_answer'] = np.array(has_answer, dtype=np.int32)
+
+        # convert sample_weight
+        if is_training or y:
+            sample_weight = self._convert_sample_weight(
+                sample_weight, n_inputs)
+            data['sample_weight'] = np.array(sample_weight, dtype=np.float32)
+
+        return data
+
+    def _convert_y(self, y, input_ids, tokenized=False):
+        label_ids = []
+        has_answer = []
+
+        invalid_ids = []
+        for ex_id, (_y, _input_ids) in enumerate(zip(y, input_ids)):
+            if not _y:
+                label_ids.append([0, 0])
+                has_answer.append(0)
+                continue
+
+            if isinstance(_y, str):
+                _answer_tokens = self.tokenizer.tokenize(_y)
+                _answer_ids = self.tokenizer.convert_tokens_to_ids(
+                    _answer_tokens)
+            elif isinstance(_y, list):
+                assert tokenized, (
+                    '%s does not support multiple answers.'
+                    % self.__class__.__name__)
+                _answer_ids = self.tokenizer.convert_tokens_to_ids(
+                    _y)
+            else:
+                raise ValueError(
+                    '`y` should be a list of answer strings.')
+
+            start_position = utils.find_boyer_moore(
+                _input_ids, _answer_ids)
+            if start_position == -1:
+                label_ids.append([0, 0])
+                has_answer.append(0)
+                invalid_ids.append(ex_id)
+                continue
+
+            end_position = start_position + len(_answer_ids) - 1
+            label_ids.append([start_position, end_position])
+            has_answer.append(1)
+
+        if invalid_ids:
+            tf.logging.warning(
+                'Failed to find the mapping of answer to inputs at '
+                'line %s. A possible reason is that the answer spans '
+                'are truncated due to the `max_seq_length` setting.'
+                % invalid_ids)
+
+        return label_ids, has_answer
+
+    def _set_placeholders(self, target, on_export=False):
+        self.placeholders = {
+            'input_ids': utils.get_placeholder(
+                target, 'input_ids',
+                [None, self.max_seq_length], tf.int32),
+            'input_mask': utils.get_placeholder(
+                target, 'input_mask',
+                [None, self.max_seq_length], tf.int32),
+            'segment_ids': utils.get_placeholder(
+                target, 'segment_ids',
+                [None, self.max_seq_length], tf.int32),
+            'label_ids': utils.get_placeholder(
+                target, 'label_ids', [None, 2], tf.int32),
+            'has_answer': utils.get_placeholder(
+                target, 'has_answer', [None], tf.int32),
+        }
+        if not on_export:
+            self.placeholders['sample_weight'] = \
+                utils.get_placeholder(
+                    target, 'sample_weight',
+                    [None], tf.float32)
+
+    def _forward(self, is_training, split_placeholders, **kwargs):
+
+        encoder = BERTEncoder(
+            bert_config=self.bert_config,
+            is_training=is_training,
+            input_ids=split_placeholders['input_ids'],
+            input_mask=split_placeholders['input_mask'],
+            segment_ids=split_placeholders['segment_ids'],
+            scope='bert',
+            drop_pooler=self._drop_pooler,
+            **kwargs)
+        verifier = CLSDecoder(
+            is_training=is_training,
+            input_tensor=encoder.get_pooled_output(),
+            label_ids=split_placeholders['has_answer'],
+            label_size=2,
+            sample_weight=split_placeholders.get('sample_weight'),
+            scope='cls/verifier',
+            **kwargs)
+        decoder = MRCDecoder(
+            is_training=is_training,
+            input_tensor=encoder.get_sequence_output(),
+            label_ids=split_placeholders['label_ids'],
+            sample_weight=split_placeholders.get('sample_weight'),
+            scope='mrc',
+            **kwargs)
+
+        (verifier_total_loss, verifier_losses, verifier_probs,
+         verifier_preds) = verifier.get_forward_outputs()
+        (decoder_total_loss, decoder_losses, decoder_probs,
+         decoder_preds) = decoder.get_forward_outputs()
+
+        total_loss = verifier_total_loss + decoder_total_loss
+        losses = collections.OrderedDict()
+        probs = collections.OrderedDict()
+        preds = collections.OrderedDict()
+        for key in verifier_losses:
+            losses['verifier_' + key] = verifier_losses[key]
+        for key in verifier_probs:
+            probs['verifier_' + key] = verifier_probs[key]
+        for key in verifier_preds:
+            preds['verifier_' + key] = verifier_preds[key]
+        for key in decoder_losses:
+            losses['mrc_' + key] = decoder_losses[key]
+        for key in decoder_probs:
+            probs['mrc_' + key] = decoder_probs[key]
+        for key in decoder_preds:
+            preds['mrc_' + key] = decoder_preds[key]
+
+        return (total_loss, losses, probs, preds)
+
+    def _get_fit_ops(self, as_feature=False):
+        ops = [self._train_op,
+               self._preds['verifier_preds'],
+               self._losses['verifier_losses'],
+               self._preds['mrc_preds'],
+               self._losses['mrc_losses']]
+        if as_feature:
+            ops.extend([self.placeholders['label_ids']])
+            ops.extend([self.placeholders['has_answer']])
+        return ops
+
+    def _get_fit_info(self, output_arrays, feed_dict, as_feature=False):
+
+        if as_feature:
+            batch_labels = output_arrays[-2]
+            batch_has_answer = output_arrays[-1]
+        else:
+            batch_labels = feed_dict[self.placeholders['label_ids']]
+            batch_has_answer = feed_dict[
+                self.placeholders['has_answer']]
+
+        # verifier accuracy
+        batch_has_answer_preds = output_arrays[1]
+        has_answer_accuracy = np.mean(
+            batch_has_answer_preds == batch_has_answer)
+
+        # verifier loss
+        batch_verifier_losses = output_arrays[2]
+        verifier_loss = np.mean(batch_verifier_losses)
+
+        # mrc exact match & f1
+        batch_preds = output_arrays[3]
+        for i in range(len(batch_has_answer_preds)):
+            if batch_has_answer_preds[i] == 0:
+                batch_preds[i] = 0
+        exact_match, f1 = self._get_em_and_f1(batch_preds, batch_labels)
+
+        # mrc loss
+        batch_losses = output_arrays[4]
+        loss = np.mean(batch_losses)
+
+        info = ''
+        info += ', has_ans_accuracy %.4f' % has_answer_accuracy
+        info += ', exact_match %.4f' % exact_match
+        info += ', f1 %.4f' % f1
+        info += ', verifier_loss %.6f' % verifier_loss
+        info += ', mrc_loss %.6f' % loss
+
+        return info
+
+    def _get_predict_ops(self):
+        return [self._probs['verifier_probs'],
+                self._preds['verifier_preds'],
+                self._probs['mrc_probs'],
+                self._preds['mrc_preds']]
+
+    def _get_predict_outputs(self, batch_outputs):
+        n_inputs = len(list(self.data.values())[0])
+        output_arrays = list(zip(*batch_outputs))
+
+        # verifier preds & probs
+        verifier_probs = utils.transform(output_arrays[0], n_inputs)
+        verifier_preds = utils.transform(output_arrays[1], n_inputs)
+
+        # mrc preds & probs
+        preds = []
+        probs = utils.transform(output_arrays[2], n_inputs)
+        mrc_preds = utils.transform(output_arrays[3], n_inputs)
+        for ex_id, _preds in enumerate(mrc_preds):
+            start_pred, end_pred = int(_preds[0]), int(_preds[1])
+            if verifier_preds == 0 or start_pred == 0 or end_pred == 0 \
+                    or start_pred > end_pred:
+                preds.append(None)
+                continue
+
+            _input_ids = self.data['input_ids'][ex_id]
+            _answer_ids = _input_ids[start_pred: end_pred + 1]
+            _answer_tokens = self.tokenizer.convert_ids_to_tokens(
+                _answer_ids)
+            _answer_text = utils.convert_tokens_to_text(_answer_tokens)
+            preds.append(_answer_text)
+
+        outputs = {}
+        outputs['verifier_probs'] = verifier_probs
+        outputs['verifier_preds'] = verifier_preds
+        outputs['mrc_probs'] = probs
+        outputs['mrc_preds'] = preds
+
+        return outputs
+
+    def _get_score_ops(self):
+        return [self._preds['verifier_preds'],
+                self._losses['verifier_losses'],
+                self._preds['mrc_preds'],
+                self._losses['mrc_losses']]
+
+    def _get_score_outputs(self, batch_outputs):
+        n_inputs = len(list(self.data.values())[0])
+        output_arrays = list(zip(*batch_outputs))
+
+        # verifier accuracy
+        has_answer_preds = utils.transform(output_arrays[0], n_inputs)
+        has_answer_accuracy = np.mean(
+            has_answer_preds == self.data['has_answer'])
+
+        # verifier loss
+        batch_verifier_losses = utils.transform(output_arrays[1], n_inputs)
+        verifier_loss = np.mean(batch_verifier_losses)
+
+        # mrc exact match & f1
+        batch_preds = utils.transform(output_arrays[2], n_inputs)
+        for i in range(len(has_answer_preds)):
+            if has_answer_preds[i] == 0:
+                batch_preds[i] = 0
+        exact_match, f1 = self._get_em_and_f1(
+            batch_preds, self.data['label_ids'])
+
+        # mrc loss
+        losses = utils.transform(output_arrays[3], n_inputs)
+        loss = np.mean(losses)
+
+        outputs = {}
+        outputs['has_ans_accuracy'] = has_answer_accuracy
+        outputs['exact_match'] = exact_match
+        outputs['f1'] = f1
+        outputs['verifier_loss'] = verifier_loss
+        outputs['mrc_loss'] = loss
+
+        return outputs
+
+
+
 class BERTLM(LMModule):
     ''' Language modeling on BERT. '''
     _INFER_ATTRIBUTES = {

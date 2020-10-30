@@ -1784,15 +1784,16 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
                 target, 'segment_ids',
                 [None, self.max_seq_length], tf.int32),
             'label_ids': utils.get_placeholder(
-                target, 'label_ids', [None, 2], tf.int32),
+                target, 'label_ids',
+                [None, 2], tf.int32),
             'has_answer': utils.get_placeholder(
-                target, 'has_answer', [None], tf.int32),
+                target, 'has_answer',
+                [None], tf.int32),
         }
         if not on_export:
-            self.placeholders['sample_weight'] = \
-                utils.get_placeholder(
-                    target, 'sample_weight',
-                    [None], tf.float32)
+            self.placeholders['sample_weight'] = utils.get_placeholder(
+                target, 'sample_weight',
+                [None], tf.float32)
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
@@ -1915,7 +1916,7 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
         mrc_preds = utils.transform(output_arrays[3], n_inputs)
         for ex_id, _preds in enumerate(mrc_preds):
             start_pred, end_pred = int(_preds[0]), int(_preds[1])
-            if verifier_preds == 0 or start_pred == 0 or end_pred == 0 \
+            if verifier_preds[ex_id] == 0 or start_pred == 0 or end_pred == 0 \
                     or start_pred > end_pred:
                 preds.append(None)
                 continue
@@ -1951,16 +1952,15 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
             has_answer_preds == self.data['has_answer'])
 
         # verifier loss
-        batch_verifier_losses = utils.transform(output_arrays[1], n_inputs)
-        verifier_loss = np.mean(batch_verifier_losses)
+        verifier_losses = utils.transform(output_arrays[1], n_inputs)
+        verifier_loss = np.mean(verifier_losses)
 
         # mrc exact match & f1
-        batch_preds = utils.transform(output_arrays[2], n_inputs)
+        preds = utils.transform(output_arrays[2], n_inputs)
         for i in range(len(has_answer_preds)):
             if has_answer_preds[i] == 0:
-                batch_preds[i] = 0
-        exact_match, f1 = self._get_em_and_f1(
-            batch_preds, self.data['label_ids'])
+                preds[i] = 0
+        exact_match, f1 = self._get_em_and_f1(preds, self.data['label_ids'])
 
         # mrc loss
         losses = utils.transform(output_arrays[3], n_inputs)

@@ -10,7 +10,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-beta2.1.42-blue">
+        <img src="https://img.shields.io/badge/version-beta2.1.43-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-≥1.11.0-yellow">
@@ -91,6 +91,7 @@ Available APIs include:
 | `RoBERTaMRC` 		| Machine Reading Comprehension | Extract answer span from inputs |
 | `ALBERTMRC` 		| Machine Reading Comprehension | Extract answer span from inputs |
 | `ELECTRAMRC` 		| Machine Reading Comprehension | Extract answer span from inputs |
+| `RetroReaderMRC` | Machine Reading Comprehension | Extract answer span from inputs, with a verifier assisted to judge whether the question is answerable |
 | `BERTClassifier` 		| Single-label Classification | Each sample belongs to one class |
 | `XLNetClassifier` 		| Single-label Classification | Each sample belongs to one class |
 | `RoBERTaClassifier` 		| Single-label Classification | Each sample belongs to one class |

@@ -247,6 +247,7 @@ class MRCDecoder(BaseDecoder):
             logits = tf.transpose(logits, [0, 2, 1])
             probs = tf.nn.softmax(logits, axis=-1, name='probs')
             self.probs['probs'] = probs
+            self.preds['preds'] = tf.argmax(logits, axis=-1)
 
             start_one_hot_labels = tf.one_hot(
                 label_ids[:, 0], depth=seq_length, dtype=tf.float32)
@@ -264,9 +265,3 @@ class MRCDecoder(BaseDecoder):
 
             self.total_loss = tf.reduce_mean(per_example_loss)
             self.losses['losses'] = per_example_loss
-
-            start_preds = tf.expand_dims(
-                tf.argmax(logits[:, 0, :], axis=-1), axis=-1)
-            end_preds = tf.expand_dims(
-                tf.argmax(logits[:, 1, :], axis=-1), axis=-1)
-            self.preds['preds'] = tf.concat([start_preds, end_preds], axis=-1)

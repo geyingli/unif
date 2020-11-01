@@ -1814,11 +1814,17 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
             sample_weight=split_placeholders.get('sample_weight'),
             scope='cls/verifier',
             **kwargs)
+        if is_training:
+            sample_weight = (
+                tf.cast(split_placeholders['has_answer'], tf.float32) *
+                split_placeholders.get('sample_weight'))
+        else:
+            sample_weight = split_placeholders.get('sample_weight')
         decoder = MRCDecoder(
             is_training=is_training,
             input_tensor=encoder.get_sequence_output(),
             label_ids=split_placeholders['label_ids'],
-            sample_weight=split_placeholders.get('sample_weight'),
+            sample_weight=sample_weight,
             scope='mrc',
             **kwargs)
 

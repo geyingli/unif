@@ -37,7 +37,7 @@ class RetroReaderDecoder(BaseDecoder):
                  matching_mechanism='cross-attention',
                  beta_1=0.5,
                  beta_2=0.5,
-                 threshold=0.0,
+                 threshold=1.0,
                  trainable=True,
                  **kwargs):
         super().__init__(**kwargs)
@@ -184,7 +184,8 @@ class RetroReaderDecoder(BaseDecoder):
 
             # rear verification
             v = beta_1 * score_diff + beta_2 * score_ext
-            self.preds['verifier_preds'] = tf.greater(v, threshold)
+            self.preds['verifier_preds'] = \
+                tf.cast(tf.greater(v, threshold), tf.int32)
             self.probs['verifier_probs'] = v
 
             self.total_loss = sketchy_loss + intensive_loss

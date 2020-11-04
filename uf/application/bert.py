@@ -1913,7 +1913,7 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
         output_arrays = list(zip(*batch_outputs))
 
         # verifier preds & probs
-        verifier_probs = utils.transform(output_arrays[0], n_inputs)
+        verifier_probs = utils.transform(output_arrays[0], n_inputs)[:, 1]
         verifier_preds = utils.transform(output_arrays[1], n_inputs)
 
         # mrc preds & probs

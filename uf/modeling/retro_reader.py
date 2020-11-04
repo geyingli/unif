@@ -24,6 +24,7 @@ from . import util
 
 class RetroReaderDecoder(BaseDecoder):
     def __init__(self,
+                 bert_config,
                  is_training,
                  sketchy_encoder,
                  intensive_encoder,
@@ -32,8 +33,6 @@ class RetroReaderDecoder(BaseDecoder):
                  has_answer,
                  sample_weight=None,
                  scope='retro_reader',
-                 hidden_dropout_prob=0.1,
-                 initializer_range=0.02,
                  matching_mechanism='cross-attention',
                  beta_1=0.5,
                  beta_2=0.5,
@@ -53,7 +52,8 @@ class RetroReaderDecoder(BaseDecoder):
                 output_weights = tf.get_variable(
                     'output_weights',
                     shape=[2, hidden_size],
-                    initializer=util.create_initializer(initializer_range),
+                    initializer=util.create_initializer(
+                        bert_config.initializer_range),
                     trainable=trainable)
                 output_bias = tf.get_variable(
                     'output_bias',
@@ -62,8 +62,8 @@ class RetroReaderDecoder(BaseDecoder):
                     trainable=trainable)
 
                 output_layer = util.dropout(
-                    sketchy_output,
-                    hidden_dropout_prob if is_training else 0.0)
+                    sketchy_output, bert_config.hidden_dropout_prob \
+                        if is_training else 0.0)
                 logits = tf.matmul(
                     output_layer, output_weights, transpose_b=True)
                 logits = tf.nn.bias_add(logits, output_bias)
@@ -100,11 +100,13 @@ class RetroReaderDecoder(BaseDecoder):
                             from_tensor=H,
                             to_tensor=H_Q,
                             attention_mask=attention_mask,
-                            num_attention_heads=12,
-                            size_per_head=hidden_size // 12,
+                            num_attention_heads=\
+                                bert_config.num_attention_heads,
+                            size_per_head=\
+                                hidden_size // bert_config.num_attention_heads,
                             attention_probs_dropout_prob=\
-                                hidden_dropout_prob,
-                            initializer_range=initializer_range,
+                                bert_config.hidden_dropout_prob,
+                            initializer_range=bert_config.initializer_range,
                             do_return_2d_tensor=False,
                             batch_size=batch_size,
                             from_max_seq_length=max_seq_length,
@@ -117,7 +119,8 @@ class RetroReaderDecoder(BaseDecoder):
                         output_weights = tf.get_variable(
                             'output_weights',
                             shape=[hidden_size, hidden_size],
-                            initializer=util.create_initializer(initializer_range),
+                            initializer=util.create_initializer(
+                                bert_config.initializer_range),
                             trainable=trainable)
                         output_bias = tf.get_variable(
                             'output_bias',
@@ -138,7 +141,8 @@ class RetroReaderDecoder(BaseDecoder):
                     output_weights = tf.get_variable(
                         'output_weights',
                         shape=[2, hidden_size],
-                        initializer=util.create_initializer(initializer_range),
+                        initializer=util.create_initializer(
+                            bert_config.initializer_range),
                         trainable=trainable)
                     output_bias = tf.get_variable(
                         'output_bias',
@@ -147,11 +151,15 @@ class RetroReaderDecoder(BaseDecoder):
                         trainable=trainable)
 
                     output_layer = util.dropout(
-                        H_prime, hidden_dropout_prob if is_training else 0.0)
-                    output_layer = tf.reshape(output_layer, [-1, hidden_size])
+                        H_prime, bert_config.hidden_dropout_prob \
+                            if is_training else 0.0)
+                    output_layer = tf.reshape(
+                        output_layer,
+                        [batch_size * max_seq_length, hidden_size])
                     logits = tf.matmul(output_layer, output_weights, transpose_b=True)
                     logits = tf.nn.bias_add(logits, output_bias)
-                    logits = tf.reshape(logits, [-1, max_seq_length, 2])
+                    logits = tf.reshape(
+                        logits, [batch_size, max_seq_length, 2])
                     logits = tf.transpose(logits, [0, 2, 1])
                     probs = tf.nn.softmax(logits, axis=-1, name='probs')
 

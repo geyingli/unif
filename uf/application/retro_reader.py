@@ -45,6 +45,7 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
                  matching_mechanism='cross-attention',
                  beta_1=0.5,
                  beta_2=0.5,
+                 threshold=1.0,
                  truncate_method='longer-FO'):
         super(MRCModule, self).__init__(
             init_checkpoint, output_dir, gpu_ids)
@@ -56,6 +57,7 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
         self.beta_2 = beta_2
         self._reading_module = reading_module
         self._matching_mechanism = matching_mechanism
+        self._threshold = threshold
         self.__init_args__ = locals()
 
         if reading_module == 'albert':
@@ -245,6 +247,7 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
         sketchy_encoder = _get_encoder(self._reading_module)
         intensive_encoder = sketchy_encoder    #TODO: experiment with different encoder
         decoder = RetroReaderDecoder(
+            bert_config=self.bert_config,
             is_training=is_training,
             sketchy_encoder=sketchy_encoder,
             intensive_encoder=intensive_encoder,
@@ -256,6 +259,7 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
             matching_mechanism=self._matching_mechanism,
             beta_1=self.beta_1,
             beta_2=self.beta_2,
+            threshold=self._threshold,
             trainable=True,
             **kwargs)
         (total_loss, losses, probs, preds) = decoder.get_forward_outputs()

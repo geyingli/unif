@@ -315,6 +315,46 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
 
         return info
 
+    def _get_predict_ops(self):
+        return [self._probs['verifier_probs'],
+                self._preds['verifier_preds'],
+                self._probs['mrc_probs'],
+                self._preds['mrc_preds']]
+
+    def _get_predict_outputs(self, batch_outputs):
+        n_inputs = len(list(self.data.values())[0])
+        output_arrays = list(zip(*batch_outputs))
+
+        # verifier preds & probs
+        verifier_probs = utils.transform(output_arrays[0], n_inputs)
+        verifier_preds = utils.transform(output_arrays[1], n_inputs)
+
+        # mrc preds & probs
+        preds = []
+        probs = utils.transform(output_arrays[2], n_inputs)
+        mrc_preds = utils.transform(output_arrays[3], n_inputs)
+        for ex_id, _preds in enumerate(mrc_preds):
+            start_pred, end_pred = int(_preds[0]), int(_preds[1])
+            if verifier_preds[ex_id] == 0 or start_pred == 0 or end_pred == 0 \
+                    or start_pred > end_pred:
+                preds.append(None)
+                continue
+
+            _input_ids = self.data['input_ids'][ex_id]
+            _answer_ids = _input_ids[start_pred: end_pred + 1]
+            _answer_tokens = self.tokenizer.convert_ids_to_tokens(
+                _answer_ids)
+            _answer_text = utils.convert_tokens_to_text(_answer_tokens)
+            preds.append(_answer_text)
+
+        outputs = {}
+        outputs['verifier_probs'] = verifier_probs
+        outputs['verifier_preds'] = verifier_preds
+        outputs['mrc_probs'] = probs
+        outputs['mrc_preds'] = preds
+
+        return outputs
+
     def _get_score_ops(self):
         return [self._preds['verifier_preds'],
                 self._preds['mrc_preds'],

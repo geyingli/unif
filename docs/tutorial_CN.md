@@ -30,7 +30,7 @@ help(model)
 
 #### 1.2 从配置快速读取模型
 
-UF 支持缓存模型配置及快速读取，通过 `.cache()` 和 `.load()` 方法来完成。
+UNIF 支持缓存模型配置及快速读取，通过 `.cache()` 和 `.load()` 方法来完成。
 
 ``` python
 # 缓存配置
@@ -66,10 +66,10 @@ help(model.score)
 - sample_weight: list 类型，默认为 None。样本权重，如果为空，则所有样本使用 1.0 的默认权重值
 - batch_size: int 类型，默认为 32。适当增大有利于高效训练，但过高则会导致显存溢出
 - learning_rate: float 类型，默认为 5e-5。影响模型表现的关键参数，推荐对以下取值均进行尝试，5e-5、1e-4、2e-4。通常参数规模越大，学习率越低
-- target_steps: int 类型，默认为 None。预先设定的训练中断点，可在训练进行时跳出进程，进行验证集的评测。如果为正数，则直接设定为目标步数；如果为空，则跑完 total_steps；如果为负，则训练至 `|total_steps| ` 轮，默认值代表训练三轮
+- target_steps: int 类型，默认为 None。预先设定的训练中断点，可在训练进行时跳出进程，进行验证集的评测。如果为正数，则直接设定为目标步数；如果为空，则跑完 total_steps；如果为负，则训练至 `|target_steps| ` 轮，默认值代表训练三轮
 - total_steps: int 类型，默认为 -3。总训练步数，影响学习率的变化。如果为正数，则直接设定为步数上限；如果为空，则自动根据 X 的大小和 batch_size 选择合适的 steps 数量，训练一轮；如果为负，则训练 `|total_steps|` 轮，默认值代表训练三轮
 - warmup_ratio: float 类型，默认为 0.1。总步数的前一定比例采用线性增长的学习率，直到达到 learning_rate 的上限值
-- print_per_secs: int 类型，默认为 60。每一定秒数打印一次训练信息
+- print_per_secs: int 类型，默认为 0.1。每一定秒数打印一次训练信息
 - save_per_steps: int 类型，默认为 1000。每一定步数保存一下 checkpoint 文件到 output_dir 目录
 
 kwargs 承载其他模型特定的条件参数，例如在 `BERTClassifier` 的训练上使用对抗式训练算法，传入 `adversarial`、`epsilon`、`breg_miu` 等参数。详情见下文，第 2.3 小节。
@@ -96,7 +96,7 @@ model.fit(X, y, ..., layerwise_lr_decay_ratio=0.85)
 
 #### 2.3 对抗式训练
 
-对抗式训练算法是非常有效的抗过拟合及增强泛化能力的 trick，在各类场景下都推荐进行尝试。UF 支持五类对抗式训练算法，分别为 FGM, PGD, FreeLB, FreeAT 及 SMART。
+对抗式训练算法是非常有效的抗过拟合及增强泛化能力的 trick，在各类场景下都推荐进行尝试。UNIF 支持五类对抗式训练算法，分别为 FGM, PGD, FreeLB, FreeAT 及 SMART。
 
 ``` python
 # FGM
@@ -165,6 +165,7 @@ model.reinit_from_checkpoint()
 print(model.uninited_vars)
 
 # 保存正确初始化的参数及配置（建议执行，否则下次载入模型需要重复上述步骤）
+assert model.output_dir is not None
 model.cache('代号')
 ```
 
@@ -176,6 +177,7 @@ model.cache('代号')
 
 ``` python
 # 导出 PB 文件到 `output_dir` 下
+assert model.output_dir is not None
 model.export()
 ```
 

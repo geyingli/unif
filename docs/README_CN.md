@@ -1,8 +1,8 @@
-中文 | [English](README.md)
+中文 | [English](../README.md)
 
 <p align="center">
     <br>
-    	<img src="logo.png" style="zoom:70%"/>
+    	<img src="./logo.png" style="zoom:70%"/>
     <br>
 <p>
 <p align="center">
@@ -10,7 +10,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-beta2.1.43-blue">
+        <img src="https://img.shields.io/badge/version-beta2.2.0-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-≥1.11.0-yellow">
@@ -67,7 +67,7 @@ model.fit(X, y)
 print(model.predict(X))
 ```
 
-包括 FAQ 及建模、训练等进一步的指导和说明，见 [tutorial.md](./tutorial.md)。
+包括 FAQ 及建模、训练等进一步的指导和说明，见 [tutorial_CN.md](./tutorial_CN.md)。
 
 ### API
 

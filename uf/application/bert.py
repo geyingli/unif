@@ -1463,8 +1463,9 @@ class BERTMRC(BERTClassifier, MRCModule):
         # convert X
         if X or X_tokenized:
             tokenized = False if X else X_tokenized
-            input_ids, input_mask, segment_ids = self._convert_X(
-                X_tokenized if tokenized else X, tokenized=tokenized)
+            (input_ids, input_mask, segment_ids,
+             doc_ids, doc_text, doc_start) = self._convert_X(
+                 X_tokenized if tokenized else X, tokenized=tokenized)
             data['input_ids'] = np.array(input_ids, dtype=np.int32)
             data['input_mask'] = np.array(input_mask, dtype=np.int32)
             data['segment_ids'] = np.array(segment_ids, dtype=np.int32)
@@ -1475,7 +1476,8 @@ class BERTMRC(BERTClassifier, MRCModule):
 
         # convert y
         if y:
-            label_ids = self._convert_y(y, input_ids, tokenized)
+            label_ids = self._convert_y(
+                y, doc_ids, doc_text, doc_start, tokenized)
             data['label_ids'] = np.array(label_ids, dtype=np.int32)
 
         # convert sample_weight
@@ -1486,42 +1488,144 @@ class BERTMRC(BERTClassifier, MRCModule):
 
         return data
 
-    def _convert_y(self, y, input_ids, tokenized=False):
+    def _convert_X(self, X_target, tokenized):
+
+        # tokenize input texts
+        segment_input_tokens = []
+        for ex_id, example in enumerate(X_target):
+            try:
+                segment_input_tokens.append(
+                    self._convert_x(example, tokenized))
+            except Exception:
+                tf.logging.warning(
+                    'Wrong input format (line %d): \'%s\'. '
+                    % (ex_id, example))
+
+        input_ids = []
+        input_mask = []
+        segment_ids = []
+        doc_ids = []
+        doc_text = []
+        doc_start = []
+        for ex_id, segments in enumerate(segment_input_tokens):
+            _input_tokens = ['[CLS]']
+            _input_ids = []
+            _input_mask = [1]
+            _segment_ids = [0]
+
+            _doc_tokens = segments.pop('doc')
+            segments = list(segments.values()) + [_doc_tokens]
+            utils.truncate_segments(
+                segments, self.max_seq_length - len(segments) - 1,
+                truncate_method=self.truncate_method)
+            _doc_tokens = segments[-1]
+
+            for s_id, segment in enumerate(segments):
+                _segment_id = min(s_id, 1)
+                _input_tokens.extend(segment + ['[SEP]'])
+                _input_mask.extend([1] * (len(segment) + 1))
+                _segment_ids.extend([_segment_id] * (len(segment) + 1))
+            _doc_start = len(_input_tokens) - len(_doc_tokens) - 1
+
+            _input_ids = self.tokenizer.convert_tokens_to_ids(_input_tokens)
+            _doc_ids = _input_ids[_doc_start: -1]
+
+            # padding
+            for _ in range(self.max_seq_length - len(_input_ids)):
+                _input_ids.append(0)
+                _input_mask.append(0)
+                _segment_ids.append(0)
+
+            input_ids.append(_input_ids)
+            input_mask.append(_input_mask)
+            segment_ids.append(_segment_ids)
+            doc_ids.append(_doc_ids)
+            doc_text.append(X_target[ex_id]['doc'])
+            doc_start.append(_doc_start)
+
+        return (input_ids, input_mask, segment_ids,
+                doc_ids, doc_text, doc_start)
+
+    def _convert_x(self, x, tokenized):
+        output = {}
+
+        if not isinstance(x, dict) or 'doc' not in x:
+            raise ValueError(
+                'Wrong input format of `y`. An untokenized example: '
+                '`y = [{\'doc\': \'...\', \'question\': \'...\', ...}, ...]`')
+
+        for key in x:
+            if not tokenized:
+                # deal with general inputs
+                output[key] = self.tokenizer.tokenize(x[key])
+                continue
+
+            # deal with tokenized inputs
+            output[key] = x[key]
+
+        return output
+
+    def _convert_y(self, y, doc_ids, doc_text, doc_start, tokenized=False):
         label_ids = []
 
         invalid_ids = []
-        multiple_span = 0
-        for ex_id, (_y, _input_ids) in enumerate(zip(y, input_ids)):
-            if not _y:
+        for ex_id, _y in enumerate(y):
+            if _y is None:
                 label_ids.append([0, 0])
                 continue
 
-            if isinstance(_y, str):
-                _answer_tokens = self.tokenizer.tokenize(_y)
+            if not isinstance(_y, dict) or \
+                    'text' not in _y or 'answer_start' not in _y:
+                raise ValueError(
+                    'Wrong input format of `y`. An untokenized example: '
+                    '`y = [{\'text\': \'Obama\', \'answer_start\': 12}, '
+                    'None, ...]`')
+
+            _answer_text = _y['text']
+            _answer_start = _y['answer_start']
+            _doc_ids = doc_ids[ex_id]
+
+            # tokenization
+            if isinstance(_answer_text, str):
+                _answer_tokens = self.tokenizer.tokenize(_answer_text)
                 _answer_ids = self.tokenizer.convert_tokens_to_ids(
                     _answer_tokens)
-            elif isinstance(_y, list):
+            elif isinstance(_answer_text, list):
                 assert tokenized, (
-                    '%s does not support multiple answers.'
+                    '%s does not support multiple answer spans.'
                     % self.__class__.__name__)
+                _answer_tokens = _answer_text
                 _answer_ids = self.tokenizer.convert_tokens_to_ids(
-                    _y)
+                    _answer_text)
             else:
                 raise ValueError(
-                    '`y` should be a list of answer strings.')
+                    'Invalid answer text at line %d: `%s`.'
+                    % (ex_id, _answer_text))
 
-            start_positions = utils.find_all_boyer_moore(
-                _input_ids, _answer_ids)
-            if not start_positions:
-                label_ids.append([0, 0])
-                invalid_ids.append(ex_id)
-                continue
-            if len(start_positions) > 1:
-                multiple_span += 1
-            start_position = start_positions[0]
+            if isinstance(_answer_text, str):
+                _overlap_time = len(utils.find_all_boyer_moore(
+                    doc_text[ex_id][:_answer_start], _answer_text))
+                try:
+                    start_position = utils.find_all_boyer_moore(
+                        _doc_ids, _answer_ids)[_overlap_time]
+                    end_position = start_position + len(_answer_ids) - 1
+                except IndexError:
+                    label_ids.append([0, 0])
+                    invalid_ids.append(ex_id)
+                    continue
+            elif isinstance(_answer_text, list):
+                start_position = _answer_start
+                end_position = start_position + len(_answer_ids) - 1
+                if _doc_ids[_answer_start: end_position + 1] != _answer_ids:
+                    tf.logging.warning(
+                        'Wrong `answer_start` at line %d. Ignored and set '
+                        'label to null text.')
+                    label_ids.append([0, 0])
+                    invalid_ids.append(ex_id)
+                    continue
 
-            end_position = start_position + len(_answer_ids) - 1
-            label_ids.append([start_position, end_position])
+            label_ids.append([start_position + doc_start[ex_id],
+                              end_position + doc_start[ex_id]])
 
         if invalid_ids:
             tf.logging.warning(
@@ -1529,12 +1633,6 @@ class BERTMRC(BERTClassifier, MRCModule):
                 'line %s. A possible reason is that the answer spans '
                 'are truncated due to the `max_seq_length` setting.'
                 % invalid_ids)
-
-        if multiple_span:
-            tf.logging.warning(
-                '%d lines have multiple answer spans. Only the first span '
-                'is recognized and labeled.'
-                % multiple_span)
 
         return label_ids
 
@@ -1712,8 +1810,9 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
         # convert X
         if X or X_tokenized:
             tokenized = False if X else X_tokenized
-            input_ids, input_mask, segment_ids = self._convert_X(
-                X_tokenized if tokenized else X, tokenized=tokenized)
+            (input_ids, input_mask, segment_ids, doc_ids,
+             doc_text, doc_start) = self._convert_X(
+                 X_tokenized if tokenized else X, tokenized=tokenized)
             data['input_ids'] = np.array(input_ids, dtype=np.int32)
             data['input_mask'] = np.array(input_mask, dtype=np.int32)
             data['segment_ids'] = np.array(segment_ids, dtype=np.int32)
@@ -1724,7 +1823,8 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
 
         # convert y
         if y:
-            label_ids, has_answer = self._convert_y(y, input_ids, tokenized)
+            label_ids, has_answer = self._convert_y(
+                y, doc_ids, doc_text, doc_start, tokenized)
             data['label_ids'] = np.array(label_ids, dtype=np.int32)
             data['has_answer'] = np.array(has_answer, dtype=np.int32)
 
@@ -1736,45 +1836,73 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
 
         return data
 
-    def _convert_y(self, y, input_ids, tokenized=False):
+    def _convert_y(self, y, doc_ids, doc_text, doc_start, tokenized=False):
         label_ids = []
         has_answer = []
 
         invalid_ids = []
-        multiple_span = 0
-        for ex_id, (_y, _input_ids) in enumerate(zip(y, input_ids)):
-            if not _y:
+        for ex_id, _y in enumerate(y):
+            if _y is None:
                 label_ids.append([0, 0])
                 has_answer.append(0)
                 continue
 
-            if isinstance(_y, str):
-                _answer_tokens = self.tokenizer.tokenize(_y)
+            if not isinstance(_y, dict) or \
+                    'text' not in _y or 'answer_start' not in _y:
+                raise ValueError(
+                    'Wrong input format of `y`. An untokenized example: '
+                    '`y = [{\'text\': \'Obama\', \'answer_start\': 12}, '
+                    'None, ...]`')
+
+            _answer_text = _y['text']
+            _answer_start = _y['answer_start']
+            _doc_ids = doc_ids[ex_id]
+
+            # tokenization
+            if isinstance(_answer_text, str):
+                _answer_tokens = self.tokenizer.tokenize(_answer_text)
                 _answer_ids = self.tokenizer.convert_tokens_to_ids(
                     _answer_tokens)
-            elif isinstance(_y, list):
+            elif isinstance(_answer_text, list):
                 assert tokenized, (
-                    '%s does not support multiple answers.'
+                    '%s does not support multiple answer spans.'
                     % self.__class__.__name__)
+                _answer_tokens = _answer_text
                 _answer_ids = self.tokenizer.convert_tokens_to_ids(
-                    _y)
+                    _answer_text)
             else:
                 raise ValueError(
-                    '`y` should be a list of answer strings.')
+                    'Invalid answer text at line %d: `%s`.'
+                    % (ex_id, _answer_text))
 
-            start_positions = utils.find_all_boyer_moore(
-                _input_ids, _answer_ids)
-            if not start_positions:
-                label_ids.append([0, 0])
-                has_answer.append(0)
-                invalid_ids.append(ex_id)
-                continue
-            if len(start_positions) > 1:
-                multiple_span += 1
-            start_position = start_positions[0]
+            if isinstance(_answer_text, str):
+                _overlap_time = len(utils.find_all_boyer_moore(
+                    doc_text[ex_id][:_answer_start], _answer_text))
 
-            end_position = start_position + len(_answer_ids) - 1
-            label_ids.append([start_position, end_position])
+                start_positions = utils.find_all_boyer_moore(
+                    _doc_ids, _answer_ids)
+                if _overlap_time >= len(start_positions):
+                    label_ids.append([0, 0])
+                    has_answer.append(0)
+                    invalid_ids.append(ex_id)
+                    continue
+                start_position = start_positions[_overlap_time]
+                end_position = start_position + len(_answer_ids) - 1
+
+            elif isinstance(_answer_text, list):
+                start_position = _answer_start
+                end_position = start_position + len(_answer_ids) - 1
+                if _doc_ids[_answer_start: end_position + 1] != _answer_ids:
+                    tf.logging.warning(
+                        'Wrong `answer_start` at line %d. Ignored and set '
+                        'label to null text.')
+                    label_ids.append([0, 0])
+                    has_answer.append(0)
+                    invalid_ids.append(ex_id)
+                    continue
+
+            label_ids.append([start_position + doc_start[ex_id],
+                              end_position + doc_start[ex_id]])
             has_answer.append(1)
 
         if invalid_ids:
@@ -1783,12 +1911,6 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
                 'line %s. A possible reason is that the answer spans '
                 'are truncated due to the `max_seq_length` setting.'
                 % invalid_ids)
-
-        if multiple_span:
-            tf.logging.warning(
-                '%d lines have multiple answer spans. Only the first span '
-                'is recognized and labeled.'
-                % multiple_span)
 
         return label_ids, has_answer
 

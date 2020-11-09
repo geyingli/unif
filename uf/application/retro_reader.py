@@ -95,7 +95,8 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
         # convert X
         if X or X_tokenized:
             tokenized = False if X else X_tokenized
-            input_ids, input_mask, query_mask, segment_ids = self._convert_X(
+            (input_ids, input_mask, query_mask, segment_ids,
+             doc_ids, doc_text, doc_start) = self._convert_X(
                 X_tokenized if tokenized else X, tokenized=tokenized)
             data['input_ids'] = np.array(input_ids, dtype=np.int32)
             data['input_mask'] = np.array(input_mask, dtype=np.int32)
@@ -108,7 +109,8 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
 
         # convert y
         if y:
-            label_ids, has_answer = self._convert_y(y, input_ids, tokenized)
+            label_ids, has_answer = self._convert_y(
+                y, doc_ids, doc_text, doc_start, tokenized)
             data['label_ids'] = np.array(label_ids, dtype=np.int32)
             data['has_answer'] = np.array(has_answer, dtype=np.int32)
 
@@ -133,23 +135,13 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
                     'Wrong input format (line %d): \'%s\'. '
                     % (ex_id, example))
 
-        # If `max_seq_length` is not mannually assigned,
-        # the value will be set to the maximum length of
-        # `input_ids`.
-        if not self.max_seq_length:
-            max_seq_length = 0
-            for segments in segment_input_tokens:
-                # subtract `[CLS]` and `[SEP]s`
-                seq_length = sum([len(seg) + 1 for seg in segments]) + 1
-                max_seq_length = max(max_seq_length, seq_length)
-            self.max_seq_length = max_seq_length
-            tf.logging.info('Adaptive max_seq_length: %d'
-                            % self.max_seq_length)
-
         input_ids = []
         input_mask = []
         query_mask = []
         segment_ids = []
+        doc_ids = []
+        doc_text = []
+        doc_start = []
         for ex_id, segments in enumerate(segment_input_tokens):
             _input_tokens = ['[CLS]']
             _input_ids = []
@@ -157,9 +149,13 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
             _query_mask = [1]
             _segment_ids = [0]
 
+            _doc_tokens = segments.pop('doc')
+            segments = list(segments.values()) + [_doc_tokens]
             utils.truncate_segments(
                 segments, self.max_seq_length - len(segments) - 1,
                 truncate_method=self.truncate_method)
+            _doc_tokens = segments[-1]
+
             for s_id, segment in enumerate(segments):
                 _segment_id = min(s_id, 1)
                 _input_tokens.extend(segment + ['[SEP]'])
@@ -167,8 +163,10 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
                 if s_id == 0:
                     _query_mask.extend([1] * (len(segment) + 1))
                 _segment_ids.extend([_segment_id] * (len(segment) + 1))
+            _doc_start = len(_input_tokens) - len(_doc_tokens) - 1
 
             _input_ids = self.tokenizer.convert_tokens_to_ids(_input_tokens)
+            _doc_ids = _input_ids[_doc_start: -1]
 
             # padding
             for _ in range(self.max_seq_length - len(_input_ids)):
@@ -182,8 +180,12 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
             input_mask.append(_input_mask)
             query_mask.append(_query_mask)
             segment_ids.append(_segment_ids)
+            doc_ids.append(_doc_ids)
+            doc_text.append(X_target[ex_id]['doc'])
+            doc_start.append(_doc_start)
 
-        return input_ids, input_mask, query_mask, segment_ids
+        return (input_ids, input_mask, query_mask, segment_ids,
+                doc_ids, doc_text, doc_start)
 
     def _set_placeholders(self, target, on_export=False):
         self.placeholders = {

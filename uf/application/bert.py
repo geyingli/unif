@@ -1490,6 +1490,7 @@ class BERTMRC(BERTClassifier, MRCModule):
         label_ids = []
 
         invalid_ids = []
+        multiple_span = 0
         for ex_id, (_y, _input_ids) in enumerate(zip(y, input_ids)):
             if not _y:
                 label_ids.append([0, 0])
@@ -1509,12 +1510,15 @@ class BERTMRC(BERTClassifier, MRCModule):
                 raise ValueError(
                     '`y` should be a list of answer strings.')
 
-            start_position = utils.find_boyer_moore(
+            start_positions = utils.find_all_boyer_moore(
                 _input_ids, _answer_ids)
-            if start_position == -1:
+            if not start_positions:
                 label_ids.append([0, 0])
                 invalid_ids.append(ex_id)
                 continue
+            if len(start_positions) > 1:
+                multiple_span += 1
+            start_position = start_positions[0]
 
             end_position = start_position + len(_answer_ids) - 1
             label_ids.append([start_position, end_position])
@@ -1525,6 +1529,12 @@ class BERTMRC(BERTClassifier, MRCModule):
                 'line %s. A possible reason is that the answer spans '
                 'are truncated due to the `max_seq_length` setting.'
                 % invalid_ids)
+
+        if multiple_span:
+            tf.logging.warning(
+                '%d lines have multiple answer spans. Only the first span '
+                'is recognized and labeled.'
+                % multiple_span)
 
         return label_ids
 
@@ -1731,6 +1741,7 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
         has_answer = []
 
         invalid_ids = []
+        multiple_span = 0
         for ex_id, (_y, _input_ids) in enumerate(zip(y, input_ids)):
             if not _y:
                 label_ids.append([0, 0])
@@ -1751,13 +1762,16 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
                 raise ValueError(
                     '`y` should be a list of answer strings.')
 
-            start_position = utils.find_boyer_moore(
+            start_positions = utils.find_all_boyer_moore(
                 _input_ids, _answer_ids)
-            if start_position == -1:
+            if not start_positions:
                 label_ids.append([0, 0])
                 has_answer.append(0)
                 invalid_ids.append(ex_id)
                 continue
+            if len(start_positions) > 1:
+                multiple_span += 1
+            start_position = start_positions[0]
 
             end_position = start_position + len(_answer_ids) - 1
             label_ids.append([start_position, end_position])
@@ -1769,6 +1783,12 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
                 'line %s. A possible reason is that the answer spans '
                 'are truncated due to the `max_seq_length` setting.'
                 % invalid_ids)
+
+        if multiple_span:
+            tf.logging.warning(
+                '%d lines have multiple answer spans. Only the first span '
+                'is recognized and labeled.'
+                % multiple_span)
 
         return label_ids, has_answer
 

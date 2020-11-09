@@ -21,7 +21,7 @@ import collections
 import numpy as np
 
 from .tools import tf
-from .tokenization.word_piece import (
+from uf.tokenization.word_piece import (
     _is_whitespace as is_whitespace,
     _is_punctuation as is_punctuation,
     _is_chinese_char as is_chinese_char,

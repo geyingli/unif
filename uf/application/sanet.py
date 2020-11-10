@@ -211,7 +211,8 @@ class SANetMRC(BERTMRC, MRCModule):
                 if key == 'doc':
                     sents = x[key].split(self.split_sign)
                     if sents[-1] == '':
-                        sents = sents[:-1]
+                        sents.pop()
+                    sents = [sent + self.split_sign for sent in sents]
                     output[key] = \
                         [self.tokenizer.tokenize(sent) for sent in sents]
                     continue

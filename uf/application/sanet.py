@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-''' Applications based on BERT-based Retro-Reader. '''
+''' Applications based on SANet. '''
 
 import numpy as np
 

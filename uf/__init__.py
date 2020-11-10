@@ -13,8 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__version__ = '2.2.2'
-__date__ = '11/9/2020'
+__version__ = '2.2.3'
+__date__ = '11/10/2020'
 
 
 from .utils import get_checkpoint_path
@@ -53,6 +53,7 @@ from .application.roberta import RoBERTaMRC
 from .application.albert import ALBERTMRC
 from .application.electra import ELECTRAMRC
 from .application.retro_reader import RetroReaderMRC
+from .application.sanet import SANetMRC
 from .application.transformer import TransformerMT
 
 # sentencepiece==0.1.85
@@ -109,6 +110,7 @@ __all__ = [
     'ALBERTMRC',
     'ELECTRAMRC',
     'RetroReaderMRC',
+    'SANetMRC',
     'TransformerMT',
 
     # useful methods

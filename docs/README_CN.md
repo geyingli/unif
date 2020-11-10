@@ -10,7 +10,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-beta2.2.2-blue">
+        <img src="https://img.shields.io/badge/version-beta2.2.3-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-≥1.11.0-yellow">
@@ -85,10 +85,11 @@ print(model.predict(X))
 | `BERTCRFCascadeNER` | 命名实体识别 | 基于维特比解码，通过 BIESO 标签推导实体；<br>识别实体的同时对实体进行分类 |
 | `TransformerMT` | 机器翻译 | 共享词表，序列到序列建模 |
 | `BERTMRC` 		| 机器阅读理解 | 从输入中抽取一段完整的答案 |
-| `BERTVerifierMRC` | 机器阅读理解 | 从输入中抽取一段完整的答案，通过判题器辅助判断是否可答 |
 | `RoBERTaMRC` 		| 机器阅读理解 | 从输入中抽取一段完整的答案 |
 | `ALBERTMRC` 		| 机器阅读理解 | 从输入中抽取一段完整的答案 |
 | `ELECTRAMRC` 		| 机器阅读理解 | 从输入中抽取一段完整的答案 |
+| `SANetMRC` 		| 机器阅读理解 | 从输入中抽取一段完整的答案 |
+| `BERTVerifierMRC` | 机器阅读理解 | 从输入中抽取一段完整的答案，通过判题器辅助判断是否可答 |
 | `RetroReaderMRC` | 机器阅读理解 | 从输入中抽取一段完整的答案，通过判题器辅助判断是否可答 |
 | `BERTClassifier` 		| 单标签分类 | 每一个样本归属于一个唯一的类别 |
 | `XLNetClassifier` 		| 单标签分类 | 每一个样本归属于一个唯一的类别 |

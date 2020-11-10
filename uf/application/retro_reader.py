@@ -29,8 +29,7 @@ import uf.utils as utils
 
 
 class RetroReaderMRC(BERTVerifierMRC, MRCModule):
-    ''' Machine reading comprehension on BERT, with a external front
-    verifier. '''
+    ''' Machine reading comprehension on Retro-Reader. '''
     _INFER_ATTRIBUTES = BERTVerifierMRC._INFER_ATTRIBUTES
 
     def __init__(self,
@@ -100,7 +99,7 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
                 X_tokenized if tokenized else X, tokenized=tokenized)
             data['input_ids'] = np.array(input_ids, dtype=np.int32)
             data['input_mask'] = np.array(input_mask, dtype=np.int32)
-            data['query_mask'] = np.array(input_mask, dtype=np.int32)
+            data['query_mask'] = np.array(query_mask, dtype=np.int32)
             data['segment_ids'] = np.array(segment_ids, dtype=np.int32)
             n_inputs = len(input_ids)
 

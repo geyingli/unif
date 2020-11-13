@@ -20,9 +20,9 @@ help(model)
 - max_seq_length: int type, default as 128. The maximum sequence length of tokens. Sequences whose length exceeds the value will be truncated.
 - label_size: int type, default as None. The dimension of outputs, e.g. binary classification corresponds to label_size of 2. If set to None, the module will recognize and set the label size of training data.
 - init_checkpoint: str type, default as None. The path or directory of checkpoint file to initialize. If set to None, parameters will be randomly initialized.
-- output_dir: str type, default as None. The directory where module save outputs. 
+- output_dir: str type, default as None. The directory where module save outputs.
 - gpu_ids: str or list type, default as None. The ids of GPUs that you wish to use in parallel computating (run `nvidia-smi` to check available GPUs). If set to None, tensorflow will select a single GPU to run.
-- drop_pooler: bool type, default as False. BERT relevant argument that determines whether to ignore pooler layer in modeling. 
+- drop_pooler: bool type, default as False. BERT relevant argument that determines whether to ignore pooler layer in modeling.
 - do_lower_case: bool type, default as True. Whether to convert inputs into lower case.
 - truncated_method: str type, default as "LIFO". Three possible values are "Longer-FO" (longer-sequence-first-out), "LIFO" (last-in-first-out) and "FIFO" (first-in-first-out).
 
@@ -76,7 +76,7 @@ help(model.score)
 
 #### 2.1 Optimizer
 
-Four commonly used optimizers are supported in UNIF: GD, Adam, AdamW and LAMB. The default optimizer is AdamW. Feed value to argument `optimizer` when you wish to use others. 
+Four commonly used optimizers are supported in UNIF: GD, Adam, AdamW and LAMB. The default optimizer is AdamW. Feed value to argument `optimizer` when you wish to use others.
 
 ```python
 model.fit(X, y, ..., optimizer='lamb')
@@ -98,18 +98,23 @@ Adversarial training servers as another effective trick to fight against over-fi
 
 ``` python
 # FGM
+# accessible for most modules
 model.fit(X, y, ..., adversarial='fgm', epsilon=0.5)
 
 # PGD
+# accessible for most modules
 model.fit(X, y, ..., adversarial='pgd', epsilon=0.05, n_loop=2)
 
 # FreeLB
+# accessible for most modules
 model.fit(X, y, ..., adversarial='freelb', epsilon=0.3, n_loop=3)
 
 # FreeAT
+# accessible for most modules
 model.fit(X, y, ..., adversarial='freeat', epsilon=0.001, n_loop=3)
 
 # SMART
+# accessible only for classifier modules
 model.fit(X, y, ..., adversarial='smart', epsilon=0.01, n_loop=2, prtb_lambda=0.5, breg_miu=0.2, tilda_beta=0.3)
 ```
 
@@ -129,7 +134,7 @@ model.to_tfrecords(X, y)
 model.fit_from_tfrecords()
 
 # training (manually)
-# Reading from multiple tfrecords files is supported. 
+# Reading from multiple tfrecords files is supported.
 model.fit_from_tfrecords(tfrecords_files=['./tf.records', './tf.records.1'], n_jobs=3)
 
 # To see the whole arguments.

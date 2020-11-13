@@ -42,6 +42,7 @@ class SANetDecoder(BaseDecoder):
         batch_size = shape[0]
         seq_length = shape[1]
         hidden_size = shape[2]
+        sa_mask = tf.reshape(sa_mask, [batch_size, seq_length, seq_length])
         with tf.variable_scope(scope):
             with tf.variable_scope('sentence_attention'):
                 (sa_output, _) = self.attention_layer(

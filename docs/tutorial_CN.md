@@ -84,7 +84,7 @@ model.fit(X, y, ..., optimizer='lamb')
 
 #### 2.2 分层学习率
 
-分层学习率是保证深度神经网络稳定收敛非常重要的一项 trick，在最终的评测表现上也有获得 0.5 以上百分比稳定的提升。建议取值为 0.85。同样作为 `fit` 的额外参数传入。 
+分层学习率是保证深度神经网络稳定收敛非常重要的一项 trick，在最终的评测表现上也有获得 0.5 以上百分比稳定的提升。建议取值为 0.85。同样作为 `fit` 的额外参数传入。
 
 ``` python
 model.fit(X, y, ..., layerwise_lr_decay_ratio=0.85)
@@ -100,18 +100,23 @@ model.fit(X, y, ..., layerwise_lr_decay_ratio=0.85)
 
 ``` python
 # FGM
+# 大多数类可用
 model.fit(X, y, ..., adversarial='fgm', epsilon=0.5)
 
 # PGD
+# 大多数类可用
 model.fit(X, y, ..., adversarial='pgd', epsilon=0.05, n_loop=2)
 
 # FreeLB
+# 大多数类可用
 model.fit(X, y, ..., adversarial='freelb', epsilon=0.3, n_loop=3)
 
 # FreeAT
+# 大多数类可用
 model.fit(X, y, ..., adversarial='freeat', epsilon=0.001, n_loop=3)
 
 # SMART
+# 仅Classifier类可用
 model.fit(X, y, ..., adversarial='smart', epsilon=0.01, n_loop=2, prtb_lambda=0.5, breg_miu=0.2, tilda_beta=0.3)
 ```
 
@@ -202,7 +207,7 @@ model.export()
 - 问：联合框架上一版本的 mixout、abandon_cls_info 等 tricks 为何不再使用？
 
   答：这些训练技巧目前证实无法帮助模型取得稳定增益。为了保持 API 尽量简单易用，遂将这些方法删除，未来可能通过其他方式重新加入回来。
-  
+
 - 问：为何不支持 TF2.x？
 
   答：Tensorflow2.x 版本移除了 1.x 中重要的 contrib 模块，使得许多算法在 TF2.x 版本下需自行编写代码实现。在此之外，TF2.x 最新版本依旧 API 混乱，静态图向动态图的转变使得底层 bug 不断，饱受诟病。待未来 Tensorflow2.x 版本功能特性稳定下来后，UniF 会立即兼容。

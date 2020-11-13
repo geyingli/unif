@@ -188,7 +188,7 @@ class SANetMRC(BERTMRC, MRCModule):
 
             input_ids.append(_input_ids)
             input_mask.append(_input_mask)
-            sa_mask.append(_sa_mask.tolist())
+            sa_mask.append(np.reshape(_sa_mask, [-1]).tolist())
             segment_ids.append(_segment_ids)
             doc_ids.append(_doc_ids)
             doc_text.append(X_target[ex_id]['doc'])
@@ -234,7 +234,7 @@ class SANetMRC(BERTMRC, MRCModule):
                 [None, self.max_seq_length], tf.int32),
             'sa_mask': utils.get_placeholder(
                 target, 'sa_mask',
-                [None, self.max_seq_length, self.max_seq_length], tf.int32),
+                [None, self.max_seq_length ** 2], tf.int32),
             'segment_ids': utils.get_placeholder(
                 target, 'segment_ids',
                 [None, self.max_seq_length], tf.int32),

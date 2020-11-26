@@ -163,7 +163,7 @@ model.assignment_map['var_1_in_ckpt'] = model.uninited_vars['var_1_in_model']
 model.assignment_map['var_2_in_ckpt'] = model.uninited_vars['var_2_in_model']
 
 # Reload from checkpoint file.
-model.reinit_from_checkpoint()
+model.init_from_checkpoint()
 
 # See whether the fail loaded variables disappears from the list.
 print(model.uninited_vars)

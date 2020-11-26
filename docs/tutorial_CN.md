@@ -164,7 +164,7 @@ model.assignment_map['var_1_in_ckpt'] = model.uninited_vars['var_1_in_model']
 model.assignment_map['var_2_in_ckpt'] = model.uninited_vars['var_2_in_model']
 
 # 重新读取预训练参数
-model.reinit_from_checkpoint()
+model.init_from_checkpoint()
 
 # 查看变量是否从初始化失败的名单中消失
 print(model.uninited_vars)

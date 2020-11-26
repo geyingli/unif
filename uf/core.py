@@ -336,9 +336,9 @@ class BaseModule:
                 for attr in _miss_dict:
                     _miss_info += ['`%s`: %s' % (attr, _attr_dict[attr])]
                 raise ValueError(
-                    'Train the model first or feed value for the '
-                    'following necessary arguments before running '
-                    'inference. (%s)'
+                    'Intialize or train the model first, or feed value for '
+                    'the following necessary arguments (%s), before running '
+                    'inference.'
                     % '; '.join(_miss_info))
 
         # Convert raw data to structed data. This method
@@ -389,9 +389,9 @@ class BaseModule:
                 for attr in _miss_dict:
                     _miss_info += ['`%s`: %s' % (attr, _attr_dict[attr])]
                 raise ValueError(
-                    'Train the model first or feed value for the '
-                    'following necessary arguments before running '
-                    'scoring. (%s)'
+                    'Intialize or train the model first, or feed value for '
+                    'the following necessary arguments (%s), before running '
+                    'inference.'
                     % '; '.join(_miss_info))
 
         # Convert raw data to structed data. This method
@@ -413,7 +413,8 @@ class BaseModule:
         '''
         if not self._graph_built:
             raise ValueError(
-                'Fit, predict or score before saving checkpoint.')
+                'Randomly initialize, fit, predict or score before saving '
+                'checkpoint.')
 
         if not self.output_dir:
             raise ValueError('Attribute `output_dir` is None.')
@@ -502,21 +503,62 @@ class BaseModule:
                 args[key] = kwargs[key]
         return cls(**args)
 
+    def init(self, reinit_all=False):
+        ''' Initialize the graph randomly.
+
+        Args:
+            reinit_all: bool. Set to True if you wish to re-initialize the
+              graph with random values.
+        '''
+
+        # Make sure necessary arguments are on spot.
+        if not self._graph_built:
+            _attr_dict = self.__class__._INFER_ATTRIBUTES
+            _miss_dict = set()
+            for attr in _attr_dict:
+                if attr == 'init_checkpoint':
+                    continue
+                if self.__getattribute__(attr) is None:
+                    _miss_dict.add(attr)
+            if _miss_dict:
+                _miss_info = []
+                for attr in _miss_dict:
+                    _miss_info += ['`%s`: %s' % (attr, _attr_dict[attr])]
+                raise ValueError(
+                    'Feed value for the following necessary arguments '
+                    'before initialization. (%s)' % '; '.join(_miss_info))
+
+        # Build the graph, and then run.
+        with self.graph.as_default(), \
+                tf.variable_scope('', reuse=tf.AUTO_REUSE):
+            return self._build('init').run(reinit_all)
+
     def reinit_from_checkpoint(self, init_checkpoint=None,
                                assignment_map=None):
-        ''' Reinitialize variables from checkpoint file.
+        ''' Method .reinit_from_checkpoint() is deprecated and will be
+        removed in the future version. Use method
+        .init_from_checkpoint() instead.
+
+        Args:
+            check method .reinit_from_checkpoint().
+        '''
+        self.init_from_checkpoint(init_checkpoint, assignment_map)
+
+    def init_from_checkpoint(self, init_checkpoint=None,
+                             assignment_map=None):
+        ''' Initialize variables from checkpoint file.
 
         Args:
             init_checkpoint: string. Path of checkpoint file from which to
-              load.
+              load. If set to None, use `init_checkpoint` of the module.
             assignment_map: dict. A dict object that maps from variable name
-              in checkpoint to variables in local graph.
+              in checkpoint to variables in local graph. If set to None, use
+              `assignment_map` of the module.
         '''
-        if not self._graph_built:
-            raise ValueError(
-                'Fit, predict or score before running reinialization.')
 
         if not init_checkpoint:
+            if not self.init_checkpoint:
+                raise ValueError('No checkpoint file assigned for the module.')
             init_checkpoint = self.init_checkpoint
         checkpoint_path = utils.get_checkpoint_path(init_checkpoint)
         if not checkpoint_path:
@@ -529,15 +571,17 @@ class BaseModule:
         if continual:
             self.step = int(checkpoint_path.split('-')[-1])
 
-        # Add new trainable variables into assignment_map
+        # Add new global variables into assignment_map
+        if 'assignment_map' not in self.__dict__:
+            self.assignment_map = {}
         if not assignment_map:
             (assignment_map, _) = utils.get_assignment_map(
                 checkpoint_path, self.global_variables, continual=False)
             for key in assignment_map:
                 if key not in self.assignment_map:
                     self.assignment_map[key] = assignment_map[key]
-
         self.assignment_map.update(assignment_map)
+
         with self.graph.as_default():
             loader = tf.train.Saver(self.assignment_map)
             loader.restore(self.sess, checkpoint_path)
@@ -658,6 +702,8 @@ class BaseModule:
             return processing.BasicInference(self, **kwargs)
         elif work == 'score':
             return processing.BasicScoring(self, **kwargs)
+        elif work == 'init':
+            return processing.InitForInference(self, **kwargs)
         elif work == 'export':
             return processing.ExportInference(self, **kwargs)
 

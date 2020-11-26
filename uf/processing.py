@@ -27,14 +27,14 @@ from . import utils
 
 class BaseTask:
     ''' Parent class of `BasicTraining`, `AdversarialTraining`,
-    `BasicInference`, `ExportInference` and `BasicScoring`.
+    `BasicInference`, `ExportInference`, `InitForInference` and `BasicScoring`.
 
     This is an internal class that does not provide interface
     for outside requests.'''
 
     # This method will be reimplemented by `BasicTraining`,
-    # `AdversarialTraining` and `ExportInference` but not
-    # `BasicInference` and `BasicScoring`
+    # `AdversarialTraining`, `InitForInference` and `ExportInference`
+    # but not `BasicInference` and `BasicScoring`
     def __init__(self, module, **kwargs):
         self.module = module
         self.from_tfrecords = bool(kwargs.get('tfrecords_files'))
@@ -46,6 +46,8 @@ class BaseTask:
             self.n_inputs = utils.get_tfrecords_length(self.tfrecords_files)
         else:
             self.n_inputs = len(list(module.data.values())[0])
+        if not self.n_inputs:
+            raise ValueError('0 samples of input recognized.')
 
         # ignore redundant building of the work flow
         if module._graph_mode not in ('predict', 'score'):
@@ -125,6 +127,8 @@ class BasicTraining(BaseTask):
             self.n_inputs = utils.get_tfrecords_length(self.tfrecords_files)
         else:
             self.n_inputs = len(list(module.data.values())[0])
+        if not self.n_inputs:
+            raise ValueError('0 samples of input recognized.')
 
         self.decorate(module)
 
@@ -907,6 +911,60 @@ class BasicInference(BaseTask):
 
 
 
+class InitForInference(BaseTask):
+
+    def __init__(self, module, **kwargs):
+        self.module = module
+        self._kwargs = kwargs
+
+        # ignore redundant building of the work flow
+        if module._graph_mode not in ('predict', 'score'):
+            self.decorate(module)
+
+    def decorate(self, module):
+        module._set_placeholders('placeholder')
+
+        (_, module._losses, module._probs, module._preds) = \
+            module._parallel_forward(False, **self._kwargs)
+
+        if not module._graph_built:
+            utils.count_params(
+                module.global_variables, module.trainable_variables)
+
+    def run(self, reinit_all):
+        module = self.module
+
+        if not module._graph_built or reinit_all:
+            self._init_variables(module.global_variables)
+        else:
+            variables = []
+            for var in module.global_variables:
+                if var not in module._inited_vars:
+                    variables.append(var)
+            if variables:
+                self._init_variables(variables)
+            else:
+                tf.logging.info(
+                    'All variables already initialized. To randomly '
+                    're-initialize global variables, pass `reinit_all` to '
+                    'True.')
+
+        # Now we can infer without rebuilding the graph, which
+        # could be much faster.
+        module._graph_mode = 'predict'
+        module._graph_built = True
+
+    def _init_variables(self, variables):
+        module = self.module
+
+        tf.logging.info('Running local_init_op')
+        local_init_op = tf.variables_initializer(variables)
+        module.sess.run(local_init_op)
+        module._inited_vars |= set(variables)
+        tf.logging.info('Done running local_init_op')
+
+
+
 class ExportInference(BaseTask):
     def __init__(self, module, **kwargs):
         self.module = module
@@ -1034,6 +1092,8 @@ class BasicScoring(BaseTask):
     def run(self):
         module = self.module
         n_inputs = len(list(self.module.data.values())[0])
+        if not n_inputs:
+            raise ValueError('0 samples of input recognized.')
 
         if not module._graph_built:
             self._init_variables(module.global_variables)

@@ -121,9 +121,11 @@ class SANetMRC(BERTMRC, MRCModule):
                 segment_input_tokens.append(
                     self._convert_x(example, tokenized))
             except Exception:
-                tf.logging.warning(
+                raise ValueError(
                     'Wrong input format (line %d): \'%s\'. '
-                    % (ex_id, example))
+                    'An untokenized example: '
+                    '`X = [{\'doc\': \'...\', \'question\': \'...\', ...}, '
+                    '...]`' % (ex_id, example))
 
         input_ids = []
         input_mask = []

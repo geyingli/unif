@@ -1497,9 +1497,11 @@ class BERTMRC(BERTClassifier, MRCModule):
                 segment_input_tokens.append(
                     self._convert_x(example, tokenized))
             except Exception:
-                tf.logging.warning(
+                raise ValueError(
                     'Wrong input format (line %d): \'%s\'. '
-                    % (ex_id, example))
+                    'An untokenized example: '
+                    '`X = [{\'doc\': \'...\', \'question\': \'...\', ...}, '
+                    '...]`' % (ex_id, example))
 
         input_ids = []
         input_mask = []
@@ -1549,10 +1551,7 @@ class BERTMRC(BERTClassifier, MRCModule):
     def _convert_x(self, x, tokenized):
         output = {}
 
-        if not isinstance(x, dict) or 'doc' not in x:
-            raise ValueError(
-                'Wrong input format of `y`. An untokenized example: '
-                '`y = [{\'doc\': \'...\', \'question\': \'...\', ...}, ...]`')
+        assert isinstance(x, dict) and 'doc' not in x
 
         for key in x:
             if not tokenized:

@@ -1551,7 +1551,7 @@ class BERTMRC(BERTClassifier, MRCModule):
     def _convert_x(self, x, tokenized):
         output = {}
 
-        assert isinstance(x, dict) and 'doc' not in x
+        assert isinstance(x, dict) and 'doc' in x
 
         for key in x:
             if not tokenized:

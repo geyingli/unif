@@ -153,11 +153,12 @@ help(model.fit_from_tfrecords)
 如果已有训练完成的 checkpoint，发现由于参数命名不同而无法完全加载，则可通过以下方法解决。
 
 ```python
+
 # 查看从 `init_checkpoint` 初始化失败的变量
 print(model.uninited_vars)
 
 # 在 `checkpoint` 中寻找对应的参数名
-tf.train.list_variables(model.init_checkpoint)
+print(uf.list_variables(model.init_checkpoint))
 
 # 将参数名与对应的被加载变量人工添加到 `assignment_map`
 model.assignment_map['var_1_in_ckpt'] = model.uninited_vars['var_1_in_model']

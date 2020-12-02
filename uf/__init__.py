@@ -13,12 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__version__ = '2.2.5'
-__date__ = '11/27/2020'
+__version__ = '2.2.6'
+__date__ = '12/2/2020'
 
 
 from .utils import get_checkpoint_path
 from .utils import get_assignment_map
+from .utils import list_variables
 from .utils import set_log
 from .utils import unimported_module
 
@@ -116,6 +117,7 @@ __all__ = [
     # useful methods
     'get_checkpoint_path',
     'get_assignment_map',
+    'list_variables',
     'set_log',
 
     # self-graph building

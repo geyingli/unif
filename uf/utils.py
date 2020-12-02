@@ -230,6 +230,15 @@ def get_assignment_map(checkpoint_file,
     return (assignment_map, uninited_vars)
 
 
+def list_variables(checkpoint):
+    checkpoint_path = get_checkpoint_path(checkpoint)
+    if not checkpoint_path:
+        raise ValueError('Checkpoint file \'%s\' does not exist. '
+                         'Make sure you pass correct value to '
+                         '`checkpoint`.' % checkpoint)
+    return tf.train.list_variables(checkpoint_path)
+
+
 def get_grad_and_param(variables, grads, param_name):
     for (grad, param) in zip(grads, variables):
         if param_name in param.name:

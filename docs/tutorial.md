@@ -156,7 +156,7 @@ If you already have a pretrained checkpoint but fail to load into UNIF modules, 
 print(model.uninited_vars)
 
 # Check corresponding arrays in the checkpoint file.
-tf.train.list_variables(model.init_checkpoint)
+print(uf.list_variables(model.init_checkpoint))
 
 # Manually match the variable and array.
 model.assignment_map['var_1_in_ckpt'] = model.uninited_vars['var_1_in_model']

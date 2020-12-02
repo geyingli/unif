@@ -27,13 +27,13 @@ from . import utils
 
 class BaseTask:
     ''' Parent class of `BasicTraining`, `AdversarialTraining`,
-    `BasicInference`, `ExportInference`, `InitForInference` and `BasicScoring`.
+    `BasicInference`, `ExportInference`, `BasicScoring` and `Initialization`.
 
     This is an internal class that does not provide interface
     for outside requests.'''
 
     # This method will be reimplemented by `BasicTraining`,
-    # `AdversarialTraining`, `InitForInference` and `ExportInference`
+    # `AdversarialTraining`, `ExportInference` and `Initialization`
     # but not `BasicInference` and `BasicScoring`
     def __init__(self, module, **kwargs):
         self.module = module
@@ -61,7 +61,7 @@ class BaseTask:
     def run(self, *args, **kwargs):
         raise NotImplementedError()
 
-    def _init_variables(self, variables):
+    def _init_variables(self, variables, ignore_checkpoint=False):
         module = self.module
 
         tf.logging.info('Running local_init_op')
@@ -70,7 +70,7 @@ class BaseTask:
         module._inited_vars |= set(variables)
         tf.logging.info('Done running local_init_op')
 
-        if module.init_checkpoint:
+        if not ignore_checkpoint and module.init_checkpoint:
             checkpoint_path = utils.get_checkpoint_path(module.init_checkpoint)
             if not checkpoint_path:
                 raise ValueError('Checkpoint file \'%s\' does not exist. '
@@ -86,14 +86,19 @@ class BaseTask:
                 checkpoint_path, variables, continual=continual)
             module.assignment_map = assignment_map
             module.uninited_vars = uninited_vars
+
+            tf.logging.info(
+                '%d local variables failed to match up with the checkpoint '
+                'file. Check more details through `.uninited_vars`.'
+                % len(uninited_vars))
+
             if not module.assignment_map:
                 return
             loader = tf.train.Saver(module.assignment_map)
             loader.restore(module.sess, checkpoint_path)
-            try:
+
+            if '_global_step' in module.__dict__:
                 module.sess.run(tf.assign(module._global_step, module.step))
-            except AttributeError:
-                pass
 
     def _build_feed_dict(self):
         if self.from_tfrecords:
@@ -911,7 +916,7 @@ class BasicInference(BaseTask):
 
 
 
-class InitForInference(BaseTask):
+class Initialization(BaseTask):
 
     def __init__(self, module, **kwargs):
         self.module = module
@@ -931,37 +936,28 @@ class InitForInference(BaseTask):
             utils.count_params(
                 module.global_variables, module.trainable_variables)
 
-    def run(self, reinit_all):
+    def run(self, reinit_all, ignore_checkpoint):
         module = self.module
 
         if not module._graph_built or reinit_all:
-            self._init_variables(module.global_variables)
+            self._init_variables(module.global_variables, ignore_checkpoint)
         else:
             variables = []
             for var in module.global_variables:
                 if var not in module._inited_vars:
                     variables.append(var)
             if variables:
-                self._init_variables(variables)
+                self._init_variables(variables, ignore_checkpoint)
             else:
                 tf.logging.info(
-                    'All variables already initialized. To randomly '
-                    're-initialize global variables, pass `reinit_all` to '
+                    'Global variables already initialized. To '
+                    're-initialize all, pass `reinit_all` to '
                     'True.')
 
         # Now we can infer without rebuilding the graph, which
         # could be much faster.
         module._graph_mode = 'predict'
         module._graph_built = True
-
-    def _init_variables(self, variables):
-        module = self.module
-
-        tf.logging.info('Running local_init_op')
-        local_init_op = tf.variables_initializer(variables)
-        module.sess.run(local_init_op)
-        module._inited_vars |= set(variables)
-        tf.logging.info('Done running local_init_op')
 
 
 

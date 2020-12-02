@@ -504,7 +504,7 @@ class BaseModule:
         return cls(**args)
 
     def init(self, reinit_all=False):
-        ''' Initialize the graph randomly.
+        ''' Initialize the graph randomly or from checkpoint file.
 
         Args:
             reinit_all: bool. Set to True if you wish to re-initialize the
@@ -531,22 +531,13 @@ class BaseModule:
         # Build the graph, and then run.
         with self.graph.as_default(), \
                 tf.variable_scope('', reuse=tf.AUTO_REUSE):
-            return self._build('init').run(reinit_all)
+            return self._build('init').run(
+                reinit_all=reinit_all,
+                ignore_checkpoint=(self.init_checkpoint is None))
 
     def reinit_from_checkpoint(self, init_checkpoint=None,
                                assignment_map=None):
-        ''' Method .reinit_from_checkpoint() is deprecated and will be
-        removed in the future version. Use method
-        .init_from_checkpoint() instead.
-
-        Args:
-            check method .reinit_from_checkpoint().
-        '''
-        self.init_from_checkpoint(init_checkpoint, assignment_map)
-
-    def init_from_checkpoint(self, init_checkpoint=None,
-                             assignment_map=None):
-        ''' Initialize variables from checkpoint file.
+        ''' Reinitialize variables from checkpoint file.
 
         Args:
             init_checkpoint: string. Path of checkpoint file from which to
@@ -580,7 +571,8 @@ class BaseModule:
             for key in assignment_map:
                 if key not in self.assignment_map:
                     self.assignment_map[key] = assignment_map[key]
-        self.assignment_map.update(assignment_map)
+        else:
+            self.assignment_map = assignment_map
 
         with self.graph.as_default():
             loader = tf.train.Saver(self.assignment_map)
@@ -702,10 +694,10 @@ class BaseModule:
             return processing.BasicInference(self, **kwargs)
         elif work == 'score':
             return processing.BasicScoring(self, **kwargs)
-        elif work == 'init':
-            return processing.InitForInference(self, **kwargs)
         elif work == 'export':
             return processing.ExportInference(self, **kwargs)
+        elif work == 'init':
+            return processing.Initialization(self, **kwargs)
 
     @abstractmethod
     def _set_placeholders(self, *args, **kwargs):

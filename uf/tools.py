@@ -17,9 +17,7 @@
 try:
     # tensorflow 1.x
     import tensorflow as tf
-    contrib = tf.contrib
 except Exception:
     # tensorflow 2.x
     import tensorflow.compat.v1 as tf
-    import tensorflow.contrib as contrib
     tf.disable_eager_execution()

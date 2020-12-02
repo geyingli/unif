@@ -200,7 +200,3 @@ model.export()
 - Q: Any suggestions of distillation?
 
   A: Fit `TinyBERTClassifier` and run `model.to_bert()` to save renamed parameters. Then implement secondary distillation by fitting `FastBERTClassifier`. Twice distillation helps you to achieve the maximum efficiency of inference.
-
-- Q: Will UNIF supports Tensorflow 2.x?
-
-  A: Tensorflow 2.x removed API contrib, which is a fairly import module to implement complex algorithms like CRF. Besides, the design of API usage is somewhat massive in tensorflow 2.x and bugs occurs without accessible solutions. The time when we support tensorflow 2.x depends on the acceptance level of worldwide tf-users.

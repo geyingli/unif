@@ -10,7 +10,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-beta2.2.6-blue">
+        <img src="https://img.shields.io/badge/version-beta2.3.0-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-≥1.11.0-yellow">
@@ -26,6 +26,7 @@ Wish to implement your ideas immediately? UNIF, as a unified language processing
 ### Features
 
 - Scikit-Learn like API design, train and predict in 3 lines of code
+- Compatible with both Tensorflow 1.x and 2.x
 - Supports transfering pretrained model
 - Support multiple deep learning tricks, e.g. adversarial training
 - Multi-GPU parallelization

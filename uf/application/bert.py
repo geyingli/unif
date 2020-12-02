@@ -20,12 +20,12 @@ import random
 import collections
 import numpy as np
 
-from uf.tools import tf, contrib
+from uf.tools import tf
 from .base import ClassifierModule, LMModule, NERModule, MRCModule
 from uf.modeling.bert import BERTEncoder, BERTDecoder, BERTConfig
 from uf.modeling.base import (
     CLSDecoder, BinaryCLSDecoder, SeqCLSDecoder, MRCDecoder)
-from uf.modeling.crf import CRFDecoder
+from uf.modeling.crf import CRFDecoder, viterbi_decode
 from uf.tokenization.word_piece import get_word_piece_tokenizer
 import uf.utils as utils
 
@@ -1064,7 +1064,7 @@ class BERTCRFNER(BERTNER, NERModule):
         batch_input_length = np.sum(batch_mask, axis=-1)
         batch_preds = []
         for logit, seq_len in zip(batch_logits, batch_input_length):
-            viterbi_seq, _ = contrib.crf.viterbi_decode(
+            viterbi_seq, _ = viterbi_decode(
                 logit[:seq_len], batch_transition_matrix)
             batch_preds.append(viterbi_seq)
         f1_token, f1_entity = self._get_f1(
@@ -1097,7 +1097,7 @@ class BERTCRFNER(BERTNER, NERModule):
         input_length = np.sum(mask, axis=-1)
         for _logits, _ids, _mask in zip(logits, ids, mask):
             input_length = int(np.sum(_mask))
-            viterbi_seq, _ = contrib.crf.viterbi_decode(
+            viterbi_seq, _ = viterbi_decode(
                 _logits[:input_length], transition_matrix)
             _entities = self._get_entities(viterbi_seq)
             _preds = []
@@ -1134,7 +1134,7 @@ class BERTCRFNER(BERTNER, NERModule):
         input_length = np.sum(mask, axis=-1)
         preds = []
         for logit, seq_len in zip(logits, input_length):
-            viterbi_seq, _ = contrib.crf.viterbi_decode(
+            viterbi_seq, _ = viterbi_decode(
                 logit[:seq_len], transition_matrix)
             preds.append(viterbi_seq)
         f1_token, f1_entity = self._get_f1(
@@ -1315,7 +1315,7 @@ class BERTCRFCascadeNER(BERTCRFNER, NERModule):
         batch_input_length = np.sum(batch_mask, axis=-1)
         batch_preds = []
         for logit, seq_len in zip(batch_logits, batch_input_length):
-            viterbi_seq, _ = contrib.crf.viterbi_decode(
+            viterbi_seq, _ = viterbi_decode(
                 logit[:seq_len], batch_transition_matrix)
             batch_preds.append(viterbi_seq)
         metrics = self._get_cascade_f1(
@@ -1348,7 +1348,7 @@ class BERTCRFCascadeNER(BERTCRFNER, NERModule):
         input_length = np.sum(mask, axis=-1)
         for _logits, _ids, _mask in zip(logits, ids, mask):
             input_length = int(np.sum(_mask))
-            viterbi_seq, _ = contrib.crf.viterbi_decode(
+            viterbi_seq, _ = viterbi_decode(
                 _logits[:input_length], transition_matrix)
 
             _preds = {}
@@ -1392,7 +1392,7 @@ class BERTCRFCascadeNER(BERTCRFNER, NERModule):
         input_length = np.sum(mask, axis=-1)
         preds = []
         for logit, seq_len in zip(logits, input_length):
-            viterbi_seq, _ = contrib.crf.viterbi_decode(
+            viterbi_seq, _ = viterbi_decode(
                 logit[:seq_len], transition_matrix)
             preds.append(viterbi_seq)
         metrics = self._get_cascade_f1(

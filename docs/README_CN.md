@@ -10,7 +10,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-beta2.2.6-blue">
+        <img src="https://img.shields.io/badge/version-beta2.3.0-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-≥1.11.0-yellow">
@@ -25,6 +25,7 @@
 ### 特性
 
 - 仿 Scikit-Learn API 设计，三行代码完成训练及推理
+- 同时支持 Tensorflow 1.x 及 2.x 版本
 - 支持快速迁入已训练完毕的模型
 - 支持对抗式训练等多项通用训练技巧
 - 一键设置多 GPU 并行

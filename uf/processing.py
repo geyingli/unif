@@ -87,10 +87,11 @@ class BaseTask:
             module.assignment_map = assignment_map
             module.uninited_vars = uninited_vars
 
-            tf.logging.info(
-                '%d local variables failed to match up with the checkpoint '
-                'file. Check more details through `.uninited_vars`.'
-                % len(uninited_vars))
+            if uninited_vars:
+                tf.logging.info(
+                    '%d local variables failed to match up with the '
+                    'checkpoint file. Check more details through '
+                    '`.uninited_vars`.' % len(uninited_vars))
 
             if not module.assignment_map:
                 return

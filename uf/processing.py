@@ -20,7 +20,7 @@ import random
 import numpy as np
 from abc import abstractmethod
 
-from .tools import tf, contrib
+from .tools import tf
 from . import utils
 
 
@@ -156,7 +156,7 @@ class BasicTraining(BaseTask):
 
             dataset = tf.data.TFRecordDataset(self.tfrecords_files)
             dataset = dataset.repeat()
-            dataset = dataset.apply(contrib.data.map_and_batch(
+            dataset = dataset.apply(tf.data.experimental.map_and_batch(
                 decode_record,
                 batch_size=module.batch_size,
                 num_parallel_batches=self.n_jobs,
@@ -325,7 +325,7 @@ class AdversarialTraining(BasicTraining):
 
             dataset = tf.data.TFRecordDataset(self.tfrecords_files)
             dataset = dataset.repeat()
-            dataset = dataset.apply(tf.contrib.data.map_and_batch(
+            dataset = dataset.apply(tf.data.experimental.map_and_batch(
                 decode_record,
                 batch_size=module.batch_size,
                 num_parallel_batches=self.n_jobs,
@@ -853,7 +853,7 @@ class BasicInference(BaseTask):
 
             dataset = tf.data.TFRecordDataset(self.tfrecords_files)
             dataset = dataset.repeat()
-            dataset = dataset.apply(tf.contrib.data.map_and_batch(
+            dataset = dataset.apply(tf.data.experimental.map_and_batch(
                 decode_record,
                 batch_size=module.batch_size,
                 num_parallel_batches=self.n_jobs,
@@ -1067,7 +1067,7 @@ class BasicScoring(BaseTask):
 
             dataset = tf.data.TFRecordDataset(self.tfrecords_files)
             dataset = dataset.repeat()
-            dataset = dataset.apply(tf.contrib.data.map_and_batch(
+            dataset = dataset.apply(tf.data.experimental.map_and_batch(
                 decode_record,
                 batch_size=module.batch_size,
                 num_parallel_batches=self.n_jobs,

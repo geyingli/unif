@@ -24,6 +24,12 @@ from .tools import tf
 from . import utils
 
 
+if tf.__version__.startswith('1'):
+    map_and_batch = tf.contrib.data.map_and_batch
+elif tf.__version__.startswith('2'):
+    map_and_batch = tf.data.experimental.map_and_batch
+
+
 
 class BaseTask:
     ''' Parent class of `BasicTraining`, `AdversarialTraining`,
@@ -157,7 +163,7 @@ class BasicTraining(BaseTask):
 
             dataset = tf.data.TFRecordDataset(self.tfrecords_files)
             dataset = dataset.repeat()
-            dataset = dataset.apply(tf.data.experimental.map_and_batch(
+            dataset = dataset.apply(map_and_batch(
                 decode_record,
                 batch_size=module.batch_size,
                 num_parallel_batches=self.n_jobs,
@@ -326,7 +332,7 @@ class AdversarialTraining(BasicTraining):
 
             dataset = tf.data.TFRecordDataset(self.tfrecords_files)
             dataset = dataset.repeat()
-            dataset = dataset.apply(tf.data.experimental.map_and_batch(
+            dataset = dataset.apply(map_and_batch(
                 decode_record,
                 batch_size=module.batch_size,
                 num_parallel_batches=self.n_jobs,
@@ -854,7 +860,7 @@ class BasicInference(BaseTask):
 
             dataset = tf.data.TFRecordDataset(self.tfrecords_files)
             dataset = dataset.repeat()
-            dataset = dataset.apply(tf.data.experimental.map_and_batch(
+            dataset = dataset.apply(map_and_batch(
                 decode_record,
                 batch_size=module.batch_size,
                 num_parallel_batches=self.n_jobs,
@@ -1068,7 +1074,7 @@ class BasicScoring(BaseTask):
 
             dataset = tf.data.TFRecordDataset(self.tfrecords_files)
             dataset = dataset.repeat()
-            dataset = dataset.apply(tf.data.experimental.map_and_batch(
+            dataset = dataset.apply(map_and_batch(
                 decode_record,
                 batch_size=module.batch_size,
                 num_parallel_batches=self.n_jobs,

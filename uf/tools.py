@@ -15,9 +15,9 @@
 ''' Version control of dependencies. '''
 
 try:
-    # tensorflow 1.x
-    import tensorflow as tf
-except Exception:
     # tensorflow 2.x
     import tensorflow.compat.v1 as tf
     tf.disable_eager_execution()
+except Exception:
+    # tensorflow 1.x
+    import tensorflow as tf

@@ -22,9 +22,9 @@ if tf.__version__.startswith('1'):
     from tensorflow.python.ops import rnn
     from tensorflow.python.ops import rnn_cell
 elif tf.__version__.startswith('2'):
-    from tensorflow.compat.v1.python.framework import smart_cond as smart
-    from tensorflow.compat.v1.python.ops import rnn
-    from tensorflow.compat.v1.python.ops import rnn_cell
+    from tensorflow.python.framework import smart_cond as smart
+    from tensorflow.python.ops import rnn
+    from tensorflow.python.ops import rnn_cell
 from .base import BaseDecoder
 from . import util
 

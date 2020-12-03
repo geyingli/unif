@@ -13,7 +13,7 @@
         <img src="https://img.shields.io/badge/version-beta2.3.1-blue">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/tensorflow-≥1.11.0-yellow">
+        <img src="https://img.shields.io/badge/tensorflow-1.11+ 2.x-yellow">
     </a>
     <a>
         <img src="https://img.shields.io/badge/license-Apache2.0-red">

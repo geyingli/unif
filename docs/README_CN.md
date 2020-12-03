@@ -13,7 +13,7 @@
         <img src="https://img.shields.io/badge/version-beta2.3.1-blue">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/tensorflow-1.11+ 2.x-yellow">
+        <img src="https://img.shields.io/badge/tensorflow-1.x 2.x-yellow">
     </a>
     <a>
         <img src="https://img.shields.io/badge/license-Apache2.0-red">
@@ -34,7 +34,7 @@
 
 ### 安装
 
-在安装此依赖库之前需要预先安装 Python 3.6+ 及 Tensorflow 1.11+ 版本。如果需要使用 GPU，请预先根据 Tensorflow 版本，安装指定的英伟达 CUDA 工具包，配置运行环境。
+在安装此依赖库之前需要预先安装 Python 3.6+ 及 Tensorflow 1.11+/2.x 版本。如果需要使用 GPU，请预先根据 Tensorflow 版本，安装指定的英伟达 CUDA 工具包，配置运行环境。
 
 ``` bash
 git clone https://github.com/geyingli/unif

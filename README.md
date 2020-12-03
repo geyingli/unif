@@ -13,7 +13,7 @@
         <img src="https://img.shields.io/badge/version-beta2.3.1-blue">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/tensorflow-1.11+ 2.x-yellow">
+        <img src="https://img.shields.io/badge/tensorflow-1.x 2.x-yellow">
     </a>
     <a>
         <img src="https://img.shields.io/badge/license-Apache2.0-red">
@@ -26,7 +26,7 @@ Wish to implement your ideas immediately? UNIF, as a unified language processing
 ### Features
 
 - Scikit-Learn like API design, train and predict in 3 lines of code
-- Compatible with both Tensorflow 1.x and 2.x
+- Compatible with Tensorflow 1.x and 2.x
 - Supports transfering pretrained model
 - Support multiple deep learning tricks, e.g. adversarial training
 - Multi-GPU parallelization
@@ -35,7 +35,7 @@ Wish to implement your ideas immediately? UNIF, as a unified language processing
 
 ### Install
 
-Python 3.6+ and Tensorflow 1.11+ are required to install the repo. If you with to run the models on GPU, please install NVIDIA CUDA toolkit in advance (be careful on the selection of published version).
+Python 3.6+ and Tensorflow 1.11+/2.x are required to install the repo. If you with to run the models on GPU, please install NVIDIA CUDA toolkit in advance (be careful on the selection of published version).
 
 ``` bash
 git clone https://github.com/geyingli/unif

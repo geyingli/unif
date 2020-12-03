@@ -67,16 +67,17 @@ class TransformerMT(MTModule):
         self.tokenizer = get_word_piece_tokenizer(vocab_file, do_lower_case)
         self._key_to_depths = get_key_to_depths(num_hidden_layers)
 
+        if '<s>' not in self.tokenizer.vocab:
+            self.tokenizer.add('<s>')
+        if '</s>' not in self.tokenizer.vocab:
+            self.tokenizer.add('</s>')
+
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
                 is_training=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
 
         if is_training:
             assert y is not None, '`y` can\'t be None.'
-        if '<s>' not in self.tokenizer.vocab:
-            self.tokenizer.add('<s>')
-        if '</s>' not in self.tokenizer.vocab:
-            self.tokenizer.add('</s>')
 
         n_inputs = None
         data = {}

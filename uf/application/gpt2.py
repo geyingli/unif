@@ -65,6 +65,11 @@ class GPT2LM(LMModule):
             n_layer=num_hidden_layers)
         self._key_to_depths = get_key_to_depths(num_hidden_layers)
 
+        if '<eos>' not in self.tokenizer.vocab:
+            self.tokenizer.add('<eos>')
+            self.gpt2_config.n_vocab += 1
+        self._eos_id = self.tokenizer.convert_tokens_to_ids(['<eos>'])[0]
+
     def predict(self, X=None, X_tokenized=None,
                 batch_size=8, given=1):
         ''' Inference on the model.
@@ -114,10 +119,6 @@ class GPT2LM(LMModule):
         assert y is None, (
             'Training of %s is unsupervised. `y` should be None.'
             % self.__class__.__name__)
-        if '<eos>' not in self.tokenizer.vocab:
-            self.tokenizer.add('<eos>')
-            self.gpt2_config.n_vocab += 1
-        self._eos_id = self.tokenizer.convert_tokens_to_ids(['<eos>'])[0]
 
         n_inputs = None
         data = {}

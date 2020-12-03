@@ -10,7 +10,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-beta2.3.0-blue">
+        <img src="https://img.shields.io/badge/version-beta2.3.1-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-≥1.11.0-yellow">
@@ -92,6 +92,7 @@ print(model.predict(X))
 | `SANetMRC` 		| 机器阅读理解 | 从输入中抽取一段完整的答案 |
 | `BERTVerifierMRC` | 机器阅读理解 | 从输入中抽取一段完整的答案，通过判题器辅助判断是否可答 |
 | `RetroReaderMRC` | 机器阅读理解 | 从输入中抽取一段完整的答案，通过判题器辅助判断是否可答 |
+| `TextCNNClassifier` 		| 单标签分类 | 每一个样本归属于一个唯一的类别 |
 | `BERTClassifier` 		| 单标签分类 | 每一个样本归属于一个唯一的类别 |
 | `XLNetClassifier` 		| 单标签分类 | 每一个样本归属于一个唯一的类别 |
 | `RoBERTaClassifier` 		| 单标签分类 | 每一个样本归属于一个唯一的类别 |

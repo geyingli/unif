@@ -13,8 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__version__ = '2.3.0'
-__date__ = '12/2/2020'
+__version__ = '2.3.1'
+__date__ = '12/3/2020'
 
 
 from .utils import get_checkpoint_path
@@ -31,6 +31,7 @@ from .application.roberta import RoBERTaLM
 from .application.albert import ALBERTLM
 from .application.electra import ELECTRALM
 from .application.gpt2 import GPT2LM
+from .application.text_cnn import TextCNNClassifier
 from .application.bert import BERTClassifier
 from .application.roberta import RoBERTaClassifier
 from .application.albert import ALBERTClassifier
@@ -85,6 +86,7 @@ __all__ = [
     'ALBERTLM',
     'ELECTRALM',
     'GPT2LM',
+    'TextCNNClassifier',
     'BERTClassifier',
     'XLNetClassifier',
     'RoBERTaClassifier',

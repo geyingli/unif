@@ -57,6 +57,13 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
         self.tokenizer = get_word_piece_tokenizer(vocab_file, do_lower_case)
         self._key_to_depths = 'unsupported'
 
+        if '[CLS]' not in self.tokenizer.vocab:
+            self.tokenizer.add('[CLS]')
+            self.bert_config.n_vocab += 1
+        if '[SEP]' not in self.tokenizer.vocab:
+            self.tokenizer.add('[SEP]')
+            self.bert_config.n_vocab += 1
+
     def predict(self, X=None, X_tokenized=None,
                 batch_size=8, speed=0.1, ignore_cls=None):
         ''' Inference on the model.
@@ -193,12 +200,6 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
             assert y is None, (
                 'Training of %s is unsupervised. `y` should be None.'
                 % self.__class__.__name__)
-        if '[CLS]' not in self.tokenizer.vocab:
-            self.tokenizer.add('[CLS]')
-            self.bert_config.n_vocab += 1
-        if '[SEP]' not in self.tokenizer.vocab:
-            self.tokenizer.add('[SEP]')
-            self.bert_config.n_vocab += 1
 
         n_inputs = None
         data = {}

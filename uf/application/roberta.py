@@ -86,6 +86,13 @@ class RoBERTaLM(BERTLM, LMModule):
         self._key_to_depths = get_key_to_depths(
             self.bert_config.num_hidden_layers)
 
+        if '[CLS]' not in self.tokenizer.vocab:
+            self.tokenizer.add('[CLS]')
+            self.bert_config.n_vocab += 1
+        if '[SEP]' not in self.tokenizer.vocab:
+            self.tokenizer.add('[SEP]')
+            self.bert_config.n_vocab += 1
+
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
                 is_training=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
@@ -93,12 +100,6 @@ class RoBERTaLM(BERTLM, LMModule):
         assert y is None, (
             'Training of %s is unsupervised. `y` should be None.'
             % self.__class__.__name__)
-        if '[CLS]' not in self.tokenizer.vocab:
-            self.tokenizer.add('[CLS]')
-            self.bert_config.n_vocab += 1
-        if '[SEP]' not in self.tokenizer.vocab:
-            self.tokenizer.add('[SEP]')
-            self.bert_config.n_vocab += 1
 
         n_inputs = None
         data = {}

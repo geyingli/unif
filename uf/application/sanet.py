@@ -67,18 +67,19 @@ class SANetMRC(BERTMRC, MRCModule):
         self._key_to_depths = get_key_to_depths(
             self.bert_config.num_hidden_layers)
 
-    def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
-                is_training=False):
-        self._assert_legal(X, y, sample_weight, X_tokenized)
-
-        if is_training:
-            assert y is not None, '`y` can\'t be None.'
         if '[CLS]' not in self.tokenizer.vocab:
             self.tokenizer.add('[CLS]')
             self.bert_config.n_vocab += 1
         if '[SEP]' not in self.tokenizer.vocab:
             self.tokenizer.add('[SEP]')
             self.bert_config.n_vocab += 1
+
+    def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
+                is_training=False):
+        self._assert_legal(X, y, sample_weight, X_tokenized)
+
+        if is_training:
+            assert y is not None, '`y` can\'t be None.'
 
         n_inputs = None
         data = {}

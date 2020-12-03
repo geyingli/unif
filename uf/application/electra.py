@@ -286,6 +286,11 @@ class ELECTRALM(BERTLM, LMModule):
         self.tokenizer = get_word_piece_tokenizer(vocab_file, do_lower_case)
         self._key_to_depths = 'unsupported'
 
+        if '[CLS]' not in self.tokenizer.vocab:
+            self.tokenizer.add('[CLS]')
+        if '[SEP]' not in self.tokenizer.vocab:
+            self.tokenizer.add('[SEP]')
+
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
                 is_training=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
@@ -293,11 +298,6 @@ class ELECTRALM(BERTLM, LMModule):
         assert y is None, (
             'Training of %s is unsupervised. `y` should be None.'
             % self.__class__.__name__)
-
-        if '[CLS]' not in self.tokenizer.vocab:
-            self.tokenizer.add('[CLS]')
-        if '[SEP]' not in self.tokenizer.vocab:
-            self.tokenizer.add('[SEP]')
 
         n_inputs = None
         data = {}

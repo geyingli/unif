@@ -47,7 +47,7 @@ If the installation if not authorized, try `python setup.py install --user`.
 
 ### Quick Tour
 
-See how we train and predict in just several lines. Since we provide demo configuration files, no pretrained model is required. Input `ipython` in command line and enter the interactive Python interface.
+See how we train and predict in just several lines. Since we provide demo configuration files, no pretrained model is required. Input `python` in command line and enter the interactive Python interface.
 
 ``` python
 import tensorflow as tf

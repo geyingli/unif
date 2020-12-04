@@ -46,7 +46,7 @@ python setup.py install
 
 ### 快速上手
 
-来看看如何在数行代码之内完成训练和推理。这里我们提供了必备的配置文件作为 demo，无需提前下载预训练模型包。在刚才的安装目录下输入 `ipython` 指令进入 Python 交互界面。
+来看看如何在数行代码之内完成训练和推理。这里我们提供了必备的配置文件作为 demo，无需提前下载预训练模型包。在刚才的安装目录下输入 `python` 指令进入 Python 交互界面。
 
 ``` python
 import tensorflow as tf

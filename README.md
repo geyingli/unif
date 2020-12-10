@@ -10,7 +10,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-beta2.3.1-blue">
+        <img src="https://img.shields.io/badge/version-beta2.3.2-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-1.x 2.x-yellow">
@@ -50,11 +50,10 @@ If the installation if not authorized, try `python setup.py install --user`.
 See how we train and predict in just several lines. Since we provide demo configuration files, no pretrained model is required. Input `python` in command line and enter the interactive Python interface.
 
 ``` python
-import tensorflow as tf
 import uf
 
-# allow printing information
-tf.logging.set_verbosity(tf.logging.INFO)
+# allow printing basic information
+uf.set_verbosity(2)
 
 # load model (by using demo files)
 model = uf.BERTClassifier(config_file='demo/bert_config.json', vocab_file='demo/vocab.txt')

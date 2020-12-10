@@ -126,16 +126,16 @@ Say if you wish to train a language model on large corpus, you can cache the con
 
 ``` python
 # cache data (auto)
-# When `tfrecords_file` is None, create "tf.records" in `output_dir`.
+# When `tfrecords_file` is None, create ".tfrecords" in `output_dir`.
 model.to_tfrecords(X, y)
 
 # training (auto)
-# When `tfrecords_file` is None, read from "tf.records" in `output_dir`.
+# When `tfrecords_file` is None, read from ".tfrecords" in `output_dir`.
 model.fit_from_tfrecords()
 
 # training (manually)
 # Reading from multiple tfrecords files is supported.
-model.fit_from_tfrecords(tfrecords_files=['./tf.records', './tf.records.1'], n_jobs=3)
+model.fit_from_tfrecords(tfrecords_files=['./.tfrecords', './.tfrecords.1'], n_jobs=3)
 
 # To see the whole arguments.
 help(model.fit_from_tfrecords)

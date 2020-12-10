@@ -10,7 +10,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-beta2.3.1-blue">
+        <img src="https://img.shields.io/badge/version-beta2.3.2-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-1.x 2.x-yellow">
@@ -49,11 +49,10 @@ python setup.py install
 来看看如何在数行代码之内完成训练和推理。这里我们提供了必备的配置文件作为 demo，无需提前下载预训练模型包。在刚才的安装目录下输入 `python` 指令进入 Python 交互界面。
 
 ``` python
-import tensorflow as tf
 import uf
 
-# 许可日志打印
-tf.logging.set_verbosity(tf.logging.INFO)
+# 许可日志打印基本信息
+uf.set_verbosity(2)
 
 # 载入模型（使用 demo 配置文件进行示范）
 model = uf.BERTClassifier(config_file='demo/bert_config.json', vocab_file='demo/vocab.txt')

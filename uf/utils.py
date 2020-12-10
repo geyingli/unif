@@ -57,6 +57,19 @@ class TFModuleError(Exception):
         pass
 
 
+def set_verbosity(level=2):
+    if level == 2:
+        tf.logging.set_verbosity(tf.logging.INFO)
+    elif level == 1:
+        tf.logging.set_verbosity(tf.logging.WARN)
+    elif level == 0:
+        tf.logging.set_verbosity(tf.logging.ERROR)
+    else:
+        raise ValueError(
+          'Invalid value: %s. Pick from `0`, `1` and `2`. '
+          'The larger the value, the more information will be printed.')
+
+
 def set_log(log_file):
     log = logging.getLogger('tensorflow')
     log.setLevel(logging.INFO)

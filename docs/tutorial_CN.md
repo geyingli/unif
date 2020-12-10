@@ -128,15 +128,15 @@ model.fit(X, y, ..., adversarial='smart', epsilon=0.01, n_loop=2, prtb_lambda=0.
 
 ``` python
 # 缓存数据（自动创建文件）
-# `tfrecords_file` 传入参数为空时，则默认在 `output_dir` 下创建名为 "tf.records" 的文件
+# `tfrecords_file` 传入参数为空时，则默认在 `output_dir` 下创建名为 ".tfrecords" 的文件
 model.to_tfrecords(X, y)
 
 # 训练（自动指定文件）
-# `tfrecords_files` 传入参数为空时，则默认取 `output_dir` 下名为 "tf.records" 的文件
+# `tfrecords_files` 传入参数为空时，则默认取 `output_dir` 下名为 ".tfrecords" 的文件
 model.fit_from_tfrecords()
 
 # 训练（手动指定文件，可多个）
-model.fit_from_tfrecords(tfrecords_files=['./tf.records', './tf.records.1'], n_jobs=3)
+model.fit_from_tfrecords(tfrecords_files=['./.tfrecords', './.tfrecords.1'], n_jobs=3)
 
 # 全部参数
 help(model.fit_from_tfrecords)

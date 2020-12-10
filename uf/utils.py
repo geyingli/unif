@@ -67,7 +67,8 @@ def set_verbosity(level=2):
     else:
         raise ValueError(
           'Invalid value: %s. Pick from `0`, `1` and `2`. '
-          'The larger the value, the more information will be printed.')
+          'The larger the value, the more information will be printed.'
+          % level)
 
 
 def set_log(log_file):

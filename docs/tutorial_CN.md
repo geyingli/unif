@@ -30,14 +30,14 @@ help(model)
 
 #### 1.2 从配置快速读取模型
 
-UNIF 支持缓存模型配置及快速读取，通过 `.cache()` 和 `.load()` 方法来完成。
+UNIF 支持缓存模型配置及快速读取，通过 `.cache()` 和 `uf.load()` 方法来完成。
 
 ``` python
 # 缓存配置
 model.cache('代号')
 
 # 从配置读取模型
-model = uf.BERTClassifier.load('代号')
+model = uf.load('代号')
 ```
 
 注：当模型的 `output_dir` 属性为空时，模型仅保存配置，不保存参数。

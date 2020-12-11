@@ -30,14 +30,14 @@ Check more information by running `help(XXX)` whenever you use new modules.
 
 #### 1.2 Load module from configuration file
 
-UNIF supports fast loading of module from configuration file. This is implemented by `.cache()` and `.load()` methods.
+UNIF supports fast loading of module from configuration file. This is implemented by `.cache()` and `uf.load()` methods.
 
 ``` python
 # cache configuration
 model.cache('any code')
 
 # load configuration
-model = uf.BERTClassifier.load('any code')
+model = uf.load('any code')
 ```
 
 Note: when attribute `output_dir`  is set to None, module saves configurations only, without saving graph into checkpoint.

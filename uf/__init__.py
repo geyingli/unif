@@ -13,111 +13,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__version__ = '2.3.2'
-__date__ = '12/10/2020'
+__version__ = '2.4.0'
+__date__ = '12/11/2020'
 
 
+from . import modeling
+from . import tokenization
+from .application import *
+
+from .utils import load
 from .utils import get_checkpoint_path
 from .utils import get_assignment_map
 from .utils import list_variables
 from .utils import set_verbosity
 from .utils import set_log
-from .utils import unimported_module
-
-from . import modeling
-from . import tokenization
-
-from .application.bert import BERTLM
-from .application.roberta import RoBERTaLM
-from .application.albert import ALBERTLM
-from .application.electra import ELECTRALM
-from .application.gpt2 import GPT2LM
-from .application.text_cnn import TextCNNClassifier
-from .application.bert import BERTClassifier
-from .application.roberta import RoBERTaClassifier
-from .application.albert import ALBERTClassifier
-from .application.electra import ELECTRAClassifier
-from .application.tiny_bert import TinyBERTClassifier
-from .application.fast_bert import FastBERTClassifier
-from .application.bert import BERTBinaryClassifier
-from .application.roberta import RoBERTaBinaryClassifier
-from .application.albert import ALBERTBinaryClassifier
-from .application.electra import ELECTRABinaryClassifier
-from .application.bert import BERTSeqClassifier
-from .application.roberta import RoBERTaSeqClassifier
-from .application.albert import ALBERTSeqClassifier
-from .application.electra import ELECTRASeqClassifier
-from .application.bert import BERTNER
-from .application.bert import BERTCRFNER
-from .application.bert import BERTCRFCascadeNER
-from .application.bert import BERTMRC
-from .application.bert import BERTVerifierMRC
-from .application.roberta import RoBERTaMRC
-from .application.albert import ALBERTMRC
-from .application.electra import ELECTRAMRC
-from .application.retro_reader import RetroReaderMRC
-from .application.sanet import SANetMRC
-from .application.transformer import TransformerMT
-
-# sentencepiece==0.1.85
-try:
-    from .application.xlnet import XLNetClassifier
-    from .application.xlnet import XLNetBinaryClassifier
-except ModuleNotFoundError:
-    XLNetClassifier = unimported_module(
-        'XLNetClassifier', 'sentencepiece')
-    XLNetBinaryClassifier = unimported_module(
-        'XLNetBinaryClassifier', 'sentencepiece')
-
-# pyemd
-try:
-    from .application.bert_emd import BERTEMDClassifier
-except ModuleNotFoundError:
-    BERTEMDClassifier = unimported_module(
-        'BERTEMDClassifier', 'pyemd')
-
-del unimported_module
 
 
 __all__ = [
 
-    # application classes
-    'BERTLM',
-    'RoBERTaLM',
-    'ALBERTLM',
-    'ELECTRALM',
-    'GPT2LM',
-    'TextCNNClassifier',
-    'BERTClassifier',
-    'XLNetClassifier',
-    'RoBERTaClassifier',
-    'ALBERTClassifier',
-    'ELECTRAClassifier',
-    'TinyBERTClassifier',
-    'FastBERTClassifier',
-    'BERTEMDClassifier',
-    'BERTBinaryClassifier',
-    'XLNetBinaryClassifier',
-    'RoBERTaBinaryClassifier',
-    'ALBERTBinaryClassifier',
-    'ELECTRABinaryClassifier',
-    'BERTSeqClassifier',
-    'RoBERTaSeqClassifier',
-    'ALBERTSeqClassifier',
-    'ELECTRASeqClassifier',
-    'BERTNER',
-    'BERTCRFNER',
-    'BERTCRFCascadeNER',
-    'BERTMRC',
-    'BERTVerifierMRC',
-    'RoBERTaMRC',
-    'ALBERTMRC',
-    'ELECTRAMRC',
-    'RetroReaderMRC',
-    'SANetMRC',
-    'TransformerMT',
-
     # useful methods
+    'load',
     'get_checkpoint_path',
     'get_assignment_map',
     'list_variables',

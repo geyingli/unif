@@ -16,6 +16,7 @@
 
 import os
 import re
+import json
 import logging
 import collections
 import numpy as np
@@ -26,6 +27,7 @@ from uf.tokenization.word_piece import (
     _is_punctuation as is_punctuation,
     _is_chinese_char as is_chinese_char,
     )
+from . import application
 
 PACK_DIR = os.path.dirname(__file__)
 
@@ -55,6 +57,46 @@ def unimported_module(name, required):
 class TFModuleError(Exception):
     def __init__(self, *args, **kwargs):
         pass
+
+
+def load(code, cache_file='./.cache', **kwargs):
+    ''' Load model from configurations saved in cache file.
+
+    Args:
+        code: string. Unique name of configuration to load.
+        cache_file: string. The path of cache file.
+    Returns:
+        None
+    '''
+    if not os.path.exists(cache_file):
+        raise ValueError('No cache file found with `%s`.' % cache_file)
+    cache_fp = open(cache_file, encoding='utf-8')
+    cache_json = json.load(cache_fp)
+    cache_fp.close()
+
+    if code not in cache_json.keys():
+        raise ValueError(
+            'No cached configs found with code `%s`.' % code)
+    if 'model' not in cache_json[code]:
+        raise ValueError(
+            'No model assigned. Try `uf.XXX.load()` instead.')
+    model = cache_json[code]['model']
+    args = collections.OrderedDict()
+
+    # unif >= beta v2.1.35
+    if '__init__' in cache_json[code]:
+        zips = cache_json[code]['__init__'].items()
+    # unif < beta v2.1.35
+    elif 'keys' in cache_json[code]:
+        zips = zip(cache_json[code]['keys'], cache_json[code]['values'])
+    else:
+        raise ValueError('Wrong format of cache file.')
+
+    for key, value in zips:
+        args[key] = value
+        if key in kwargs:
+            args[key] = kwargs[key]
+    return application.__dict__[model](**args)
 
 
 def set_verbosity(level=2):

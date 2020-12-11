@@ -113,4 +113,4 @@ Available APIs are displayed as below. More details about the usage as well as p
 
 ### Acknowledgement
 
-The repo's still in development and testing stage. Any suggestion are mostly welcome. At last, thanks for your interest.
+The repo's still in development and testing stage. Any suggestions are mostly welcome. At last, thanks for your interest.

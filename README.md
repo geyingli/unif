@@ -33,7 +33,7 @@ Wish to implement your ideas immediately? UNIF, as a unified language processing
 - Export SavedModel for industrial deployment
 - Easy to develop and extend, chase after state-of-the-art algorithms
 
-### Install
+### Installation
 
 Python 3.6+ and Tensorflow 1.11+/2.x are required to install the repo. If you with to run the models on GPU, please install NVIDIA CUDA toolkit in advance (be careful on the selection of published version).
 
@@ -55,7 +55,7 @@ import uf
 # allow printing basic information
 uf.set_verbosity(2)
 
-# load model (by using demo files)
+# load model (using demo files)
 model = uf.BERTClassifier(config_file='demo/bert_config.json', vocab_file='demo/vocab.txt')
 
 # define training samples
@@ -74,47 +74,43 @@ For FAQs and more instructions about building and training models, see [tutorial
 
 Available APIs include:
 
-| API 				| Application | Description                                       |
-| ----------- | ------------ | ---------------------------------------------------- |
-| `BERTLM` 		| Language Modeling | Combine MLM and NSP task, sample sentences from context or other documents |
-| `RoBERTaLM` 		| Language Modeling | Single MLM task, sample sentences to maximum sequence length |
-| `ALBERTLM` 		| Language Modeling | Combine MLM and SOP task, sample sentences from context or other documents |
-| `ELECTRALM` 		| Language Modeling | Combine MLM and RTD task, train generator and discriminator together |
-| `GPT2LM` | Language Modeling | Auto-regressive text generation |
-| `BERTNER` 		| Named Entity Recognition | Recognize entities through BIESO labels |
-| `BERTCRFNER` 		| Named Entity Recognition | Recognize entities through BIESO labels and Viterbi decoding |
-| `BERTCRFCascadeNER` | Named Entity Recognition | Recognize and classify entities through BIESO labels and Viterbi decoding |
-| `TransformerMT` | Machine Translation | Sequence in and sequence out, with shared vocabulary |
-| `BERTMRC` 		| Machine Reading Comprehension | Extract answer span from inputs |
-| `RoBERTaMRC` 		| Machine Reading Comprehension | Extract answer span from inputs |
-| `ALBERTMRC` 		| Machine Reading Comprehension | Extract answer span from inputs |
-| `ELECTRAMRC` 		| Machine Reading Comprehension | Extract answer span from inputs |
-| `SANetMRC` 		| Machine Reading Comprehension | Extract answer span from inputs |
-| `BERTVerifierMRC` | Machine Reading Comprehension | Extract answer span from inputs, with a verifier assisted to judge whether the question is answerable |
-| `RetroReaderMRC` | Machine Reading Comprehension | Extract answer span from inputs, with a verifier assisted to judge whether the question is answerable |
-| `TextCNNClassifier` 	 | Single-label Classification | Each sample belongs to one class |
-| `BERTClassifier` 		| Single-label Classification | Each sample belongs to one class |
-| `XLNetClassifier` 		| Single-label Classification | Each sample belongs to one class |
-| `RoBERTaClassifier` 		| Single-label Classification | Each sample belongs to one class |
-| `ALBERTClassifier` 		| Single-label Classification | Each sample belongs to one class |
-| `ELECTRAClassifier` 		| Single-label Classification | Each sample belongs to one class |
-| `BERTBinaryClassifier` 		| Multi-label Classification | Each sample belongs to zero or multiple classes |
-| `XLNetBinaryClassifier` 		| Multi-label Classification | Each sample belongs to zero or multiple classes |
-| `RoBERTaBinaryClassifier` 		| Multi-label Classification | Each sample belongs to zero or multiple classes |
-| `ALBERTBinaryClassifier` 		| Multi-label Classification | Each sample belongs to zero or multiple classes |
-| `ELECTRABinaryClassifier` 		| Multi-label Classification | Each sample belongs to zero or multiple classes |
-| `BERTSeqClassifier` 		| Sequence Labeling | Each token belongs to one single class |
-| `XLNetSeqClassifier` 		| Sequence Labeling | Each token belongs to one single class |
-| `RoBERTaSeqClassifier` 		| Sequence Labeling | Each token belongs to one single class |
-| `ALBERTSeqClassifier` 		| Sequence Labeling | Each token belongs to one single class |
-| `ELECTRASeqClassifier` 		| Sequence Labeling | Each token belongs to one single class |
-| `TinyBERTClassifier` 		| Knowledge Distillation | Support distillation for all BERTClassifier, RoBERTaClassifier and ELECTRAClassifier |
-| `FastBERTClassifier` 		| Knowledge Distillation | Support distillation for all BERTClassifier, RoBERTaClassifier and ELECTRAClassifier |
+| Application | API 				| Description                                       |
+| :---------- | ------------ | ------------ |
+| Language Modeling (LM) | `BERTLM` 		| Combine MLM and NSP task, sample sentences from context or other documents |
+|  		| `RoBERTaLM` 		| Single MLM task, sample sentences to maximum sequence length |
+|  		| `ALBERTLM` 		| Combine MLM and SOP task, sample sentences from context or other documents |
+|  		| `ELECTRALM` 		| Combine MLM and RTD task, train generator and discriminator together |
+|  | `GPT2LM` | Auto-regressive text generation |
+| Named Entity Recognition (NER) | `BERTNER` 		| Recognize entities through BIESO labels |
+|  		| `BERTCRFNER` 		| Recognize entities through BIESO labels and Viterbi decoding |
+|  | `BERTCRFCascadeNER` | Recognize and classify entities through BIESO labels and Viterbi decoding |
+| Machine Translation (MT) | `TransformerMT` | Sequence in and sequence out, with shared vocabulary |
+| Machine Reading Comprehension (MRC) | `BERTMRC` 		| Extract answer span from inputs |
+|  		| `RoBERTaMRC` 		| Extract answer span from inputs |
+|  		| `ALBERTMRC` 		| Extract answer span from inputs |
+|  		| `ELECTRAMRC` 		| Extract answer span from inputs |
+|  		| `SANetMRC` 		| Extract answer span from inputs |
+|  | `BERTVerifierMRC` | Extract answer span from inputs, with a verifier assisted to judge whether the question is answerable |
+|  | `RetroReaderMRC` | Extract answer span from inputs, with a verifier assisted to judge whether the question is answerable |
+| Single-label Classification | `TextCNNClassifier` 	 | Each sample belongs to one class |
+|  		| `BERTClassifier` 		| Each sample belongs to one class |
+|  		| `XLNetClassifier` 		| Each sample belongs to one class |
+|  		| `RoBERTaClassifier` 		| Each sample belongs to one class |
+|  		| `ALBERTClassifier` 		| Each sample belongs to one class |
+|  		| `ELECTRAClassifier` 		| Each sample belongs to one class |
+| Multi-label Classification | `BERTBinaryClassifier` 		| Each sample belongs to zero or multiple classes |
+|  		| `XLNetBinaryClassifier` 		| Each sample belongs to zero or multiple classes |
+|  		| `RoBERTaBinaryClassifier` 		| Each sample belongs to zero or multiple classes |
+|  		| `ALBERTBinaryClassifier` 		| Each sample belongs to zero or multiple classes |
+|  		| `ELECTRABinaryClassifier` 		| Each sample belongs to zero or multiple classes |
+| Sequence Labeling | `BERTSeqClassifier` 		| Each token belongs to one single class |
+|  		| `XLNetSeqClassifier` 		| Each token belongs to one single class |
+|  		| `RoBERTaSeqClassifier` 		| Each token belongs to one single class |
+|  		| `ALBERTSeqClassifier` 		| Each token belongs to one single class |
+|  		| `ELECTRASeqClassifier` 		| Each token belongs to one single class |
+| Knowledge Distillation | `TinyBERTClassifier` 		| Support distillation for all BERTClassifier, RoBERTaClassifier and ELECTRAClassifier |
+|  		| `FastBERTClassifier` 		| Support distillation for all BERTClassifier, RoBERTaClassifier and ELECTRAClassifier |
 
-### Performance on Public Leaderboards
+### Acknowledgement
 
-...
-
-### Development
-
-...
+The repo's still in development and testing stage. Any suggestion are mostly welcome. At last, thanks for your interest.

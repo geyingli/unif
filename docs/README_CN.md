@@ -73,47 +73,43 @@ print(model.predict(X))
 
 当前版本已开放的成熟 API 包括：
 
-| API 				| 类别         | 说明                                                 |
-| ----------- | ------------ | ---------------------------------------------------- |
-| `BERTLM` 		| 语言模型 | 结合 MLM 和 NSP 任务，随机采样自下文及其他文档 |
-| `RoBERTaLM` 		| 语言模型 | 单独 MLM 任务，采样至填满 max_seq_length |
-| `ALBERTLM` 		| 语言模型 | 结合 MLM 和 SOP 任务，随机采样自上下文及其他文档 |
-| `ELECTRALM` 		| 语言模型 | 结合 MLM 和 RTD 任务，生成器与判别器联合训练 |
-| `GPT2LM` | 语言模型 | 自回归式文本生成 |
-| `BERTNER` 		| 命名实体识别 | 通过 BIESO 标签推导实体 |
-| `BERTCRFNER` 		| 命名实体识别 | 基于维特比解码，通过 BIESO 标签推导实体 |
-| `BERTCRFCascadeNER` | 命名实体识别 | 基于维特比解码，通过 BIESO 标签推导实体；<br>识别实体的同时对实体进行分类 |
-| `TransformerMT` | 机器翻译 | 共享词表，序列到序列建模 |
-| `BERTMRC` 		| 机器阅读理解 | 从输入中抽取一段完整的答案 |
-| `RoBERTaMRC` 		| 机器阅读理解 | 从输入中抽取一段完整的答案 |
-| `ALBERTMRC` 		| 机器阅读理解 | 从输入中抽取一段完整的答案 |
-| `ELECTRAMRC` 		| 机器阅读理解 | 从输入中抽取一段完整的答案 |
-| `SANetMRC` 		| 机器阅读理解 | 从输入中抽取一段完整的答案 |
-| `BERTVerifierMRC` | 机器阅读理解 | 从输入中抽取一段完整的答案，通过判题器辅助判断是否可答 |
-| `RetroReaderMRC` | 机器阅读理解 | 从输入中抽取一段完整的答案，通过判题器辅助判断是否可答 |
-| `TextCNNClassifier` 		| 单标签分类 | 每一个样本归属于一个唯一的类别 |
-| `BERTClassifier` 		| 单标签分类 | 每一个样本归属于一个唯一的类别 |
-| `XLNetClassifier` 		| 单标签分类 | 每一个样本归属于一个唯一的类别 |
-| `RoBERTaClassifier` 		| 单标签分类 | 每一个样本归属于一个唯一的类别 |
-| `ALBERTClassifier` 		| 单标签分类 | 每一个样本归属于一个唯一的类别 |
-| `ELECTRAClassifier` 		| 单标签分类 | 每一个样本归属于一个唯一的类别 |
-| `BERTBinaryClassifier` 		| 多标签分类 | 每一个样本可同时属于零个或多个类别 |
-| `XLNetBinaryClassifier` 		| 多标签分类 | 每一个样本可同时属于零个或多个类别 |
-| `RoBERTaBinaryClassifier` 		| 多标签分类 | 每一个样本可同时属于零个或多个类别 |
-| `ALBERTBinaryClassifier` 		| 多标签分类 | 每一个样本可同时属于零个或多个类别 |
-| `ELECTRABinaryClassifier` 		| 多标签分类 | 每一个样本可同时属于零个或多个类别 |
-| `BERTSeqClassifier` 		| 序列标注 | 每一个 token 都有唯一的类别 |
-| `XLNetSeqClassifier` 		| 序列标注 | 每一个 token 都有唯一的类别 |
-| `RoBERTaSeqClassifier` 		| 序列标注 | 每一个 token 都有唯一的类别 |
-| `ALBERTSeqClassifier` 		| 序列标注 | 每一个 token 都有唯一的类别 |
-| `ELECTRASeqClassifier` 		| 序列标注 | 每一个 token 都有唯一的类别 |
-| `TinyBERTClassifier` 		| 模型蒸馏 | 可蒸馏 BERTClassifier、RoBERTaClassifier 及 ELECTRAClassifier |
-| `FastBERTClassifier` 		| 模型蒸馏 | 可蒸馏 BERTClassifier、RoBERTaClassifier 及 ELECTRAClassifier |
+| 应用 | API 				| 说明                                                 |
+| ----------- | ------------ | ------------ |
+| 语言模型 | `BERTLM` 		| 结合 MLM 和 NSP 任务，随机采样自下文及其他文档 |
+|  		| `RoBERTaLM` 		| 单独 MLM 任务，采样至填满 max_seq_length |
+|  		| `ALBERTLM` 		| 结合 MLM 和 SOP 任务，随机采样自上下文及其他文档 |
+|  		| `ELECTRALM` 		| 结合 MLM 和 RTD 任务，生成器与判别器联合训练 |
+|  | `GPT2LM` | 自回归式文本生成 |
+| 命名实体识别 | `BERTNER` 		| 通过 BIESO 标签推导实体 |
+|  		| `BERTCRFNER` 		| 基于维特比解码，通过 BIESO 标签推导实体 |
+|  | `BERTCRFCascadeNER` | 基于维特比解码，通过 BIESO 标签推导实体；<br>识别实体的同时对实体进行分类 |
+| 机器翻译 | `TransformerMT` | 共享词表，序列到序列建模 |
+| 机器阅读理解 | `BERTMRC` 		| 从输入中抽取一段完整的答案 |
+|  		| `RoBERTaMRC` 		| 从输入中抽取一段完整的答案 |
+|  		| `ALBERTMRC` 		| 从输入中抽取一段完整的答案 |
+|  		| `ELECTRAMRC` 		| 从输入中抽取一段完整的答案 |
+|  		| `SANetMRC` 		| 从输入中抽取一段完整的答案 |
+|  | `BERTVerifierMRC` | 从输入中抽取一段完整的答案，通过判题器辅助判断是否可答 |
+|  | `RetroReaderMRC` | 从输入中抽取一段完整的答案，通过判题器辅助判断是否可答 |
+| 单标签分类 | `TextCNNClassifier` 		| 每一个样本归属于一个唯一的类别 |
+|  		| `BERTClassifier` 		| 每一个样本归属于一个唯一的类别 |
+|  		| `XLNetClassifier` 		| 每一个样本归属于一个唯一的类别 |
+|  		| `RoBERTaClassifier` 		| 每一个样本归属于一个唯一的类别 |
+|  		| `ALBERTClassifier` 		| 每一个样本归属于一个唯一的类别 |
+|  		| `ELECTRAClassifier` 		| 每一个样本归属于一个唯一的类别 |
+| 多标签分类 | `BERTBinaryClassifier` 		| 每一个样本可同时属于零个或多个类别 |
+|  		| `XLNetBinaryClassifier` 		| 每一个样本可同时属于零个或多个类别 |
+|  		| `RoBERTaBinaryClassifier` 		| 每一个样本可同时属于零个或多个类别 |
+|  		| `ALBERTBinaryClassifier` 		| 每一个样本可同时属于零个或多个类别 |
+|  		| `ELECTRABinaryClassifier` 		| 每一个样本可同时属于零个或多个类别 |
+| 序列标注 | `BERTSeqClassifier` 		| 每一个 token 都有唯一的类别 |
+|  		| `XLNetSeqClassifier` 		| 每一个 token 都有唯一的类别 |
+|  		| `RoBERTaSeqClassifier` 		| 每一个 token 都有唯一的类别 |
+|  		| `ALBERTSeqClassifier` 		| 每一个 token 都有唯一的类别 |
+|  		| `ELECTRASeqClassifier` 		| 每一个 token 都有唯一的类别 |
+| 模型蒸馏 | `TinyBERTClassifier` 		| 可蒸馏 BERTClassifier、RoBERTaClassifier 及 ELECTRAClassifier |
+|  		| `FastBERTClassifier` 		| 可蒸馏 BERTClassifier、RoBERTaClassifier 及 ELECTRAClassifier |
 
-### 公开榜单评测
 
-...
-
-### 开发需知
-
-...
+### 需知
+目前框架依然在开发和测试阶段，任何需求和建议都不尽欢迎。最后，感谢你读到这里。

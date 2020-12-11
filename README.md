@@ -72,20 +72,20 @@ For FAQs and more instructions about building and training models, see [tutorial
 
 ### API
 
-Available APIs include:
+Available APIs are displayed as below. More details about the usage as well as positional arguments, check through `help(XXX)`, e.g. `help(uf.BERTCRFCascadeNER)`.
 
 | Application | API 				| Description                                       |
 | :---------- | :----------- | :----------- |
-| Language Modeling (LM) | `BERTLM` 		| Combine MLM and NSP task, sample sentences from context or other documents |
+| Language Modeling | `BERTLM` 		| Combine MLM and NSP task, sample sentences from context or other documents |
 |  		| `RoBERTaLM` 		| Single MLM task, sample sentences to maximum sequence length |
 |  		| `ALBERTLM` 		| Combine MLM and SOP task, sample sentences from context or other documents |
 |  		| `ELECTRALM` 		| Combine MLM and RTD task, train generator and discriminator together |
 |  | `GPT2LM` | Auto-regressive text generation |
-| Named Entity Recognition (NER) | `BERTNER` 		| Recognize entities through BIESO labels |
+| Named Entity Recognition | `BERTNER` 		| Recognize entities through BIESO labels |
 |  		| `BERTCRFNER` 		| Recognize entities through BIESO labels and Viterbi decoding |
 |  | `BERTCRFCascadeNER` | Recognize and classify entities through BIESO labels and Viterbi decoding |
-| Machine Translation (MT) | `TransformerMT` | Sequence in and sequence out, with shared vocabulary |
-| Machine Reading Comprehension (MRC) | `BERTMRC` 		| Extract answer span from inputs |
+| Machine Translation | `TransformerMT` | Sequence in and sequence out, with shared vocabulary |
+| Machine Reading Comprehension | `BERTMRC` 		| Extract answer span from inputs |
 |  		| `RoBERTaMRC` 		| Extract answer span from inputs |
 |  		| `ALBERTMRC` 		| Extract answer span from inputs |
 |  		| `ELECTRAMRC` 		| Extract answer span from inputs |

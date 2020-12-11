@@ -71,7 +71,7 @@ print(model.predict(X))
 
 ### API
 
-当前版本已开放的成熟 API 包括：
+当前版本已开放的成熟 API 陈列如下。更多的使用细节，包括条件参数，可通过 `help(XXX)` 来查看，例如 `help(uf.BERTCRFCascadeNER)`。
 
 | 应用 | API 				| 说明                                                 |
 | :---------- | :----------- | :----------- |

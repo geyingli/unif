@@ -13,12 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__version__ = '2.4.0'
-__date__ = '12/11/2020'
+__version__ = '2.4.1'
+__date__ = '12/14/2020'
 
 
-from . import modeling
-from . import tokenization
 from .application import *
 
 from .utils import load
@@ -31,15 +29,11 @@ from .utils import set_log
 
 __all__ = [
 
-    # useful methods
+    # handy methods
     'load',
     'get_checkpoint_path',
     'get_assignment_map',
     'list_variables',
     'set_verbosity',
     'set_log',
-
-    # self-graph building
-    'modeling',
-    'tokenization',
 ]

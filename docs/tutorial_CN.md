@@ -150,10 +150,11 @@ help(model.fit_from_tfrecords)
 
 ### 3. 迁移学习
 
-如果已有训练完成的 checkpoint，发现由于参数命名不同而无法完全加载，则可通过以下方法解决。
+#### 3.1 加载模型
+
+如果已有从其他框架处训练完成的 checkpoint，发现由于参数命名不同而无法完全加载，则可通过以下方法解决。
 
 ```python
-
 # 查看从 `init_checkpoint` 初始化失败的变量
 print(model.uninited_vars)
 
@@ -175,7 +176,29 @@ assert model.output_dir is not None
 model.cache('代号')
 ```
 
-注：加载参数的形状必须与被加载变量完全相同。
+#### 3.2 参数赋值
+
+如果以上方式不能解决你的问题，可以通过赋值的方式达成加载参数的目的。
+
+```python
+import numpy as np
+
+# 获取模型的引用地址
+variable = model.trainable_variables[0]
+
+# 赋值（这里使用全零张量为例）
+shape = variable.shape.as_list()
+value = np.zeros(shape)
+assign_op = uf.tools.tf.assign(variable, value)
+model.sess.run(assign_op)
+
+# 查看是否赋值成功
+print(model.sess.run(variable))
+
+# 保存赋值后的参数及配置
+assert model.output_dir is not None
+model.cache('代号')
+```
 
 ### 4. TFServing
 

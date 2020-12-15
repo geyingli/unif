@@ -149,7 +149,9 @@ Note: inference or scoring from tfrecords, e.g.  `.predict_from_tfrecords()`, is
 
 ### 3. Transfer learning
 
-If you already have a pretrained checkpoint but fail to load into UNIF modules, a simple way can help if the failing is owed to the difference in name scope.
+#### 3.1 Load Checkpoint
+
+If you already have a pretrained checkpoint, but fail to load into UNIF modules simply because they have different name scope, a straight method can help:
 
 ```python
 # Check fail loaded variables.
@@ -171,6 +173,30 @@ print(model.uninited_vars)
 # Save graph into new checkpoint file in order not to repeat the above steps next time.
 assert model.output_dir is not None
 model.cache('any code')
+```
+
+#### 3.2 Set value for parameters
+
+Once the above method does work for any reason, you can directly assign values for parameters:
+
+```python
+import numpy as np
+
+# Get the reference of variable.
+variable = model.trainable_variables[0]
+
+# Assign values (we take all-zero tensor as example).
+shape = variable.shape.as_list()
+value = np.zeros(shape)
+assign_op = uf.tools.tf.assign(variable, value)
+model.sess.run(assign_op)
+
+# See thether the parameter is successfully assigned.
+print(model.sess.run(variable))
+
+# Save graph into new checkpoint file with configurations.
+assert model.output_dir is not None
+model.cache('代号')
 ```
 
 ### 4. TFServing

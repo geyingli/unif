@@ -46,6 +46,8 @@ class PerformerEncoder(BERTEncoder):
                  drop_pooler=False,
                  trainable=True,
                  **kwargs):
+        if is_training:
+            nb_random_features = 0
         self.nb_random_features = nb_random_features
 
         assert kernel_transformation in ('relu', 'softmax'), (
@@ -186,7 +188,8 @@ class PerformerEncoder(BERTEncoder):
                                     self.kernel_transformation,
                                 numerical_stabilizer=0.001,
                                 causal=False,
-                                projection_matrix_type=bool(self.nb_random_features),
+                                projection_matrix_type=True \
+                                    if bool(self.nb_random_features) else None,
                                 nb_random_features=self.nb_random_features)
                             attention_layer.build(layer_input.shape)
                             attention_output = attention_layer.call(

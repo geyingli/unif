@@ -94,6 +94,7 @@ print(model.predict(X))
 |  		| `RoBERTaClassifier` 		| Each sample belongs to one class |
 |  		| `ALBERTClassifier` 		| Each sample belongs to one class |
 |  		| `ELECTRAClassifier` 		| Each sample belongs to one class |
+|  		| `PerformerClassifier` 		| Each sample belongs to one class. Accelerate inference with FAVOR+ |
 | Multi-label Classification | `BERTBinaryClassifier` 		| Each sample belongs to zero or multiple classes |
 |  		| `XLNetBinaryClassifier` 		| Each sample belongs to zero or multiple classes |
 |  		| `RoBERTaBinaryClassifier` 		| Each sample belongs to zero or multiple classes |

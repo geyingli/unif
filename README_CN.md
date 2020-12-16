@@ -93,6 +93,7 @@ print(model.predict(X))
 |  		| `RoBERTaClassifier` 		| 每一个样本归属于一个唯一的类别 |
 |  		| `ALBERTClassifier` 		| 每一个样本归属于一个唯一的类别 |
 |  		| `ELECTRAClassifier` 		| 每一个样本归属于一个唯一的类别 |
+|  		| `PerformerClassifier` 		| 每一个样本归属于一个唯一的类别，通过 FAVOR+ 加速推理 |
 | 多标签分类 | `BERTBinaryClassifier` 		| 每一个样本可同时属于零个或多个类别 |
 |  		| `XLNetBinaryClassifier` 		| 每一个样本可同时属于零个或多个类别 |
 |  		| `RoBERTaBinaryClassifier` 		| 每一个样本可同时属于零个或多个类别 |

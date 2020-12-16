@@ -93,6 +93,16 @@ class CLSDecoder(BaseDecoder):
             if sample_weight is not None:
                 per_example_loss = tf.cast(
                     sample_weight, dtype=tf.float32) * per_example_loss
+            thresh = kwargs.get('tsa_thresh')
+            if thresh is not None:
+                assert isinstance(thresh, float), (
+                    '`tsa_thresh` must be a float between 0 and 1.')
+                uncertainty = tf.reduce_sum(self.probs['probs'] * tf.log(
+                    self.probs['probs']), axis=-1)
+                uncertainty /= tf.log(1 / label_size)
+                per_example_loss = tf.cast(
+                    tf.greater(uncertainty, thresh), dtype=tf.float32) * \
+                    per_example_loss
 
             self.losses['losses'] = per_example_loss
             self.total_loss = tf.reduce_mean(per_example_loss)

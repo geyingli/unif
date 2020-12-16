@@ -82,7 +82,6 @@ __all__ = [
     'RoBERTaClassifier',
     'ALBERTClassifier',
     'ELECTRAClassifier',
-    'PerformerClassifier',
     'TinyBERTClassifier',
     'FastBERTClassifier',
     'BERTBinaryClassifier',
@@ -108,4 +107,5 @@ __all__ = [
 
     # trial
     'BERTEMDClassifier',
+    'PerformerClassifier',
 ]

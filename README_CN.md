@@ -1,8 +1,116 @@
-# Tutorial
+中文 | [English](../README.md)
 
-### 1. 模型搭建
+<p align="center">
+    <br>
+    	<img src="./logo.png" style="zoom:70%"/>
+    <br>
+<p>
+<p align="center">
+    <a>
+        <img src="https://img.shields.io/badge/build-passing-brightgreen">
+    </a>
+    <a>
+        <img src="https://img.shields.io/badge/version-beta2.4.2-blue">
+    </a>
+    <a>
+        <img src="https://img.shields.io/badge/tensorflow-1.x 2.x-yellow">
+    </a>
+    <a>
+        <img src="https://img.shields.io/badge/license-Apache2.0-red">
+    </a>
+</p>
 
-#### 1.1 创建新模型
+有数据，想要快速实现你的想法？轻便、易使用的自然语言处理联合框架，支持快速搭建各类常用深度学习模型 (Transformer, GPT-2, BERT, RoBERTa, ALBERT, XLNet, ELECTRA)，同时对于 BERT 系列，支持高效用的蒸馏 (TinyBERT, FastBERT)。支持各类上下游任务 (语言模型、文本分类、文本生成、命名实体识别、机器阅读理解、机器翻译、序列标注等)。UNIF is all you need。
+
+### 特性
+
+- 仿 Scikit-Learn API 设计，三行代码完成训练及推理
+- 同时支持 Tensorflow 1.x 及 2.x 版本
+- 支持快速迁入已训练完毕的模型
+- 支持对抗式训练等多项通用训练技巧
+- 一键设置多 GPU 并行
+- 导出 SavedModel，供部署使用
+- 易开发，易扩展，能高效支持更多 State-Of-The-Art 算法
+
+### 安装
+
+在安装此依赖库之前需要预先安装 Python 3.6+ 及 Tensorflow 1.11+/2.x 版本。如果需要使用 GPU，请预先根据 Tensorflow 版本，安装指定的英伟达 CUDA 工具包，配置运行环境。
+
+``` bash
+git clone https://github.com/geyingli/unif
+cd unif
+python setup.py install
+```
+
+如果安装未获得权限，尝试 `python setup.py install --user`。
+
+### 快速上手
+
+来看看如何在数行代码之内完成训练和推理。这里我们提供了必备的配置文件作为 demo，无需提前下载预训练模型包。在刚才的安装目录下输入 `python` 指令进入 Python 交互界面。
+
+``` python
+import uf
+
+# 许可日志打印基本信息
+uf.set_verbosity(2)
+
+# 载入模型（使用 demo 配置文件进行示范）
+model = uf.BERTClassifier(config_file='demo/bert_config.json', vocab_file='demo/vocab.txt')
+
+# 定义训练样本
+X, y = ['久旱逢甘露', '他乡遇故知'], [1, 0]
+
+# 训练
+model.fit(X, y)
+
+# 推理
+print(model.predict(X))
+```
+
+### API
+
+| 应用 | API 				| 说明                                                 |
+| :---------- | :----------- | :----------- |
+| 语言模型 | `BERTLM` 		| 结合 MLM 和 NSP 任务，随机采样自下文及其他文档 |
+|  		| `RoBERTaLM` 		| 单独 MLM 任务，采样至填满 max_seq_length |
+|  		| `ALBERTLM` 		| 结合 MLM 和 SOP 任务，随机采样自上下文及其他文档 |
+|  		| `ELECTRALM` 		| 结合 MLM 和 RTD 任务，生成器与判别器联合训练 |
+|  | `GPT2LM` | 自回归式文本生成 |
+| 命名实体识别 | `BERTNER` 		| 通过 BIESO 标签推导实体 |
+|  		| `BERTCRFNER` 		| 基于维特比解码，通过 BIESO 标签推导实体 |
+|  | `BERTCRFCascadeNER` | 基于维特比解码，通过 BIESO 标签推导实体；<br>识别实体的同时对实体进行分类 |
+| 机器翻译 | `TransformerMT` | 共享词表，序列到序列建模 |
+| 机器阅读理解 | `BERTMRC` 		| 从输入中抽取一段完整的答案 |
+|  		| `RoBERTaMRC` 		| 从输入中抽取一段完整的答案 |
+|  		| `ALBERTMRC` 		| 从输入中抽取一段完整的答案 |
+|  		| `ELECTRAMRC` 		| 从输入中抽取一段完整的答案 |
+|  		| `SANetMRC` 		| 从输入中抽取一段完整的答案 |
+|  | `BERTVerifierMRC` | 从输入中抽取一段完整的答案，通过判题器辅助判断是否可答 |
+|  | `RetroReaderMRC` | 从输入中抽取一段完整的答案，通过判题器辅助判断是否可答 |
+| 单标签分类 | `TextCNNClassifier` 		| 每一个样本归属于一个唯一的类别 |
+|  		| `BERTClassifier` 		| 每一个样本归属于一个唯一的类别 |
+|  		| `XLNetClassifier` 		| 每一个样本归属于一个唯一的类别 |
+|  		| `RoBERTaClassifier` 		| 每一个样本归属于一个唯一的类别 |
+|  		| `ALBERTClassifier` 		| 每一个样本归属于一个唯一的类别 |
+|  		| `ELECTRAClassifier` 		| 每一个样本归属于一个唯一的类别 |
+| 多标签分类 | `BERTBinaryClassifier` 		| 每一个样本可同时属于零个或多个类别 |
+|  		| `XLNetBinaryClassifier` 		| 每一个样本可同时属于零个或多个类别 |
+|  		| `RoBERTaBinaryClassifier` 		| 每一个样本可同时属于零个或多个类别 |
+|  		| `ALBERTBinaryClassifier` 		| 每一个样本可同时属于零个或多个类别 |
+|  		| `ELECTRABinaryClassifier` 		| 每一个样本可同时属于零个或多个类别 |
+| 序列标注 | `BERTSeqClassifier` 		| 每一个 token 都有唯一的类别 |
+|  		| `XLNetSeqClassifier` 		| 每一个 token 都有唯一的类别 |
+|  		| `RoBERTaSeqClassifier` 		| 每一个 token 都有唯一的类别 |
+|  		| `ALBERTSeqClassifier` 		| 每一个 token 都有唯一的类别 |
+|  		| `ELECTRASeqClassifier` 		| 每一个 token 都有唯一的类别 |
+| 模型蒸馏 | `TinyBERTClassifier` 		| 可蒸馏 BERTClassifier、RoBERTaClassifier 及 ELECTRAClassifier |
+|  		| `FastBERTClassifier` 		| 可蒸馏 BERTClassifier、RoBERTaClassifier 及 ELECTRAClassifier |
+
+更多的使用细节，包括条件参数，可通过 `help(XXX)` 来查看，例如 `help(uf.BERTCRFCascadeNER)`。
+
+### 模型搭建
+
+#### 创建新模型
 
 不同的模型拥有不同的参数需求，以 demo 为例：
 
@@ -28,7 +136,7 @@ help(model)
 
 任何模型都可通过 `help(XXX)` 查看说明文档，了解参数含义。
 
-#### 1.2 从配置快速读取模型
+#### 从配置快速读取模型
 
 UNIF 支持缓存模型配置及快速读取，通过 `.cache()` 和 `uf.load()` 方法来完成。
 
@@ -42,7 +150,7 @@ model = uf.load('代号')
 
 注：当模型的 `output_dir` 属性为空时，模型仅保存配置，不保存参数。
 
-### 2. 训练/推理/评分
+### 训练/推理/评分
 
 基础的训练、推理及评分的使用方法与 SkLearn 十分相似，由 `.fit()`、`.predict()`和 `.score()` 来承载。
 
@@ -74,7 +182,7 @@ help(model.score)
 
 kwargs 承载其他模型特定的条件参数，例如在 `BERTClassifier` 的训练上使用对抗式训练算法，传入 `adversarial`、`epsilon`、`breg_miu` 等参数。详情见下文，第 2.3 小节。
 
-#### 2.1 优化器
+#### 优化器
 
 框架目前支持四类优化器，GD、Adam、AdamW 和 LAMB，使用时在 `fit` 方法额外传入 `optimizer` 参数即可。
 
@@ -82,7 +190,7 @@ kwargs 承载其他模型特定的条件参数，例如在 `BERTClassifier` 的�
 model.fit(X, y, ..., optimizer='lamb')
 ```
 
-#### 2.2 分层学习率
+#### 分层学习率
 
 分层学习率是保证深度神经网络稳定收敛非常重要的一项 trick，在最终的评测表现上也有获得 0.5 以上百分比稳定的提升。建议取值为 0.85。同样作为 `fit` 的额外参数传入。
 
@@ -94,7 +202,7 @@ model.fit(X, y, ..., layerwise_lr_decay_ratio=0.85)
 
 此外，需要注意的是，少部分模型不支持分层学习率 (例如蒸馏模型)。当 `model._key_to_depths` 的返回值为 `'unsupported'` 时，则表示该模型不支持分层学习率。
 
-#### 2.3 对抗式训练
+#### 对抗式训练
 
 对抗式训练算法是非常有效的抗过拟合及增强泛化能力的 trick，在各类场景下都推荐进行尝试。UNIF 支持五类对抗式训练算法，分别为 FGM, PGD, FreeLB, FreeAT 及 SMART。
 
@@ -122,7 +230,7 @@ model.fit(X, y, ..., adversarial='smart', epsilon=0.01, n_loop=2, prtb_lambda=0.
 
 注：部分模型与部分对抗式训练算法不兼容，如遇报错，可尝试其他对抗式训练算法。
 
-#### 2.4 大批量训练 (via TFRecords)
+#### 大批量训练 (via TFRecords)
 
 当训练数据总数过大至内存难以承载时，可以考虑通过 `.to_tfrecords()` 将模型处理过后的训练数据缓存到本地，减轻训练时的内存负担。
 
@@ -148,9 +256,9 @@ help(model.fit_from_tfrecords)
 
 注：目前暂不支持预先缓存推理数据，可以通过分批推理完成批量推理任务。
 
-### 3. 迁移学习
+### 迁移学习
 
-#### 3.1 加载模型
+#### 加载模型
 
 如果已有从其他框架处训练完成的 checkpoint，发现由于参数命名不同而无法完全加载，则可通过以下方法解决。
 
@@ -176,7 +284,7 @@ assert model.output_dir is not None
 model.cache('代号')
 ```
 
-#### 3.2 参数赋值
+#### 参数赋值
 
 如果以上方式不能解决你的问题，可以通过赋值的方式达成加载参数的目的。
 
@@ -200,7 +308,7 @@ assert model.output_dir is not None
 model.cache('代号')
 ```
 
-### 4. TFServing
+### TFServing
 
 所有模型都支持导出 PB 文件，供模型上线，可以通过打印信息看到接口的定义及格式要求。
 
@@ -210,7 +318,7 @@ assert model.output_dir is not None
 model.export()
 ```
 
-### 5. FAQ
+### FAQ
 
 - 问：如何实现多个 segment 的输入？
 
@@ -231,3 +339,7 @@ model.export()
 - 问：联合框架上一版本的 mixout、abandon_cls_info 等 tricks 为何不再使用？
 
   答：这些训练技巧目前证实无法帮助模型取得稳定增益。为了保持 API 尽量简单易用，遂将这些方法删除，未来可能通过其他方式重新加入回来。
+
+### 需知
+
+目前框架依然在开发和测试阶段，任何需求和建议都不尽欢迎。最后，感谢你读到这里。

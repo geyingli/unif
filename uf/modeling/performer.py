@@ -46,8 +46,6 @@ class PerformerEncoder(BERTEncoder):
                  drop_pooler=False,
                  trainable=True,
                  **kwargs):
-        if is_training:
-            nb_random_features = 0
         self.nb_random_features = nb_random_features
 
         assert kernel_transformation in ('relu', 'softmax'), (
@@ -116,7 +114,7 @@ class PerformerEncoder(BERTEncoder):
                     input_tensor=self.embedding_output,
                     batch_size=batch_size,
                     max_seq_length=max_seq_length,
-                    attention_mask=None,
+                    input_mask=input_mask,
                     hidden_size=bert_config.hidden_size,
                     num_hidden_layers=bert_config.num_hidden_layers,
                     num_attention_heads=bert_config.num_attention_heads,
@@ -150,7 +148,7 @@ class PerformerEncoder(BERTEncoder):
                           input_tensor,
                           batch_size,
                           max_seq_length,
-                          attention_mask=None,
+                          input_mask=None,
                           hidden_size=768,
                           num_hidden_layers=12,
                           num_attention_heads=12,
@@ -180,6 +178,8 @@ class PerformerEncoder(BERTEncoder):
                     with tf.variable_scope('attention'):
                         with tf.variable_scope('self'):
 
+                            layer_input *= tf.cast(tf.expand_dims(
+                                input_mask, axis=-1), dtype=tf.float32)
                             attention_layer = Attention(
                                 hidden_size=hidden_size,
                                 num_heads=num_attention_heads,
@@ -303,7 +303,7 @@ def create_projection_matrix(m, d, seed=0, scaling=0, struct_mode=False):
   if scaling == 0:
     multiplier = tf.norm(tf.random_normal((m, d), seed=current_seed), axis=1)
   elif scaling == 1:
-    multiplier = tf.math.rsqrt(float(d)) * tf.ones((m))
+    multiplier = 1 / tf.math.rsqrt(float(d)) * tf.ones((m))
   else:
     raise ValueError('Scaling must be one of {0, 1}. Was %s' % scaling)
 
@@ -362,7 +362,7 @@ def relu_kernel_transformation(data,
   if projection_matrix is None:
     return tf.nn.relu(data) + numerical_stabilizer
   else:
-    ratio = 1.0 / tf.math.rsqrt(
+    ratio = tf.math.rsqrt(
         tf.cast(projection_matrix.shape[0], tf.float32))
     data_dash = ratio * tf.einsum('blhd,md->blhm', data, projection_matrix)
     return tf.nn.relu(data_dash) + numerical_stabilizer
@@ -386,9 +386,9 @@ def softmax_kernel_transformation(data,
   Returns:
     Corresponding kernel feature map.
   '''
-  data_normalizer = 1.0 / (
-      tf.math.rsqrt(tf.math.rsqrt(tf.cast(data.shape[-1], tf.float32))))
-  ratio = 1.0 / tf.math.rsqrt(
+  data_normalizer = \
+      tf.math.rsqrt(1 / tf.math.rsqrt(tf.cast(data.shape[-1], tf.float32)))
+  ratio = tf.math.rsqrt(
       tf.cast(projection_matrix.shape[0]
               if projection_matrix is not None
               else 1.0, tf.float32))

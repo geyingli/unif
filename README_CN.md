@@ -2,7 +2,7 @@
 
 <p align="center">
     <br>
-    	<img src="./logo.png" style="zoom:70%"/>
+    	<img src="./docs/logo.png" style="zoom:70%"/>
     <br>
 <p>
 <p align="center">

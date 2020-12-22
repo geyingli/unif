@@ -10,7 +10,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-beta2.4.3-blue">
+        <img src="https://img.shields.io/badge/version-beta2.4.4-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-1.x 2.x-yellow">
@@ -20,8 +20,7 @@
     </a>
 </p>
 
-Wish to implement your ideas immediately? UNIF, as a unified language processing framework, supports building deep learning models in a simple and efficient manner, including Transformer, GPT-2, BERT, RoBERTa, ALBERT, XLNet, ELECTRA and etc. For BERT-series models, you need nothing but a single hot key to distill the model for light usage. Feel free to run applications among language modeling, text classification, text generation, named entity recognition, machine reading comprehension, machine translation and sequence labeling. UNIF is all you need.
-
+Wish to implement your ideas immediately? UNIF, as a unified language processing framework, supports building deep learning models in a simple and efficient manner, including Transformer, GPT-2, BERT, RoBERTa, ALBERT, XLNet, ELECTRA and etc. For BERT-series models, you need nothing but a single hot key to distill the model for light usage. Feel free to run applications among language modeling, text classification, text generation, named entity recognition, machine reading comprehension, machine translation and sequence labeling.
 
 ### Features
 
@@ -40,20 +39,20 @@ Python 3.6+ and Tensorflow 1.11+/2.x are required to install the repo. If you wi
 ``` bash
 git clone https://github.com/geyingli/unif
 cd unif
-python setup.py install
+python3 setup.py install
 ```
 
-If the installation is not authorized, try `python setup.py install --user`.
+If the installation is not authorized, try `python3 setup.py install --user`.
 
 ### Quick Tour
 
-See how we train and predict in just several lines. Since we provide demo configuration files, no pretrained model is required. Input `python` in command line and enter the interactive Python interface.
+See how we train and predict in just several lines. Since we provide demo configuration files, no pretrained model is required. Input `python3` in command line and enter the interactive Python interface.
 
 ``` python
 import uf
 
 # allow printing basic information
-uf.set_verbosity(2)
+uf.set_verbosity()
 
 # load model (using demo files)
 model = uf.BERTClassifier(config_file='demo/bert_config.json', vocab_file='demo/vocab.txt')
@@ -120,9 +119,8 @@ Modules have diverse argument choices. Taking demo as example:
 import uf
 
 model = uf.BERTClassifier(config_file='demo/bert_config.json', vocab_file='demo/vocab.txt')
-
-help(model)
-# uf.application.bert.BERTClassifier(config_file, vocab_file, max_seq_length=128, label_size=None, init_checkpoint=None, output_dir=None, gpu_ids=None, drop_pooler=False, do_lower_case=True, truncate_method='LIFO')
+print(model)
+# uf.BERTClassifier(config_file, vocab_file, max_seq_length=128, label_size=None, init_checkpoint=None, output_dir=None, gpu_ids=None, drop_pooler=False, do_lower_case=True, truncate_method='LIFO')
 ```
 
 - config_file: str type, required. The path of json file released with pretrained models.
@@ -139,8 +137,6 @@ help(model)
 Check more information by running `help(XXX)` whenever you use new modules.
 
 #### Load module from configuration file
-
-UNIF supports fast loading of module from configuration file. This is implemented by `.cache()` and `uf.load()` methods.
 
 ``` python
 # cache configuration
@@ -204,31 +200,28 @@ A simple way to adjust the learning rate of a specific layer is to modify the la
 
 #### Adversarial training
 
-Adversarial training servers as another effective trick to fight against over-fitting and strengthen generalization. UNIF provides five choices: FGM, PGD, FreeLB, FreeAT and SMART.
+Adversarial training servers as another effective trick to fight against over-fitting and strengthen generalization. UNIF provides five choices.
 
 ``` python
-# FGM
 # accessible for most modules
-model.fit(X, y, ..., adversarial='fgm', epsilon=0.5)
+model.fit(X, y, ..., adversarial='fgm', epsilon=0.5)    # FGM
+model.fit(X, y, ..., adversarial='pgd', epsilon=0.05, n_loop=2)    # PGD
+model.fit(X, y, ..., adversarial='freelb', epsilon=0.3, n_loop=3)    # FreeLB
+model.fit(X, y, ..., adversarial='freeat', epsilon=0.001, n_loop=3)    # FreeAT
 
-# PGD
-# accessible for most modules
-model.fit(X, y, ..., adversarial='pgd', epsilon=0.05, n_loop=2)
-
-# FreeLB
-# accessible for most modules
-model.fit(X, y, ..., adversarial='freelb', epsilon=0.3, n_loop=3)
-
-# FreeAT
-# accessible for most modules
-model.fit(X, y, ..., adversarial='freeat', epsilon=0.001, n_loop=3)
-
-# SMART
 # accessible only for classifier modules
-model.fit(X, y, ..., adversarial='smart', epsilon=0.01, n_loop=2, prtb_lambda=0.5, breg_miu=0.2, tilda_beta=0.3)
+model.fit(X, y, ..., adversarial='smart', epsilon=0.01, n_loop=2, prtb_lambda=0.5, breg_miu=0.2, tilda_beta=0.3)    # SMART
 ```
 
 Note: some modules is incompatible with adversarial training. Remove the arguments when meet errors.
+
+#### Task Signal Annealing (TSA)
+
+TSA is a training trick proposed by Google in paper [*Unsupversed Data Augmentation for Consistency Training*](https://arxiv.org/abs/1904.12848), who ignores losses from samples that have larger classification confidence level than threshold, while others still take part in the convergence. This trick helps to prevent over-fitting and looking down upon hard examples. As now, only single-label classification modules support TSA.
+
+```python
+model.fit(X, y, ..., tsa_thresh=0.05)
+```
 
 #### Large-batch training (via TFRecords)
 

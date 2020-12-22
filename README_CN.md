@@ -10,7 +10,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-beta2.4.3-blue">
+        <img src="https://img.shields.io/badge/version-beta2.4.4-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-1.x 2.x-yellow">
@@ -20,7 +20,7 @@
     </a>
 </p>
 
-有数据，想要快速实现你的想法？轻便、易使用的自然语言处理联合框架，支持快速搭建各类常用深度学习模型 (Transformer, GPT-2, BERT, RoBERTa, ALBERT, XLNet, ELECTRA)，同时对于 BERT 系列，支持高效用的蒸馏 (TinyBERT, FastBERT)。支持各类上下游任务 (语言模型、文本分类、文本生成、命名实体识别、机器阅读理解、机器翻译、序列标注等)。UNIF is all you need。
+有数据，想要快速实现你的想法？轻便、易使用的自然语言处理联合框架，支持快速搭建各类常用深度学习模型 (Transformer, GPT-2, BERT, RoBERTa, ALBERT, XLNet, ELECTRA)，同时对于 BERT 系列，支持高效用的蒸馏 (TinyBERT, FastBERT)。支持各类上下游任务 (语言模型、文本分类、文本生成、命名实体识别、机器阅读理解、机器翻译、序列标注等)。
 
 ### 特性
 
@@ -39,20 +39,20 @@
 ``` bash
 git clone https://github.com/geyingli/unif
 cd unif
-python setup.py install
+python3 setup.py install
 ```
 
-如果安装未获得权限，尝试 `python setup.py install --user`。
+如果安装未获得权限，尝试 `python3 setup.py install --user`。
 
 ### 快速上手
 
-来看看如何在数行代码之内完成训练和推理。这里我们提供了必备的配置文件作为 demo，无需提前下载预训练模型包。在刚才的安装目录下输入 `python` 指令进入 Python 交互界面。
+来看看如何在数行代码之内完成训练和推理。这里我们提供了必备的配置文件作为 demo，无需提前下载预训练模型包。在刚才的安装目录下输入 `python3` 指令进入 Python 交互界面。
 
 ``` python
 import uf
 
 # 许可日志打印基本信息
-uf.set_verbosity(2)
+uf.set_verbosity()
 
 # 载入模型（使用 demo 配置文件进行示范）
 model = uf.BERTClassifier(config_file='demo/bert_config.json', vocab_file='demo/vocab.txt')
@@ -119,9 +119,8 @@ print(model.predict(X))
 import uf
 
 model = uf.BERTClassifier(config_file='demo/bert_config.json', vocab_file='demo/vocab.txt')
-
-help(model)
-# uf.application.bert.BERTClassifier(config_file, vocab_file, max_seq_length=128, label_size=None, init_checkpoint=None, output_dir=None, gpu_ids=None, drop_pooler=False, do_lower_case=True, truncate_method='LIFO')
+print(model)
+# uf.BERTClassifier(config_file, vocab_file, max_seq_length=128, label_size=None, init_checkpoint=None, output_dir=None, gpu_ids=None, drop_pooler=False, do_lower_case=True, truncate_method='LIFO')
 ```
 
 - config_file: str 类型，必填。指向与预训练参数配套的模型配置文件
@@ -138,8 +137,6 @@ help(model)
 任何模型都可通过 `help(XXX)` 查看说明文档，了解参数含义。
 
 #### 从配置快速读取模型
-
-UNIF 支持缓存模型配置及快速读取，通过 `.cache()` 和 `uf.load()` 方法来完成。
 
 ``` python
 # 缓存配置
@@ -205,31 +202,28 @@ model.fit(X, y, ..., layerwise_lr_decay_ratio=0.85)
 
 #### 对抗式训练
 
-对抗式训练算法是非常有效的抗过拟合及增强泛化能力的 trick，在各类场景下都推荐进行尝试。UNIF 支持五类对抗式训练算法，分别为 FGM, PGD, FreeLB, FreeAT 及 SMART。
+对抗式训练算法是非常有效的抗过拟合及增强泛化能力的训练技巧，在各类场景下都推荐进行尝试。UNIF 支持五类对抗式训练算法。
 
 ``` python
-# FGM
 # 大多数类可用
-model.fit(X, y, ..., adversarial='fgm', epsilon=0.5)
+model.fit(X, y, ..., adversarial='fgm', epsilon=0.5)    # FGM
+model.fit(X, y, ..., adversarial='pgd', epsilon=0.05, n_loop=2)    # PGD
+model.fit(X, y, ..., adversarial='freelb', epsilon=0.3, n_loop=3)    # FreeLB
+model.fit(X, y, ..., adversarial='freeat', epsilon=0.001, n_loop=3)    # FreeAT
 
-# PGD
-# 大多数类可用
-model.fit(X, y, ..., adversarial='pgd', epsilon=0.05, n_loop=2)
-
-# FreeLB
-# 大多数类可用
-model.fit(X, y, ..., adversarial='freelb', epsilon=0.3, n_loop=3)
-
-# FreeAT
-# 大多数类可用
-model.fit(X, y, ..., adversarial='freeat', epsilon=0.001, n_loop=3)
-
-# SMART
 # 仅Classifier类可用
-model.fit(X, y, ..., adversarial='smart', epsilon=0.01, n_loop=2, prtb_lambda=0.5, breg_miu=0.2, tilda_beta=0.3)
+model.fit(X, y, ..., adversarial='smart', epsilon=0.01, n_loop=2, prtb_lambda=0.5, breg_miu=0.2, tilda_beta=0.3)    # SMART
 ```
 
 注：部分模型与部分对抗式训练算法不兼容，如遇报错，可尝试其他对抗式训练算法。
+
+#### Task Signal Annealing (TSA)
+
+TSA 是由谷歌在[《Unsupversed Data Augmentation for Consistency Training》](https://arxiv.org/abs/1904.12848)论文中提出的训练技巧，当样本的置信度大于一定阈值时，样本不参与损失的计算。由此避免过拟合，并使模型能更好地应付困难样本。目前仅单标签分类模块支持 TSA。
+
+```python
+model.fit(X, y, ..., tsa_thresh=0.05)
+```
 
 #### 大批量训练 (via TFRecords)
 

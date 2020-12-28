@@ -24,12 +24,6 @@ from .tools import tf
 from . import utils
 
 
-if tf.__version__.startswith('1'):
-    map_and_batch = tf.contrib.data.map_and_batch
-elif tf.__version__.startswith('2'):
-    map_and_batch = tf.data.experimental.map_and_batch
-
-
 
 class BaseTask:
     ''' Parent class of `BasicTraining`, `AdversarialTraining`,
@@ -163,6 +157,10 @@ class BasicTraining(BaseTask):
 
             dataset = tf.data.TFRecordDataset(self.tfrecords_files)
             dataset = dataset.repeat()
+            if tf.__version__.startswith('1'):
+                map_and_batch = tf.contrib.data.map_and_batch
+            elif tf.__version__.startswith('2'):
+                map_and_batch = tf.data.experimental.map_and_batch
             dataset = dataset.apply(map_and_batch(
                 decode_record,
                 batch_size=module.batch_size,
@@ -332,6 +330,10 @@ class AdversarialTraining(BasicTraining):
 
             dataset = tf.data.TFRecordDataset(self.tfrecords_files)
             dataset = dataset.repeat()
+            if tf.__version__.startswith('1'):
+                map_and_batch = tf.contrib.data.map_and_batch
+            elif tf.__version__.startswith('2'):
+                map_and_batch = tf.data.experimental.map_and_batch
             dataset = dataset.apply(map_and_batch(
                 decode_record,
                 batch_size=module.batch_size,
@@ -860,6 +862,10 @@ class BasicInference(BaseTask):
 
             dataset = tf.data.TFRecordDataset(self.tfrecords_files)
             dataset = dataset.repeat()
+            if tf.__version__.startswith('1'):
+                map_and_batch = tf.contrib.data.map_and_batch
+            elif tf.__version__.startswith('2'):
+                map_and_batch = tf.data.experimental.map_and_batch
             dataset = dataset.apply(map_and_batch(
                 decode_record,
                 batch_size=module.batch_size,
@@ -1074,6 +1080,10 @@ class BasicScoring(BaseTask):
 
             dataset = tf.data.TFRecordDataset(self.tfrecords_files)
             dataset = dataset.repeat()
+            if tf.__version__.startswith('1'):
+                map_and_batch = tf.contrib.data.map_and_batch
+            elif tf.__version__.startswith('2'):
+                map_and_batch = tf.data.experimental.map_and_batch
             dataset = dataset.apply(map_and_batch(
                 decode_record,
                 batch_size=module.batch_size,

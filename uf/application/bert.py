@@ -324,6 +324,8 @@ class BERTClassifier(ClassifierModule):
 class BERTWideAndDeepClassifier(BERTClassifier, ClassifierModule):
     ''' Single-label classifier on Wide & Deep model with BERT. '''
     _INFER_ATTRIBUTES = BERTClassifier._INFER_ATTRIBUTES
+    _INFER_ATTRIBUTES['wide_features'] = \
+        'A list of possible values for `Wide` features (integer or string)'
 
     def __init__(self,
                  config_file,
@@ -2950,9 +2952,9 @@ def get_bert_config(config_file=None):
 def get_key_to_depths(num_hidden_layers):
     key_to_depths = {
         '/embeddings': num_hidden_layers + 2,
+        'wide/': 2,
+        'wide_and_deep/': 1,
         '/pooler/': 1,
-        'wide/': 0,
-        'wide_and_deep/': 0,
         'cls/': 0,
         'mrc/': 0}
     for layer_idx in range(num_hidden_layers):

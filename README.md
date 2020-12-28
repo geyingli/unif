@@ -93,7 +93,7 @@ print(model.predict(X))
 |  		| `RoBERTaClassifier` 		| Each sample belongs to one class |
 |  		| `ALBERTClassifier` 		| Each sample belongs to one class |
 |  		| `ELECTRAClassifier` 		| Each sample belongs to one class |
-|  		| `BERTWideAndDeepClassifier` 		| Each sample belongs to one class. Combine with more features through Wide&Deep structure |
+|  		| `BERTWideAndDeepClassifier` 		| Each sample belongs to one class. Combined with more features through Wide&Deep structure |
 |  		| `PerformerClassifier` 		| Each sample belongs to one class. Accelerate inference with FAVOR+ |
 | Multi-label Classification | `BERTBinaryClassifier` 		| Each sample belongs to zero or multiple classes |
 |  		| `XLNetBinaryClassifier` 		| Each sample belongs to zero or multiple classes |

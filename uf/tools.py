@@ -14,10 +14,9 @@
 # limitations under the License.
 ''' Version control of dependencies. '''
 
-try:
-    # tensorflow 2.x
+import tensorflow as tf
+
+
+if tf.__version__.startswith('2'):
     import tensorflow.compat.v1 as tf
     tf.disable_eager_execution()
-except Exception:
-    # tensorflow 1.x
-    import tensorflow as tf

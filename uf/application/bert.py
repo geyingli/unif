@@ -323,7 +323,7 @@ class BERTClassifier(ClassifierModule):
 
 class BERTWideAndDeepClassifier(BERTClassifier, ClassifierModule):
     ''' Single-label classifier on Wide & Deep model with BERT. '''
-    _INFER_ATTRIBUTES = BERTClassifier._INFER_ATTRIBUTES
+    _INFER_ATTRIBUTES = copy.deepcopy(BERTClassifier._INFER_ATTRIBUTES)
     _INFER_ATTRIBUTES['wide_features'] = \
         'A list of possible values for `Wide` features (integer or string)'
 

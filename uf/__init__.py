@@ -12,9 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-:
-__version__ = '2.4.4'
-__date__ = '12/22/2020'
+
+__version__ = '2.4.5'
+__date__ = '12/28/2020'
 
 
 from .application import *

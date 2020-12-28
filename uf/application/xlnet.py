@@ -92,19 +92,6 @@ class XLNetClassifier(BERTClassifier, ClassifierModule):
                     'Wrong input format (line %d): \'%s\'. '
                     % (ex_id, example))
 
-        # If `max_seq_length` is not mannually assigned,
-        # the value will be set to the maximum length of
-        # `input_ids`.
-        if not self.max_seq_length:
-            max_seq_length = 0
-            for segments in segment_input_tokens:
-                # subtract `[CLS]` and `[SEP]s`
-                seq_length = sum([len(seg) + 1 for seg in segments]) + 1
-                max_seq_length = max(max_seq_length, seq_length)
-            self.max_seq_length = max_seq_length
-            tf.logging.info('Adaptive max_seq_length: %d'
-                            % self.max_seq_length)
-
         input_ids = []
         input_mask = []
         segment_ids = []
@@ -210,19 +197,6 @@ class XLNetBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
                     'Wrong input format (line %d): \'%s\'. '
                     % (ex_id, example))
 
-        # If `max_seq_length` is not mannually assigned,
-        # the value will be set to the maximum length of
-        # `input_ids`.
-        if not self.max_seq_length:
-            max_seq_length = 0
-            for segments in segment_input_tokens:
-                # subtract `[CLS]` and `[SEP]s`
-                seq_length = sum([len(seg) + 1 for seg in segments]) + 1
-                max_seq_length = max(max_seq_length, seq_length)
-            self.max_seq_length = max_seq_length
-            tf.logging.info('Adaptive max_seq_length: %d'
-                            % self.max_seq_length)
-
         input_ids = []
         input_mask = []
         segment_ids = []
@@ -327,19 +301,6 @@ class XLNetSeqClassifier(BERTSeqClassifier, ClassifierModule):
                 tf.logging.warning(
                     'Wrong input format (line %d): \'%s\'. '
                     % (ex_id, example))
-
-        # If `max_seq_length` is not mannually assigned,
-        # the value will be set to the maximum length of
-        # `input_ids`.
-        if not self.max_seq_length:
-            max_seq_length = 0
-            for segments in segment_input_tokens:
-                # subtract `[CLS]` and `[SEP]s`
-                seq_length = sum([len(seg) + 1 for seg in segments]) + 1
-                max_seq_length = max(max_seq_length, seq_length)
-            self.max_seq_length = max_seq_length
-            tf.logging.info('Adaptive max_seq_length: %d'
-                            % self.max_seq_length)
 
         input_ids = []
         input_mask = []
@@ -508,19 +469,6 @@ class XLNetLM(BERTLM, LMModule):
                 tf.logging.warning(
                     'Wrong input format (line %d): \'%s\'. '
                     % (ex_id, example))
-
-        # If `max_seq_length` is not mannually assigned,
-        # the value will be set to the maximum length of
-        # `input_ids`.
-        if not self.max_seq_length:
-            max_seq_length = 0
-            for segments in segment_input_tokens:
-                # subtract `[CLS]` and `[SEP]s`
-                seq_length = sum([len(seg) + 1 for seg in segments]) + 1
-                max_seq_length = max(max_seq_length, seq_length)
-            self.max_seq_length = max_seq_length
-            tf.logging.info('Adaptive max_seq_length: %d'
-                            % self.max_seq_length)
 
         # assign sentence id
         token_ids = []

@@ -10,7 +10,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-beta2.4.4-blue">
+        <img src="https://img.shields.io/badge/version-beta2.4.5-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-1.x 2.x-yellow">
@@ -93,6 +93,7 @@ print(model.predict(X))
 |  		| `RoBERTaClassifier` 		| 每一个样本归属于一个唯一的类别 |
 |  		| `ALBERTClassifier` 		| 每一个样本归属于一个唯一的类别 |
 |  		| `ELECTRAClassifier` 		| 每一个样本归属于一个唯一的类别 |
+|  		| `BERTWideAndDeepClassifier` 		| 每一个样本归属于一个唯一的类别，通过Wide&Deep结构结合更多特征 |
 |  		| `PerformerClassifier` 		| 每一个样本归属于一个唯一的类别，通过 FAVOR+ 加速推理 |
 | 多标签分类 | `BERTBinaryClassifier` 		| 每一个样本可同时属于零个或多个类别 |
 |  		| `XLNetBinaryClassifier` 		| 每一个样本可同时属于零个或多个类别 |
@@ -147,6 +148,14 @@ model = uf.load('代号')
 ```
 
 注：当模型的 `output_dir` 属性为空时，模型仅保存配置，不保存参数。
+
+#### 重置
+
+清空计算图，释放内存。
+
+```python
+model.reset()
+```
 
 ### 训练/推理/评分
 

@@ -62,8 +62,8 @@ class WideAndDeepDecoder(BaseDecoder):
             attention_matrix = tf.nn.softmax(attention_scores, axis=-1)
             attention_output = tf.matmul(attention_matrix, wide_output)  # [B, 1, H]
             attention_output = attention_output[:, 0, :]  # [B, H]
-            attention_output = util.dropout(
-                attention_output, hidden_dropout_prob)
+            # attention_output = util.dropout(
+            #     attention_output, hidden_dropout_prob)
             input_tensor = util.layer_norm(
                 attention_output + input_tensor,
                 trainable=trainable)

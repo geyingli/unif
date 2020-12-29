@@ -64,9 +64,9 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
         else:
             self.bert_config = get_bert_config(config_file)
 
-        assert reading_module in ('bert', 'albert', 'electra'), (
+        assert reading_module in ('bert', 'roberta', 'albert', 'electra'), (
             'Invalid value of `reading_module`: %s. Pick one from '
-            '`bert`, `albert` and `electra`.')
+            '`bert`, `roberta`, `albert` and `electra`.')
         assert matching_mechanism in (
             'cross-attention', 'matching-attention'), (
                 'Invalid value of `matching_machanism`: %s. Pick one from '
@@ -215,7 +215,7 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
     def _forward(self, is_training, split_placeholders, **kwargs):
 
         def _get_encoder(model_name):
-            if model_name == 'bert':
+            if model_name == 'bert' or model_name == 'roberta':
                 sketchy_encoder = BERTEncoder(
                     bert_config=self.bert_config,
                     is_training=is_training,
@@ -232,7 +232,6 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
                     input_mask=split_placeholders['input_mask'],
                     segment_ids=split_placeholders['segment_ids'],
                     scope='bert',
-                    drop_pooler=self._drop_pooler,
                     **kwargs)
             elif model_name == 'electra':
                 sketchy_encoder = BERTEncoder(

@@ -27,7 +27,7 @@ from .roberta import RoBERTaClassifier
 from .albert import ALBERTClassifier
 from .electra import ELECTRAClassifier
 from .performer import PerformerClassifier
-from .bert import BERTWideAndDeepClassifier
+from .wide_and_deep import WideAndDeepClassifier
 from .tiny_bert import TinyBERTClassifier
 from .fast_bert import FastBERTClassifier
 from .bert import BERTBinaryClassifier
@@ -83,7 +83,7 @@ __all__ = [
     'RoBERTaClassifier',
     'ALBERTClassifier',
     'ELECTRAClassifier',
-    'BERTWideAndDeepClassifier',
+    'WideAndDeepClassifier',
     'TinyBERTClassifier',
     'FastBERTClassifier',
     'BERTBinaryClassifier',

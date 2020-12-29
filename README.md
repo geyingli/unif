@@ -310,7 +310,7 @@ print(model.sess.run(variable))
 
 # Save graph into new checkpoint file with configurations.
 assert model.output_dir is not None
-model.cache('代号')
+model.cache('any code')
 ```
 
 ### TFServing

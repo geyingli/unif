@@ -533,6 +533,46 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
 
         return data
 
+    def _convert_X(self, X_target, tokenized):
+
+        # tokenize input texts
+        segment_input_tokens = []
+        for ex_id, example in enumerate(X_target):
+            segment_input_tokens.append(
+                self._convert_x(example, tokenized))
+
+        input_ids = []
+        input_mask = []
+        segment_ids = []
+        for ex_id, segments in enumerate(segment_input_tokens):
+            _input_tokens = ['[CLS]']
+            _input_ids = []
+            _input_mask = [1]
+            _segment_ids = [0]
+
+            utils.truncate_segments(
+                segments, self.max_seq_length - len(segments) - 1,
+                truncate_method=self.truncate_method)
+            for s_id, segment in enumerate(segments):
+                _segment_id = min(s_id, 1)
+                _input_tokens.extend(segment + ['[SEP]'])
+                _input_mask.extend([1] * (len(segment) + 1))
+                _segment_ids.extend([_segment_id] * (len(segment) + 1))
+
+            _input_ids = self.tokenizer.convert_tokens_to_ids(_input_tokens)
+
+            # padding
+            for _ in range(self.max_seq_length - len(_input_ids)):
+                _input_ids.append(0)
+                _input_mask.append(0)
+                _segment_ids.append(0)
+
+            input_ids.append(_input_ids)
+            input_mask.append(_input_mask)
+            segment_ids.append(_segment_ids)
+
+        return input_ids, input_mask, segment_ids
+
     def _convert_x(self, x, tokenized):
         if not tokenized:
             raise ValueError(

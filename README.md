@@ -10,7 +10,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-beta2.4.7-blue">
+        <img src="https://img.shields.io/badge/version-beta2.4.8-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-1.x 2.x-yellow">
@@ -34,7 +34,7 @@ Wish to implement your ideas immediately? UNIF, as a unified language processing
 
 ### Installation
 
-Python 3.6+ and Tensorflow 1.11+/2.x are required to install the repo. If you with to run the models on GPU, please install NVIDIA CUDA toolkit in advance (be careful on the selection of published version).
+Python 3.6+ and Tensorflow 1.11+/2.x are required to install the repo. If you with to run the models on GPU, make sure you have already installed GPU version of Tensorflow and NVIDIA CUDA toolkit (including cuDNN). Be careful on the selection of released versions, e.g. tensorflow-gpu\=\=1.11.0 requires cuda\=\=9.0.
 
 ``` bash
 git clone https://github.com/geyingli/unif
@@ -94,6 +94,7 @@ print(model.predict(X))
 |  		| `ALBERTClassifier` 		| Each sample belongs to one class |
 |  		| `ELECTRAClassifier` 		| Each sample belongs to one class |
 |  		| `WideAndDeepClassifier` 		| Each sample belongs to one class. Combined with more sentence-level features through Wide&Deep structure |
+|  		| `SemBERTClassifier` 		| Each sample belongs to one class. Combined with more token-level features through SemBERT structure |
 |  		| `PerformerClassifier` 		| Each sample belongs to one class. Accelerate inference with FAVOR+ |
 | Multi-label Classification | `BERTBinaryClassifier` 		| Each sample belongs to zero or multiple classes |
 |  		| `XLNetBinaryClassifier` 		| Each sample belongs to zero or multiple classes |

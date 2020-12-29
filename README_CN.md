@@ -10,7 +10,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-beta2.4.7-blue">
+        <img src="https://img.shields.io/badge/version-beta2.4.8-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-1.x 2.x-yellow">
@@ -34,7 +34,7 @@
 
 ### 安装
 
-在安装此依赖库之前需要预先安装 Python 3.6+ 及 Tensorflow 1.11+/2.x 版本。如果需要使用 GPU，请预先根据 Tensorflow 版本，安装指定的英伟达 CUDA 工具包，配置运行环境。
+在安装此依赖库之前需要预先安装 Python 3.6+ 及 Tensorflow 1.11+/2.x 版本。如果需要使用 GPU，请预先安装 Tensorflow GPU 版，并版本安装指定的英伟达 CUDA 工具包 (包括 cuDNN)，配置运行环境。
 
 ``` bash
 git clone https://github.com/geyingli/unif
@@ -94,6 +94,7 @@ print(model.predict(X))
 |  		| `ALBERTClassifier` 		| 每一个样本归属于一个唯一的类别 |
 |  		| `ELECTRAClassifier` 		| 每一个样本归属于一个唯一的类别 |
 |  		| `WideAndDeepClassifier` 		| 每一个样本归属于一个唯一的类别，通过Wide&Deep结构结合更多句子级别的特征 |
+|  		| `SemBERTClassifier` 		| 每一个样本归属于一个唯一的类别，通过SemBERT结构结合更多字级别的特征 |
 |  		| `PerformerClassifier` 		| 每一个样本归属于一个唯一的类别，通过 FAVOR+ 加速推理 |
 | 多标签分类 | `BERTBinaryClassifier` 		| 每一个样本可同时属于零个或多个类别 |
 |  		| `XLNetBinaryClassifier` 		| 每一个样本可同时属于零个或多个类别 |

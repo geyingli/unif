@@ -12,23 +12,25 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-''' Wide & Deep structure. '''
-
-import math
+''' SemBERT decoder. '''
 
 from uf.tools import tf
 from .base import BaseDecoder
+from .bert import BERTEncoder
 from . import util
 
 
 
-class WideAndDeepDecoder(BaseDecoder):
+class SemBERTDecoder(BaseDecoder):
     def __init__(self,
+                 bert_config,
                  is_training,
                  input_tensor,
-                 n_wide_features,
-                 wide_features,
+                 input_mask,
+                 sem_features,
                  label_ids,
+                 max_seq_length,
+                 feature_size,
                  label_size=2,
                  sample_weight=None,
                  scope='cls/seq_relationship',
@@ -38,32 +40,43 @@ class WideAndDeepDecoder(BaseDecoder):
                  **kwargs):
         super().__init__(**kwargs)
 
-        hidden_size = input_tensor.shape.as_list()[-1]
-        feature_size = wide_features.shape.as_list()[-1]
-        with tf.variable_scope('wide'):
+        input_shape = util.get_shape_list(input_tensor)
+        batch_size = input_shape[0]
+        hidden_size = input_shape[-1]
+        with tf.variable_scope('sem'):
             feature_embeddings = tf.get_variable(
                 name='feature_embeddings',
-                shape=[feature_size + 1, hidden_size],
+                shape=[feature_size + 3, hidden_size],  # for [PAD], [CLS], [SEP]
                 initializer=util.create_initializer(initializer_range),
                 trainable=trainable)
-            wide_output = tf.gather(
-                feature_embeddings, wide_features)  # [B, N, H]
+            sem_output = tf.gather(
+                feature_embeddings, sem_features)  # [B, N, H]
 
-        with tf.variable_scope('wide_and_deep'):
-            deep_output = tf.expand_dims(input_tensor, -1)  # [B, H, 1]
-            attention_scores = tf.matmul(wide_output, deep_output)  # [B, N, 1]
-            attention_scores = tf.transpose(attention_scores, [0, 2, 1])  # [B, 1, N]
-            attention_scores = tf.multiply(
-                attention_scores, 1.0 / math.sqrt(hidden_size))
-            feature_mask = tf.cast(
-                tf.sequence_mask(n_wide_features, feature_size), tf.float32)    # [B, N]
-            feature_mask = tf.expand_dims(feature_mask, 1)  # [B, 1, N]
-            attention_scores += (1.0 - feature_mask) * -10000.0
-            attention_matrix = tf.nn.softmax(attention_scores, axis=-1)
-            attention_output = tf.matmul(attention_matrix, wide_output)  # [B, 1, H]
+            attention_heads = []
+            with tf.variable_scope('self'):
+                attention_mask = BERTEncoder.create_attention_mask_from_input_mask(
+                    input_mask, batch_size, max_seq_length)
+                (attention_head, _) = BERTEncoder.attention_layer(
+                    from_tensor=sem_output,
+                    to_tensor=sem_output,
+                    attention_mask=attention_mask,
+                    num_attention_heads=bert_config.num_attention_heads,
+                    size_per_head=(hidden_size // bert_config.num_attention_heads),
+                    attention_probs_dropout_prob=hidden_dropout_prob if is_training else 0.0,
+                    initializer_range=initializer_range,
+                    do_return_2d_tensor=False,
+                    batch_size=batch_size,
+                    from_max_seq_length=max_seq_length,
+                    to_max_seq_length=max_seq_length,
+                    trainable=trainable)
+                attention_heads.append(attention_head)
+
+            if len(attention_heads) == 1:
+                attention_output = attention_heads[0]
+            else:
+                attention_output = tf.concat(attention_heads, axis=-1)
+
             attention_output = attention_output[:, 0, :]  # [B, H]
-            # attention_output = util.dropout(
-            #     attention_output, hidden_dropout_prob)
             input_tensor = util.layer_norm(
                 attention_output + input_tensor,
                 trainable=trainable)

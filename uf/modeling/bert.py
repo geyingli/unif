@@ -244,8 +244,8 @@ class BERTEncoder(BaseEncoder):
             output, dropout_prob, trainable=trainable)
         return output
 
-    def create_attention_mask_from_input_mask(self,
-                                              to_mask,
+    @staticmethod
+    def create_attention_mask_from_input_mask(to_mask,
                                               batch_size,
                                               max_seq_length,
                                               dtype=tf.float32):
@@ -256,8 +256,8 @@ class BERTEncoder(BaseEncoder):
         mask = broadcast_ones * to_mask
         return mask
 
-    def attention_layer(self,
-                        from_tensor,
+    @staticmethod
+    def attention_layer(from_tensor,
                         to_tensor,
                         attention_mask=None,
                         num_attention_heads=1,

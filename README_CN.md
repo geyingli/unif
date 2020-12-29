@@ -268,6 +268,8 @@ help(model.fit_from_tfrecords)
 
 ```python
 # 查看从 `init_checkpoint` 初始化失败的变量
+assert model.init_checkpoint is not None
+model.init()
 print(model.uninited_vars)
 
 # 在 `checkpoint` 中寻找对应的参数名
@@ -278,7 +280,7 @@ model.assignment_map['var_1_in_ckpt'] = model.uninited_vars['var_1_in_model']
 model.assignment_map['var_2_in_ckpt'] = model.uninited_vars['var_2_in_model']
 
 # 重新读取预训练参数
-model.init_from_checkpoint()
+model.reinit_from_checkpoint()
 
 # 查看变量是否从初始化失败的名单中消失
 print(model.uninited_vars)

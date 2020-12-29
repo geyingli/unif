@@ -267,6 +267,8 @@ If you already have a pretrained checkpoint, but fail to load into UNIF modules 
 
 ```python
 # Check fail loaded variables.
+assert model.init_checkpoint is not None
+model.init()
 print(model.uninited_vars)
 
 # Check corresponding arrays in the checkpoint file.
@@ -277,7 +279,7 @@ model.assignment_map['var_1_in_ckpt'] = model.uninited_vars['var_1_in_model']
 model.assignment_map['var_2_in_ckpt'] = model.uninited_vars['var_2_in_model']
 
 # Reload from checkpoint file.
-model.init_from_checkpoint()
+model.reinit_from_checkpoint()
 
 # See whether the fail loaded variables disappears from the list.
 print(model.uninited_vars)

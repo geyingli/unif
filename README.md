@@ -107,8 +107,8 @@ print(model.predict(X))
 |  		| `RoBERTaSeqClassifier` 		| Each token belongs to one single class |
 |  		| `ALBERTSeqClassifier` 		| Each token belongs to one single class |
 |  		| `ELECTRASeqClassifier` 		| Each token belongs to one single class |
-| Knowledge Distillation | `TinyBERTClassifier` 		| Support distillation for all BERTClassifier, RoBERTaClassifier and ELECTRAClassifier |
-|  		| `FastBERTClassifier` 		| Support distillation for all BERTClassifier, RoBERTaClassifier and ELECTRAClassifier |
+| Knowledge Distillation | `TinyBERTClassifier` 		| Largely reduce the size of parameters |
+|  		| `FastBERTClassifier` 		| Dynamic inference who allows easy samples exit early |
 
 More details about the usage as well as positional arguments, check through `help(XXX)`, e.g. `help(uf.BERTCRFCascadeNER)`.
 

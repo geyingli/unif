@@ -25,6 +25,7 @@ from . import optimization
 from . import utils
 
 
+
 class BaseModule:
     ''' Parent class of all the application processors. '''
 

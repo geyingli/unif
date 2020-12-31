@@ -94,8 +94,8 @@ print(model.predict(X))
 |  		| `RoBERTaClassifier` 		| 每一个样本归属于一个唯一的类别 |
 |  		| `ALBERTClassifier` 		| 每一个样本归属于一个唯一的类别 |
 |  		| `ELECTRAClassifier` 		| 每一个样本归属于一个唯一的类别 |
-|  		| `WideAndDeepClassifier` 		| 每一个样本归属于一个唯一的类别；<br>通过Wide&Deep结构结合更多句子级别的特征 |
-|  		| `SemBERTClassifier` 		| 每一个样本归属于一个唯一的类别；<br>通过SemBERT结构结合更多字级别的特征 |
+|  		| `WideAndDeepClassifier` 		| 每一个样本归属于一个唯一的类别；<br>通过 Wide&Deep 结构结合更多句子级别的特征 |
+|  		| `SemBERTClassifier` 		| 每一个样本归属于一个唯一的类别；<br>通过 SemBERT 结构结合更多字级别的特征 |
 |  		| `PerformerClassifier` 		| 每一个样本归属于一个唯一的类别；<br>通过 FAVOR+ 加速推理 |
 | 多标签分类 | `BERTBinaryClassifier` 		| 每一个样本可同时属于零个或多个类别 |
 |  		| `XLNetBinaryClassifier` 		| 每一个样本可同时属于零个或多个类别 |
@@ -107,8 +107,8 @@ print(model.predict(X))
 |  		| `RoBERTaSeqClassifier` 		| 每一个 token 都有唯一的类别 |
 |  		| `ALBERTSeqClassifier` 		| 每一个 token 都有唯一的类别 |
 |  		| `ELECTRASeqClassifier` 		| 每一个 token 都有唯一的类别 |
-| 模型蒸馏 | `TinyBERTClassifier` 		| 可蒸馏 BERTClassifier、RoBERTaClassifier 及 ELECTRAClassifier |
-|  		| `FastBERTClassifier` 		| 可蒸馏 BERTClassifier、RoBERTaClassifier 及 ELECTRAClassifier |
+| 模型蒸馏 | `TinyBERTClassifier` 		| 大幅度压缩模型参数 |
+|  		| `FastBERTClassifier` 		| 动态推理，易分样本提前离开模型 |
 
 更多的使用细节，包括条件参数，可通过 `help(XXX)` 来查看，例如 `help(uf.BERTCRFCascadeNER)`。
 

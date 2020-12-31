@@ -189,7 +189,16 @@ help(model.score)
 - print_per_secs: int 类型，默认为 0.1。每一定秒数打印一次训练信息
 - save_per_steps: int 类型，默认为 1000。每一定步数保存一下 checkpoint 文件到 output_dir 目录
 
-kwargs 承载其他模型特定的条件参数，例如在 `BERTClassifier` 的训练上使用对抗式训练算法，传入 `adversarial`、`epsilon`、`breg_miu` 等参数。详情见下文，第 2.3 小节。
+kwargs 承载其他模型特定的条件参数，例如在 `BERTClassifier` 的训练上使用对抗式训练算法，传入 `adversarial`、`epsilon`、`breg_miu` 等参数。详情见下文，第 2.3 小节。以下提供了一个“边训练边推理”的代码示例：
+
+```python
+# 假设你需要中途进行十次模型验证，而训练总共持续 6 轮
+for loop_id in range(10):
+    print('*** Running training on loop %d ***' % loop_id)
+    model.fit(X, y, target_steps=((loop_id + 1) * -0.6), total_steps=-6)
+    print('*** Running evaluation ***')
+    print(model.score(X_dev, y_dev))
+```
 
 #### 优化器
 

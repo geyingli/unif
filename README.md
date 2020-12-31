@@ -189,7 +189,17 @@ help(model.score)
 - print_per_secs: int type, default as 0.1. How many seconds to print training information.
 - save_per_steps: int type, default as 1000. How many steps to save graph into checkpoint.
 
-`kwargs` servers for other conditional arguments, e.g. `adversarial`, `epsilon` and `breg_miu` for adversarial training. See section 2.3 for more details.
+`kwargs` servers for other conditional arguments, e.g. `adversarial`, `epsilon` and `breg_miu` for adversarial training. See section 2.3 for more details. We provide an example showing how to "evaluate while train":
+
+```python
+# Assume you wish to evaluate the model 10 times, and the 
+# lifetime of training is 6 epochs on data.
+for loop_id in range(10):
+    print('*** Running training on loop %d ***' % loop_id)
+    model.fit(X, y, target_steps=((loop_id + 1) * -0.6), total_steps=-6)
+    print('*** Running evaluation ***')
+    print(model.score(X_dev, y_dev))
+```
 
 #### Optimizer
 

@@ -2174,7 +2174,7 @@ class BERTLM(LMModule):
                  output_dir=None,
                  gpu_ids=None,
                  drop_pooler=False,
-                 do_sample_sentence=True,
+                 do_sample_next_sentence=True,
                  max_predictions_per_seq=20,
                  dupe_factor=1,
                  masked_lm_prob=0.15,
@@ -2188,7 +2188,7 @@ class BERTLM(LMModule):
         self.batch_size = 0
         self.max_seq_length = max_seq_length
         self.label_size = 2
-        self.do_sample_sentence = do_sample_sentence
+        self.do_sample_next_sentence = do_sample_next_sentence
         self.dupe_factor = dupe_factor
         self.masked_lm_prob = masked_lm_prob
         self.short_seq_prob = short_seq_prob
@@ -2217,11 +2217,11 @@ class BERTLM(LMModule):
 
         if is_training:
             if y is not None:
-                assert not self.do_sample_sentence, (
-                    '`y` should be None when `do_sample_sentence` is True.')
+                assert not self.do_sample_next_sentence, (
+                    '`y` should be None when `do_sample_next_sentence` is True.')
             else:
-                assert self.do_sample_sentence, (
-                    '`y` can\'t be None when `do_sample_sentence` is False.')
+                assert self.do_sample_next_sentence, (
+                    '`y` can\'t be None when `do_sample_next_sentence` is False.')
 
         n_inputs = None
         data = {}
@@ -2248,7 +2248,7 @@ class BERTLM(LMModule):
                 data['masked_lm_weights'] = \
                     np.array(masked_lm_weights, dtype=np.float32)
 
-            if is_training and self.do_sample_sentence:
+            if is_training and self.do_sample_next_sentence:
                 data['next_sentence_labels'] = \
                     np.array(next_sentence_labels, dtype=np.int32)
 
@@ -2300,7 +2300,7 @@ class BERTLM(LMModule):
             segment_input_tokens = new_segment_input_tokens
 
         # random sampling of next sentence
-        if is_training and self.do_sample_sentence:
+        if is_training and self.do_sample_next_sentence:
             new_segment_input_tokens = []
             for ex_id in range(len(segment_input_tokens)):
                 instances = create_instances_from_document(
@@ -2407,7 +2407,7 @@ class BERTLM(LMModule):
         # automatically set `label_size`
         if self.label_size:
             assert len(label_set) <= self.label_size, (
-                'Number of unique `y`s exceeds `label_size`.')
+                'Number of unique `y`s exceeds 2.')
         else:
             self.label_size = len(label_set)
 
@@ -2479,8 +2479,7 @@ class BERTLM(LMModule):
             masked_lm_positions=split_placeholders['masked_lm_positions'],
             masked_lm_ids=split_placeholders['masked_lm_ids'],
             masked_lm_weights=split_placeholders['masked_lm_weights'],
-            next_sentence_labels=\
-                split_placeholders.get('next_sentence_labels'),
+            next_sentence_labels=split_placeholders['next_sentence_labels'],
             sample_weight=split_placeholders.get('sample_weight'),
             scope_lm='cls/predictions',
             scope_cls='cls/seq_relationship',
@@ -2654,23 +2653,6 @@ def create_instances_from_document(all_documents, document_index,
 
                 assert len(tokens_a) >= 1
                 assert len(tokens_b) >= 1
-
-                tokens = []
-                segment_ids = []
-                tokens.append('[CLS]')
-                segment_ids.append(0)
-                for token in tokens_a:
-                    tokens.append(token)
-                    segment_ids.append(0)
-
-                tokens.append('[SEP]')
-                segment_ids.append(0)
-
-                for token in tokens_b:
-                    tokens.append(token)
-                    segment_ids.append(1)
-                tokens.append('[SEP]')
-                segment_ids.append(1)
 
                 instances.append(([tokens_a, tokens_b], is_random_next))
             current_chunk = []

@@ -152,6 +152,7 @@ class GPT2LM(LMModule):
                 tf.logging.warning(
                     'Wrong input format (line %d): \'%s\'. '
                     % (ex_id, example))
+                continue
             _input_ids = self.tokenizer.convert_tokens_to_ids(_input_tokens)
 
             utils.truncate_segments(

@@ -21,6 +21,7 @@ from .roberta import RoBERTaLM
 from .albert import ALBERTLM
 from .electra import ELECTRALM
 from .gpt2 import GPT2LM
+from .unilm import UniLM
 from .text_cnn import TextCNNClassifier
 from .bert import BERTClassifier
 from .roberta import RoBERTaClassifier
@@ -78,6 +79,7 @@ __all__ = [
     'ALBERTLM',
     'ELECTRALM',
     'GPT2LM',
+    'UniLM',
     'TextCNNClassifier',
     'BERTClassifier',
     'XLNetClassifier',

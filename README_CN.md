@@ -10,7 +10,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-beta2.4.8-blue">
+        <img src="https://img.shields.io/badge/version-beta2.4.9-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-1.x 2.x-yellow">
@@ -76,6 +76,7 @@ print(model.predict(X))
 |  		| `ALBERTLM` 		| 结合 MLM 和 SOP 任务，随机采样自上下文及其他文档 |
 |  		| `ELECTRALM` 		| 结合 MLM 和 RTD 任务，生成器与判别器联合训练 |
 |  | `GPT2LM` | 自回归式文本生成 |
+|       | `UniLM` | 结合双向、单向及 Seq2Seq 任务的语言模型 |
 | 命名实体识别 | `BERTNER` 		| 通过 BIESO 标签推导实体 |
 |  		| `BERTCRFNER` 		| 基于维特比解码，通过 BIESO 标签推导实体 |
 |  | `BERTCRFCascadeNER` | 基于维特比解码，通过 BIESO 标签推导实体；<br>识别实体的同时对实体进行分类 |
@@ -93,9 +94,9 @@ print(model.predict(X))
 |  		| `RoBERTaClassifier` 		| 每一个样本归属于一个唯一的类别 |
 |  		| `ALBERTClassifier` 		| 每一个样本归属于一个唯一的类别 |
 |  		| `ELECTRAClassifier` 		| 每一个样本归属于一个唯一的类别 |
-|  		| `WideAndDeepClassifier` 		| 每一个样本归属于一个唯一的类别，通过Wide&Deep结构结合更多句子级别的特征 |
-|  		| `SemBERTClassifier` 		| 每一个样本归属于一个唯一的类别，通过SemBERT结构结合更多字级别的特征 |
-|  		| `PerformerClassifier` 		| 每一个样本归属于一个唯一的类别，通过 FAVOR+ 加速推理 |
+|  		| `WideAndDeepClassifier` 		| 每一个样本归属于一个唯一的类别；<br>通过Wide&Deep结构结合更多句子级别的特征 |
+|  		| `SemBERTClassifier` 		| 每一个样本归属于一个唯一的类别；<br>通过SemBERT结构结合更多字级别的特征 |
+|  		| `PerformerClassifier` 		| 每一个样本归属于一个唯一的类别；<br>通过 FAVOR+ 加速推理 |
 | 多标签分类 | `BERTBinaryClassifier` 		| 每一个样本可同时属于零个或多个类别 |
 |  		| `XLNetBinaryClassifier` 		| 每一个样本可同时属于零个或多个类别 |
 |  		| `RoBERTaBinaryClassifier` 		| 每一个样本可同时属于零个或多个类别 |

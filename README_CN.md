@@ -34,7 +34,7 @@
 
 ### 安装
 
-在安装此依赖库之前需要预先安装 Python 3.6+ 及 Tensorflow 1.11+/2.x 版本。如果需要使用 GPU，请预先安装 Tensorflow GPU 版，并版本安装指定的英伟达 CUDA 工具包 (包括 cuDNN)，配置运行环境。
+在安装此依赖库之前需要预先安装 Python 3.6+ 及 Tensorflow 1.11+/2.x 版本。如果需要使用 GPU，请预先安装 Tensorflow GPU 版，并根据版本安装指定的英伟达 CUDA 工具包 (包括 cuDNN)，配置运行环境。例如 tensorflow-gpu\=\=1.11.0 对应 cuda\=\=9.0。
 
 ``` bash
 git clone https://github.com/geyingli/unif

@@ -88,7 +88,7 @@ class XLNetClassifier(BERTClassifier, ClassifierModule):
             try:
                 segment_input_tokens.append(self._convert_x(example, tokenized))
             except Exception:
-                tf.logging.warning(
+                raise ValueError(
                     'Wrong input format (line %d): \'%s\'. '
                     % (ex_id, example))
 
@@ -193,7 +193,7 @@ class XLNetBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
             try:
                 segment_input_tokens.append(self._convert_x(example, tokenized))
             except Exception:
-                tf.logging.warning(
+                raise ValueError(
                     'Wrong input format (line %d): \'%s\'. '
                     % (ex_id, example))
 
@@ -298,7 +298,7 @@ class XLNetSeqClassifier(BERTSeqClassifier, ClassifierModule):
                 segment_input_tokens.append(
                     self._convert_x(example, tokenized))
             except Exception:
-                tf.logging.warning(
+                raise ValueError(
                     'Wrong input format (line %d): \'%s\'. '
                     % (ex_id, example))
 
@@ -466,7 +466,7 @@ class XLNetLM(BERTLM, LMModule):
                 segment_input_tokens.append(
                     self._convert_x(example, tokenized))
             except Exception:
-                tf.logging.warning(
+                raise ValueError(
                     'Wrong input format (line %d): \'%s\'. '
                     % (ex_id, example))
 

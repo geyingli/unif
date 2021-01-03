@@ -15,6 +15,7 @@
 ''' Applications based on UniLM. '''
 
 import os
+import copy
 import random
 import collections
 import numpy as np
@@ -192,7 +193,7 @@ class UniLM(BERTLM, LMModule):
                 segment_input_tokens.append(
                     self._convert_x(example, tokenized))
             except Exception:
-                tf.logging.warning(
+                raise ValueError(
                     'Wrong input format (line %d): \'%s\'. '
                     % (ex_id, example))
 

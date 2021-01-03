@@ -113,7 +113,7 @@ class TransformerMT(MTModule):
             try:
                 _source_tokens = self._convert_x(example, tokenized)
             except Exception:
-                tf.logging.warning(
+                raise ValueError(
                     'Wrong input format (line %d): \'%s\'. '
                     % (ex_id, example))
             _source_ids = self.tokenizer.convert_tokens_to_ids(_source_tokens)

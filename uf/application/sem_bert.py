@@ -125,7 +125,7 @@ class SemBERTClassifier(BERTClassifier, ClassifierModule):
                     {'Sem': sem,
                      'Text': self._convert_x(example['Text'], tokenized)})
             except Exception:
-                tf.logging.warning(
+                raise ValueError(
                     'Wrong input format (line %d): %s. An example: '
                     'X_tokenized = [{\'Sem\': [\'n\', \'v\', \'n\'], '
                     '\'Text\': [\'I\', \'love\', \'you\']}, ...]'

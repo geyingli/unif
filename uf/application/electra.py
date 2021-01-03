@@ -262,7 +262,6 @@ class ELECTRALM(BERTLM, LMModule):
                  generator_weight=1.0,
                  discriminator_weight=50.0,
                  max_predictions_per_seq=20,
-                 dupe_factor=1,
                  masked_lm_prob=0.15,
                  do_whole_word_mask=False,
                  do_lower_case=True,
@@ -274,7 +273,6 @@ class ELECTRALM(BERTLM, LMModule):
         self.max_seq_length = max_seq_length
         self.generator_weight = generator_weight
         self.discriminator_weight = discriminator_weight
-        self.dupe_factor = dupe_factor
         self.masked_lm_prob = masked_lm_prob
         self.do_whole_word_mask = do_whole_word_mask
         self.truncate_method = truncate_method
@@ -344,7 +342,7 @@ class ELECTRALM(BERTLM, LMModule):
                 segment_input_tokens.append(
                     self._convert_x(example, tokenized))
             except Exception:
-                tf.logging.warning(
+                raise ValueError(
                     'Wrong input format (line %d): \'%s\'. '
                     % (ex_id, example))
 
@@ -354,14 +352,6 @@ class ELECTRALM(BERTLM, LMModule):
         masked_lm_positions = []
         masked_lm_ids = []
         masked_lm_weights = []
-
-        # duplicate raw inputs
-        if is_training and self.dupe_factor > 1:
-            new_segment_input_tokens = []
-            for _ in range(self.dupe_factor):
-                new_segment_input_tokens.extend(
-                    copy.deepcopy(segment_input_tokens))
-            segment_input_tokens = new_segment_input_tokens
 
         for ex_id, segments in enumerate(segment_input_tokens):
             _input_tokens = ['[CLS]']

@@ -127,7 +127,7 @@ class WideAndDeepClassifier(BERTClassifier, ClassifierModule):
                     {'Wide': example['Wide'],
                      'Deep': self._convert_x(example['Deep'], tokenized)})
             except Exception:
-                tf.logging.warning(
+                raise ValueError(
                     'Wrong input format (line %d): \'%s\'. An untokenized '
                     'example: X = [{\'Wide\': [1, 5, \'positive\'], '
                     '\'Deep\': \'I bet she will win.\'}, ...]'

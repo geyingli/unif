@@ -149,7 +149,7 @@ class GPT2LM(LMModule):
             try:
                 _input_tokens = self._convert_x(example, tokenized)
             except Exception:
-                tf.logging.warning(
+                raise ValueError(
                     'Wrong input format (line %d): \'%s\'. '
                     % (ex_id, example))
                 continue

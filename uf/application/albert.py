@@ -265,7 +265,6 @@ class ALBERTLM(BERTLM, LMModule):
                  drop_pooler=False,
                  do_sample_sentence=True,
                  max_predictions_per_seq=20,
-                 dupe_factor=1,
                  masked_lm_prob=0.15,
                  short_seq_prob=0.1,
                  n_gram=3,
@@ -281,7 +280,6 @@ class ALBERTLM(BERTLM, LMModule):
         self.max_seq_length = max_seq_length
         self.label_size = 2
         self.do_sample_sentence = do_sample_sentence
-        self.dupe_factor = dupe_factor
         self.masked_lm_prob = masked_lm_prob
         self.short_seq_prob = short_seq_prob
         self.ngram = n_gram
@@ -309,6 +307,14 @@ class ALBERTLM(BERTLM, LMModule):
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
                 is_training=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
+
+        if is_training:
+            if y is not None:
+                assert not self.do_sample_sentence, (
+                    '`y` should be None when `do_sample_sentence` is True.')
+            else:
+                assert self.do_sample_sentence, (
+                    '`y` can\'t be None when `do_sample_sentence` is False.')
 
         n_inputs = None
         data = {}
@@ -366,7 +372,7 @@ class ALBERTLM(BERTLM, LMModule):
                 segment_input_tokens.append(
                     self._convert_x(example, tokenized))
             except Exception:
-                tf.logging.warning(
+                raise ValueError(
                     'Wrong input format (line %d): \'%s\'. '
                     % (ex_id, example))
 
@@ -377,14 +383,6 @@ class ALBERTLM(BERTLM, LMModule):
         masked_lm_ids = []
         masked_lm_weights = []
         sentence_order_labels = []
-
-        # duplicate raw inputs
-        if is_training and self.dupe_factor > 1:
-            new_segment_input_tokens = []
-            for _ in range(self.dupe_factor):
-                new_segment_input_tokens.extend(
-                    copy.deepcopy(segment_input_tokens))
-            segment_input_tokens = new_segment_input_tokens
 
         # random sampling of next sentence
         if is_training and self.do_sample_sentence:

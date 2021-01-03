@@ -15,7 +15,6 @@
 ''' Applications based on BERT. '''
 
 import os
-import copy
 import random
 import collections
 import numpy as np
@@ -123,7 +122,7 @@ class BERTClassifier(ClassifierModule):
                 segment_input_tokens.append(
                     self._convert_x(example, tokenized))
             except Exception:
-                tf.logging.warning(
+                raise ValueError(
                     'Wrong input format (line %d): \'%s\'. '
                     % (ex_id, example))
 
@@ -2176,7 +2175,6 @@ class BERTLM(LMModule):
                  drop_pooler=False,
                  do_sample_next_sentence=True,
                  max_predictions_per_seq=20,
-                 dupe_factor=1,
                  masked_lm_prob=0.15,
                  short_seq_prob=0.1,
                  do_whole_word_mask=False,
@@ -2189,7 +2187,6 @@ class BERTLM(LMModule):
         self.max_seq_length = max_seq_length
         self.label_size = 2
         self.do_sample_next_sentence = do_sample_next_sentence
-        self.dupe_factor = dupe_factor
         self.masked_lm_prob = masked_lm_prob
         self.short_seq_prob = short_seq_prob
         self.do_whole_word_mask = do_whole_word_mask
@@ -2290,14 +2287,6 @@ class BERTLM(LMModule):
         masked_lm_ids = []
         masked_lm_weights = []
         next_sentence_labels = []
-
-        # duplicate raw inputs
-        if is_training and self.dupe_factor > 1:
-            new_segment_input_tokens = []
-            for _ in range(self.dupe_factor):
-                new_segment_input_tokens.extend(
-                    copy.deepcopy(segment_input_tokens))
-            segment_input_tokens = new_segment_input_tokens
 
         # random sampling of next sentence
         if is_training and self.do_sample_next_sentence:

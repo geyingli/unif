@@ -24,6 +24,7 @@ from .base import BaseEncoder, BaseDecoder
 from . import util
 
 
+
 class GPT2(BaseDecoder, BaseEncoder):
     def __init__(self,
                  hparams,

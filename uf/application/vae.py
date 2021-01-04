@@ -12,24 +12,26 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-''' Applications based on GPT-2. '''
+''' Applications based on BERT. '''
 
 import numpy as np
 
 from uf.tools import tf
 from .base import LMModule
-from uf.modeling.gpt2 import GPT2
+from .bert import BERTClassifier
+from uf.modeling.vae import VAE
 from uf.tokenization.word_piece import get_word_piece_tokenizer
 import uf.utils as utils
 
 
 
-class GPT2LM(LMModule):
-    ''' Language modeling on GPT-2. '''
+class VAELM(BERTClassifier, LMModule):
+    ''' Text generator in VAE structure. '''
     _INFER_ATTRIBUTES = {
         'max_seq_length': (
             'An integer that defines max sequence length of input tokens, '
-            'which typically equals `len(tokenize(segments)) + 1'),
+            'which typically equals `len(tokenize(segments)) + '
+            'len(segments)` + 1'),
         'init_checkpoint': (
             'A string that directs to the checkpoint file used for '
             'initialization')}
@@ -40,10 +42,10 @@ class GPT2LM(LMModule):
                  init_checkpoint=None,
                  output_dir=None,
                  gpu_ids=None,
-                 hidden_size=768,
-                 num_hidden_layers=12,
-                 num_attention_heads=12,
-                 max_position_embeddings=1024,
+                 topic_size=1024,
+                 hidden_size=128,
+                 num_hidden_layers=6,
+                 num_attention_heads=4,
                  do_lower_case=True,
                  truncate_method='LIFO'):
         super(LMModule, self).__init__(
@@ -52,27 +54,24 @@ class GPT2LM(LMModule):
         self.batch_size = 0
         self.max_seq_length = max_seq_length
         self.truncate_method = truncate_method
-        self._given = 1
+        self._topic_size = topic_size
+        self._hidden_size = hidden_size
+        self._num_hidden_layers = num_hidden_layers
+        self._num_attention_heads = num_attention_heads
+        self._bias = 0
         self._id_to_label = None
         self.__init_args__ = locals()
 
         self.tokenizer = get_word_piece_tokenizer(vocab_file, do_lower_case)
-        self.gpt2_config = get_gpt2_config(
-            n_vocab=len(self.tokenizer.vocab),
-            n_predict=max_seq_length,
-            n_ctx=max_position_embeddings,
-            n_embed=hidden_size,
-            n_head=num_attention_heads,
-            n_layer=num_hidden_layers)
         self._key_to_depths = get_key_to_depths(num_hidden_layers)
 
-        if '<eos>' not in self.tokenizer.vocab:
-            self.tokenizer.add('<eos>')
-            self.gpt2_config.n_vocab += 1
-        self._eos_id = self.tokenizer.convert_tokens_to_ids(['<eos>'])[0]
+        if '[SOS]' not in self.tokenizer.vocab:
+            self.tokenizer.add('[SOS]')
+        if '[SEP]' not in self.tokenizer.vocab:
+            self.tokenizer.add('[SEP]')
 
     def predict(self, X=None, X_tokenized=None,
-                batch_size=8, given=1):
+                batch_size=8, bias=0):
         ''' Inference on the model.
 
         Args:
@@ -80,25 +79,27 @@ class GPT2LM(LMModule):
             X_tokenized: list. A list object consisting tokenized inputs.
               Either `X` or `X_tokenized` should be None.
             batch_size: int. The size of batch in each step.
-            given: int. The number of already known tokens.
+            bias: float. The absolute value of the upper and lower range
+              of random uniform noise for text generation.
         Returns:
             A dict object of model outputs.
         '''
 
-        if given != self._given:
-            self._given = given
+        if bias != self._bias:
+            self._bias = bias
             self._graph_mode = None
 
         return super(LMModule, self).predict(
             X, X_tokenized, batch_size)
 
-    def export(self, export_dir, given=1,
+    def export(self, export_dir, bias=0,
                rename_inputs=None, rename_outputs=None, ignore_outputs=None):
         ''' Export model into SavedModel files.
 
         Args:
             export_dir: str. Directory to which the model is saved.
-            given: int. The number of already known tokens.
+            bias: float. The absolute value of the upper and lower range
+              of random uniform noise for text generation.
             rename_inputs: dict. Mapping of original name to target name.
             rename_outputs: dict. Mapping of original name to target name.
             ignore_outputs: list. Name of outputs to ignore.
@@ -106,8 +107,8 @@ class GPT2LM(LMModule):
             None
         '''
 
-        if given != self._given:
-            self._given = given
+        if bias != self._bias:
+            self._bias = bias
             self._graph_mode = None
 
         return super(LMModule, self).export(
@@ -127,9 +128,11 @@ class GPT2LM(LMModule):
         # convert X
         if X or X_tokenized:
             tokenized = False if X else X_tokenized
-            input_ids = self._convert_X(
+            input_ids, input_mask, segment_ids = self._convert_X(
                 X_tokenized if tokenized else X, tokenized=tokenized)
             data['input_ids'] = np.array(input_ids, dtype=np.int32)
+            data['input_mask'] = np.array(input_mask, dtype=np.int32)
+            data['segment_ids'] = np.array(segment_ids, dtype=np.int32)
             n_inputs = len(input_ids)
 
             if n_inputs < self.batch_size:
@@ -143,49 +146,16 @@ class GPT2LM(LMModule):
 
         return data
 
-    def _convert_X(self, X_target, tokenized):
-        input_ids = []
-
-        for ex_id, example in enumerate(X_target):
-            try:
-                _input_tokens = self._convert_x(example, tokenized)
-            except Exception:
-                raise ValueError(
-                    'Wrong input format (line %d): \'%s\'. '
-                    % (ex_id, example))
-                continue
-            _input_ids = self.tokenizer.convert_tokens_to_ids(_input_tokens)
-
-            utils.truncate_segments(
-                [_input_ids], self.max_seq_length - 1,
-                truncate_method=self.truncate_method)
-            _input_ids.append(self._eos_id)
-
-            if len(_input_ids) < self.max_seq_length:
-                _input_ids.extend([0 for _ in range(
-                    self.max_seq_length - len(_input_ids))])
-            input_ids.append(_input_ids)
-
-        return input_ids
-
-    def _convert_x(self, x, tokenized):
-        if not tokenized:
-            # deal with general inputs
-            if isinstance(x, str):
-                return self.tokenizer.tokenize(x)
-
-        # deal with tokenized inputs
-        elif isinstance(x[0], str):
-            return x
-
-        # deal with tokenized and multiple inputs
-        raise ValueError(
-            'GPT2 only supports single sentence inputs.')
-
     def _set_placeholders(self, target, on_export=False):
         self.placeholders = {
             'input_ids': utils.get_placeholder(
                 target, 'input_ids',
+                [None, self.max_seq_length], tf.int32),
+            'input_mask': utils.get_placeholder(
+                target, 'input_mask',
+                [None, self.max_seq_length], tf.int32),
+            'segment_ids': utils.get_placeholder(
+                target, 'segment_ids',
                 [None, self.max_seq_length], tf.int32),
         }
         if not on_export:
@@ -196,14 +166,19 @@ class GPT2LM(LMModule):
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
-        model = GPT2(
-            hparams=self.gpt2_config,
+        model = VAE(
             vocab_size=len(self.tokenizer.vocab),
             is_training=is_training,
             input_ids=split_placeholders['input_ids'],
+            input_mask=split_placeholders['input_mask'],
+            segment_ids=split_placeholders['segment_ids'],
             sample_weight=split_placeholders.get('sample_weight'),
-            scope='model',
-            given=self._given,
+            topic_size=self._topic_size,
+            hidden_size=self._hidden_size,
+            num_hidden_layers=self._num_hidden_layers,
+            num_attention_heads=self._num_attention_heads,
+            bias=self._bias,
+            scope='vae',
             **kwargs)
         (total_loss, losses, probs, preds) = model.get_forward_outputs()
         return (total_loss, losses, probs, preds)
@@ -211,23 +186,24 @@ class GPT2LM(LMModule):
     def _get_fit_ops(self, as_feature=False):
         ops = [self._train_op, self._preds['preds'], self._losses['losses']]
         if as_feature:
-            ops.extend([self.placeholders['input_ids']])
+            ops.extend([self.placeholders['input_ids'],
+                        self.placeholders['input_mask']])
         return ops
 
     def _get_fit_info(self, output_arrays, feed_dict, as_feature=False):
 
         if as_feature:
-            batch_target = output_arrays[-1]
+            batch_labels = output_arrays[-2]
+            batch_mask = output_arrays[-1]
         else:
-            batch_target = feed_dict[self.placeholders['input_ids']]
+            batch_labels = feed_dict[self.placeholders['input_ids']]
+            batch_mask = feed_dict[self.placeholders['input_mask']]
 
         # accuracy
         batch_preds = output_arrays[1]
-        batch_labels = np.hstack(
-            (batch_target[:, 1:], np.zeros((self.batch_size, 1))))
-        batch_mask = (batch_labels > 0)
-        accuracy = np.sum((batch_preds == batch_labels) * batch_mask) / \
-            np.sum(batch_mask)
+        accuracy = (
+            np.sum((batch_preds == batch_labels) * batch_mask) /
+            batch_mask.sum())
 
         # loss
         batch_losses = output_arrays[2]
@@ -240,46 +216,46 @@ class GPT2LM(LMModule):
         return info
 
     def _get_predict_ops(self):
-        return [self._preds['preds']]
+        return [self._probs['miu'], self._probs['sigma'],
+                self._preds['preds']]
 
     def _get_predict_outputs(self, batch_outputs):
         n_inputs = len(list(self.data.values())[0])
         output_arrays = list(zip(*batch_outputs))
 
+        # miu
+        miu = utils.transform(output_arrays[0], n_inputs)
+
+        # sigma
+        sigma = utils.transform(output_arrays[1], n_inputs)
+
         # preds
-        all_preds = utils.transform(output_arrays[0], n_inputs).tolist()
+        all_preds = utils.transform(output_arrays[2], n_inputs).tolist()
         preds = []
         for _pred_ids in all_preds:
             _pred_tokens = self.tokenizer.convert_ids_to_tokens(_pred_ids)
             for i in range(self.max_seq_length):
-                if _pred_tokens[i] == '<eos>':
+                if _pred_ids[i] == 0:
                     _pred_tokens = _pred_tokens[:i]
                     break
-            _pred_text = utils.convert_tokens_to_text(_pred_tokens)
-            preds.append(_pred_text)
+            preds.append(_pred_tokens)
 
         outputs = {}
+        outputs['miu'] = miu
+        outputs['sigma'] = sigma
         outputs['preds'] = preds
 
         return outputs
 
 
-class GPT2Config:
-    def __init__(self, **kwargs):
-        for key, value in kwargs.items():
-            self.__setattr__(key, value)
-
-
-def get_gpt2_config(**kwargs):
-    return GPT2Config(**kwargs)
-
 
 def get_key_to_depths(num_hidden_layers):
     key_to_depths = {
-        '/word_embeddings': num_hidden_layers + 2,
-        '/wpe': num_hidden_layers + 2,
-        'ln_f/': 0}
+        '/embeddings': num_hidden_layers + 3,
+        '/encoder/projection': 2,
+        '/decoder': 1,
+        'cls/': 0}
     for layer_idx in range(num_hidden_layers):
-        key_to_depths['/h%d/' % layer_idx] = \
-            num_hidden_layers - layer_idx + 1
+        key_to_depths['/layer_%d/' % layer_idx] = \
+            num_hidden_layers - layer_idx + 2
     return key_to_depths

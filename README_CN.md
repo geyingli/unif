@@ -10,7 +10,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-beta2.4.9-blue">
+        <img src="https://img.shields.io/badge/version-beta2.4.10-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-1.x 2.x-yellow">
@@ -20,7 +20,7 @@
     </a>
 </p>
 
-有数据，想要快速实现你的想法？轻便、易使用的自然语言处理联合框架，支持快速搭建各类常用深度学习模型 (Transformer, GPT-2, BERT, RoBERTa, ALBERT, XLNet, ELECTRA)，同时对于 BERT 系列，支持高效用的蒸馏 (TinyBERT, FastBERT)。支持各类上下游任务 (语言模型、文本分类、文本生成、命名实体识别、机器阅读理解、机器翻译、序列标注等)。
+有数据，想要快速实现你的想法？轻便、易使用的自然语言处理联合框架，支持快速搭建各类常用深度学习模型 (Transformer, GPT-2, BERT, RoBERTa, ALBERT, UniLM, ELECTRA)，同时对于 BERT 系列，支持高效用的蒸馏 (TinyBERT, FastBERT)。支持各类上下游任务 (语言模型、文本分类、文本生成、命名实体识别、机器阅读理解、机器翻译、序列标注等)。
 
 ### 特性
 
@@ -77,6 +77,7 @@ print(model.predict(X))
 |  		| `ELECTRALM` 		| 结合 MLM 和 RTD 任务，生成器与判别器联合训练 |
 |  | `GPT2LM` | 自回归式文本生成 |
 |       | `UniLM` | 结合双向、单向及 Seq2Seq 任务的语言模型 |
+|       | `VAELM` | 可生成语言文本负样本，也可提取向量用于聚类 |
 | 命名实体识别 | `BERTNER` 		| 通过 BIESO 标签推导实体 |
 |  		| `BERTCRFNER` 		| 基于维特比解码，通过 BIESO 标签推导实体 |
 |  | `BERTCRFCascadeNER` | 基于维特比解码，通过 BIESO 标签推导实体；<br>识别实体的同时对实体进行分类 |

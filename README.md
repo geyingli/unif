@@ -10,7 +10,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-beta2.4.9-blue">
+        <img src="https://img.shields.io/badge/version-beta2.4.10-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-1.x 2.x-yellow">
@@ -20,7 +20,7 @@
     </a>
 </p>
 
-Wish to implement your ideas immediately? UNIF, as a unified language processing framework, supports building deep learning models in a simple and efficient manner, including Transformer, GPT-2, BERT, RoBERTa, ALBERT, XLNet, ELECTRA and etc. For BERT-series models, you need nothing but a single hot key to distill the model for light usage. Feel free to run applications among language modeling, text classification, text generation, named entity recognition, machine reading comprehension, machine translation and sequence labeling.
+Wish to implement your ideas immediately? UNIF, as a unified language processing framework, supports building deep learning models in a simple and efficient manner, including Transformer, GPT-2, BERT, RoBERTa, ALBERT, UniLM, ELECTRA and etc. For BERT-series models, you need nothing but a single hot key to distill the model for light usage. Feel free to run applications among language modeling, text classification, text generation, named entity recognition, machine reading comprehension, machine translation and sequence labeling.
 
 ### Features
 
@@ -77,6 +77,7 @@ print(model.predict(X))
 |  		| `ELECTRALM` 		| Combine MLM and RTD task, train generator and discriminator together |
 |  | `GPT2LM` | Auto-regressive text generation |
 |       | `UniLM` | Combine bidirectional, unidirectional and Seq2Seq tasks |
+|       | `VAELM` | For generation of negative text samples and clustering |
 | Named Entity Recognition | `BERTNER` 		| Recognize entities through BIESO labels |
 |  		| `BERTCRFNER` 		| Recognize entities through BIESO labels and Viterbi decoding |
 |  | `BERTCRFCascadeNER` | Recognize and classify entities through BIESO labels and Viterbi decoding |
@@ -192,7 +193,7 @@ help(model.score)
 `kwargs` servers for other conditional arguments, e.g. `adversarial`, `epsilon` and `breg_miu` for adversarial training. See section 2.3 for more details. We provide an example showing how to "evaluate while train":
 
 ```python
-# Assume you wish to evaluate the model 10 times, and the 
+# Assume you wish to evaluate the model 10 times, and the
 # lifetime of training is 6 epochs on data.
 for loop_id in range(10):
     print('*** Running training on loop %d ***' % loop_id)

@@ -32,6 +32,7 @@ Inputs = collections.namedtuple(
                'masked_lm_ids', 'masked_lm_weights'])
 
 
+
 class ELECTRA(BaseDecoder):
     def __init__(self,
                  vocab_size,

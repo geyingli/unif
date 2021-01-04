@@ -253,8 +253,8 @@ class ELECTRALM(BERTLM, LMModule):
     _INFER_ATTRIBUTES = BERTLM._INFER_ATTRIBUTES
 
     def __init__(self,
-                 model_size,
                  vocab_file,
+                 model_size='base',
                  max_seq_length=128,
                  init_checkpoint=None,
                  output_dir=None,

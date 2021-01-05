@@ -10,7 +10,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-beta2.4.10-blue">
+        <img src="https://img.shields.io/badge/version-beta2.4.11-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-1.x 2.x-yellow">
@@ -75,9 +75,9 @@ print(model.predict(X))
 |  		| `RoBERTaLM` 		| Single MLM task, sample sentences to maximum sequence length |
 |  		| `ALBERTLM` 		| Combine MLM and SOP task, sample sentences from context or other documents |
 |  		| `ELECTRALM` 		| Combine MLM and RTD task, train generator and discriminator together |
+|       | `VAELM` | For generation of negative text samples and clustering |
 |  | `GPT2LM` | Auto-regressive text generation |
 |       | `UniLM` | Combine bidirectional, unidirectional and Seq2Seq tasks |
-|       | `VAELM` | For generation of negative text samples and clustering |
 | Named Entity Recognition | `BERTNER` 		| Recognize entities through BIESO labels |
 |  		| `BERTCRFNER` 		| Recognize entities through BIESO labels and Viterbi decoding |
 |  | `BERTCRFCascadeNER` | Recognize and classify entities through BIESO labels and Viterbi decoding |

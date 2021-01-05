@@ -42,10 +42,11 @@ class VAELM(BERTClassifier, LMModule):
                  init_checkpoint=None,
                  output_dir=None,
                  gpu_ids=None,
+                 reduced_size=64,
                  topic_size=1024,
-                 hidden_size=128,
+                 hidden_size=256,
                  num_hidden_layers=6,
-                 num_attention_heads=4,
+                 num_attention_heads=8,
                  do_lower_case=True,
                  truncate_method='LIFO'):
         super(LMModule, self).__init__(
@@ -54,6 +55,7 @@ class VAELM(BERTClassifier, LMModule):
         self.batch_size = 0
         self.max_seq_length = max_seq_length
         self.truncate_method = truncate_method
+        self._reduced_size = reduced_size
         self._topic_size = topic_size
         self._hidden_size = hidden_size
         self._num_hidden_layers = num_hidden_layers
@@ -173,6 +175,7 @@ class VAELM(BERTClassifier, LMModule):
             input_mask=split_placeholders['input_mask'],
             segment_ids=split_placeholders['segment_ids'],
             sample_weight=split_placeholders.get('sample_weight'),
+            reduced_size=self._reduced_size,
             topic_size=self._topic_size,
             hidden_size=self._hidden_size,
             num_hidden_layers=self._num_hidden_layers,

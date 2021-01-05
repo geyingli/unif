@@ -30,6 +30,7 @@ class VAE(BaseDecoder, BERTEncoder):
                  input_mask,
                  segment_ids,
                  sample_weight=None,
+                 reduced_size=64,
                  topic_size=1024,
                  hidden_size=768,
                  num_hidden_layers=12,
@@ -108,7 +109,7 @@ class VAE(BaseDecoder, BERTEncoder):
                 with tf.variable_scope('projection'):
                     transformer_output = tf.layers.dense(
                         self.all_encoder_layers[-1],
-                        config.hidden_size,
+                        reduced_size,
                         activation=util.gelu,
                         kernel_initializer=tf.truncated_normal_initializer(
                             stddev=config.initializer_range),
@@ -121,12 +122,12 @@ class VAE(BaseDecoder, BERTEncoder):
                     input_length_2d = tf.reshape(input_length, [batch_size, 1])
 
                     broadcast_mask = tf.sequence_mask(
-                        tf.multiply(input_length_1d, config.hidden_size),
-                        seq_length * config.hidden_size,
+                        tf.multiply(input_length_1d, reduced_size),
+                        seq_length * reduced_size,
                         dtype=tf.float32)
                     broadcast_mask = tf.multiply(
                         broadcast_mask, seq_length / input_length_2d)
-                    transformer_output = transformer_output * broadcast_mask
+                    transformer_output *= broadcast_mask
 
                     # latent space
                     miu = tf.layers.dense(
@@ -146,8 +147,6 @@ class VAE(BaseDecoder, BERTEncoder):
                         trainable=trainable)
                     self.probs['miu'] = miu
                     self.probs['sigma'] = sigma
-                    miu_reg = tf.reduce_mean(tf.square(miu))
-                    sigma_reg = tf.reduce_mean(tf.exp(sigma) - sigma - 1)
 
             with tf.variable_scope('decoder'):
                 with tf.variable_scope('projection'):
@@ -164,14 +163,13 @@ class VAE(BaseDecoder, BERTEncoder):
                     # projection
                     decoder_input = tf.layers.dense(
                         decoder_input,
-                        seq_length * config.hidden_size,
+                        seq_length * reduced_size,
                         activation=util.gelu,
                         kernel_initializer=tf.truncated_normal_initializer(
                             stddev=config.initializer_range),
                         trainable=trainable)
                     intermediate_input = tf.reshape(
-                        decoder_input,
-                        [batch_size, seq_length, config.hidden_size])
+                        decoder_input, [-1, seq_length, reduced_size])
                     intermediate_input = util.layer_norm(
                         intermediate_input, trainable=trainable)
                     intermediate_input = util.dropout(
@@ -181,7 +179,7 @@ class VAE(BaseDecoder, BERTEncoder):
                 with tf.variable_scope('intermediate'):
                     intermediate_output = tf.layers.dense(
                         intermediate_input,
-                        4 * config.hidden_size,
+                        4 * reduced_size,
                         activation=util.gelu,
                         kernel_initializer=util.create_initializer(
                             config.initializer_range),
@@ -239,7 +237,9 @@ class VAE(BaseDecoder, BERTEncoder):
                 per_example_loss *= tf.expand_dims(sample_weight, axis=-1)
 
             self.total_loss = (
-                tf.reduce_mean(per_example_loss) + miu_reg + sigma_reg)
+                tf.reduce_mean(per_example_loss) +
+                tf.reduce_mean(tf.square(miu)) +
+                tf.reduce_mean(tf.exp(sigma) - sigma - 1))
             self.losses['losses'] = per_example_loss
 
 

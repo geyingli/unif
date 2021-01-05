@@ -10,7 +10,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-beta2.4.10-blue">
+        <img src="https://img.shields.io/badge/version-beta2.4.11-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-1.x 2.x-yellow">
@@ -75,9 +75,9 @@ print(model.predict(X))
 |  		| `RoBERTaLM` 		| 单独 MLM 任务，采样至填满 max_seq_length |
 |  		| `ALBERTLM` 		| 结合 MLM 和 SOP 任务，随机采样自上下文及其他文档 |
 |  		| `ELECTRALM` 		| 结合 MLM 和 RTD 任务，生成器与判别器联合训练 |
+|       | `VAELM` | 可生成语言文本负样本，也可提取向量用于聚类 |
 |  | `GPT2LM` | 自回归式文本生成 |
 |       | `UniLM` | 结合双向、单向及 Seq2Seq 任务的语言模型 |
-|       | `VAELM` | 可生成语言文本负样本，也可提取向量用于聚类 |
 | 命名实体识别 | `BERTNER` 		| 通过 BIESO 标签推导实体 |
 |  		| `BERTCRFNER` 		| 基于维特比解码，通过 BIESO 标签推导实体 |
 |  | `BERTCRFCascadeNER` | 基于维特比解码，通过 BIESO 标签推导实体；<br>识别实体的同时对实体进行分类 |

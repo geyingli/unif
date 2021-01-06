@@ -162,7 +162,7 @@ model.reset()
 
 ### 训练/推理/评分
 
-基础的训练、推理及评分的使用方法与 SkLearn 十分相似，由 `.fit()`、`.predict()`和 `.score()` 来承载。
+基础的训练、推理及评分的使用方法与 Scikit-Learn 十分相似，由 `.fit()`、`.predict()`和 `.score()` 来承载。
 
 ``` python
 import uf

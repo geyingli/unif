@@ -162,7 +162,7 @@ model.reset()
 
 ### Train/Predict/Score
 
-Basic training, inference and scoring methods work similar with Scikit-Learns, implemented by `.fit()`, `.predict()` and `.score()` methods.
+Basic training, inference and scoring methods work similar with Scikit-Learn, implemented by `.fit()`, `.predict()` and `.score()` methods.
 
 ``` python
 import uf

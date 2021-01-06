@@ -55,6 +55,13 @@ class VAE(BaseDecoder, BERTEncoder):
         batch_size = input_shape[0]
         seq_length = input_shape[1]
 
+        # Tilda embeddings for SMART algorithm
+        tilda_embeddings = None
+        use_tilda_embedding=kwargs.get('use_tilda_embedding')
+        if use_tilda_embedding:
+            with tf.variable_scope('', reuse=True):
+                tilda_embeddings = tf.get_variable('tilda_embeddings')
+
         with tf.variable_scope(scope):
             with tf.variable_scope('embeddings'):
 
@@ -67,6 +74,7 @@ class VAE(BaseDecoder, BERTEncoder):
                         embedding_size=config.hidden_size,
                         initializer_range=config.initializer_range,
                         word_embedding_name='word_embeddings',
+                        tilda_embeddings=tilda_embeddings,
                         trainable=trainable)
                 self.embedding_output = self.embedding_postprocessor(
                     input_tensor=self.embedding_output,

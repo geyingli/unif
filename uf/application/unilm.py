@@ -440,7 +440,7 @@ def create_masked_lm_predictions(tokens,
     # on-the-fly whole word masking is possible.
 
     for (i, token) in enumerate(tokens):
-        if token == "[CLS]" or token == "[SEP]":
+        if token == "[CLS]":  # or token == "[SEP]":  we need to know when to stop
             continue
         # Whole Word Masking means that if we mask all of the wordpieces
         # corresponding to an original word.

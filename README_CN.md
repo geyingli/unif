@@ -239,12 +239,12 @@ model.fit(X, y, ..., adversarial='smart', epsilon=0.01, n_loop=2, prtb_lambda=0.
 
 注：部分模型与部分对抗式训练算法不兼容，如遇报错，可尝试其他对抗式训练算法。
 
-#### Task Signal Annealing (TSA)
+#### 置信度过滤
 
-TSA 是由谷歌在[《Unsupversed Data Augmentation for Consistency Training》](https://arxiv.org/abs/1904.12848)论文中提出的训练技巧，当样本的置信度大于一定阈值时，样本不参与损失的计算。由此避免过拟合，并使模型能更好地应付困难样本。目前仅单标签分类模块支持 TSA。
+当样本在任何一类的置信度大于阈值时，样本不参与损失的计算，由此避免过拟合，并使模型能更好地应付困难样本。目前仅单标签分类模块支持置信度过滤。
 
 ```python
-model.fit(X, y, ..., tsa_thresh=0.05)
+model.fit(X, y, ..., conf_thresh=0.99)
 ```
 
 #### 大批量训练 (via TFRecords)

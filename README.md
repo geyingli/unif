@@ -238,12 +238,12 @@ model.fit(X, y, ..., adversarial='smart', epsilon=0.01, n_loop=2, prtb_lambda=0.
 
 Note: some modules is incompatible with adversarial training. Remove the arguments when meet errors.
 
-#### Task Signal Annealing (TSA)
+#### Confidence-based masking
 
-TSA is a training trick proposed by Google in paper [*Unsupversed Data Augmentation for Consistency Training*](https://arxiv.org/abs/1904.12848), who ignores losses from samples that have larger classification confidence level than threshold, while others still take part in the convergence. This trick helps to prevent over-fitting and looking down upon hard examples. As now, only single-label classification modules support TSA.
+Ignore losses from samples that have larger classification confidence level than threshold, while others still take part in the convergence. This trick helps to prevent over-fitting and pay more attention on hard examples. As for now, only single-label classification modules support this method.
 
 ```python
-model.fit(X, y, ..., tsa_thresh=0.05)
+model.fit(X, y, ..., conf_thresh=0.99)
 ```
 
 #### Large-batch training (via TFRecords)

@@ -170,7 +170,7 @@ class TransformerMT(MTModule):
 
         return target_ids
 
-    def _set_placeholders(self, target, on_export=False):
+    def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
             'source_ids': utils.get_placeholder(
                 target, 'source_ids',

@@ -197,7 +197,7 @@ class WideAndDeepClassifier(BERTClassifier, ClassifierModule):
         return (input_ids, input_mask, segment_ids,
                 n_wide_features, wide_features)
 
-    def _set_placeholders(self, target, on_export=False):
+    def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
             'input_ids': utils.get_placeholder(
                 target, 'input_ids',

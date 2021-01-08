@@ -182,7 +182,7 @@ class GPT2LM(LMModule):
         raise ValueError(
             'GPT2 only supports single sentence inputs.')
 
-    def _set_placeholders(self, target, on_export=False):
+    def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
             'input_ids': utils.get_placeholder(
                 target, 'input_ids',

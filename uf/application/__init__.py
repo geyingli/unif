@@ -31,6 +31,7 @@ from .electra import ELECTRAClassifier
 from .wide_and_deep import WideAndDeepClassifier
 from .sem_bert import SemBERTClassifier
 from .performer import PerformerClassifier
+from .uda import UDAClassifier
 from .tiny_bert import TinyBERTClassifier
 from .fast_bert import FastBERTClassifier
 from .bert import BERTBinaryClassifier
@@ -90,6 +91,7 @@ __all__ = [
     'ELECTRAClassifier',
     'WideAndDeepClassifier',
     'SemBERTClassifier',
+    'UDAClassifier',
     'TinyBERTClassifier',
     'FastBERTClassifier',
     'BERTBinaryClassifier',

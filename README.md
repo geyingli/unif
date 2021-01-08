@@ -10,7 +10,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-beta2.4.11-blue">
+        <img src="https://img.shields.io/badge/version-beta2.4.12-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-1.x 2.x-yellow">
@@ -98,6 +98,7 @@ print(model.predict(X))
 |  		| `WideAndDeepClassifier` 		| Each sample belongs to one class.<br>Combined with more sentence-level features through Wide&Deep structure |
 |  		| `SemBERTClassifier` 		| Each sample belongs to one class.<br>Combined with more token-level features through SemBERT structure |
 |  		| `PerformerClassifier` 		| Each sample belongs to one class.<br>Accelerate inference with FAVOR+ |
+|  		| `UDAClassifier` 		| Semi-supervised algorithm with consistency training |
 | Multi-label Classification | `BERTBinaryClassifier` 		| Each sample belongs to zero or multiple classes |
 |  		| `XLNetBinaryClassifier` 		| Each sample belongs to zero or multiple classes |
 |  		| `RoBERTaBinaryClassifier` 		| Each sample belongs to zero or multiple classes |

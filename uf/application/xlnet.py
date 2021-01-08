@@ -513,7 +513,7 @@ class XLNetLM(BERTLM, LMModule):
 
         return (inputs, targets, seg_ids, labels, is_masked)
 
-    def _set_placeholders(self, target, on_export=False):
+    def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
             'input': utils.get_placeholder(
                 target, 'input',

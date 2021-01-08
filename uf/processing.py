@@ -140,7 +140,7 @@ class BasicTraining(BaseTask):
 
     def decorate(self, module):
         if self.from_tfrecords:
-            module._set_placeholders('feature')
+            module._set_placeholders('feature', is_training=True)
             features = {key: module.placeholders[key]
                         for key in utils.get_tfrecords_keys(
                             self.tfrecords_files[0])}
@@ -170,7 +170,7 @@ class BasicTraining(BaseTask):
             iterator = dataset.make_one_shot_iterator()    # never stop
             module.placeholders = iterator.get_next()
         else:
-            module._set_placeholders('placeholder')
+            module._set_placeholders('placeholder', is_training=True)
 
         (grads, module._losses, module._probs, module._preds) = \
             module._parallel_forward(**self._kwargs)
@@ -313,7 +313,7 @@ class AdversarialTraining(BasicTraining):
 
     def decorate(self, module):
         if self.from_tfrecords:
-            module._set_placeholders('feature')
+            module._set_placeholders('feature', is_training=True)
             features = {key: module.placeholders[key]
                         for key in utils.get_tfrecords_keys(
                             self.tfrecords_files[0])}
@@ -343,7 +343,7 @@ class AdversarialTraining(BasicTraining):
             iterator = dataset.make_one_shot_iterator()    # never stop
             module.placeholders = iterator.get_next()
         else:
-            module._set_placeholders('placeholder')
+            module._set_placeholders('placeholder', is_training=True)
 
         adversarial = ''
         if self.adversarial:
@@ -845,7 +845,7 @@ class BasicInference(BaseTask):
 
     def decorate(self, module):
         if self.from_tfrecords:
-            module._set_placeholders('feature')
+            module._set_placeholders('feature', is_training=False)
             features = {key: module.placeholders[key]
                         for key in utils.get_tfrecords_keys(
                             self.tfrecords_files[0])}
@@ -875,7 +875,7 @@ class BasicInference(BaseTask):
             iterator = dataset.make_one_shot_iterator()    # never stop
             module.placeholders = iterator.get_next()
         else:
-            module._set_placeholders('placeholder')
+            module._set_placeholders('placeholder', is_training=False)
 
         (_, module._losses, module._probs, module._preds) = \
             module._parallel_forward(False, **self._kwargs)
@@ -940,7 +940,7 @@ class Initialization(BaseTask):
             self.decorate(module)
 
     def decorate(self, module):
-        module._set_placeholders('placeholder')
+        module._set_placeholders('placeholder', is_training=False)
 
         (_, module._losses, module._probs, module._preds) = \
             module._parallel_forward(False, **self._kwargs)
@@ -984,7 +984,8 @@ class ExportInference(BaseTask):
             self.decorate(module)
 
     def decorate(self, module):
-        module._set_placeholders('placeholder', on_export=True)
+        module._set_placeholders(
+            'placeholder', on_export=True, is_training=False)
 
         (_, module._losses, module._probs, module._preds) = \
             module._parallel_forward(False, **self._kwargs)
@@ -1063,7 +1064,7 @@ class BasicScoring(BaseTask):
 
     def decorate(self, module):
         if self.from_tfrecords:
-            module._set_placeholders('feature')
+            module._set_placeholders('feature', is_training=False)
             features = {key: module.placeholders[key]
                         for key in utils.get_tfrecords_keys(
                             self.tfrecords_files[0])}
@@ -1093,7 +1094,7 @@ class BasicScoring(BaseTask):
             iterator = dataset.make_one_shot_iterator()    # never stop
             module.placeholders = iterator.get_next()
         else:
-            module._set_placeholders('placeholder')
+            module._set_placeholders('placeholder', is_training=False)
 
         (_, module._losses, module._probs, module._preds) = \
             module._parallel_forward(False, **self._kwargs)

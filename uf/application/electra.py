@@ -423,7 +423,7 @@ class ELECTRALM(BERTLM, LMModule):
         return (input_ids, input_mask, segment_ids,
                 masked_lm_positions, masked_lm_ids, masked_lm_weights)
 
-    def _set_placeholders(self, target, on_export=False):
+    def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
             'input_ids': utils.get_placeholder(
                 target, 'input_ids',

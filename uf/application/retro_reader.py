@@ -186,7 +186,7 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
         return (input_ids, input_mask, query_mask, segment_ids,
                 doc_ids, doc_text, doc_start)
 
-    def _set_placeholders(self, target, on_export=False):
+    def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
             'input_ids': utils.get_placeholder(
                 target, 'input_ids',

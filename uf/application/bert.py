@@ -204,7 +204,7 @@ class BERTClassifier(ClassifierModule):
         label_ids = [self._label_to_id[label] for label in y]
         return label_ids
 
-    def _set_placeholders(self, target, on_export=False):
+    def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
             'input_ids': utils.get_placeholder(
                 target, 'input_ids',
@@ -390,7 +390,7 @@ class BERTBinaryClassifier(BERTClassifier, ClassifierModule):
                       for i in range(self.label_size)] for sample in y]
         return label_ids
 
-    def _set_placeholders(self, target, on_export=False):
+    def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
             'input_ids': utils.get_placeholder(
                 target, 'input_ids',
@@ -635,7 +635,7 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
             label_ids.append(_label_ids)
         return label_ids
 
-    def _set_placeholders(self, target, on_export=False):
+    def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
             'input_ids': utils.get_placeholder(
                 target, 'input_ids',
@@ -906,7 +906,7 @@ class BERTNER(BERTClassifier, NERModule):
 
         return label_ids
 
-    def _set_placeholders(self, target, on_export=False):
+    def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
             'input_ids': utils.get_placeholder(
                 target, 'input_ids',
@@ -1664,7 +1664,7 @@ class BERTMRC(BERTClassifier, MRCModule):
 
         return label_ids
 
-    def _set_placeholders(self, target, on_export=False):
+    def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
             'input_ids': utils.get_placeholder(
                 target, 'input_ids',
@@ -1943,7 +1943,7 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
 
         return label_ids, has_answer
 
-    def _set_placeholders(self, target, on_export=False):
+    def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
             'input_ids': utils.get_placeholder(
                 target, 'input_ids',
@@ -2420,7 +2420,7 @@ class BERTLM(LMModule):
         label_ids = [self._label_to_id[label] for label in y]
         return label_ids
 
-    def _set_placeholders(self, target, on_export=False):
+    def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
             'input_ids': utils.get_placeholder(
                 target, 'input_ids',

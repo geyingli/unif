@@ -195,7 +195,7 @@ class SemBERTClassifier(BERTClassifier, ClassifierModule):
 
         return (input_ids, input_mask, segment_ids, sem_features)
 
-    def _set_placeholders(self, target, on_export=False):
+    def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
             'input_ids': utils.get_placeholder(
                 target, 'input_ids',

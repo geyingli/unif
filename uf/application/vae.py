@@ -148,7 +148,7 @@ class VAELM(BERTClassifier, LMModule):
 
         return data
 
-    def _set_placeholders(self, target, on_export=False):
+    def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
             'input_ids': utils.get_placeholder(
                 target, 'input_ids',

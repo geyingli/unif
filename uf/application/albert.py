@@ -475,7 +475,7 @@ class ALBERTLM(BERTLM, LMModule):
                 masked_lm_positions, masked_lm_ids, masked_lm_weights,
                 sentence_order_labels)
 
-    def _set_placeholders(self, target, on_export=False):
+    def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
             'input_ids': utils.get_placeholder(
                 target, 'input_ids',

@@ -10,7 +10,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-beta2.4.11-blue">
+        <img src="https://img.shields.io/badge/version-beta2.4.12-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-1.x 2.x-yellow">
@@ -98,6 +98,7 @@ print(model.predict(X))
 |  		| `WideAndDeepClassifier` 		| 每一个样本归属于一个唯一的类别；<br>通过 Wide&Deep 结构结合更多句子级别的特征 |
 |  		| `SemBERTClassifier` 		| 每一个样本归属于一个唯一的类别；<br>通过 SemBERT 结构结合更多字级别的特征 |
 |  		| `PerformerClassifier` 		| 每一个样本归属于一个唯一的类别；<br>通过 FAVOR+ 加速推理 |
+|  		| `UDAClassifier` 		| 融合一致性学习的半监督学习算法 |
 | 多标签分类 | `BERTBinaryClassifier` 		| 每一个样本可同时属于零个或多个类别 |
 |  		| `XLNetBinaryClassifier` 		| 每一个样本可同时属于零个或多个类别 |
 |  		| `RoBERTaBinaryClassifier` 		| 每一个样本可同时属于零个或多个类别 |

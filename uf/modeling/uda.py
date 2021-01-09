@@ -117,12 +117,10 @@ class UDADecoder(BaseDecoder):
                     sup_ori_log_probs, mask=(1.0 - is_supervised), axis=0)
                 aug_log_probs = tf.boolean_mask(
                     log_probs, mask=is_expanded, axis=0)
-                ori_logits = tf.boolean_mask(
-                    sup_ori_log_probs, mask=(1.0 - is_supervised), axis=0)
                 sup_ori_logits = tf.boolean_mask(
                     logits, mask=(1.0 - is_expanded), axis=0)
                 ori_logits = tf.boolean_mask(
-                    sup_ori_logits, mask=is_supervised, axis=0)
+                    sup_ori_logits, mask=(1.0 - is_supervised), axis=0)
 
                 unsup_loss_mask = 1
                 if uda_softmax_temp != -1:

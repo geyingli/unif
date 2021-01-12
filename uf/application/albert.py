@@ -15,7 +15,6 @@
 ''' Applications based on ALBERT. '''
 
 import os
-import copy
 import random
 import collections
 import numpy as np

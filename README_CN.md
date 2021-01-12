@@ -10,7 +10,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-beta2.4.12-blue">
+        <img src="https://img.shields.io/badge/version-beta2.4.13-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-1.x 2.x-yellow">
@@ -19,8 +19,17 @@
         <img src="https://img.shields.io/badge/license-Apache2.0-red">
     </a>
 </p>
-
 有数据，想要快速实现你的想法？轻便、易使用的自然语言处理联合框架，支持快速搭建各类常用深度学习模型 (Transformer, GPT-2, BERT, RoBERTa, ALBERT, UniLM, ELECTRA)，同时对于 BERT 系列，支持高效用的蒸馏 (TinyBERT, FastBERT)。支持各类上下游任务 (语言模型、文本分类、文本生成、命名实体识别、机器阅读理解、机器翻译、序列标注等)。
+
+\*\*\*\*\*\* 重要变更 \*\*\*\*\*\*
+
+版本：beta v2.4.13
+
+时间：Jan. 12th, 2021
+
+通知：从现版本起，通过 `.cache()` 将模型配置存储在配置文件后，可从任意工作目录下读取该模型。由于本次功能改进，从前版本写入的配置文件读取模型可能失效
+
+\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
 
 ### 特性
 

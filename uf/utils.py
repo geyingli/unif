@@ -92,10 +92,21 @@ def load(code, cache_file='./.cache', **kwargs):
     else:
         raise ValueError('Wrong format of cache file.')
 
+    cache_dir = os.path.dirname(cache_file)
+    if cache_dir == '':
+        cache_dir = '.'
     for key, value in zips:
-        args[key] = value
+
+        # convert from relative path
+        if key == 'init_checkpoint' or key.endswith('_dir') or \
+                key.endswith('_file'):
+            if isinstance(value, str) and not value.startswith('/'):
+                value = get_simplified_path(
+                    cache_dir + '/' + value)
+
         if key in kwargs:
-            args[key] = kwargs[key]
+            value = kwargs[key]
+        args[key] = value
     return application.__dict__[model](**args)
 
 
@@ -159,6 +170,66 @@ def get_tfrecords_length(tfrecords_files):
         for _ in tf.python_io.tf_record_iterator(tfrecords_file):
             n += 1
     return n
+
+
+def get_relative_path(source, target):
+    source = source.replace('\\', '/')
+    target = target.replace('\\', '/')
+
+    if source.startswith('/'):
+        raise ValueError('Not a relative path: %s.' % source)
+    if target.startswith('/'):
+        raise ValueError('Not a relative path: %s.' % target)
+
+    output = get_reverse_path(source) + '/' + target
+    output = get_simplified_path(output)
+    return output
+
+
+def get_simplified_path(path):
+    path = path.replace('\\', '/')
+    while True:
+        res = re.findall('[^/.]+/../', path)
+        if res:
+            path = path.replace(res[0], '')
+        else:
+            return path.replace('/./', '/')
+
+
+def get_reverse_path(path):
+    path = path.replace('\\', '/')
+
+    if path.startswith('/'):
+        raise ValueError('Not a relative path.')
+
+    output = ''
+
+    if os.path.isdir(path):
+        if path.endswith('/'):
+            path = path[:-1]
+    else:
+        path = os.path.dirname(path)
+
+    if path == '':
+        return '.'
+
+    cwd = os.getcwd()
+    for seg in path.split('/'):
+        if seg == '.':
+            pass
+        elif seg == '..':
+            output = '/' + cwd.split('/')[-1] + output
+            cwd = os.path.dirname(cwd)
+        else:
+            output = '/..' + output
+            cwd += '/' + seg
+
+    output = output[1:]
+
+    if output == '':
+        return '.'
+
+    return output
 
 
 def create_int_feature(values):

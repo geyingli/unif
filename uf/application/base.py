@@ -72,7 +72,8 @@ class NERModule(BaseModule):
 
         pre_token = tp_token / (tp_token + fp_token + 1e-6)
         rec_token = tp_token / (tp_token + fn_token + 1e-6)
-        f1_token = 2 * pre_token * rec_token / (pre_token + rec_token + 1e-6)
+        f1_token = 2 * pre_token * rec_token / (
+            pre_token + rec_token + 1e-6)
 
         pre_entity = tp_entity / (tp_entity + fp_entity + 1e-6)
         rec_entity = tp_entity / (tp_entity + fn_entity + 1e-6)

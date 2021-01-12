@@ -465,6 +465,15 @@ class BaseModule:
                 value = self.__getattribute__(key)
             except:
                 value = self.__init_args__[key]
+
+            # convert to relative path
+            if key == 'init_checkpoint' or key.endswith('_dir') or \
+                    key.endswith('_file'):
+                if isinstance(value, str) and not value.startswith('/'):
+                    value = utils.get_relative_path(
+                        source=cache_file,
+                        target=value)
+
             _cache_json['__init__'][key] = value
         cache_json[code] = _cache_json
 
@@ -502,10 +511,21 @@ class BaseModule:
         else:
             raise ValueError('Wrong format of cache file.')
 
+        cache_dir = os.path.dirname(cache_file)
+        if cache_dir == '':
+            cache_dir = '.'
         for key, value in zips:
-            args[key] = value
+
+            # convert from relative path
+            if key == 'init_checkpoint' or key.endswith('_dir') or \
+                    key.endswith('_file'):
+                if isinstance(value, str) and not value.startswith('/'):
+                    value = utils.get_simplified_path(
+                        cache_dir + '/' + value)
+
             if key in kwargs:
-                args[key] = kwargs[key]
+                value = kwargs[key]
+            args[key] = value
         return cls(**args)
 
     def init(self, reinit_all=False):

@@ -19,7 +19,10 @@
         <img src="https://img.shields.io/badge/license-Apache2.0-red">
     </a>
 </p>
+
 有数据，想要快速实现你的想法？轻便、易使用的自然语言处理联合框架，支持快速搭建各类常用深度学习模型 (Transformer, GPT-2, BERT, RoBERTa, ALBERT, UniLM, ELECTRA)，同时对于 BERT 系列，支持高效用的蒸馏 (TinyBERT, FastBERT)。支持各类上下游任务 (语言模型、文本分类、文本生成、命名实体识别、机器阅读理解、机器翻译、序列标注等)。
+
+
 ### 重要变更 (January 12, 2021)
 
 从现版本起，通过 `.cache()` 将模型参数存储在配置文件后，可从任意工作目录下读取该模型，不再仅限于单一的工作目录。但由于本次功能改进，从前版本写入的配置文件读取模型可能会失效。

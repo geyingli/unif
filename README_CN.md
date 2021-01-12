@@ -150,10 +150,10 @@ print(model)
 
 ``` python
 # 缓存配置
-model.cache('代号')
+model.cache('代号', cache_file='.cache')
 
 # 从配置读取模型
-model = uf.load('代号')
+model = uf.load('代号', cache_file='.cache')
 ```
 
 注：当模型的 `output_dir` 属性为空时，模型仅保存配置，不保存参数。

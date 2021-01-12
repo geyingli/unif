@@ -145,10 +145,10 @@ Check more information by running `help(XXX)` whenever you use new modules.
 
 ``` python
 # cache configuration
-model.cache('any code')
+model.cache('any code', cache_file='.cache')
 
 # load configuration
-model = uf.load('any code')
+model = uf.load('any code', cache_file='.cache')
 ```
 
 Note: when attribute `output_dir`  is set to None, module saves configurations only, without saving graph into checkpoint.

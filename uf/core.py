@@ -481,53 +481,6 @@ class BaseModule:
         json.dump(cache_json, cache_fp, indent=2)
         cache_fp.close()
 
-    @classmethod
-    def load(cls, code, cache_file='./.cache', **kwargs):
-        ''' Load model from configurations saved in cache file.
-
-        Args:
-            code: string. Unique name of configuration to load.
-            cache_file: string. The path of cache file.
-        Returns:
-            None
-        '''
-        if not os.path.exists(cache_file):
-            raise ValueError('No cache file found with `%s`.' % cache_file)
-        cache_fp = open(cache_file, encoding='utf-8')
-        cache_json = json.load(cache_fp)
-        cache_fp.close()
-
-        if code not in cache_json.keys():
-            raise ValueError(
-                'No cached configs found with code `%s`.' % code)
-        args = collections.OrderedDict()
-
-        # unif >= beta v2.1.35
-        if '__init__' in cache_json[code]:
-            zips = cache_json[code]['__init__'].items()
-        # unif < beta v2.1.35
-        elif 'keys' in cache_json[code]:
-            zips = zip(cache_json[code]['keys'], cache_json[code]['values'])
-        else:
-            raise ValueError('Wrong format of cache file.')
-
-        cache_dir = os.path.dirname(cache_file)
-        if cache_dir == '':
-            cache_dir = '.'
-        for key, value in zips:
-
-            # convert from relative path
-            if key == 'init_checkpoint' or key.endswith('_dir') or \
-                    key.endswith('_file'):
-                if isinstance(value, str) and not value.startswith('/'):
-                    value = utils.get_simplified_path(
-                        cache_dir + '/' + value)
-
-            if key in kwargs:
-                value = kwargs[key]
-            args[key] = value
-        return cls(**args)
-
     def init(self, reinit_all=False):
         ''' Initialize the graph randomly or from checkpoint file.
 

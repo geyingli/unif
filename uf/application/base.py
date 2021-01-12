@@ -83,14 +83,32 @@ class NERModule(BaseModule):
         return f1_token, f1_entity
 
     def _get_cascade_f1(self, preds, labels, mask):
-
         metrics = {}
+
+        # f1 of each type
+        B_ids = []
         for i, entity_type in enumerate(self.entity_types):
             B_id = 1 + i * 4
+            B_ids.append(B_id)
             f1_token, f1_entity = self._get_f1(
                 preds, labels, mask, B_id=B_id)
             metrics['f1 (%s-T)' % entity_type] = f1_token
             metrics['f1 (%s-E)' % entity_type] = f1_entity
+
+        # macro f1
+        f1_macro_token = np.mean(
+            [metrics[key] for key in metrics if '-T)' in key])
+        f1_macro_entity = np.mean(
+            [metrics[key] for key in metrics if '-E)' in key])
+        metrics['f1 <Macro-T>'] = f1_macro_token
+        metrics['f1 <Macro-E>'] = f1_macro_entity
+
+        # micro f1
+        f1_micro_token, f1_micro_entity = self._get_f1(
+            preds, labels, mask, B_id=B_ids)
+        metrics['f1 <Micro-T>'] = f1_micro_token
+        metrics['f1 <Micro-E>'] = f1_micro_entity
+
         return metrics
 
     def _get_entities(self, ids, B_id=None):
@@ -99,32 +117,43 @@ class NERModule(BaseModule):
             I_id = self.I_ID
             E_id = self.E_ID
             S_id = self.S_ID
+            BIES = [(B_id, I_id, E_id, S_id)]
+        elif isinstance(B_id, list):
+            BIES = []
+            for _B_id in B_id:
+                I_id = _B_id + 1
+                E_id = _B_id + 2
+                S_id = _B_id + 3
+                BIES += [(_B_id, I_id, E_id, S_id)]
         else:
             I_id = B_id + 1
             E_id = B_id + 2
             S_id = B_id + 3
+            BIES = [(B_id, I_id, E_id, S_id)]
 
         entities = []
-        on_entity = False
-        start_id = 0
-        for i in range(len(ids)):
-            if on_entity:
-                if ids[i] == I_id:
-                    pass
-                elif ids[i] == E_id:
-                    on_entity = False
-                    entities.append([start_id, i])
-                elif ids[i] == S_id:
-                    on_entity = False
-                    entities.append([i, i])
+        for k in range(len(BIES)):
+            (B_id, I_id, E_id, S_id) = BIES[k]
+            on_entity = False
+            start_id = 0
+            for i in range(len(ids)):
+                if on_entity:
+                    if ids[i] == I_id:
+                        pass
+                    elif ids[i] == E_id:
+                        on_entity = False
+                        entities.append([start_id, i])
+                    elif ids[i] == S_id:
+                        on_entity = False
+                        entities.append([i, i])
+                    else:
+                        on_entity = False
                 else:
-                    on_entity = False
-            else:
-                if ids[i] == B_id:
-                    on_entity = True
-                    start_id = i
-                elif ids[i] == S_id:
-                    entities.append([i, i])
+                    if ids[i] == B_id:
+                        on_entity = True
+                        start_id = i
+                    elif ids[i] == S_id:
+                        entities.append([i, i])
         return entities
 
 

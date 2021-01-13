@@ -796,6 +796,8 @@ class BERTNER(BERTClassifier, NERModule):
         self.batch_size = 0
         self.max_seq_length = max_seq_length
         self.truncate_method = truncate_method
+        self._do_lower_case = do_lower_case
+        self._on_predict = False
         self.__init_args__ = locals()
 
         self.bert_config = get_bert_config(config_file)
@@ -810,6 +812,24 @@ class BERTNER(BERTClassifier, NERModule):
             self.tokenizer.add('[SEP]')
             self.bert_config.n_vocab += 1
 
+    def predict(self, X=None, X_tokenized=None,
+                batch_size=8):
+        ''' Inference on the model.
+
+        Args:
+            X: list. A list object consisting untokenized inputs.
+            X_tokenized: list. A list object consisting tokenized inputs.
+              Either `X` or `X_tokenized` should be None.
+            batch_size: int. The size of batch in each step.
+        Returns:
+            A dict object of model outputs.
+        '''
+
+        self._on_predict = True
+
+        return super(NERModule, self).predict(
+            X, X_tokenized, batch_size)
+
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
                 is_training=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
@@ -823,12 +843,18 @@ class BERTNER(BERTClassifier, NERModule):
         # convert X
         if X or X_tokenized:
             tokenized = False if X else X_tokenized
+            X_target = X_tokenized if tokenized else X
             input_ids, input_mask, segment_ids = self._convert_X(
-                X_tokenized if tokenized else X, tokenized=tokenized)
+                X_target, tokenized=tokenized)
             data['input_ids'] = np.array(input_ids, dtype=np.int32)
             data['input_mask'] = np.array(input_mask, dtype=np.int32)
             data['segment_ids'] = np.array(segment_ids, dtype=np.int32)
             n_inputs = len(input_ids)
+
+            # backup for answer mapping
+            if self._on_predict:
+                self._tokenized = tokenized
+                self._X_target = X_target
 
             if n_inputs < self.batch_size:
                 self.batch_size = max(n_inputs, len(self._gpu_ids))
@@ -845,6 +871,58 @@ class BERTNER(BERTClassifier, NERModule):
             data['sample_weight'] = np.array(sample_weight, dtype=np.float32)
 
         return data
+
+    def _convert_X(self, X_target, tokenized):
+
+        # tokenize input texts
+        segment_input_tokens = []
+        for ex_id, example in enumerate(X_target):
+            try:
+                segment_input_tokens.append(
+                    self._convert_x(example, tokenized))
+            except Exception:
+                raise ValueError(
+                    'Wrong input format (line %d): \'%s\'. '
+                    % (ex_id, example))
+
+        # backup for answer mapping
+        if self._on_predict:
+            self._input_tokens = []
+
+        input_ids = []
+        input_mask = []
+        segment_ids = []
+        for ex_id, segments in enumerate(segment_input_tokens):
+            _input_tokens = ['[CLS]']
+            _input_ids = []
+            _input_mask = [1]
+            _segment_ids = [0]
+
+            utils.truncate_segments(
+                segments, self.max_seq_length - len(segments) - 1,
+                truncate_method=self.truncate_method)
+            for s_id, segment in enumerate(segments):
+                _segment_id = min(s_id, 1)
+                _input_tokens.extend(segment + ['[SEP]'])
+                _input_mask.extend([1] * (len(segment) + 1))
+                _segment_ids.extend([_segment_id] * (len(segment) + 1))
+
+            # backup for answer mapping
+            if self._on_predict:
+                self._input_tokens.append(_input_tokens)
+            _input_ids = self.tokenizer.convert_tokens_to_ids(_input_tokens)
+
+            # padding
+            for _ in range(self.max_seq_length - len(_input_ids)):
+                _input_ids.append(0)
+                _input_mask.append(0)
+                _segment_ids.append(0)
+
+            input_ids.append(_input_ids)
+            input_mask.append(_input_mask)
+            segment_ids.append(_segment_ids)
+
+        return input_ids, input_mask, segment_ids
 
     def _convert_y(self, y, input_ids, tokenized=False):
         label_ids = []
@@ -993,19 +1071,39 @@ class BERTNER(BERTClassifier, NERModule):
 
         # preds
         all_preds = np.argmax(probs, axis=-1)
-        ids = self.data['input_ids']
+        tokens = self._input_tokens
         mask = self.data['input_mask']
+        text = self._X_target
         preds = []
-        for _preds, _ids, _mask in zip(all_preds, ids, mask):
-            input_length = int(np.sum(_mask))
-            _entities = self._get_entities(_preds[:input_length])
+        for i in range(len(all_preds)):
+            _preds = all_preds[i]
+            _tokens = tokens[i]
+            _mask = mask[i]
+            _text = text[i]
+
+            _input_length = int(np.sum(_mask))
+            _entities = self._get_entities(_preds[:_input_length])
             _preds = []
+            if not _entities:
+                preds.append(_preds)
+                continue
+
+            if not self._tokenized:
+                if isinstance(_text, list):
+                    _text = ' '.join(_text)
+                _mapping_start, _mapping_end = utils.align_tokens_with_text(
+                    _tokens, _text, self._do_lower_case)
+
             for _entity in _entities:
-                _entity_ids = _ids[_entity[0]: _entity[1] + 1]
-                _entity_tokens = \
-                    self.tokenizer.convert_ids_to_tokens(_entity_ids)
-                _entity_text = utils.convert_tokens_to_text(_entity_tokens)
-                _preds.append(_entity_text)
+                _start, _end = _entity[0], _entity[1]
+                if self._tokenized:
+                    _entity_tokens = _tokens[_start: _end + 1]
+                    _preds.append(_entity_tokens)
+                else:
+                    _text_start = _mapping_start[_start]
+                    _text_end = _mapping_end[_end]
+                    _entity_text = _text[_text_start: _text_end]
+                    _preds.append(_entity_text)
             preds.append(_preds)
 
         outputs = {}
@@ -1117,24 +1215,43 @@ class BERTCRFNER(BERTNER, NERModule):
         output_arrays = list(zip(*batch_outputs))
 
         # preds
-        preds = []
         logits = utils.transform(output_arrays[0], n_inputs)
         transition_matrix = output_arrays[1][0]
-        ids = self.data['input_ids']
+        tokens = self._input_tokens
         mask = self.data['input_mask']
-        input_length = np.sum(mask, axis=-1)
-        for _logits, _ids, _mask in zip(logits, ids, mask):
-            input_length = int(np.sum(_mask))
-            viterbi_seq, _ = viterbi_decode(
-                _logits[:input_length], transition_matrix)
-            _entities = self._get_entities(viterbi_seq)
+        text = self._X_target
+        preds = []
+        for i in range(len(logits)):
+            _logits = logits[i]
+            _tokens = tokens[i]
+            _mask = mask[i]
+            _text = text[i]
+
+            _input_length = int(np.sum(_mask))
+            _viterbi_seq, _ = viterbi_decode(
+                _logits[:_input_length], transition_matrix)
+            _entities = self._get_entities(_viterbi_seq)
             _preds = []
+            if not _entities:
+                preds.append(_preds)
+                continue
+
+            if not self._tokenized:
+                if isinstance(_text, list):
+                    _text = ' '.join(_text)
+                _mapping_start, _mapping_end = utils.align_tokens_with_text(
+                    _tokens, _text, self._do_lower_case)
+
             for _entity in _entities:
-                _entity_ids = _ids[_entity[0]: _entity[1] + 1]
-                _entity_tokens = \
-                    self.tokenizer.convert_ids_to_tokens(_entity_ids)
-                _entity_text = utils.convert_tokens_to_text(_entity_tokens)
-                _preds.append(_entity_text)
+                _start, _end = _entity[0], _entity[1]
+                if self._tokenized:
+                    _entity_tokens = _tokens[_start: _end + 1]
+                    _preds.append(_entity_tokens)
+                else:
+                    _text_start = _mapping_start[_start]
+                    _text_end = _mapping_end[_end]
+                    _entity_text = _text[_text_start: _text_end]
+                    _preds.append(_entity_text)
             preds.append(_preds)
 
         # probs
@@ -1211,6 +1328,8 @@ class BERTCRFCascadeNER(BERTCRFNER, NERModule):
         self.max_seq_length = max_seq_length
         self.truncate_method = truncate_method
         self.entity_types = entity_types
+        self._do_lower_case = do_lower_case
+        self._on_predict = False
         self.__init_args__ = locals()
 
         self.bert_config = get_bert_config(config_file)
@@ -1368,31 +1487,45 @@ class BERTCRFCascadeNER(BERTCRFNER, NERModule):
         output_arrays = list(zip(*batch_outputs))
 
         # preds
-        preds = []
         logits = utils.transform(output_arrays[0], n_inputs)
         transition_matrix = output_arrays[1][0]
-        ids = self.data['input_ids']
+        tokens = self._input_tokens
         mask = self.data['input_mask']
-        input_length = np.sum(mask, axis=-1)
-        for _logits, _ids, _mask in zip(logits, ids, mask):
-            input_length = int(np.sum(_mask))
-            viterbi_seq, _ = viterbi_decode(
-                _logits[:input_length], transition_matrix)
+        text = self._X_target
+        preds = []
+        for i in range(len(logits)):
+            _logits = logits[i]
+            _tokens = tokens[i]
+            _mask = mask[i]
+            _text = text[i]
+
+            _input_length = int(np.sum(_mask))
+            _viterbi_seq, _ = viterbi_decode(
+                _logits[:_input_length], transition_matrix)
+
+            if not self._tokenized:
+                if isinstance(_text, list):
+                    _text = ' '.join(_text)
+                _mapping_start, _mapping_end = utils.align_tokens_with_text(
+                    _tokens, _text, self._do_lower_case)
 
             _preds = {}
             for i, entity_type in enumerate(self.entity_types):
-                B_id = 1 + 4 * i
-                _entities = self._get_entities(viterbi_seq, B_id)
+                _B_id = 1 + 4 * i
+                _entities = self._get_entities(_viterbi_seq, _B_id)
                 if _entities:
                     _preds[entity_type] = []
 
                     for _entity in _entities:
-                        _entity_ids = _ids[_entity[0]: _entity[1] + 1]
-                        _entity_tokens = \
-                            self.tokenizer.convert_ids_to_tokens(_entity_ids)
-                        _entity_text = utils.convert_tokens_to_text(
-                            _entity_tokens)
-                        _preds[entity_type].append(_entity_text)
+                        _start, _end = _entity[0], _entity[1]
+                        if self._tokenized:
+                            _entity_tokens = _tokens[_start: _end + 1]
+                            _preds[entity_type].append(_entity_tokens)
+                        else:
+                            _text_start = _mapping_start[_start]
+                            _text_end = _mapping_end[_end]
+                            _entity_text = _text[_text_start: _text_end]
+                            _preds[entity_type].append(_entity_text)
             preds.append(_preds)
 
         # probs

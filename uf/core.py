@@ -318,8 +318,8 @@ class BaseModule:
         Returns:
             A dict object of model outputs.
         '''
-        # NOTE: This method is reimplemented by `FastBERTClassifier` and
-        # `GPT2LM`.
+        # NOTE: This method is reimplemented by `FastBERTClassifier`,
+        # `GPT2LM`, `BERTNER`.
 
         # Make sure the arguments are correct.
         self.batch_size = batch_size

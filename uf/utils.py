@@ -497,6 +497,41 @@ def convert_tokens_to_text(tokens):
     return text.strip()
 
 
+def align_tokens_with_text(tokens, text, lower_case):
+    print(tokens)
+    print(text)
+    if lower_case:
+        text = text.lower()
+
+    i = 0
+    j = 0
+    max_j = len(text)
+    mapping_start = []
+    mapping_end = []
+    while i < len(tokens):
+        token = tokens[i]
+        token = token.replace('##', '')
+        if text[j:].startswith(token):
+            mapping_start.append(j)
+            mapping_end.append(j + len(token))
+            i += 1
+            j += len(token)
+        elif token not in text[j:]:  # [CLS], [SEP]
+            mapping_start.append(j)
+            mapping_end.append(j)
+            i += 1
+        else:
+            j += 1
+        if j >= max_j:
+            break
+
+    for _ in range(len(tokens) - len(mapping_start)):
+        mapping_start.append(max_j + 1000)
+        mapping_end.append(max_j + 1000)
+
+    return mapping_start, mapping_end
+
+
 def transform(output_arrays, n_inputs, reshape=False):
     if len(output_arrays[0].shape) > 1:
         return np.vstack(output_arrays)[:n_inputs]

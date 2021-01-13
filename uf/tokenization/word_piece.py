@@ -38,13 +38,13 @@ class WordPieceTokenizer:
     def __init__(self, vocab_file, do_lower_case=True):
         self.vocab = load_vocab(vocab_file)
         self.inv_vocab = {v: k for k, v in self.vocab.items()}
-        self.basic_tokenizer = BasicTokenizer(do_lower_case=do_lower_case)
-        self.wordpiece_tokenizer = WordpieceTokenizer(vocab=self.vocab)
+        self.processor = [BasicTokenizer(do_lower_case=do_lower_case),
+                          WordpieceTokenizer(vocab=self.vocab)]
 
     def tokenize(self, text):
         tokens = []
-        for token in self.basic_tokenizer.tokenize(text):
-            for sub_token in self.wordpiece_tokenizer.tokenize(token):
+        for token in self.processor[0].tokenize(text):
+            for sub_token in self.processor[1].tokenize(token):
                 tokens.append(sub_token)
         return tokens
 
@@ -60,7 +60,6 @@ class WordPieceTokenizer:
         index = len(self.vocab)
         self.vocab[char] = index
         self.inv_vocab[index] = char
-
 
 
 class BasicTokenizer:
@@ -159,7 +158,8 @@ class WordpieceTokenizer:
         self.max_input_chars_per_word = max_input_chars_per_word
 
     def tokenize(self, text):
-        '''Tokenizes a piece of text into its word pieces.'''
+        '''Tokenizes a piece of text into its word pieces.
+        NOTE(geyingli): we do not create `unk_token` in this step.'''
 
         text = convert_to_unicode(text)
 
@@ -167,7 +167,8 @@ class WordpieceTokenizer:
         for token in whitespace_tokenize(text):
             chars = list(token)
             if len(chars) > self.max_input_chars_per_word:
-                output_tokens.append(self.unk_token)
+                # output_tokens.append(self.unk_token)
+                output_tokens.append(token)
                 continue
 
             is_bad = False
@@ -191,7 +192,8 @@ class WordpieceTokenizer:
                 start = end
 
             if is_bad:
-                output_tokens.append(self.unk_token)
+                # output_tokens.append(self.unk_token)
+                output_tokens.append(token)
             else:
                 output_tokens.extend(sub_tokens)
         return output_tokens

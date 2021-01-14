@@ -498,8 +498,6 @@ def convert_tokens_to_text(tokens):
 
 
 def align_tokens_with_text(tokens, text, lower_case):
-    print(tokens)
-    print(text)
     if lower_case:
         text = text.lower()
 

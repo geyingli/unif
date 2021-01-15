@@ -103,10 +103,10 @@ print(model.predict(X))
 |  		| `RoBERTaSeqClassifier` 		| - |
 |  		| `ALBERTSeqClassifier` 		| - |
 |  		| `ELECTRASeqClassifier` 		| - |
-| 模型蒸馏 | `TinyBERTClassifier` 		| 大幅度压缩模型参数 |
+| 模型蒸馏 | `TinyBERTClassifier` 		| 大幅压缩模型参数，提速十倍以上 |
 |  		| `FastBERTClassifier` 		| 动态推理，易分样本提前离开模型 |
 
-说明文档目前还不完善，善用  `help(XXX)` 能帮你获得更多 API 的使用细节。
+文档目前还不完善，善用  `help(XXX)` 能帮你获得更多 API 的使用细节。
 
 ## 建模
 
@@ -191,7 +191,7 @@ model.to_tfrecords(
 model.fit_from_tfrecords(
     tfrecords_files=['./train.tfrecords-0', './.tfrecords-1'],    # 同时从两个 TFRecords 文件读取
     n_jobs=3,    # 启动三个线程
-    batch_size=32,    # 以下所有参数和 `.fit()` 中参数相同
+    batch_size=32,    # 以下参数和 `.fit()` 中参数相同
     learning_rate=5e-05,
     target_steps=None,
     total_steps=-3,
@@ -201,10 +201,10 @@ model.fit_from_tfrecords(
     **kwargs)
 ```
 
-训练所用的条件参数 kwargs 控制哪些训练要素呢？
+训练所用的条件参数 kwargs：
 
 ```python
-# 选择优化器
+# 优化器
 model.fit(X, y, ..., optimizer='gd')
 model.fit(X, y, ..., optimizer='adam')
 model.fit(X, y, ..., optimizer='adamw')    # 默认
@@ -222,7 +222,7 @@ model.fit(X, y, ..., adversarial='freeat', epsilon=0.001, n_loop=3)    # FreeAT
 model.fit(X, y, ..., adversarial='smart', epsilon=0.01, n_loop=2, prtb_lambda=0.5, breg_miu=0.2, tilda_beta=0.3)    # SMART (仅 Classifier 可用)
 
 # 置信度过滤 (仅 Classifier 可用)
-model.fit(X, y, ..., conf_thresh=0.99)
+model.fit(X, y, ..., conf_thresh=0.99)    # 默认为 None
 ```
 
 ## 迁移学习
@@ -302,6 +302,6 @@ model.export(
 
   答：`TinyBERTClassifier` 训练完成后使用 `.to_bert()` 将变量重命名保存，而后使用 `FastBERTClassifier` 常规读取生成的 checkpoint 和配置文件即可。
 
-## 需知
+## 尾声
 
-目前框架依然在开发和测试阶段，任何需求和建议都不尽欢迎。最后，感谢你读到这里。
+框架目前主要为我个人及团队所用，靠兴趣推动至今。如果能受到更多人，包括您的认可，我们会愿意投入更多精力进行丰富与完善。如果您喜欢，请点个 star 作为支持，不胜感激。如果有希望实现的 SOTA 算法，留下 issue，我们会抽工作之余的时间为您编写，通常三日以内可实现。任何需求和建议都不尽欢迎。最后，感谢你读到这里。

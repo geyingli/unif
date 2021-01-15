@@ -19,16 +19,12 @@
         <img src="https://img.shields.io/badge/license-Apache2.0-red">
     </a>
 </p>
-我自认为，这是除 transformers 以外最好用的 NLP 框架，不知你是否也这么认为呢？
-### # 重要变更 (January 12, 2021)
 
-****
+## # 重要变更 (January 12, 2021)
 
 从现版本起，通过 `.cache()` 写入配置文件后，可从任意工作目录下读取该文件载入模型，不再仅限于单一的工作目录，方便模型管理。但由于本次功能升级，将无法读取以前版本写入的配置文件。
 
-### 特性
-
-****
+## 特性
 
 - 易学易用：仿 Scikit-Learn API 设计，三行代码完成训练及推理
 - 唯一依赖：Tensorflow 1.x/2.x
@@ -36,9 +32,7 @@
 - 加速训练：一键设置多 GPU 并行
 - 线上部署：导出 SavedModel，供部署使用
 
-### 安装
-
-****
+## 安装
 
 ``` bash
 git clone https://github.com/geyingli/unif
@@ -46,9 +40,7 @@ cd unif
 python3 setup.py install --user
 ```
 
-### 快速上手
-
-****
+## 快速上手
 
 ``` python
 import uf
@@ -69,9 +61,7 @@ model.fit(X, y)
 print(model.predict(X))
 ```
 
-### 模型列表
-
-****
+## 模型列表
 
 | 领域 | API 				| 简介                                               |
 | :---------- | :----------- | :----------- |
@@ -118,9 +108,7 @@ print(model.predict(X))
 
 说明文档目前还不完善，善用  `help(XXX)` 能帮你获得更多 API 的使用细节。
 
-### 建模
-
-****
+## 建模
 
 你可以创建新模型：
 
@@ -158,9 +146,7 @@ del model
 model.reset()
 ```
 
-### 训练/推理/评分
-
-****
+## 训练/推理/评分
 
 ``` python
 model.fit(
@@ -239,9 +225,7 @@ model.fit(X, y, ..., adversarial='smart', epsilon=0.01, n_loop=2, prtb_lambda=0.
 model.fit(X, y, ..., conf_thresh=0.99)
 ```
 
-### 迁移学习
-
-****
+## 迁移学习
 
 存在变量命名不同而无法加载，可通过以下步骤解决：
 
@@ -288,9 +272,7 @@ assert model.output_dir is not None
 model.cache('key')
 ```
 
-### TFServing
-
-****
+## TFServing
 
 ``` python
 # 导出 PB 文件到 `output_dir` 下
@@ -302,9 +284,7 @@ model.export(
     ignore_outputs=None)    # 裁剪多余输出
 ```
 
-### FAQ
-
-****
+## FAQ
 
 - 问：如何实现多个 segment 的输入？
 
@@ -322,8 +302,6 @@ model.export(
 
   答：`TinyBERTClassifier` 训练完成后使用 `.to_bert()` 将变量重命名保存，而后使用 `FastBERTClassifier` 常规读取生成的 checkpoint 和配置文件即可。
 
-### 需知
-
-****
+## 需知
 
 目前框架依然在开发和测试阶段，任何需求和建议都不尽欢迎。最后，感谢你读到这里。

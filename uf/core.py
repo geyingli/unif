@@ -677,6 +677,11 @@ class BaseModule:
         elif work == 'init':
             return processing.Initialization(self, **kwargs)
 
+    def assign(self, variable, value):
+        ''' Manually assign values for a parameter. '''
+        assign_op = tf.assign(variable, value)
+        self.sess.run(assign_op)
+
     @abstractmethod
     def _set_placeholders(self, *args, **kwargs):
         raise NotImplementedError()

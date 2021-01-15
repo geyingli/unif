@@ -408,13 +408,6 @@ class XLNetLM(BERTLM, LMModule):
         self.tokenizer = get_sentence_piece_tokenizer(spm_file, do_lower_case)
         self._key_to_depths = get_key_to_depths(self.xlnet_config.n_layer)
 
-        if '[CLS]' not in self.tokenizer.vocab:
-            self.tokenizer.add('[CLS]')
-            self.xlnet_config.n_token += 1
-        if '[SEP]' not in self.tokenizer.vocab:
-            self.tokenizer.add('[SEP]')
-            self.xlnet_config.n_token += 1
-
     def predict(self, *args, **kwargs):
         raise AttributeError(
             '`predict` method is temporarily not supported for XLNetLM. '

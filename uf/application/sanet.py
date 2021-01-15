@@ -51,6 +51,8 @@ class SANetMRC(BERTMRC, MRCModule):
         self.max_seq_length = max_seq_length
         self.truncate_method = truncate_method
         self.split_sign = split_sign
+        self._do_lower_case = do_lower_case
+        self._on_predict = False
         self._reading_module = reading_module
         self._alpha = alpha
         self.__init_args__ = locals()
@@ -87,14 +89,20 @@ class SANetMRC(BERTMRC, MRCModule):
         # convert X
         if X or X_tokenized:
             tokenized = False if X else X_tokenized
+            X_target = X_tokenized if tokenized else X
             (input_ids, input_mask, sa_mask, segment_ids,
              doc_ids, doc_text, doc_start) = self._convert_X(
-                X_tokenized if tokenized else X, tokenized=tokenized)
+                X_target, tokenized=tokenized)
             data['input_ids'] = np.array(input_ids, dtype=np.int32)
             data['input_mask'] = np.array(input_mask, dtype=np.int32)
             data['sa_mask'] = np.array(sa_mask, dtype=np.int32)
             data['segment_ids'] = np.array(segment_ids, dtype=np.int32)
             n_inputs = len(input_ids)
+
+            # backup for answer mapping
+            if self._on_predict:
+                self._tokenized = tokenized
+                self._X_target = X_target
 
             if n_inputs < self.batch_size:
                 self.batch_size = max(n_inputs, len(self._gpu_ids))
@@ -127,6 +135,10 @@ class SANetMRC(BERTMRC, MRCModule):
                     'An untokenized example: '
                     '`X = [{\'doc\': \'...\', \'question\': \'...\', ...}, '
                     '...]`' % (ex_id, example))
+
+        # backup for answer mapping
+        if self._on_predict:
+            self._input_tokens = []
 
         input_ids = []
         input_mask = []
@@ -180,6 +192,9 @@ class SANetMRC(BERTMRC, MRCModule):
             _input_mask.append(1)
             _segment_ids.append(1)
 
+            # backup for answer mapping
+            if self._on_predict:
+                self._input_tokens.append(_input_tokens)
             _input_ids = self.tokenizer.convert_tokens_to_ids(_input_tokens)
             _doc_ids = _input_ids[_doc_start: -1]
 
@@ -206,7 +221,8 @@ class SANetMRC(BERTMRC, MRCModule):
         if not isinstance(x, dict) or 'doc' not in x:
             raise ValueError(
                 'Wrong input format of `y`. An untokenized example: '
-                '`y = [{\'doc\': \'...\', \'question\': \'...\', ...}, ...]`')
+                '`y = [{\'doc\': \'...\', \'question\': \'...\', ...}, '
+                'None, ...]`')
 
         for key in x:
             if not tokenized:

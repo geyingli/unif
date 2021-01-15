@@ -62,6 +62,13 @@ class ALBERTClassifier(BERTClassifier, ClassifierModule):
         self._key_to_depths = get_key_to_depths(
             self.albert_config.num_hidden_layers)
 
+        if '[CLS]' not in self.tokenizer.vocab:
+            self.tokenizer.add('[CLS]')
+            self.bert_config.n_vocab += 1
+        if '[SEP]' not in self.tokenizer.vocab:
+            self.tokenizer.add('[SEP]')
+            self.bert_config.n_vocab += 1
+
     def _forward(self, is_training, split_placeholders, **kwargs):
 
         encoder = ALBERTEncoder(
@@ -120,6 +127,13 @@ class ALBERTBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
         self._key_to_depths = get_key_to_depths(
             self.albert_config.num_hidden_layers)
 
+        if '[CLS]' not in self.tokenizer.vocab:
+            self.tokenizer.add('[CLS]')
+            self.bert_config.n_vocab += 1
+        if '[SEP]' not in self.tokenizer.vocab:
+            self.tokenizer.add('[SEP]')
+            self.bert_config.n_vocab += 1
+
     def _forward(self, is_training, split_placeholders, **kwargs):
 
         encoder = ALBERTEncoder(
@@ -175,6 +189,13 @@ class ALBERTSeqClassifier(BERTSeqClassifier, ClassifierModule):
         self._key_to_depths = get_key_to_depths(
             self.albert_config.num_hidden_layers)
 
+        if '[CLS]' not in self.tokenizer.vocab:
+            self.tokenizer.add('[CLS]')
+            self.bert_config.n_vocab += 1
+        if '[SEP]' not in self.tokenizer.vocab:
+            self.tokenizer.add('[SEP]')
+            self.bert_config.n_vocab += 1
+
     def _forward(self, is_training, split_placeholders, **kwargs):
 
         encoder = ALBERTEncoder(
@@ -219,6 +240,8 @@ class ALBERTMRC(BERTMRC, MRCModule):
         self.batch_size = 0
         self.max_seq_length = max_seq_length
         self.truncate_method = truncate_method
+        self._do_lower_case = do_lower_case
+        self._on_predict = False
         self._id_to_label = None
         self.__init_args__ = locals()
 
@@ -226,6 +249,13 @@ class ALBERTMRC(BERTMRC, MRCModule):
         self.tokenizer = get_word_piece_tokenizer(vocab_file, do_lower_case)
         self._key_to_depths = get_key_to_depths(
             self.albert_config.num_hidden_layers)
+
+        if '[CLS]' not in self.tokenizer.vocab:
+            self.tokenizer.add('[CLS]')
+            self.bert_config.n_vocab += 1
+        if '[SEP]' not in self.tokenizer.vocab:
+            self.tokenizer.add('[SEP]')
+            self.bert_config.n_vocab += 1
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 

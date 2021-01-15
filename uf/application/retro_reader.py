@@ -54,6 +54,8 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
         self.truncate_method = truncate_method
         self.beta_1 = beta_1
         self.beta_2 = beta_2
+        self._do_lower_case = do_lower_case
+        self._on_predict = False
         self._reading_module = reading_module
         self._matching_mechanism = matching_mechanism
         self._threshold = threshold
@@ -75,12 +77,6 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
         self._key_to_depths = get_key_to_depths(
             self.bert_config.num_hidden_layers)
 
-    def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
-                is_training=False):
-        self._assert_legal(X, y, sample_weight, X_tokenized)
-
-        if is_training:
-            assert y is not None, '`y` can\'t be None.'
         if '[CLS]' not in self.tokenizer.vocab:
             self.tokenizer.add('[CLS]')
             self.bert_config.n_vocab += 1
@@ -88,20 +84,33 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
             self.tokenizer.add('[SEP]')
             self.bert_config.n_vocab += 1
 
+    def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
+                is_training=False):
+        self._assert_legal(X, y, sample_weight, X_tokenized)
+
+        if is_training:
+            assert y is not None, '`y` can\'t be None.'
+
         n_inputs = None
         data = {}
 
         # convert X
         if X or X_tokenized:
             tokenized = False if X else X_tokenized
+            X_target = X_tokenized if tokenized else X
             (input_ids, input_mask, query_mask, segment_ids,
              doc_ids, doc_text, doc_start) = self._convert_X(
-                X_tokenized if tokenized else X, tokenized=tokenized)
+                X_target, tokenized=tokenized)
             data['input_ids'] = np.array(input_ids, dtype=np.int32)
             data['input_mask'] = np.array(input_mask, dtype=np.int32)
             data['query_mask'] = np.array(query_mask, dtype=np.int32)
             data['segment_ids'] = np.array(segment_ids, dtype=np.int32)
             n_inputs = len(input_ids)
+
+            # backup for answer mapping
+            if self._on_predict:
+                self._tokenized = tokenized
+                self._X_target = X_target
 
             if n_inputs < self.batch_size:
                 self.batch_size = max(n_inputs, len(self._gpu_ids))
@@ -132,7 +141,13 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
             except Exception:
                 raise ValueError(
                     'Wrong input format (line %d): \'%s\'. '
-                    % (ex_id, example))
+                    'An untokenized example: '
+                    '`X = [{\'doc\': \'...\', \'question\': \'...\', ...}, '
+                    '...]`' % (ex_id, example))
+
+        # backup for answer mapping
+        if self._on_predict:
+            self._input_tokens = []
 
         input_ids = []
         input_mask = []
@@ -164,6 +179,9 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
                 _segment_ids.extend([_segment_id] * (len(segment) + 1))
             _doc_start = len(_input_tokens) - len(_doc_tokens) - 1
 
+            # backup for answer mapping
+            if self._on_predict:
+                self._input_tokens.append(_input_tokens)
             _input_ids = self.tokenizer.convert_tokens_to_ids(_input_tokens)
             _doc_ids = _input_ids[_doc_start: -1]
 
@@ -334,18 +352,28 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
         probs = utils.transform(output_arrays[2], n_inputs)
         mrc_preds = utils.transform(output_arrays[3], n_inputs)
         for ex_id, _preds in enumerate(mrc_preds):
-            start_pred, end_pred = int(_preds[0]), int(_preds[1])
-            if verifier_preds[ex_id] == 0 or start_pred == 0 or end_pred == 0 \
-                    or start_pred > end_pred:
+            _start, _end = int(_preds[0]), int(_preds[1])
+            if verifier_preds[ex_id] == 0 or _start == 0 or _end == 0 \
+                    or _start > _end:
                 preds.append(None)
                 continue
+            _tokens = self._input_tokens[ex_id]
 
-            _input_ids = self.data['input_ids'][ex_id]
-            _answer_ids = _input_ids[start_pred: end_pred + 1]
-            _answer_tokens = self.tokenizer.convert_ids_to_tokens(
-                _answer_ids)
-            _answer_text = utils.convert_tokens_to_text(_answer_tokens)
-            preds.append(_answer_text)
+            if self._tokenized:
+                _span_tokens = _tokens[_start: _end + 1]
+                preds.append(_span_tokens)
+            else:
+                _sample = self._X_target[ex_id]
+                _text = [_sample[key] for key in _sample if key != 'doc']
+                _text.append(_sample['doc'])
+                _text = ' '.join(_text)
+                _mapping_start, _mapping_end = utils.align_tokens_with_text(
+                    _tokens, _text, self._do_lower_case)
+
+                _text_start = _mapping_start[_start]
+                _text_end = _mapping_end[_end]
+                _span_text = _text[_text_start: _text_end]
+                preds.append(_span_text)
 
         outputs = {}
         outputs['verifier_probs'] = verifier_probs

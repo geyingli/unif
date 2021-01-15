@@ -14,7 +14,6 @@
 # limitations under the License.
 ''' Applications based on RoBERTa. '''
 
-import copy
 import numpy as np
 
 from uf.tools import tf

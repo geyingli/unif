@@ -38,20 +38,30 @@ class PerformerClassifier(BERTClassifier, ClassifierModule):
                  drop_pooler=False,
                  do_lower_case=True,
                  truncate_method='LIFO'):
-        super().__init__(
-            config_file, vocab_file,
-            max_seq_length=max_seq_length,
-            label_size=label_size,
-            init_checkpoint=init_checkpoint,
-            output_dir=output_dir,
-            gpu_ids=gpu_ids,
-            drop_pooler=drop_pooler,
-            do_lower_case=do_lower_case,
-            truncate_method=truncate_method)
+        super(ClassifierModule, self).__init__(
+            init_checkpoint, output_dir, gpu_ids)
+
+        self.batch_size = 0
+        self.max_seq_length = max_seq_length
+        self.label_size = label_size
+        self.truncate_method = truncate_method
+        self._drop_pooler = drop_pooler
+        self._id_to_label = None
         self._kernel_transformation = kernel_transformation
         self._nb_random_features = nb_random_features
-        self._id_to_label = None
         self.__init_args__ = locals()
+
+        self.bert_config = get_bert_config(config_file)
+        self.tokenizer = get_word_piece_tokenizer(vocab_file, do_lower_case)
+        self._key_to_depths = get_key_to_depths(
+            self.bert_config.num_hidden_layers)
+
+        if '[CLS]' not in self.tokenizer.vocab:
+            self.tokenizer.add('[CLS]')
+            self.bert_config.n_vocab += 1
+        if '[SEP]' not in self.tokenizer.vocab:
+            self.tokenizer.add('[SEP]')
+            self.bert_config.n_vocab += 1
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 

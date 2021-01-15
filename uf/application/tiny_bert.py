@@ -63,6 +63,13 @@ class TinyBERTClassifier(BERTClassifier, ClassifierModule):
         self.student_config.intermediate_size = 4 * hidden_size
         self.student_config.num_hidden_layers = num_hidden_layers
 
+        if '[CLS]' not in self.tokenizer.vocab:
+            self.tokenizer.add('[CLS]')
+            self.bert_config.n_vocab += 1
+        if '[SEP]' not in self.tokenizer.vocab:
+            self.tokenizer.add('[SEP]')
+            self.bert_config.n_vocab += 1
+
     def to_bert(self):
         ''' Isolate student tiny_bert out of traing graph. '''
         if not self._graph_built:

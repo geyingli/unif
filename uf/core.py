@@ -434,13 +434,14 @@ class BaseModule:
             saver = tf.train.Saver(max_to_keep=1000000)
             saver.save(self.sess, self.init_checkpoint)
 
-    def cache(self, code, cache_file='./.cache'):
+    def cache(self, code, cache_file='./.cache', note=''):
         ''' Save model configurations into cache file.
 
         Args:
             code: string. Unique name of configuration to save. Can be any
               kind of string.
             cache_file: string. The path of cache file.
+            note: string. The information you with to note.
         Returns:
             None
 
@@ -460,6 +461,9 @@ class BaseModule:
         _cache_json = {
             'model': self.__class__.__name__,
             '__init__': {}}
+        if note:
+            _cache_json['note'] = note
+
         for key in self.__class__.__init__.__code__.co_varnames[1:]:
             try:
                 value = self.__getattribute__(key)

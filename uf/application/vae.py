@@ -67,8 +67,8 @@ class VAELM(BERTClassifier, LMModule):
         self.tokenizer = get_word_piece_tokenizer(vocab_file, do_lower_case)
         self._key_to_depths = get_key_to_depths(num_hidden_layers)
 
-        if '[SOS]' not in self.tokenizer.vocab:
-            self.tokenizer.add('[SOS]')
+        if '[CLS]' not in self.tokenizer.vocab:
+            self.tokenizer.add('[CLS]')
         if '[SEP]' not in self.tokenizer.vocab:
             self.tokenizer.add('[SEP]')
 

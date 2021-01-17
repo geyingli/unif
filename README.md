@@ -10,7 +10,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-beta v2.5.0-blue">
+        <img src="https://img.shields.io/badge/version-beta v2.5.1-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-1.x\2.x-yellow">
@@ -20,7 +20,7 @@
     </a>
 </p>
 
-恭喜你！找到了集 **语言模型预训练 + 下游微调 + 模型管理 + 模型蒸馏 + 导出可部署文件** 为一体的宝藏仓库。在接下来的时间里，你可以做这样几件事：
+恭喜你找到了集 **语言模型预训练 + 下游微调 + 模型管理 + 模型蒸馏 + 导出可部署文件** 为一体的宝藏仓库。在接下来的时间里，你可以做这样几件事：
 
 - 2 分钟后：了解并安装 UNIF，跑一遍 demo
 - 3 分钟后：查看模型列表，找到你需要的模型

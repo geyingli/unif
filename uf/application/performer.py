@@ -15,7 +15,10 @@
 ''' Applications based on Performer. '''
 
 from .base import ClassifierModule
-from .bert import BERTClassifier
+from .bert import (BERTClassifier,
+                   get_bert_config,
+                   get_word_piece_tokenizer,
+                   get_key_to_depths)
 from uf.modeling.performer import PerformerEncoder
 from uf.modeling.base import CLSDecoder
 

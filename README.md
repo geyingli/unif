@@ -10,7 +10,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-beta v2.5.1-blue">
+        <img src="https://img.shields.io/badge/version-beta v2.5.2-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-1.x\2.x-yellow">
@@ -20,22 +20,17 @@
     </a>
 </p>
 
-恭喜你找到了集 **语言模型预训练 + 下游微调 + 模型管理 + 模型蒸馏 + 导出可部署文件** 为一体的宝藏仓库。在接下来的时间里，你可以做这样几件事：
-
-- 2 分钟后：了解并安装 UNIF，跑一遍 demo
-- 3 分钟后：查看模型列表，找到你需要的模型
-- 10 分钟后：开始训练你的第一个模型
-- 20 分钟后：可以熟练使用，并根据实验需要调整参数
-- 2 小时后：得到数个即读即用的模型，开发你的有趣应用
+有数据，想要快速实现你的想法？轻便、易使用的自然语言处理联合框架，帮你快速搭建各类常用深度学习模型 (Transformer, GPT-2, BERT, RoBERTa, ALBERT, XLNet, ELECTRA)，同时对于 BERT 系列，支持高效用的蒸馏 (TinyBERT, FastBERT)。支持各类上下游任务 (语言模型、文本分类、文本生成、命名实体识别、机器阅读理解、机器翻译、序列标注等)。
 
 *重要变更 (January 12, 2021)：从现版本起，通过 `.cache()` 写入配置文件后，可从任意工作目录下读取该文件载入模型，方便模型管理。但由于本次功能升级，过去的配置文件将失效。*
 
 ### 特性
 
+- API简单：三行代码完成训练及推理，并一键设置多 GPU 并行
 - 品类丰富：支持 40+ 种模型类
 - 唯一依赖：Tensorflow 1.x/2.x
-- 易学易用：三行代码完成训练及推理，并一键设置多 GPU 并行
 - 高分保证：提供分层学习率、对抗式训练等多项训练技巧
+- 可供部署：导出 SavedModel，供部署使用
 
 ### 安装
 

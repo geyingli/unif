@@ -67,8 +67,6 @@ class VAELM(BERTClassifier, LMModule):
         self.tokenizer = get_word_piece_tokenizer(vocab_file, do_lower_case)
         self._key_to_depths = get_key_to_depths(num_hidden_layers)
 
-        if '[CLS]' not in self.tokenizer.vocab:
-            self.tokenizer.add('[CLS]')
         if '[SEP]' not in self.tokenizer.vocab:
             self.tokenizer.add('[SEP]')
 
@@ -147,6 +145,51 @@ class VAELM(BERTClassifier, LMModule):
             data['sample_weight'] = np.array(sample_weight, dtype=np.float32)
 
         return data
+
+    def _convert_X(self, X_target, tokenized):
+
+        # tokenize input texts
+        segment_input_tokens = []
+        for ex_id, example in enumerate(X_target):
+            try:
+                segment_input_tokens.append(
+                    self._convert_x(example, tokenized))
+            except Exception:
+                raise ValueError(
+                    'Wrong input format (line %d): \'%s\'. '
+                    % (ex_id, example))
+
+        input_ids = []
+        input_mask = []
+        segment_ids = []
+        for ex_id, segments in enumerate(segment_input_tokens):
+            _input_tokens = []
+            _input_ids = []
+            _input_mask = []
+            _segment_ids = []
+
+            utils.truncate_segments(
+                segments, self.max_seq_length - len(segments),
+                truncate_method=self.truncate_method)
+            for s_id, segment in enumerate(segments):
+                _segment_id = min(s_id, 1)
+                _input_tokens.extend(segment + ['[SEP]'])
+                _input_mask.extend([1] * (len(segment) + 1))
+                _segment_ids.extend([_segment_id] * (len(segment) + 1))
+
+            _input_ids = self.tokenizer.convert_tokens_to_ids(_input_tokens)
+
+            # padding
+            for _ in range(self.max_seq_length - len(_input_ids)):
+                _input_ids.append(0)
+                _input_mask.append(0)
+                _segment_ids.append(0)
+
+            input_ids.append(_input_ids)
+            input_mask.append(_input_mask)
+            segment_ids.append(_segment_ids)
+
+        return input_ids, input_mask, segment_ids
 
     def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {

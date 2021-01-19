@@ -61,10 +61,10 @@ class ELECTRAClassifier(BERTClassifier, ClassifierModule):
 
         if '[CLS]' not in self.tokenizer.vocab:
             self.tokenizer.add('[CLS]')
-            self.bert_config.n_vocab += 1
+            self.bert_config.vocab_size += 1
         if '[SEP]' not in self.tokenizer.vocab:
             self.tokenizer.add('[SEP]')
-            self.bert_config.n_vocab += 1
+            self.bert_config.vocab_size += 1
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
@@ -124,10 +124,10 @@ class ELECTRABinaryClassifier(BERTBinaryClassifier, ClassifierModule):
 
         if '[CLS]' not in self.tokenizer.vocab:
             self.tokenizer.add('[CLS]')
-            self.bert_config.n_vocab += 1
+            self.bert_config.vocab_size += 1
         if '[SEP]' not in self.tokenizer.vocab:
             self.tokenizer.add('[SEP]')
-            self.bert_config.n_vocab += 1
+            self.bert_config.vocab_size += 1
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
@@ -186,10 +186,10 @@ class ELECTRASeqClassifier(BERTSeqClassifier, ClassifierModule):
 
         if '[CLS]' not in self.tokenizer.vocab:
             self.tokenizer.add('[CLS]')
-            self.bert_config.n_vocab += 1
+            self.bert_config.vocab_size += 1
         if '[SEP]' not in self.tokenizer.vocab:
             self.tokenizer.add('[SEP]')
-            self.bert_config.n_vocab += 1
+            self.bert_config.vocab_size += 1
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
@@ -248,10 +248,10 @@ class ELECTRAMRC(BERTMRC, MRCModule):
 
         if '[CLS]' not in self.tokenizer.vocab:
             self.tokenizer.add('[CLS]')
-            self.bert_config.n_vocab += 1
+            self.bert_config.vocab_size += 1
         if '[SEP]' not in self.tokenizer.vocab:
             self.tokenizer.add('[SEP]')
-            self.bert_config.n_vocab += 1
+            self.bert_config.vocab_size += 1
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 

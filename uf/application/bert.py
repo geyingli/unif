@@ -72,10 +72,10 @@ class BERTClassifier(ClassifierModule):
 
         if '[CLS]' not in self.tokenizer.vocab:
             self.tokenizer.add('[CLS]')
-            self.bert_config.n_vocab += 1
+            self.bert_config.vocab_size += 1
         if '[SEP]' not in self.tokenizer.vocab:
             self.tokenizer.add('[SEP]')
-            self.bert_config.n_vocab += 1
+            self.bert_config.vocab_size += 1
 
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
                 is_training=False):
@@ -354,10 +354,10 @@ class BERTBinaryClassifier(BERTClassifier, ClassifierModule):
 
         if '[CLS]' not in self.tokenizer.vocab:
             self.tokenizer.add('[CLS]')
-            self.bert_config.n_vocab += 1
+            self.bert_config.vocab_size += 1
         if '[SEP]' not in self.tokenizer.vocab:
             self.tokenizer.add('[SEP]')
-            self.bert_config.n_vocab += 1
+            self.bert_config.vocab_size += 1
 
     def _convert_y(self, y):
         try:
@@ -498,10 +498,10 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
 
         if '[CLS]' not in self.tokenizer.vocab:
             self.tokenizer.add('[CLS]')
-            self.bert_config.n_vocab += 1
+            self.bert_config.vocab_size += 1
         if '[SEP]' not in self.tokenizer.vocab:
             self.tokenizer.add('[SEP]')
-            self.bert_config.n_vocab += 1
+            self.bert_config.vocab_size += 1
 
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
                 is_training=False):
@@ -814,10 +814,10 @@ class BERTNER(BERTClassifier, NERModule):
 
         if '[CLS]' not in self.tokenizer.vocab:
             self.tokenizer.add('[CLS]')
-            self.bert_config.n_vocab += 1
+            self.bert_config.vocab_size += 1
         if '[SEP]' not in self.tokenizer.vocab:
             self.tokenizer.add('[SEP]')
-            self.bert_config.n_vocab += 1
+            self.bert_config.vocab_size += 1
 
     def predict(self, X=None, X_tokenized=None,
                 batch_size=8):
@@ -1348,10 +1348,10 @@ class BERTCRFCascadeNER(BERTCRFNER, NERModule):
 
         if '[CLS]' not in self.tokenizer.vocab:
             self.tokenizer.add('[CLS]')
-            self.bert_config.n_vocab += 1
+            self.bert_config.vocab_size += 1
         if '[SEP]' not in self.tokenizer.vocab:
             self.tokenizer.add('[SEP]')
-            self.bert_config.n_vocab += 1
+            self.bert_config.vocab_size += 1
 
     def _convert_y(self, y, input_ids, tokenized=False):
         label_ids = []
@@ -1625,10 +1625,10 @@ class BERTMRC(BERTClassifier, MRCModule):
 
         if '[CLS]' not in self.tokenizer.vocab:
             self.tokenizer.add('[CLS]')
-            self.bert_config.n_vocab += 1
+            self.bert_config.vocab_size += 1
         if '[SEP]' not in self.tokenizer.vocab:
             self.tokenizer.add('[SEP]')
-            self.bert_config.n_vocab += 1
+            self.bert_config.vocab_size += 1
 
     def predict(self, X=None, X_tokenized=None,
                 batch_size=8):
@@ -2017,10 +2017,10 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
 
         if '[CLS]' not in self.tokenizer.vocab:
             self.tokenizer.add('[CLS]')
-            self.bert_config.n_vocab += 1
+            self.bert_config.vocab_size += 1
         if '[SEP]' not in self.tokenizer.vocab:
             self.tokenizer.add('[SEP]')
-            self.bert_config.n_vocab += 1
+            self.bert_config.vocab_size += 1
 
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
                 is_training=False):
@@ -2415,10 +2415,10 @@ class BERTLM(LMModule):
 
         if '[CLS]' not in self.tokenizer.vocab:
             self.tokenizer.add('[CLS]')
-            self.bert_config.n_vocab += 1
+            self.bert_config.vocab_size += 1
         if '[SEP]' not in self.tokenizer.vocab:
             self.tokenizer.add('[SEP]')
-            self.bert_config.n_vocab += 1
+            self.bert_config.vocab_size += 1
 
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
                 is_training=False):

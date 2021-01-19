@@ -73,10 +73,10 @@ class WideAndDeepClassifier(BERTClassifier, ClassifierModule):
 
         if '[CLS]' not in self.tokenizer.vocab:
             self.tokenizer.add('[CLS]')
-            self.bert_config.n_vocab += 1
+            self.bert_config.vocab_size += 1
         if '[SEP]' not in self.tokenizer.vocab:
             self.tokenizer.add('[SEP]')
-            self.bert_config.n_vocab += 1
+            self.bert_config.vocab_size += 1
 
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
                 is_training=False):

@@ -20,6 +20,7 @@ from .bert import BERTLM
 from .roberta import RoBERTaLM
 from .albert import ALBERTLM
 from .electra import ELECTRALM
+from .dilated import DilatedLM
 from .vae import VAELM
 from .gpt2 import GPT2LM
 from .unilm import UniLM
@@ -80,6 +81,7 @@ __all__ = [
     'RoBERTaLM',
     'ALBERTLM',
     'ELECTRALM',
+    'DilatedLM',
     'VAELM',
     'GPT2LM',
     'UniLM',

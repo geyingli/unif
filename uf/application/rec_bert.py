@@ -358,7 +358,8 @@ class RecBERTLM(LMModule):
                     if self._add_prob > 0 and _add_preds[i] != 0:
                         _token = self.tokenizer.convert_ids_to_tokens(
                             [_add_preds[i]])[0]
-                        _output_tokens.insert(i + n, _token)
+                        _token = '{add:%s}' % _token
+                        _output_tokens.insert(i + 1 + n, _token)
                         n += 1
                 preds.append(_output_tokens)
             else:
@@ -414,21 +415,28 @@ def sample_wrong_tokens(_input_ids, _rep_label_ids,
     # `add`, remove padding for prediction of adding tokens
     # e.g. 124 591 9521 -> 124 9521
     for _ in range(max_add):
-        cand_indicies = [i for i in range(1, len(_input_ids) - 1)
+        cand_indicies = [i for i in range(0, len(_input_ids) - 1)
                          if _input_ids[i] != 0 and
                          _input_ids[i + 1] != 0 and
-                         _add_label_ids[i] == 0]
+                         _add_label_ids[i] == 0 and
+                         _add_label_ids[i + 1] == 0]
         if not cand_indicies:
             break
 
         index = random.choice(cand_indicies)
         _add_label_ids[index] = _input_ids.pop(index + 1)
+        _add_label_ids.pop(index + 1)
+        _rep_label_ids.pop(index + 1)
+        _del_label_ids.pop(index + 1)
         _input_ids.append(0)
+        _add_label_ids.append(0)
+        _rep_label_ids.append(0)
+        _del_label_ids.append(0)
 
     # `rep`, rep tokens for prediction of replacing tokens
     # e.g. 124 591 9521 -> 124 789 9521
     for _ in range(max_rep):
-        cand_indicies = [i for i in range(1, len(_input_ids) - 1)
+        cand_indicies = [i for i in range(0, len(_input_ids))
                          if _input_ids[i] != 0 and
                          _rep_label_ids[i] == 0]
         if not cand_indicies:
@@ -438,12 +446,12 @@ def sample_wrong_tokens(_input_ids, _rep_label_ids,
         _rep_label_ids[index] = _input_ids[index]
         _input_ids[index] = random.randint(1, vocab_size - 1)
 
-    # `del`, add wrong tokens for prediction of delion
+    # `del`, add wrong tokens for prediction of deleted tokens
     # e.g. 124 591 -> 124 92 591
     for _ in range(max_del):
         if _input_ids[-1] != 0:  # no more space
             break
-        cand_indicies = [i for i in range(0, len(_input_ids) - 1)
+        cand_indicies = [i for i in range(0, len(_input_ids))
                          if _input_ids[i] != 0 and
                          _del_label_ids[i] == 0]
         if not cand_indicies:
@@ -451,5 +459,10 @@ def sample_wrong_tokens(_input_ids, _rep_label_ids,
 
         index = random.choice(cand_indicies)
         _input_ids.insert(index, random.randint(1, vocab_size - 1))
-        _del_label_ids[index] = 1
+        _add_label_ids.insert(index, 0)
+        _rep_label_ids.insert(index, 0)
+        _del_label_ids.insert(index, 1)
         _input_ids.pop()
+        _add_label_ids.pop()
+        _rep_label_ids.pop()
+        _del_label_ids.pop()

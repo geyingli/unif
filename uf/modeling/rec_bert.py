@@ -185,10 +185,9 @@ class RecBERT(BaseDecoder, BERTEncoder):
 
             with tf.variable_scope('verifier'):
                 logits = tf.layers.dense(
-                    input_tensor,
-                    2,
+                    input_tensor, 2,
                     kernel_initializer=util.create_initializer(
-                    bert_config.initializer_range),
+                        bert_config.initializer_range),
                     trainable=True)
                 verifier_label_ids = tf.cast(
                     tf.greater(label_ids, 0), tf.int32)
@@ -213,12 +212,20 @@ class RecBERT(BaseDecoder, BERTEncoder):
                 verifier_preds = tf.argmax(logits, axis=-1)
 
             with tf.variable_scope('prediction'):
-                logits = tf.layers.dense(
-                    input_tensor,
-                    bert_config.hidden_size,
-                    kernel_initializer=util.create_initializer(
-                    bert_config.initializer_range),
-                    trainable=True)
+
+                with tf.variable_scope('intermediate'):
+                    logits = tf.layers.dense(
+                        input_tensor, bert_config.hidden_size * 4,
+                        kernel_initializer=util.create_initializer(
+                            bert_config.initializer_range),
+                        activation=util.gelu,
+                        trainable=True)
+                with tf.variable_scope('output'):
+                    logits = tf.layers.dense(
+                        logits, bert_config.hidden_size,
+                        kernel_initializer=util.create_initializer(
+                            bert_config.initializer_range),
+                        trainable=True)
 
                 flattened = tf.reshape(
                     logits,
@@ -265,10 +272,9 @@ class RecBERT(BaseDecoder, BERTEncoder):
 
         with tf.variable_scope(scope):
             logits = tf.layers.dense(
-                input_tensor,
-                2,
+                input_tensor, 2,
                 kernel_initializer=util.create_initializer(
-                bert_config.initializer_range),
+                    bert_config.initializer_range),
                 trainable=True)
 
             # loss

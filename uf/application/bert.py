@@ -500,15 +500,6 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
         self._key_to_depths = get_key_to_depths(
             self.bert_config.num_hidden_layers)
 
-        if '[CLS]' not in self.tokenizer.vocab:
-            self.tokenizer.add('[CLS]')
-            self.bert_config.vocab_size += 1
-            tf.logging.info('Add necessary token `[CLS]` into vocabulary.')
-        if '[SEP]' not in self.tokenizer.vocab:
-            self.tokenizer.add('[SEP]')
-            self.bert_config.vocab_size += 1
-            tf.logging.info('Add necessary token `[SEP]` into vocabulary.')
-
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
                 is_training=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
@@ -546,32 +537,21 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
         return data
 
     def _convert_X(self, X_target, tokenized):
-
-        # tokenize input texts
-        segment_input_tokens = []
-        for ex_id, example in enumerate(X_target):
-            segment_input_tokens.append(
-                self._convert_x(example, tokenized))
-
         input_ids = []
         input_mask = []
         segment_ids = []
-        for ex_id, segments in enumerate(segment_input_tokens):
-            _input_tokens = ['[CLS]']
-            _input_ids = []
-            _input_mask = [1]
-            _segment_ids = [0]
+
+        # tokenize input texts
+        for ex_id, example in enumerate(X_target):
+            _input_tokens = self._convert_x(example, tokenized)
 
             utils.truncate_segments(
-                segments, self.max_seq_length - len(segments) - 1,
+                [_input_tokens], self.max_seq_length,
                 truncate_method=self.truncate_method)
-            for s_id, segment in enumerate(segments):
-                _segment_id = min(s_id, 1)
-                _input_tokens.extend(segment + ['[SEP]'])
-                _input_mask.extend([1] * (len(segment) + 1))
-                _segment_ids.extend([_segment_id] * (len(segment) + 1))
 
             _input_ids = self.tokenizer.convert_tokens_to_ids(_input_tokens)
+            _input_mask = [1 for _ in range(len(_input_tokens))]
+            _segment_ids = [0 for _ in range(len(_input_tokens))]
 
             # padding
             for _ in range(self.max_seq_length - len(_input_ids)):
@@ -593,7 +573,7 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
 
         # deal with tokenized inputs
         if isinstance(x[0], str):
-            return [x]
+            return x
 
         # deal with tokenized and multiple inputs
         raise ValueError(
@@ -635,16 +615,19 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
 
         label_ids = []
         for sample in y:
-            num_labels = len(sample)
-            if num_labels < self.max_seq_length - 2:
-                sample.extend([0] * (self.max_seq_length - 2 - num_labels))
-            elif num_labels > self.max_seq_length - 2:
-                sample = sample[:self.max_seq_length - 2]
+            sample = [label for label in sample]
 
-            _label_ids = [0]
-            _label_ids.extend(
-                [self._label_to_id[label] for label in sample])
-            _label_ids.append(0)
+            num_labels = len(sample)
+            if num_labels < self.max_seq_length:
+                sample.extend([0] * (self.max_seq_length - num_labels))
+            elif num_labels > self.max_seq_length:
+                sample = sample[:self.max_seq_length]
+
+                utils.truncate_segments(
+                    [sample], self.max_seq_length,
+                    truncate_method=self.truncate_method)
+
+            _label_ids = [self._label_to_id[label] for label in sample]
             label_ids.append(_label_ids)
         return label_ids
 
@@ -709,10 +692,6 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
 
         # accuracy
         batch_preds = output_arrays[1]
-        batch_mask = np.hstack((
-            np.zeros((len(batch_preds), 1)),
-            batch_mask[:, 2:],
-            np.zeros((len(batch_preds), 1))))
         accuracy = (np.sum((batch_preds == batch_labels) * batch_mask) /
                     batch_mask.sum())
 
@@ -741,8 +720,8 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
         mask = self.data['input_mask']
         preds = []
         for _preds, _mask in zip(all_preds, mask):
-            input_length = np.sum(_mask) - 2
-            _preds = _preds[1: input_length + 1].tolist()
+            input_length = np.sum(_mask)
+            _preds = _preds[:input_length].tolist()
             if self._id_to_label:
                 _preds = [self._id_to_label[idx] for idx in _preds]
             preds.append(_preds)
@@ -764,10 +743,6 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
         preds = utils.transform(output_arrays[0], n_inputs)
         labels = self.data['label_ids']
         mask = self.data['input_mask']
-        mask = np.hstack((
-            np.zeros((len(preds), 1)),
-            mask[:, 2:],
-            np.zeros((len(preds), 1))))
         accuracy = (np.sum((preds == labels) * mask) /
                     mask.sum())
 

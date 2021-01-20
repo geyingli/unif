@@ -173,9 +173,9 @@ class SeqCLSDecoder(BaseDecoder):
                  **kwargs):
         super().__init__(**kwargs)
 
-        batch_size = tf.shape(input_tensor)[0]
-        seq_length = input_tensor.shape.as_list()[-2]
-        hidden_size = input_tensor.shape.as_list()[-1]
+        shape = input_tensor.shape.as_list()
+        seq_length = shape[-2]
+        hidden_size = shape[-1]
         with tf.variable_scope(scope):
             output_weights = tf.get_variable(
                 'output_weights',
@@ -202,14 +202,13 @@ class SeqCLSDecoder(BaseDecoder):
             log_probs = tf.nn.log_softmax(logits, axis=-1)
             one_hot_labels = tf.one_hot(
                 label_ids, depth=label_size, dtype=tf.float32)
-            per_token_losses = - tf.reduce_mean(
+            per_token_loss = - tf.reduce_mean(
                 one_hot_labels * log_probs, axis=-1)
-            input_mask = tf.concat([
-                tf.zeros((batch_size, 1), dtype=tf.float32),
-                tf.cast(input_mask[:, 2:], dtype=tf.float32),
-                tf.zeros((batch_size, 1), dtype=tf.float32)], axis=-1)
-            per_token_losses *= input_mask
-            per_example_loss = tf.reduce_mean(per_token_losses, axis=-1)
+
+            input_mask = tf.cast(input_mask, tf.float32)
+            per_token_loss *= input_mask / tf.reduce_sum(
+                input_mask, keepdims=True, axis=-1)
+            per_example_loss = tf.reduce_mean(per_token_loss, axis=-1)
             if sample_weight is not None:
                 per_example_loss *= tf.cast(
                     sample_weight, dtype=tf.float32)

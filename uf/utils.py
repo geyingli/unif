@@ -32,6 +32,7 @@ from . import application
 PACK_DIR = os.path.dirname(__file__)
 
 
+
 class Null:
     ''' A null class for keeping code compatible when hanging out. '''
     def __init__(self, *args, **kwargs):

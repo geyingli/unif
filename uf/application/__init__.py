@@ -1,5 +1,5 @@
 # coding:=utf-8
-# Copyright 2020 Tencent. All rights reserved.
+# Copyright 2021 Tencent. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ from .roberta import RoBERTaLM
 from .albert import ALBERTLM
 from .electra import ELECTRALM
 from .dilated import DilatedLM
+from .rec_bert import RecBERTLM
 from .vae import VAELM
 from .gpt2 import GPT2LM
 from .unilm import UniLM
@@ -82,6 +83,7 @@ __all__ = [
     'ALBERTLM',
     'ELECTRALM',
     'DilatedLM',
+    'RecBERTLM',
     'VAELM',
     'GPT2LM',
     'UniLM',

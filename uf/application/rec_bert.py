@@ -60,6 +60,15 @@ class RecBERTLM(LMModule):
         self._del_prob = del_prob
         self.__init_args__ = locals()
 
+        self._all_prob = rep_prob + add_prob + del_prob
+        assert self._all_prob > 0 and self._all_prob < 1, (
+            'The sum of `rep_prob`, `add_prob` and `del_prob` '
+            'should be larger than 0 and smaller than 1.')
+        self._rep_prob /= self._all_prob
+        self._add_prob /= self._all_prob
+        self._del_prob /= self._all_prob
+        self._p = [self._rep_prob, self._add_prob, self._del_prob]
+
         self.bert_config = get_bert_config(config_file)
         self.tokenizer = get_word_piece_tokenizer(vocab_file, do_lower_case)
         self._key_to_depths = get_key_to_depths(
@@ -168,14 +177,18 @@ class RecBERTLM(LMModule):
                     _add_label_ids.append(0)
                     _del_label_ids.append(0)
 
-                max_rep = int(nonpad_seq_length * self._rep_prob)
-                max_add = int(nonpad_seq_length * self._add_prob)
-                max_del = int(nonpad_seq_length * self._del_prob)
+                maxs = [0, 0, 0]
+                max_all = int(np.round(nonpad_seq_length * self._all_prob))
+                for _ in range(max_all):
+                    index = np.random.choice([0, 1, 2], p=self._p)
+                    maxs[index] += 1
 
                 sample_wrong_tokens(
                     _input_ids, _rep_label_ids,
                     _add_label_ids, _del_label_ids,
-                    max_rep, max_add, max_del,
+                    max_rep=maxs[0],
+                    max_add=maxs[1],
+                    max_del=maxs[2],
                     nonpad_seq_length=nonpad_seq_length,
                     vocab_size=len(self.tokenizer.vocab))
 

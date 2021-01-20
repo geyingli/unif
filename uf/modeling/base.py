@@ -143,14 +143,14 @@ class BinaryCLSDecoder(BaseDecoder):
             self.probs['probs'] = probs
             self.preds['preds'] = tf.greater(probs, 0.5)
 
-            per_example_loss = tf.nn.sigmoid_cross_entropy_with_logits(
+            per_label_loss = tf.nn.sigmoid_cross_entropy_with_logits(
                 logits=logits,
                 labels=tf.cast(label_ids, dtype=tf.float32))
             if label_weight is not None:
                 label_weight = tf.constant(label_weight, dtype=tf.float32)
                 label_weight = tf.reshape(label_weight, [1, label_size])
-                per_example_loss *= label_weight
-            per_example_loss = tf.reduce_mean(per_example_loss, axis=-1)
+                per_label_loss *= label_weight
+            per_example_loss = tf.reduce_sum(per_label_loss, axis=-1)
             if sample_weight is not None:
                 per_example_loss *= sample_weight
 
@@ -202,13 +202,13 @@ class SeqCLSDecoder(BaseDecoder):
             log_probs = tf.nn.log_softmax(logits, axis=-1)
             one_hot_labels = tf.one_hot(
                 label_ids, depth=label_size, dtype=tf.float32)
-            per_token_loss = - tf.reduce_mean(
+            per_token_loss = - tf.reduce_sum(
                 one_hot_labels * log_probs, axis=-1)
 
             input_mask = tf.cast(input_mask, tf.float32)
             per_token_loss *= input_mask / tf.reduce_sum(
                 input_mask, keepdims=True, axis=-1)
-            per_example_loss = tf.reduce_mean(per_token_loss, axis=-1)
+            per_example_loss = tf.reduce_sum(per_token_loss, axis=-1)
             if sample_weight is not None:
                 per_example_loss *= tf.cast(
                     sample_weight, dtype=tf.float32)

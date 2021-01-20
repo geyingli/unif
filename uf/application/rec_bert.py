@@ -128,7 +128,7 @@ class RecBERTLM(LMModule):
             # replace/add/subtract
             if is_training:
                 for _input_id in _input_ids:
-                    _replace_label_ids.append(_input_id)
+                    _replace_label_ids.append(0)
                     _add_label_ids.append(0)
                     _subtract_label_ids.append(0)
 
@@ -353,7 +353,7 @@ def sample_wrong_tokens(_input_ids, _replace_label_ids,
     for _ in range(max_replace):
         cand_indicies = [i for i in range(1, len(_input_ids) - 1)
                          if _input_ids[i] != 0 and
-                         _input_ids[i] == _replace_label_ids[i]]
+                         _replace_label_ids[i] == 0]
         if not cand_indicies:
             break
 

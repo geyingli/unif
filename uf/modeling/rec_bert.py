@@ -182,48 +182,71 @@ class RecBERT(BaseDecoder, BERTEncoder):
                     initializer_range=0.02):
 
         with tf.variable_scope(scope):
-            output_weights = tf.get_variable(
-                'output_weights',
-                shape=[bert_config.hidden_size, bert_config.hidden_size],
-                initializer=util.create_initializer(initializer_range),
-                trainable=True)
-            output_bias = tf.get_variable(
-                'output_bias',
-                shape=[bert_config.hidden_size],
-                initializer=tf.zeros_initializer(),
-                trainable=True)
 
-            output_layer = util.dropout(
-                input_tensor, hidden_dropout_prob if is_training else 0.0)
-            logits = tf.matmul(output_layer, output_weights, transpose_b=True)
-            logits = tf.nn.bias_add(logits, output_bias)
+            with tf.variable_scope('verifier'):
+                logits = tf.layers.dense(
+                    input_tensor,
+                    2,
+                    kernel_initializer=util.create_initializer(
+                    bert_config.initializer_range),
+                    trainable=True)
+                verifier_label_ids = tf.cast(
+                    tf.greater(label_ids, 0), tf.int32)
 
-            flattened = tf.reshape(
-                logits,
-                [batch_size * max_seq_length, bert_config.hidden_size])
-            logits = tf.matmul(
-                flattened, self.embedding_table, transpose_b=True)
-            logits = tf.reshape(
-                logits, [-1, max_seq_length, bert_config.vocab_size])
+                # loss
+                log_probs = tf.nn.log_softmax(logits, axis=-1)
+                one_hot_labels = tf.one_hot(
+                    verifier_label_ids, depth=2)
+                per_token_loss = -tf.reduce_sum(
+                    one_hot_labels * log_probs, axis=-1)
 
-            # loss
-            log_probs = tf.nn.log_softmax(logits, axis=-1)
-            one_hot_labels = tf.one_hot(
-                label_ids, depth=bert_config.vocab_size)
-            per_token_loss = -tf.reduce_sum(
-                one_hot_labels * log_probs, axis=-1)
+                input_mask = tf.cast(input_mask, tf.float32)
+                per_token_loss *= input_mask / tf.reduce_sum(
+                    input_mask, keepdims=True, axis=-1)
+                per_example_loss = tf.reduce_sum(per_token_loss, axis=-1)
+                if sample_weight is not None:
+                    per_example_loss *= tf.expand_dims(sample_weight, axis=-1)
 
-            input_mask = tf.cast(input_mask, tf.float32)
-            per_token_loss *= input_mask / tf.reduce_sum(
-                input_mask, keepdims=True, axis=-1)
-            per_example_loss = tf.reduce_mean(per_token_loss, axis=-1)
-            if sample_weight is not None:
-                per_example_loss *= tf.expand_dims(sample_weight, axis=-1)
+                if prob != 0:
+                    self.total_loss += tf.reduce_mean(per_example_loss)
+                verifier_loss = per_example_loss
+                verifier_preds = tf.argmax(logits, axis=-1)
 
-            if prob != 0:
-                self.total_loss += tf.reduce_mean(per_example_loss)
-            self.losses[name + '_loss'] = per_example_loss
-            self.preds[name + '_preds'] = tf.argmax(logits, axis=-1)
+            with tf.variable_scope('prediction'):
+                logits = tf.layers.dense(
+                    input_tensor,
+                    bert_config.hidden_size,
+                    kernel_initializer=util.create_initializer(
+                    bert_config.initializer_range),
+                    trainable=True)
+
+                flattened = tf.reshape(
+                    logits,
+                    [batch_size * max_seq_length, bert_config.hidden_size])
+                logits = tf.matmul(
+                    flattened, self.embedding_table, transpose_b=True)
+                logits = tf.reshape(
+                    logits, [-1, max_seq_length, bert_config.vocab_size])
+
+                # loss
+                log_probs = tf.nn.log_softmax(logits, axis=-1)
+                one_hot_labels = tf.one_hot(
+                    label_ids, depth=bert_config.vocab_size)
+                per_token_loss = -tf.reduce_sum(
+                    one_hot_labels * log_probs, axis=-1)
+
+                input_mask *= tf.cast(verifier_preds, tf.float32)
+                per_token_loss *= input_mask / (tf.reduce_sum(
+                    input_mask, keepdims=True, axis=-1) + 1e-6)
+                per_example_loss = tf.reduce_sum(per_token_loss, axis=-1)
+                if sample_weight is not None:
+                    per_example_loss *= tf.expand_dims(sample_weight, axis=-1)
+
+                if prob != 0:
+                    self.total_loss += tf.reduce_mean(per_example_loss)
+                self.losses[name + '_loss'] = verifier_loss + per_example_loss
+                self.preds[name + '_preds'] = \
+                    tf.argmax(logits, axis=-1) * verifier_preds
 
     def _cls_forward(self,
                      is_training,
@@ -241,20 +264,12 @@ class RecBERT(BaseDecoder, BERTEncoder):
                      initializer_range=0.02):
 
         with tf.variable_scope(scope):
-            output_weights = tf.get_variable(
-                'output_weights',
-                shape=[2, bert_config.hidden_size],
-                initializer=util.create_initializer(initializer_range),
+            logits = tf.layers.dense(
+                input_tensor,
+                2,
+                kernel_initializer=util.create_initializer(
+                bert_config.initializer_range),
                 trainable=True)
-            output_bias = tf.get_variable(
-                'output_bias',
-                shape=[2],
-                initializer=tf.zeros_initializer(),
-                trainable=True)
-
-            logits = tf.matmul(input_tensor, output_weights, transpose_b=True)
-            logits = tf.nn.bias_add(logits, output_bias)
-            logits = tf.reshape(logits, [-1, max_seq_length, 2])
 
             # loss
             log_probs = tf.nn.log_softmax(logits, axis=-1)
@@ -266,7 +281,7 @@ class RecBERT(BaseDecoder, BERTEncoder):
             input_mask = tf.cast(input_mask, tf.float32)
             per_token_loss *= input_mask / tf.reduce_sum(
                 input_mask, keepdims=True, axis=-1)
-            per_example_loss = tf.reduce_mean(per_token_loss, axis=-1)
+            per_example_loss = tf.reduce_sum(per_token_loss, axis=-1)
             if sample_weight is not None:
                 per_example_loss *= tf.expand_dims(sample_weight, axis=-1)
 

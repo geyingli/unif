@@ -26,13 +26,13 @@ class RecBERT(BaseDecoder, BERTEncoder):
                  bert_config,
                  is_training,
                  input_ids,
-                 replace_label_ids,
+                 rep_label_ids,
                  add_label_ids,
-                 subtract_label_ids,
+                 del_label_ids,
                  sample_weight=None,
-                 replace_prob=0,
+                 rep_prob=0,
                  add_prob=0,
-                 subtract_prob=0,
+                 del_prob=0,
                  scope='bert',
                  use_tilda_embedding=False,
                  **kwargs):
@@ -67,13 +67,13 @@ class RecBERT(BaseDecoder, BERTEncoder):
                 is_training,
                 input_tensor=hidden,
                 input_mask=input_mask,
-                label_ids=replace_label_ids,
+                label_ids=rep_label_ids,
                 bert_config=bert_config,
                 batch_size=batch_size,
                 max_seq_length=max_seq_length,
-                prob=replace_prob,
-                scope='cls/replace',
-                name='replace',
+                prob=rep_prob,
+                scope='cls/rep',
+                name='rep',
                 sample_weight=sample_weight)
             self._lm_forward(
                 is_training,
@@ -91,13 +91,13 @@ class RecBERT(BaseDecoder, BERTEncoder):
                 is_training,
                 input_tensor=hidden,
                 input_mask=input_mask,
-                label_ids=subtract_label_ids,
+                label_ids=del_label_ids,
                 bert_config=bert_config,
                 batch_size=batch_size,
                 max_seq_length=max_seq_length,
-                prob=subtract_prob,
-                scope='cls/subtract',
-                name='subtract',
+                prob=del_prob,
+                scope='cls/del',
+                name='del',
                 sample_weight=sample_weight)
 
     def _bert_forward(self,
@@ -244,7 +244,7 @@ class RecBERT(BaseDecoder, BERTEncoder):
 
                 if prob != 0:
                     self.total_loss += tf.reduce_mean(per_example_loss)
-                self.losses[name + '_loss'] = verifier_loss + per_example_loss
+                self.losses[name + '_loss'] = verifier_loss
                 self.preds[name + '_preds'] = \
                     tf.argmax(logits, axis=-1) * verifier_preds
 

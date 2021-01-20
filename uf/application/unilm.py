@@ -88,9 +88,11 @@ class UniLM(BERTLM, LMModule):
         if '[CLS]' not in self.tokenizer.vocab:
             self.tokenizer.add('[CLS]')
             self.bert_config.vocab_size += 1
+            tf.logging.info('Add necessary token `[CLS]` into vocabulary.')
         if '[SEP]' not in self.tokenizer.vocab:
             self.tokenizer.add('[SEP]')
             self.bert_config.vocab_size += 1
+            tf.logging.info('Add necessary token `[SEP]` into vocabulary.')
 
     def to_mode(self, mode):
         ''' Switch the mode of UniLM.

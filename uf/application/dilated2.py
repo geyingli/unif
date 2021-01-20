@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-''' Applications based on DilatedBERT. '''
+''' Applications based on Dilated2BERT. '''
 
 import random
 import numpy as np
@@ -25,8 +25,8 @@ import uf.utils as utils
 
 
 
-class DilatedLM(LMModule):
-    ''' Language modeling on DilatedBERT. '''
+class Dilated2LM(LMModule):
+    ''' Language modeling on Dilated2BERT. '''
     _INFER_ATTRIBUTES = {
         'max_seq_length': (
             'An integer that defines max sequence length of input tokens, '

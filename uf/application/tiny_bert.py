@@ -66,9 +66,13 @@ class TinyBERTClassifier(BERTClassifier, ClassifierModule):
         if '[CLS]' not in self.tokenizer.vocab:
             self.tokenizer.add('[CLS]')
             self.bert_config.vocab_size += 1
+            self.student_config.vocab_size += 1
+            tf.logging.info('Add necessary token `[CLS]` into vocabulary.')
         if '[SEP]' not in self.tokenizer.vocab:
             self.tokenizer.add('[SEP]')
             self.bert_config.vocab_size += 1
+            self.student_config.vocab_size += 1
+            tf.logging.info('Add necessary token `[SEP]` into vocabulary.')
 
     def to_bert(self):
         ''' Isolate student tiny_bert out of traing graph. '''

@@ -62,9 +62,11 @@ class ELECTRAClassifier(BERTClassifier, ClassifierModule):
         if '[CLS]' not in self.tokenizer.vocab:
             self.tokenizer.add('[CLS]')
             self.bert_config.vocab_size += 1
+            tf.logging.info('Add necessary token `[CLS]` into vocabulary.')
         if '[SEP]' not in self.tokenizer.vocab:
             self.tokenizer.add('[SEP]')
             self.bert_config.vocab_size += 1
+            tf.logging.info('Add necessary token `[SEP]` into vocabulary.')
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
@@ -125,9 +127,11 @@ class ELECTRABinaryClassifier(BERTBinaryClassifier, ClassifierModule):
         if '[CLS]' not in self.tokenizer.vocab:
             self.tokenizer.add('[CLS]')
             self.bert_config.vocab_size += 1
+            tf.logging.info('Add necessary token `[CLS]` into vocabulary.')
         if '[SEP]' not in self.tokenizer.vocab:
             self.tokenizer.add('[SEP]')
             self.bert_config.vocab_size += 1
+            tf.logging.info('Add necessary token `[SEP]` into vocabulary.')
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
@@ -187,9 +191,11 @@ class ELECTRASeqClassifier(BERTSeqClassifier, ClassifierModule):
         if '[CLS]' not in self.tokenizer.vocab:
             self.tokenizer.add('[CLS]')
             self.bert_config.vocab_size += 1
+            tf.logging.info('Add necessary token `[CLS]` into vocabulary.')
         if '[SEP]' not in self.tokenizer.vocab:
             self.tokenizer.add('[SEP]')
             self.bert_config.vocab_size += 1
+            tf.logging.info('Add necessary token `[SEP]` into vocabulary.')
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
@@ -249,9 +255,11 @@ class ELECTRAMRC(BERTMRC, MRCModule):
         if '[CLS]' not in self.tokenizer.vocab:
             self.tokenizer.add('[CLS]')
             self.bert_config.vocab_size += 1
+            tf.logging.info('Add necessary token `[CLS]` into vocabulary.')
         if '[SEP]' not in self.tokenizer.vocab:
             self.tokenizer.add('[SEP]')
             self.bert_config.vocab_size += 1
+            tf.logging.info('Add necessary token `[SEP]` into vocabulary.')
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
@@ -315,8 +323,10 @@ class ELECTRALM(BERTLM, LMModule):
 
         if '[CLS]' not in self.tokenizer.vocab:
             self.tokenizer.add('[CLS]')
+            tf.logging.info('Add necessary token `[CLS]` into vocabulary.')
         if '[SEP]' not in self.tokenizer.vocab:
             self.tokenizer.add('[SEP]')
+            tf.logging.info('Add necessary token `[SEP]` into vocabulary.')
 
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
                 is_training=False):

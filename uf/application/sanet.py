@@ -72,9 +72,11 @@ class SANetMRC(BERTMRC, MRCModule):
         if '[CLS]' not in self.tokenizer.vocab:
             self.tokenizer.add('[CLS]')
             self.bert_config.vocab_size += 1
+            tf.logging.info('Add necessary token `[CLS]` into vocabulary.')
         if '[SEP]' not in self.tokenizer.vocab:
             self.tokenizer.add('[SEP]')
             self.bert_config.vocab_size += 1
+            tf.logging.info('Add necessary token `[SEP]` into vocabulary.')
 
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
                 is_training=False):

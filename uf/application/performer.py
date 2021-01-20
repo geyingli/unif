@@ -14,6 +14,7 @@
 # limitations under the License.
 ''' Applications based on Performer. '''
 
+from uf.tools import tf
 from .base import ClassifierModule
 from .bert import (BERTClassifier,
                    get_bert_config,
@@ -62,9 +63,11 @@ class PerformerClassifier(BERTClassifier, ClassifierModule):
         if '[CLS]' not in self.tokenizer.vocab:
             self.tokenizer.add('[CLS]')
             self.bert_config.vocab_size += 1
+            tf.logging.info('Add necessary token `[CLS]` into vocabulary.')
         if '[SEP]' not in self.tokenizer.vocab:
             self.tokenizer.add('[SEP]')
             self.bert_config.vocab_size += 1
+            tf.logging.info('Add necessary token `[SEP]` into vocabulary.')
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 

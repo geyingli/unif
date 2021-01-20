@@ -16,6 +16,7 @@
 
 import numpy as np
 
+from uf.tools import tf
 from .base import ClassifierModule
 from uf.modeling.fast_bert import FastBERTCLSDistillor
 from .bert import BERTClassifier, get_bert_config
@@ -60,9 +61,11 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
         if '[CLS]' not in self.tokenizer.vocab:
             self.tokenizer.add('[CLS]')
             self.bert_config.vocab_size += 1
+            tf.logging.info('Add necessary token `[CLS]` into vocabulary.')
         if '[SEP]' not in self.tokenizer.vocab:
             self.tokenizer.add('[SEP]')
             self.bert_config.vocab_size += 1
+            tf.logging.info('Add necessary token `[SEP]` into vocabulary.')
 
     def predict(self, X=None, X_tokenized=None,
                 batch_size=8, speed=0.1, ignore_cls=None):

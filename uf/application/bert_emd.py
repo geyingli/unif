@@ -16,6 +16,7 @@
 
 import copy
 
+from uf.tools import tf
 from .base import ClassifierModule
 from uf.modeling.bert_emd import BERTEMDCLSDistillor
 from .bert import get_bert_config
@@ -72,9 +73,11 @@ class BERTEMDClassifier(TinyBERTClassifier, ClassifierModule):
         if '[CLS]' not in self.tokenizer.vocab:
             self.tokenizer.add('[CLS]')
             self.bert_config.vocab_size += 1
+            tf.logging.info('Add necessary token `[CLS]` into vocabulary.')
         if '[SEP]' not in self.tokenizer.vocab:
             self.tokenizer.add('[SEP]')
             self.bert_config.vocab_size += 1
+            tf.logging.info('Add necessary token `[SEP]` into vocabulary.')
 
     def to_bert(self):
         ''' Isolate student bert_emd out of traing graph. '''

@@ -69,6 +69,7 @@ class VAELM(BERTClassifier, LMModule):
 
         if '[SEP]' not in self.tokenizer.vocab:
             self.tokenizer.add('[SEP]')
+            tf.logging.info('Add necessary token `[SEP]` into vocabulary.')
 
     def predict(self, X=None, X_tokenized=None,
                 batch_size=8, bias=0):

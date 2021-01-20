@@ -69,6 +69,7 @@ class GPT2LM(LMModule):
         if '<eos>' not in self.tokenizer.vocab:
             self.tokenizer.add('<eos>')
             self.gpt2_config.n_vocab += 1
+            tf.logging.info('Add necessary token `<eos>` into vocabulary.')
         self._eos_id = self.tokenizer.convert_tokens_to_ids(['<eos>'])[0]
 
     def predict(self, X=None, X_tokenized=None,

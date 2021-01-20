@@ -64,10 +64,12 @@ class ALBERTClassifier(BERTClassifier, ClassifierModule):
 
         if '[CLS]' not in self.tokenizer.vocab:
             self.tokenizer.add('[CLS]')
-            self.bert_config.vocab_size += 1
+            self.albert_config.vocab_size += 1
+            tf.logging.info('Add necessary token `[CLS]` into vocabulary.')
         if '[SEP]' not in self.tokenizer.vocab:
             self.tokenizer.add('[SEP]')
-            self.bert_config.vocab_size += 1
+            self.albert_config.vocab_size += 1
+            tf.logging.info('Add necessary token `[SEP]` into vocabulary.')
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
@@ -129,10 +131,12 @@ class ALBERTBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
 
         if '[CLS]' not in self.tokenizer.vocab:
             self.tokenizer.add('[CLS]')
-            self.bert_config.vocab_size += 1
+            self.albert_config.vocab_size += 1
+            tf.logging.info('Add necessary token `[CLS]` into vocabulary.')
         if '[SEP]' not in self.tokenizer.vocab:
             self.tokenizer.add('[SEP]')
-            self.bert_config.vocab_size += 1
+            self.albert_config.vocab_size += 1
+            tf.logging.info('Add necessary token `[SEP]` into vocabulary.')
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
@@ -191,10 +195,12 @@ class ALBERTSeqClassifier(BERTSeqClassifier, ClassifierModule):
 
         if '[CLS]' not in self.tokenizer.vocab:
             self.tokenizer.add('[CLS]')
-            self.bert_config.vocab_size += 1
+            self.albert_config.vocab_size += 1
+            tf.logging.info('Add necessary token `[CLS]` into vocabulary.')
         if '[SEP]' not in self.tokenizer.vocab:
             self.tokenizer.add('[SEP]')
-            self.bert_config.vocab_size += 1
+            self.albert_config.vocab_size += 1
+            tf.logging.info('Add necessary token `[SEP]` into vocabulary.')
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
@@ -252,10 +258,12 @@ class ALBERTMRC(BERTMRC, MRCModule):
 
         if '[CLS]' not in self.tokenizer.vocab:
             self.tokenizer.add('[CLS]')
-            self.bert_config.vocab_size += 1
+            self.albert_config.vocab_size += 1
+            tf.logging.info('Add necessary token `[CLS]` into vocabulary.')
         if '[SEP]' not in self.tokenizer.vocab:
             self.tokenizer.add('[SEP]')
-            self.bert_config.vocab_size += 1
+            self.albert_config.vocab_size += 1
+            tf.logging.info('Add necessary token `[SEP]` into vocabulary.')
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
@@ -328,10 +336,12 @@ class ALBERTLM(BERTLM, LMModule):
 
         if '[CLS]' not in self.tokenizer.vocab:
             self.tokenizer.add('[CLS]')
-            self.albert_config.n_vocab += 1
+            self.albert_config.vocab_size += 1
+            tf.logging.info('Add necessary token `[CLS]` into vocabulary.')
         if '[SEP]' not in self.tokenizer.vocab:
             self.tokenizer.add('[SEP]')
-            self.albert_config.n_vocab += 1
+            self.albert_config.vocab_size += 1
+            tf.logging.info('Add necessary token `[SEP]` into vocabulary.')
 
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
                 is_training=False):

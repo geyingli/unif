@@ -69,8 +69,10 @@ class TransformerMT(MTModule):
 
         if '<s>' not in self.tokenizer.vocab:
             self.tokenizer.add('<s>')
+            tf.logging.info('Add necessary token `<s>` into vocabulary.')
         if '</s>' not in self.tokenizer.vocab:
             self.tokenizer.add('</s>')
+            tf.logging.info('Add necessary token `</s>` into vocabulary.')
 
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
                 is_training=False):

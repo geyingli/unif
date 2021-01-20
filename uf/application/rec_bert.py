@@ -180,8 +180,8 @@ class RecBERTLM(LMModule):
                 maxs = [0, 0, 0]
                 max_all = int(np.round(nonpad_seq_length * self._all_prob))
                 for _ in range(max_all):
-                    index = np.random.choice([0, 1, 2], p=self._p)
-                    maxs[index] += 1
+                    ptr = np.random.choice([0, 1, 2], p=self._p)
+                    maxs[ptr] += 1
 
                 sample_wrong_tokens(
                     _input_ids, _rep_label_ids,

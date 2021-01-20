@@ -120,6 +120,8 @@ class BaseModule:
 
         data = self.convert(
             X, y, sample_weight, X_tokenized, is_training=True)
+
+        tf.logging.info('Serializing data into %s' % tfrecords_file)
         utils.write_tfrecords(data, tfrecords_file)
 
     def fit_from_tfrecords(
@@ -450,6 +452,7 @@ class BaseModule:
         '''
         if self.output_dir and self._graph_built:
             self.save()
+        tf.logging.info('Saving model configuration into %s' % cache_file)
 
         if os.path.exists(cache_file):
             cache_fp = open(cache_file, encoding='utf-8')

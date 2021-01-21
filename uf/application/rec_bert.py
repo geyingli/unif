@@ -424,6 +424,7 @@ def sample_wrong_tokens(_input_ids, _rep_label_ids,
                         max_rep, max_add, max_del,
                         nonpad_seq_length, vocab_size):
     # The sampling follows the order `add -> rep -> del`
+    _init_input_ids = [_id for _id in _input_ids if _id != 0]
 
     # `add`, remove padding for prediction of adding tokens
     # e.g. 124 591 9521 -> 124 9521
@@ -471,7 +472,7 @@ def sample_wrong_tokens(_input_ids, _rep_label_ids,
             break
 
         index = random.choice(cand_indicies)
-        _input_ids.insert(index, random.randint(1, vocab_size - 1))
+        _input_ids.insert(index, random.choice(_init_input_ids))
         _add_label_ids.insert(index, 0)
         _rep_label_ids.insert(index, 0)
         _del_label_ids.insert(index, 1)

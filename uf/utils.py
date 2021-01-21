@@ -337,11 +337,12 @@ def get_assignment_map(checkpoint_file,
     # read checkpoint variables
     init_vars = tf.train.list_variables(checkpoint_file)
     inited_vars = {}
-    for name_var in init_vars:
-        (from_name, var) = (name_var[0], name_var[1])
+    for name_shape in init_vars:
+        (from_name, from_shape) = (name_shape[0], name_shape[1])
 
         to_name = from_name
-        if to_name not in name_to_variable:
+        if to_name not in name_to_variable or \
+                name_to_variable[to_name].shape.as_list() != from_shape:
             if show_matched:
                 tf.logging.info('checkpoint_file contains <%s>', from_name)
             continue

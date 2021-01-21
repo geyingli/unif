@@ -190,7 +190,7 @@ class RecBERTLM(LMModule):
                     max_add=maxs[1],
                     max_del=maxs[2],
                     nonpad_seq_length=nonpad_seq_length,
-                    vocab_size=len(self.tokenizer.vocab))
+                    tokenizer=self.tokenizer)
 
             input_ids.append(_input_ids)
             rep_label_ids.append(_rep_label_ids)
@@ -422,9 +422,12 @@ class RecBERTLM(LMModule):
 def sample_wrong_tokens(_input_ids, _rep_label_ids,
                         _add_label_ids, _del_label_ids,
                         max_rep, max_add, max_del,
-                        nonpad_seq_length, vocab_size):
+                        nonpad_seq_length, tokenizer):
     # The sampling follows the order `add -> rep -> del`
     _init_input_ids = [_id for _id in _input_ids if _id != 0]
+    sign_ids = {tokenizer.inv_vocab.get(char): 0 for char in utils.SIGNS}
+    vocab_size = len(tokenizer.vocab)
+
 
     # `add`, remove padding for prediction of adding tokens
     # e.g. 124 591 9521 -> 124 9521
@@ -472,7 +475,15 @@ def sample_wrong_tokens(_input_ids, _rep_label_ids,
             break
 
         index = random.choice(cand_indicies)
-        _input_ids.insert(index, random.choice(_init_input_ids))
+        if random.random() < 0.1:
+            rand = random.choice(_init_input_ids)
+        else:
+            while True:
+                rand = random.randint(1, vocab_size - 1)
+                if rand in sign_ids:
+                    continue
+                break
+        _input_ids.insert(index, rand)
         _add_label_ids.insert(index, 0)
         _rep_label_ids.insert(index, 0)
         _del_label_ids.insert(index, 1)

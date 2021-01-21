@@ -30,6 +30,8 @@ from uf.tokenization.word_piece import (
 from . import application
 
 PACK_DIR = os.path.dirname(__file__)
+SIGNS = ('~`!@#$%^&*()_-+=][\}{|;\':",./><?·！@#￥%……&*（）——+'
+         '【】「」：；”    “’‘《，》。？、')
 
 
 

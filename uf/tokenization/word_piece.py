@@ -36,7 +36,7 @@ def get_word_piece_tokenizer(vocab_file, do_lower_case=True):
 
 class WordPieceTokenizer:
     def __init__(self, vocab_file, do_lower_case=True):
-        self.vocab = load_vocab(vocab_file)
+        self.vocab = load_vocab(vocab_file)  # word: idx
         self.inv_vocab = {v: k for k, v in self.vocab.items()}
         self.processor = [BasicTokenizer(do_lower_case=do_lower_case),
                           WordpieceTokenizer(vocab=self.vocab)]

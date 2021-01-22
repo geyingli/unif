@@ -26,11 +26,9 @@ class RecBERT(BaseDecoder, BERTEncoder):
                  bert_config,
                  is_training,
                  input_ids,
-                 rep_label_ids,
                  add_label_ids,
                  del_label_ids,
                  sample_weight=None,
-                 rep_prob=0,
                  add_prob=0,
                  del_prob=0,
                  scope='bert',
@@ -67,18 +65,6 @@ class RecBERT(BaseDecoder, BERTEncoder):
                 tilda_embeddings=tilda_embeddings)
 
             self.total_loss = 0
-            self._lm_forward(
-                is_training,
-                input_tensor=hidden,
-                input_mask=input_mask,
-                label_ids=rep_label_ids,
-                bert_config=bert_config,
-                batch_size=batch_size,
-                max_seq_length=max_seq_length,
-                prob=rep_prob,
-                scope='cls/rep',
-                name='rep',
-                sample_weight=sample_weight)
             self._lm_forward(
                 is_training,
                 input_tensor=hidden,

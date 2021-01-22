@@ -162,7 +162,7 @@ class RecBERTLM(LMModule):
 
             tokenized_input_ids.append(_input_ids)
         vocab_p_sum = sum(vocab_p)
-        vocab_p = [n / vocab_p_sum for n in vocab_p_sum]
+        vocab_p = [n / vocab_p_sum for n in vocab_p]
 
         input_ids = []
         add_label_ids = []
@@ -409,7 +409,7 @@ def sample_wrong_tokens(_input_ids, _add_label_ids, _del_label_ids,
         cand_indicies = list(range(nonpad_seq_length + 1))
 
         index = random.choice(cand_indicies)
-        rand = random.choice(vocab_ind, p=vocab_p)  # sample from vocabulary
+        rand = np.random.choice(vocab_ind, p=vocab_p)  # sample from vocabulary
         _input_ids.insert(index, rand)
         _add_label_ids.insert(index, 0)
         _del_label_ids.insert(index, 1)

@@ -450,7 +450,7 @@ def sample_wrong_tokens(_input_ids, _rep_label_ids,
         _rep_label_ids.append(0)
         _del_label_ids.append(0)
 
-    # `rep`, rep tokens for prediction of replacing tokens
+    # `rep`, replace tokens for prediction of replacing tokens
     # e.g. 124 591 9521 -> 124 789 9521
     for _ in range(max_rep):
         cand_indicies = [i for i in range(0, len(_input_ids))
@@ -475,9 +475,9 @@ def sample_wrong_tokens(_input_ids, _rep_label_ids,
             break
 
         index = random.choice(cand_indicies)
-        if random.random() < 0.1:
+        if random.random() < 0.1:    # 10% sampling from input
             rand = random.choice(_init_input_ids)
-        else:
+        else:    # 90% sampling from vocabulary
             while True:
                 rand = random.randint(1, vocab_size - 1)
                 if rand in sign_ids:

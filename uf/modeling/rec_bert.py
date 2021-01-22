@@ -45,6 +45,10 @@ class RecBERT(BaseDecoder, BERTEncoder):
         batch_size = shape[0]
         max_seq_length = shape[1]
 
+        if is_training:
+            bert_config.hidden_dropout_prob = 0.0
+            bert_config.attention_probs_dropout_prob = 0.0
+
         # Tilda embeddings for SMART algorithm
         tilda_embeddings = None
         if use_tilda_embedding:

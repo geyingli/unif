@@ -157,12 +157,14 @@ class RecBERTLM(LMModule):
 
             # count char
             _input_ids = self.tokenizer.convert_tokens_to_ids(_input_tokens)
-            for _input_id in _input_ids:
-                vocab_p[_input_id] += 1
+            if is_training:
+                for _input_id in _input_ids:
+                    vocab_p[_input_id] += 1
 
             tokenized_input_ids.append(_input_ids)
-        vocab_p_sum = sum(vocab_p)
-        vocab_p = [n / vocab_p_sum for n in vocab_p]
+        if is_training:
+            vocab_p_sum = sum(vocab_p)
+            vocab_p = [n / vocab_p_sum for n in vocab_p]
 
         input_ids = []
         add_label_ids = []

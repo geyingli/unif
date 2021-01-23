@@ -412,9 +412,15 @@ def sample_wrong_tokens(_input_ids, _add_label_ids, _del_label_ids,
 
         index = random.choice(cand_indicies)
         rand = np.random.choice(vocab_ind, p=vocab_p)  # sample from vocabulary
+
+        # always delete the right one
         _input_ids.insert(index, rand)
         _add_label_ids.insert(index, 0)
         _del_label_ids.insert(index, 1)
+        if rand == _input_ids[index + 1]:
+            _del_label_ids[index + 1], _del_label_ids[index] = \
+                _del_label_ids[index], _del_label_ids[index + 1]
+
         _input_ids.pop()
         _add_label_ids.pop()
         _del_label_ids.pop()

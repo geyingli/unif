@@ -139,8 +139,8 @@ class RecBERTLM(LMModule):
         vocab_size = len(self.tokenizer.vocab)
         vocab_ind = list(range(vocab_size))
         vocab_p = [0] * vocab_size
-        for ex_id, example in enumerate(X_target):
-            _input_tokens = self._convert_x(example, tokenized)
+        for ex_id, sample in enumerate(X_target):
+            _input_tokens = self._convert_x(sample, tokenized)
 
             # skip noise training data
             if is_training:
@@ -181,6 +181,10 @@ class RecBERTLM(LMModule):
 
             # add/del
             if is_training:
+                if (ex_id + 1) % 100000 == 0:
+                    tf.logging.info(
+                        'Sampling wrong tokens of input %d' % (ex_id + 1))
+
                 for _ in range(self.max_seq_length):
                     _add_label_ids.append(0)
                     _del_label_ids.append(0)

@@ -302,7 +302,7 @@ model.export(
 
 <p align="center">
     <br>
-    	<img src="./docs/framework.png" style="zoom:70%"/>
+    	<img src="./docs/framework.png" style="zoom:50%"/>
     <br>
 <p>
 

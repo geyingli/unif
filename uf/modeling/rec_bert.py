@@ -64,6 +64,18 @@ class RecBERT(BaseDecoder, BERTEncoder):
                 max_seq_length,
                 tilda_embeddings=tilda_embeddings)
 
+            additional_position_embeddings = tf.get_variable(
+                name='position_embeddings',
+                shape=[bert_config.max_position_embeddings,
+                       bert_config.hidden_size],
+                initializer=util.create_initializer(
+                    bert_config.initializer_range))
+            embedding_slice = tf.slice(
+                additional_position_embeddings, [0, 0], [max_seq_length, -1])
+            hidden += tf.reshape(
+                embedding_slice,
+                [1, max_seq_length, bert_config.hidden_size])
+
             self.total_loss = 0
             self._lm_forward(
                 is_training,

@@ -138,7 +138,7 @@ class RecBERTLM(LMModule):
         tokenized_input_ids = []
         vocab_size = len(self.tokenizer.vocab)
         vocab_ind = list(range(vocab_size))
-        vocab_p = [0 for _ in range(vocab_size)]
+        vocab_p = [0] * vocab_size
         for ex_id, example in enumerate(X_target):
             _input_tokens = self._convert_x(example, tokenized)
 

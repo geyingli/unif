@@ -10,7 +10,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-beta v2.6.0-blue">
+        <img src="https://img.shields.io/badge/version-beta v2.6.1-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-1.x\2.x-yellow">
@@ -30,6 +30,7 @@
 - 品类丰富：支持 40+ 种模型类
 - 唯一依赖：Tensorflow 1.x/2.x
 - 高分保证：提供分层学习率、对抗式训练等多项训练技巧
+- 高扩展性：代码高度抽象、易扩展，能够高效支持更多 SOTA 算法
 - 可供部署：导出 SavedModel，供部署使用
 
 ### 安装
@@ -293,6 +294,16 @@ model.export(
 - 问：如何实现 TinyBERT 和 FastBERT 复蒸馏？
 
   答：`TinyBERTClassifier` 训练完成后使用 `.to_bert()` 将变量重命名保存，而后使用 `FastBERTClassifier` 常规读取生成的 checkpoint 和配置文件即可。
+
+## 开发需知
+
+我们欢迎一切有效的 pull request，加入我们，成为 contributors 一员。 核心的代码架构如下图所示，新的模型开发仅需要在 application 下添加新的类，这些类可以由现有算法库 modeling 中的算子组合而来，也可以自行编写。
+
+<p align="center">
+    <br>
+    	<img src="./docs/framework.png" style="zoom:60%"/>
+    <br>
+<p>
 
 ## 尾声
 

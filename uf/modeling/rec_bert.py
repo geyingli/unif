@@ -67,7 +67,7 @@ class RecBERT(BaseDecoder, BERTEncoder):
             # additional_position_embeddings = tf.get_variable(
             #     name='position_embeddings',
             #     shape=[bert_config.max_position_embeddings,
-            #            bert_config.hidden_size],
+            #             bert_config.hidden_size],
             #     initializer=util.create_initializer(
             #         bert_config.initializer_range))
             # embedding_slice = tf.slice(

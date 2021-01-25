@@ -185,21 +185,18 @@ class RecBERTLM(LMModule):
                     tf.logging.info(
                         'Sampling wrong tokens of input %d' % (ex_id + 1))
 
-                for _ in range(self.max_seq_length):
-                    _add_label_ids.append(0)
-                    _del_label_ids.append(0)
+                _add_label_ids = [0] * self.max_seq_length
+                _del_label_ids = [0] * self.max_seq_length
 
-                max_add = 0
-                max_del = 0
-                for _ in range(nonpad_seq_length):
-                    if random.random() < self._add_prob:
-                        max_add += 1
-                    if random.random() < self._del_prob:
-                        max_del += 1
+                max_add = np.sum(
+                    np.random.random(nonpad_seq_length) < self._add_prob)
+                max_del = np.sum(
+                    np.random.random(nonpad_seq_length) < self._del_prob)
 
                 sample_wrong_tokens(
                     _input_ids, _add_label_ids, _del_label_ids,
                     max_add=max_add, max_del=max_del,
+                    nonpad_seq_length=nonpad_seq_length,
                     vocab_size=vocab_size,
                     vocab_ind=vocab_ind,
                     vocab_p=vocab_p)
@@ -385,7 +382,8 @@ class RecBERTLM(LMModule):
 
 
 def sample_wrong_tokens(_input_ids, _add_label_ids, _del_label_ids,
-                        max_add, max_del, vocab_size, vocab_ind, vocab_p):
+                        max_add, max_del, nonpad_seq_length,
+                        vocab_size, vocab_ind, vocab_p):
 
     # `add`, remove padding for prediction of adding tokens
     # e.g. 124 591 9521 -> 124 9521
@@ -404,17 +402,16 @@ def sample_wrong_tokens(_input_ids, _add_label_ids, _del_label_ids,
         _input_ids.append(0)
         _add_label_ids.append(0)
         _del_label_ids.append(0)
+        nonpad_seq_length -= 1
 
     # `del`, add wrong tokens for prediction of deleted tokens
     # e.g. 124 591 -> 124 92 591
     for _ in range(max_del):
         if _input_ids[-1] != 0:  # no more space
             break
-        nonpad_seq_length = \
-            sum([1 if _token != 0 else 0 for _token in _input_ids])
-        cand_indicies = list(range(nonpad_seq_length + 1))
 
         index = random.choice(cand_indicies)
+        index = random.randint(0, nonpad_seq_length)
         rand = np.random.choice(vocab_ind, p=vocab_p)  # sample from vocabulary
 
         # always delete the right one
@@ -428,3 +425,4 @@ def sample_wrong_tokens(_input_ids, _add_label_ids, _del_label_ids,
         _input_ids.pop()
         _add_label_ids.pop()
         _del_label_ids.pop()
+        nonpad_seq_length += 1

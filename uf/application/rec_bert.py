@@ -410,7 +410,6 @@ def sample_wrong_tokens(_input_ids, _add_label_ids, _del_label_ids,
         if _input_ids[-1] != 0:  # no more space
             break
 
-        index = random.choice(cand_indicies)
         index = random.randint(0, nonpad_seq_length)
         rand = np.random.choice(vocab_ind, p=vocab_p)  # sample from vocabulary
 

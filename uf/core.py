@@ -195,12 +195,12 @@ class BaseModule:
             total_steps = -total_steps * self.steps_per_epoch
         self.total_steps = int(total_steps)
         if not target_steps:
-            target_steps = total_steps
+            target_steps = self.total_steps
         elif target_steps < 0:
             target_steps = int(-target_steps * self.steps_per_epoch)
-        if target_steps > total_steps:
+        if target_steps > self.total_steps:
             raise ValueError('Target steps can\'t exceed total steps.')
-        self.num_warmup_steps = int(total_steps * warmup_ratio)
+        self.num_warmup_steps = int(self.total_steps * warmup_ratio)
 
         # Define optimization process, build the graph, and then run.
         with self.graph.as_default(), \
@@ -286,12 +286,12 @@ class BaseModule:
             total_steps = -total_steps * self.steps_per_epoch
         self.total_steps = total_steps
         if not target_steps:
-            target_steps = total_steps
+            target_steps = self.total_steps
         elif target_steps < 0:
             target_steps = -target_steps * self.steps_per_epoch
-        if target_steps > total_steps:
+        if target_steps > self.total_steps:
             raise ValueError('Target steps can\'t exceed total steps.')
-        self.num_warmup_steps = int(total_steps * warmup_ratio)
+        self.num_warmup_steps = int(self.total_steps * warmup_ratio)
 
         # Define optimization process, build the graph, and then run.
         with self.graph.as_default(), \

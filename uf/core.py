@@ -284,7 +284,7 @@ class BaseModule:
         self.steps_per_epoch = (n_inputs - 1) // batch_size + 1
         if total_steps < 0:
             total_steps = -total_steps * self.steps_per_epoch
-        self.total_steps = total_steps
+        self.total_steps = int(total_steps)
         if not target_steps:
             target_steps = self.total_steps
         elif target_steps < 0:

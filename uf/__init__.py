@@ -13,8 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__version__ = '2.6.1'
-__date__ = '1/23/2020'
+__version__ = '2.6.2'
+__date__ = '1/26/2020'
 
 
 from .application import *

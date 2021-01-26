@@ -357,6 +357,8 @@ def get_assignment_map(checkpoint_file,
     uninited_vars = {}
     for var in variables:
         if var.name[:-2] not in inited_vars:
+            if var.name[:-2].endswith('_m') or var.name[:-2].endswith('_v'):
+                continue
             if show_matched:
                 tf.logging.info('unmatched parameter %s', var)
             uninited_vars[var.name[:-2]] = var

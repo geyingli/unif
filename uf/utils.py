@@ -194,7 +194,7 @@ def get_relative_path(source, target):
 def get_simplified_path(path):
     path = path.replace('\\', '/')
     while True:
-        res = re.findall('[^/]+/../', path)
+        res = re.findall('[^/]+/[.][.]/', path)
         res = [item for item in res if item != '../../' and item != './../']
         if res:
             path = path.replace(res[0], '')

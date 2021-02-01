@@ -40,9 +40,25 @@ class FastBERTCLSDistillor(BaseDecoder, BERTEncoder):
                  cls_model='self-attention',
                  label_size=2,
                  speed=0.1,
-                 ignore_cls=None,
+                 ignore_cls='0',
                  **kwargs):
         super(FastBERTCLSDistillor, self).__init__()
+
+        if not ignore_cls:
+            ignore_cls = []
+        if isinstance(ignore_cls, str):
+            ignore_cls = ignore_cls.replace(' ','').split(',')
+            ignore_cls = list(map(int, ignore_cls))
+        elif isinstance(ignore_cls, list):
+            ignore_cls = list(map(int, ignore_cls))
+        else:
+            raise ValueError(
+                '`ignore_cls` should be a list of child-classifier ids or '
+                'a string seperated with commas.')
+
+        if not speed:
+            raise ValueError(
+                '`speed` should be a float number between `0` and `1`.')
 
         bert_config = copy.deepcopy(bert_config)
         bert_config.hidden_dropout_prob = 0.0

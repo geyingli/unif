@@ -48,7 +48,7 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
         self.label_size = label_size
         self.truncate_method = truncate_method
         self._cls_model = cls_model
-        self._ignore_cls = []
+        self._ignore_cls = '0'
         self._speed = 0.1
         self._drop_pooler = drop_pooler
         self._id_to_label = None
@@ -68,7 +68,7 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
             tf.logging.info('Add necessary token `[SEP]` into vocabulary.')
 
     def predict(self, X=None, X_tokenized=None,
-                batch_size=8, speed=0.1, ignore_cls=None):
+                batch_size=8, speed=0.1, ignore_cls='0'):
         ''' Inference on the model.
 
         Args:
@@ -86,23 +86,10 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
         '''
 
         if ignore_cls != self._ignore_cls:
-            if not ignore_cls:
-                ignore_cls = self._ignore_cls
-            elif isinstance(ignore_cls, str):
-                ignore_cls = ignore_cls.replace(' ','').split(',')
-            elif isinstance(ignore_cls, list):
-                pass
-            else:
-                raise ValueError(
-                    '`ignore_cls` should be a list of child-classifier ids or '
-                    'a string seperated with commas.')
             self._ignore_cls = ignore_cls
             self._graph_mode = None
 
         if speed != self._speed:
-            if not speed:
-                raise ValueError(
-                    '`speed` should be a float number between `0` and `1`.')
             self._speed = speed
             self._graph_mode = None
 
@@ -110,7 +97,7 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
             X, X_tokenized, batch_size)
 
     def score(self, X=None, y=None, sample_weight=None, X_tokenized=None,
-                batch_size=8, speed=0.1, ignore_cls=None):
+                batch_size=8, speed=0.1, ignore_cls='0'):
         ''' Inference on the model with scoring.
 
         Args:
@@ -130,30 +117,17 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
         '''
 
         if ignore_cls != self._ignore_cls:
-            if not ignore_cls:
-                ignore_cls = self._ignore_cls
-            elif isinstance(ignore_cls, str):
-                ignore_cls = ignore_cls.replace(' ','').split(',')
-            elif isinstance(ignore_cls, list):
-                pass
-            else:
-                raise ValueError(
-                    '`ignore_cls` should be a list of child-classifier ids or '
-                    'a string seperated with commas.')
             self._ignore_cls = ignore_cls
             self._graph_mode = None
 
         if speed != self._speed:
-            if not speed:
-                raise ValueError(
-                    '`speed` should be a float number between `0` and `1`.')
             self._speed = speed
             self._graph_mode = None
 
         return super(ClassifierModule, self).score(
             X, y, sample_weight, X_tokenized, batch_size)
 
-    def export(self, export_dir, speed=0.1, ignore_cls=None,
+    def export(self, export_dir, speed=0.1, ignore_cls='0',
                rename_inputs=None, rename_outputs=None, ignore_outputs=None):
         ''' Export model into SavedModel files.
 
@@ -172,23 +146,10 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
         '''
 
         if ignore_cls != self._ignore_cls:
-            if not ignore_cls:
-                ignore_cls = self._ignore_cls
-            elif isinstance(ignore_cls, str):
-                ignore_cls = ignore_cls.replace(' ','').split(',')
-            elif isinstance(ignore_cls, list):
-                pass
-            else:
-                raise ValueError(
-                    '`ignore_cls` should be a list of child-classifier ids or '
-                    'a string seperated with commas.')
             self._ignore_cls = ignore_cls
             self._graph_mode = None
 
         if speed != self._speed:
-            if not speed:
-                raise ValueError(
-                    '`speed` should be a float number between `0` and `1`.')
             self._speed = speed
             self._graph_mode = None
 

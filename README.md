@@ -107,7 +107,7 @@ print(model.predict(X))
 
 ## 建模
 
-你可以创建新模型：
+一步创建新模型：
 
 ```python
 model = uf.BERTClassifier(
@@ -122,7 +122,17 @@ model = uf.BERTClassifier(
     truncate_method='LIFO')    # longer-FO/LIFO/FIFO
 ```
 
-也可以从配置文件，快速读取已有模型：
+下载知名公开预训练参数：
+
+```python
+# 查看可下载列表
+uf.list_resources()
+
+# 下载预训练模型包
+uf.download('bert-wwm-ext-base-zh')
+```
+
+任务后期需要大量的训练，可以通过配置文件，方便地整理和读取模型：
 
 ``` python
 # 写入配置文件

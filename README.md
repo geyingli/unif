@@ -10,7 +10,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-beta v2.6.4-blue">
+        <img src="https://img.shields.io/badge/version-beta v2.6.5-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-1.x\2.x-yellow">
@@ -44,9 +44,6 @@ python3 setup.py install --user
 
 ``` python
 import uf
-
-# 许可日志打印所有信息
-uf.set_verbosity()
 
 # 载入模型（使用 demo 配置文件进行示范）
 model = uf.BERTClassifier(config_file='demo/bert_config.json', vocab_file='demo/vocab.txt')
@@ -119,7 +116,7 @@ model = uf.BERTClassifier(
     label_size=2,
     init_checkpoint=None,    # 预训练参数路径
     output_dir='./output',
-    gpu_ids="0,1,3,5",
+    gpu_ids='0,1,3,5',
     drop_pooler=False,    # 建模时跳过 pooler 层
     do_lower_case=True,
     truncate_method='LIFO')    # longer-FO/LIFO/FIFO

@@ -13,27 +13,36 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__version__ = '2.6.4'
-__date__ = '2/1/2020'
+__version__ = '2.6.5'
+__date__ = '2/2/2020'
 
 
 from .application import *
 
 from .utils import load
+from .utils import download
+from .utils import download_all
 from .utils import get_checkpoint_path
 from .utils import get_assignment_map
 from .utils import list_variables
+from .utils import list_resources
 from .utils import set_verbosity
 from .utils import set_log
+
+
+set_verbosity()
 
 
 __all__ = [
 
     # handy methods
     'load',
+    'download',
+    'download_all',
     'get_checkpoint_path',
     'get_assignment_map',
     'list_variables',
+    'list_resources',
     'set_verbosity',
     'set_log',
 ]

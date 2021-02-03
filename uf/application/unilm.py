@@ -93,6 +93,10 @@ class UniLM(BERTLM, LMModule):
             self.tokenizer.add('[SEP]')
             self.bert_config.vocab_size += 1
             tf.logging.info('Add necessary token `[SEP]` into vocabulary.')
+        if '[EOS]' not in self.tokenizer.vocab:
+            self.tokenizer.add('[EOS]')
+            self.bert_config.vocab_size += 1
+            tf.logging.info('Add necessary token `[EOS]` into vocabulary.')
 
     def to_mode(self, mode):
         ''' Switch the mode of UniLM.
@@ -244,8 +248,10 @@ class UniLM(BERTLM, LMModule):
                 _input_mask.extend([1] * (len(segment) + 1))
                 _segment_ids.extend([_segment_id] * (len(segment) + 1))
 
-            # special values for `input_mask`
+            # special values for `_input_tokens` and `input_mask`
             if self.mode == 's2s':
+                _input_tokens.pop()
+                _input_tokens.append('[EOS]')
                 _input_mask = [len(_input_ids)] * (len(segments[0]) + 2)
                 for i in range(len(segments[1]) + 1):
                     _input_mask.append(_input_mask[0] + i + 1)
@@ -441,7 +447,7 @@ def create_masked_lm_predictions(tokens,
     # on-the-fly whole word masking is possible.
 
     for (i, token) in enumerate(tokens):
-        if token == "[CLS]":  # or token == "[SEP]":  we need to know when to stop
+        if token == "[CLS]" or token == "[SEP]":
             continue
         # Whole Word Masking means that if we mask all of the wordpieces
         # corresponding to an original word.

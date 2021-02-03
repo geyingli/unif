@@ -127,25 +127,26 @@ model = uf.BERTClassifier(
 ```python
 # 查看可下载列表
 uf.list_resources()
-# ┌──────────────────────────┬──────────┬──────────────┬───────────────────────────────────────────┬───────────────────────────────────────────────────────────────────────────────────┐
-# ┊ Key                      ┊ Backbone ┊ Organization ┊ Site                                      ┊ URL                                                                               ┊
-# ├──────────────────────────┼──────────┼──────────────┼───────────────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────────┤
-# ┊ bert-base-zh             ┊ BERT     ┊ Google       ┊ https://github.com/google-research/bert   ┊ https://storage.googleapis.com/bert_models/2018_11_03/chinese_L-12_H-768_A-12.zip ┊
-# ┊ albert-tiny-zh           ┊ ALBERT   ┊ Google       ┊ https://github.com/google-research/albert ┊ https://storage.googleapis.com/albert_zh/albert_tiny_zh_google.zip                ┊
-# ┊ albert-small-zh          ┊ ALBERT   ┊ Google       ┊ https://github.com/google-research/albert ┊ https://storage.googleapis.com/albert_zh/albert_small_zh_google.zip               ┊
-# ┊ albert-base-zh           ┊ ALBERT   ┊ Brightmart   ┊ https://github.com/brightmart/albert_zh   ┊ https://storage.googleapis.com/albert_zh/albert_base_zh_additional_36k_steps.zip  ┊
-# ┊ albert-large-zh          ┊ ALBERT   ┊ Brightmart   ┊ https://github.com/brightmart/albert_zh   ┊ https://storage.googleapis.com/albert_zh/albert_large_zh.zip                      ┊
-# ┊ albert-xlarge-zh         ┊ ALBERT   ┊ Brightmart   ┊ https://github.com/brightmart/albert_zh   ┊ https://storage.googleapis.com/albert_zh/albert_xlarge_zh_183k.zip                ┊
-# ┊ bert-wwm-ext-base-zh     ┊ BERT     ┊ HFL          ┊ https://github.com/ymcui/Chinese-BERT-wwm ┊ https://drive.google.com/uc?export=download&id=1buMLEjdtrXE2c4G1rpsNGWEx7lUQ0RHi  ┊
-# ┊ roberta-wwm-ext-base-zh  ┊ BERT     ┊ HFL          ┊ https://github.com/ymcui/Chinese-BERT-wwm ┊ https://drive.google.com/uc?export=download&id=1jMAKIJmPn7kADgD3yQZhpsqM-IRM1qZt  ┊
-# ┊ roberta-wwm-ext-large-zh ┊ BERT     ┊ HFL          ┊ https://github.com/ymcui/Chinese-BERT-wwm ┊ https://drive.google.com/uc?export=download&id=1dtad0FFzG11CBsawu8hvwwzU2R0FDI94  ┊
-# ┊ xlnet-mid-zh             ┊ XLNet    ┊ HFL          ┊ https://github.com/ymcui/Chinese-XLNet    ┊ https://drive.google.com/uc?export=download&id=1342uBc7ZmQwV6Hm6eUIN_OnBSz1LcvfA  ┊
-# ┊ xlnet-base-zh            ┊ XLNet    ┊ HFL          ┊ https://github.com/ymcui/Chinese-XLNet    ┊ https://drive.google.com/uc?export=download&id=1m9t-a4gKimbkP5rqGXXsEAEPhJSZ8tvx  ┊
-# ┊ electra-180g-small-zh    ┊ ELECTRA  ┊ HFL          ┊ https://github.com/ymcui/Chinese-ELECTRA  ┊ https://drive.google.com/uc?export=download&id=177EVNTQpH2BRW-35-0LNLjV86MuDnEmu  ┊
-# ┊ electra-180g-small-ex-zh ┊ ELECTRA  ┊ HFL          ┊ https://github.com/ymcui/Chinese-ELECTRA  ┊ https://drive.google.com/uc?export=download&id=1NYJTKH1dWzrIBi86VSUK-Ml9Dsso_kuf  ┊
-# ┊ electra-180g-base-zh     ┊ ELECTRA  ┊ HFL          ┊ https://github.com/ymcui/Chinese-ELECTRA  ┊ https://drive.google.com/uc?export=download&id=1RlmfBgyEwKVBFagafYvJgyCGuj7cTHfh  ┊
-# ┊ electra-180g-large-zh    ┊ ELECTRA  ┊ HFL          ┊ https://github.com/ymcui/Chinese-ELECTRA  ┊ https://drive.google.com/uc?export=download&id=1P9yAuW0-HR7WvZ2r2weTnx3slo6f5u9q  ┊
-# └──────────────────────────┴──────────┴──────────────┴───────────────────────────────────────────┴───────────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────┬──────────┬──────────────┬───────────────────────────────────────────┬───────────────────────────────────────────────────────────────────────────────────┐
+┊ Key                      ┊ Backbone ┊ Organization ┊ Site                                      ┊ URL                                                                               ┊
+├──────────────────────────┼──────────┼──────────────┼───────────────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────────┤
+┊ bert-base-zh             ┊ BERT     ┊ Google       ┊ https://github.com/google-research/bert   ┊ https://storage.googleapis.com/bert_models/2018_11_03/chinese_L-12_H-768_A-12.zip ┊
+┊ albert-tiny-zh           ┊ ALBERT   ┊ Google       ┊ https://github.com/google-research/albert ┊ https://storage.googleapis.com/albert_zh/albert_tiny_zh_google.zip                ┊
+┊ albert-small-zh          ┊ ALBERT   ┊ Google       ┊ https://github.com/google-research/albert ┊ https://storage.googleapis.com/albert_zh/albert_small_zh_google.zip               ┊
+┊ albert-base-zh           ┊ ALBERT   ┊ Brightmart   ┊ https://github.com/brightmart/albert_zh   ┊ https://storage.googleapis.com/albert_zh/albert_base_zh_additional_36k_steps.zip  ┊
+┊ albert-large-zh          ┊ ALBERT   ┊ Brightmart   ┊ https://github.com/brightmart/albert_zh   ┊ https://storage.googleapis.com/albert_zh/albert_large_zh.zip                      ┊
+┊ albert-xlarge-zh         ┊ ALBERT   ┊ Brightmart   ┊ https://github.com/brightmart/albert_zh   ┊ https://storage.googleapis.com/albert_zh/albert_xlarge_zh_183k.zip                ┊
+┊ bert-wwm-ext-base-zh     ┊ BERT     ┊ HFL          ┊ https://github.com/ymcui/Chinese-BERT-wwm ┊ https://drive.google.com/uc?export=download&id=1buMLEjdtrXE2c4G1rpsNGWEx7lUQ0RHi  ┊
+┊ roberta-wwm-ext-base-zh  ┊ BERT     ┊ HFL          ┊ https://github.com/ymcui/Chinese-BERT-wwm ┊ https://drive.google.com/uc?export=download&id=1jMAKIJmPn7kADgD3yQZhpsqM-IRM1qZt  ┊
+┊ roberta-wwm-ext-large-zh ┊ BERT     ┊ HFL          ┊ https://github.com/ymcui/Chinese-BERT-wwm ┊ https://drive.google.com/uc?export=download&id=1dtad0FFzG11CBsawu8hvwwzU2R0FDI94  ┊
+┊ xlnet-mid-zh             ┊ XLNet    ┊ HFL          ┊ https://github.com/ymcui/Chinese-XLNet    ┊ https://drive.google.com/uc?export=download&id=1342uBc7ZmQwV6Hm6eUIN_OnBSz1LcvfA  ┊
+┊ xlnet-base-zh            ┊ XLNet    ┊ HFL          ┊ https://github.com/ymcui/Chinese-XLNet    ┊ https://drive.google.com/uc?export=download&id=1m9t-a4gKimbkP5rqGXXsEAEPhJSZ8tvx  ┊
+┊ electra-180g-small-zh    ┊ ELECTRA  ┊ HFL          ┊ https://github.com/ymcui/Chinese-ELECTRA  ┊ https://drive.google.com/uc?export=download&id=177EVNTQpH2BRW-35-0LNLjV86MuDnEmu  ┊
+┊ electra-180g-small-ex-zh ┊ ELECTRA  ┊ HFL          ┊ https://github.com/ymcui/Chinese-ELECTRA  ┊ https://drive.google.com/uc?export=download&id=1NYJTKH1dWzrIBi86VSUK-Ml9Dsso_kuf  ┊
+┊ electra-180g-base-zh     ┊ ELECTRA  ┊ HFL          ┊ https://github.com/ymcui/Chinese-ELECTRA  ┊ https://drive.google.com/uc?export=download&id=1RlmfBgyEwKVBFagafYvJgyCGuj7cTHfh  ┊
+┊ electra-180g-large-zh    ┊ ELECTRA  ┊ HFL          ┊ https://github.com/ymcui/Chinese-ELECTRA  ┊ https://drive.google.com/uc?export=download&id=1P9yAuW0-HR7WvZ2r2weTnx3slo6f5u9q  ┊
+└──────────────────────────┴──────────┴──────────────┴───────────────────────────────────────────┴───────────────────────────────────────────────────────────────────────────────────┘
 
 # 下载预训练模型包
 uf.download('bert-wwm-ext-base-zh')

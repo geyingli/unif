@@ -238,13 +238,13 @@ class BasicTraining(BaseTask):
                 adversarial)
             module.step += 1
 
-        if module.output_dir:
-            tf.logging.info(
-                'Saving checkpoint for %d into %s/model.ckpt'
-                % (module.step, module.output_dir))
-            module.init_checkpoint = \
-                module.output_dir + '/model.ckpt-%d' % module.step
-            saver.save(module.sess, module.init_checkpoint)
+        # if module.output_dir:
+        #     tf.logging.info(
+        #         'Saving checkpoint for %d into %s/model.ckpt'
+        #         % (module.step, module.output_dir))
+        #     module.init_checkpoint = \
+        #         module.output_dir + '/model.ckpt-%d' % module.step
+        #     saver.save(module.sess, module.init_checkpoint)
 
     def _shuffle(self):
         index_list = list(range(len(list(self.module.data.values())[0])))
@@ -748,13 +748,13 @@ class EMDTraining(BasicTraining):
                 adversarial)
             module.step += 1
 
-        if module.output_dir:
-            tf.logging.info(
-                'Saving checkpoint for %d into %s/model.ckpt'
-                % (module.step, module.output_dir))
-            module.init_checkpoint = \
-                module.output_dir + '/model.ckpt-%d' % module.step
-            saver.save(module.sess, module.init_checkpoint)
+        # if module.output_dir:
+        #     tf.logging.info(
+        #         'Saving checkpoint for %d into %s/model.ckpt'
+        #         % (module.step, module.output_dir))
+        #     module.init_checkpoint = \
+        #         module.output_dir + '/model.ckpt-%d' % module.step
+        #     saver.save(module.sess, module.init_checkpoint)
 
     def _train_one_batch(self, step, last_tic, last_step, target_steps,
                          print_per_secs, save_per_steps, saver,

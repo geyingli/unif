@@ -413,6 +413,8 @@ class ELECTRALM(BERTLM, LMModule):
 
             # random sampling of masked tokens
             if is_training:
+                tf.logging.info(
+                    'Sampling masks of input %d' % (ex_id + 1))
                 (_input_tokens, _masked_lm_positions, _masked_lm_labels) = \
                     create_masked_lm_predictions(
                         tokens=_input_tokens,

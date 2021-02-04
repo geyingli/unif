@@ -342,6 +342,7 @@ beta v2.5.0 -> Now：
 - 变更：在 vocab 中添加新的 token 时进行提示
 - 变更：将优化器动量从 `model.uninited_vars` 中删除
 - 变更：加载预训练参数时，跳过形状不一致的参数，避免报错
+- 变更：添加语言模型采样 `[MASK]` 进度提示
 - 变更：`FastBERTClassifier` 设置为默认跳过第一个子分类器
 - 变更：`UniLM` 在 `s2s` 模式下的结尾 token 从 `[SEP]` 改为 `[EOS]`
 - 变更： `VAELM` 取消返回 `[CLS]`

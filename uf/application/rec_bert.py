@@ -182,7 +182,7 @@ class RecBERTLM(LMModule):
 
             # add/del
             if is_training:
-                if (ex_id + 1) % 100000 == 0:
+                if (ex_id + 1) % 10000 == 0:
                     tf.logging.info(
                         'Sampling wrong tokens of input %d' % (ex_id + 1))
 

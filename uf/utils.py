@@ -153,12 +153,19 @@ RESOURCES = [
      'https://github.com/ymcui/Chinese-BERT-wwm',
      'https://drive.google.com/uc?export=download&id=1dtad0FFzG11CBsawu8hvwwzU2R0FDI94'],
 
-    ['xlnet-mid-zh', 'XLNet', 'HFL',
-     'https://github.com/ymcui/Chinese-XLNet',
-     'https://drive.google.com/uc?export=download&id=1342uBc7ZmQwV6Hm6eUIN_OnBSz1LcvfA'],
+    ['macbert-base-zh', 'BERT', 'HFL',
+     'https://github.com/ymcui/MacBERT',
+     'https://drive.google.com/uc?export=download&id=1aV69OhYzIwj_hn-kO1RiBa-m8QAusQ5b'],
+    ['macbert-large-zh', 'BERT', 'HFL',
+     'https://github.com/ymcui/MacBERT',
+     'https://drive.google.com/uc?export=download&id=1lWYxnk1EqTA2Q20_IShxBrCPc5VSDCkT'],
+
     ['xlnet-base-zh', 'XLNet', 'HFL',
      'https://github.com/ymcui/Chinese-XLNet',
      'https://drive.google.com/uc?export=download&id=1m9t-a4gKimbkP5rqGXXsEAEPhJSZ8tvx'],
+    ['xlnet-mid-zh', 'XLNet', 'HFL',
+     'https://github.com/ymcui/Chinese-XLNet',
+     'https://drive.google.com/uc?export=download&id=1342uBc7ZmQwV6Hm6eUIN_OnBSz1LcvfA'],
 
     ['electra-180g-small-zh', 'ELECTRA', 'HFL',
      'https://github.com/ymcui/Chinese-ELECTRA',

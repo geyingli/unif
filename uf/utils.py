@@ -77,7 +77,7 @@ def load(code, cache_file='./.cache', **kwargs):
     Returns:
         None
     '''
-    tf.logging.info('Loading model "%s" from %s' % (code, cache_file))
+    tf.logging.info('Loading model `%s` from %s' % (code, cache_file))
 
     if not os.path.exists(cache_file):
         raise ValueError('No cache file found with `%s`.' % cache_file)

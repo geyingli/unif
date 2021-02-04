@@ -454,7 +454,7 @@ class BaseModule:
         '''
         if self.output_dir and self._graph_built:
             self.save()
-        tf.logging.info('Saving model configuration "%s" into %s'
+        tf.logging.info('Saving model configuration `%s` into %s'
                         % (code, cache_file))
 
         if os.path.exists(cache_file):

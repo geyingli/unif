@@ -329,6 +329,21 @@ model.export(
     	<img src="./docs/framework.png" style="zoom:50%"/>
     <br>
 <p>
+## 重要更新
+
+V2.5.0 -> Now:
+
+- 新增：添加 `uf.list_resources()` 和 `uf.download()` 用法，方便地下载公开预训练参数
+- 新增：使用 `model.cache()` 缓存模型时，可以传入 `note` 参数作为备注
+- 新增：添加完整的示范代码，在 unif/examples 目录下
+- 变更：取消训练结束自动保存模型参数，用户需要通过 `model.save()` 或 `model.cache()` 自行保存
+- 变更：默认打印所有信息，无需用户再行输入 `uf.set_verbosity()`
+- 变更：在 vocab 中添加新的 token 时进行提示
+- 变更：将优化器动量从 `model.uninited_vars` 中删除
+- 变更：加载预训练参数时，跳过形状不一致的参数，避免报错
+- 变更：`FastBERTClassifier` 设置为默认跳过第一个子分类器
+- 变更：`UniLM` 在 `s2s` 模式下的结尾 token 从 `[SEP]` 改为 `[EOS]`
+- 变更： `VAELM` 取消返回 `[CLS]`
 
 ## 尾声
 

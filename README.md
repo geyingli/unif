@@ -332,7 +332,7 @@ model.export(
 
 ## 重要更新
 
-beta v2.5.0 -> Now:
+beta v2.5.0 -> Now：
 
 - 新增：添加 `uf.list_resources()` 和 `uf.download()` 用法，方便地下载公开预训练参数
 - 新增：使用 `model.cache()` 缓存模型时，可以传入 `note` 参数作为备注

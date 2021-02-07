@@ -17,6 +17,7 @@
 import os
 import json
 import collections
+import multiprocessing
 from abc import abstractmethod
 
 from .tools import tf
@@ -45,7 +46,7 @@ class BaseModule:
         if gpu_ids is None:
             gpu_ids = os.environ.get('CUDA_VISIBLE_DEVICES', '')
         elif not gpu_ids:
-            os.environ['CUDA_VISIBLE_DEVICES'] = ''
+            pass
         if gpu_ids:
             try:
                 if isinstance(gpu_ids, str):
@@ -56,9 +57,16 @@ class BaseModule:
                 raise ValueError(
                     '`gpu_ids` should be a list of GPU ids or a string '
                     'seperated with commas.')
-            os.environ['CUDA_VISIBLE_DEVICES'] = ','.join(self._gpu_ids)
 
-        self.reset()
+        # build graph
+        self.graph = tf.Graph()
+
+        # Before we build the graph, `score` and fast `predict`
+        # is now allowed.
+        self.step = 0
+        self._graph_mode = None
+        self._graph_built = False
+        self._inited_vars = set()
 
     def reset(self):
         ''' Reset existing session and graph. '''
@@ -69,8 +77,6 @@ class BaseModule:
 
         # initialize graph and session
         self.graph = tf.Graph()
-        config = tf.ConfigProto(allow_soft_placement=True)
-        self.sess = tf.Session(graph=self.graph, config=config)
 
         # Before we build the graph, `score` and fast `predict`
         # is now allowed.
@@ -114,11 +120,12 @@ class BaseModule:
 
         if not tfrecords_file:
             if self.output_dir:
-                tfrecords_file = os.path.join(self.output_dir, '.tfrecords')
+                tfrecords_file = os.path.join(
+                    self.output_dir, 'train.tfrecords')
             else:
-                tfrecords_file = '.tfrecords'
+                tfrecords_file = './train.tfrecords'
 
-        data = self.convert(
+        data = self._parallel_convert(
             X, y, sample_weight, X_tokenized, is_training=True)
 
         tf.logging.info('Serializing data into %s' % tfrecords_file)
@@ -133,7 +140,7 @@ class BaseModule:
             print_per_secs=0.1,
             save_per_steps=1000,
             tfrecords_files=None,
-            n_jobs=3,
+            n_jobs=None,
             **kwargs):
         ''' Training the model using TFRecords.
 
@@ -160,7 +167,8 @@ class BaseModule:
               file. Valid only when `output_dir` is not None.
             tfrecords_files: list. A list object of string defining TFRecords
               files to read.
-            n_jobs: int. Number of threads in reading TFRecords files.
+            n_jobs: int. Number of threads in processing tfrecords. Default
+              to the number of cpu cores in the comping device.
             **kwargs: Other arguments about layer-wise learning rate decay,
               adversarial training or model-specific settings. See `README.md`
               to obtain more
@@ -274,7 +282,7 @@ class BaseModule:
 
         # Convert raw data to structed data. This method
         # should be specifically implemented by child classes.
-        self.data = self.convert(
+        self.data = self._parallel_convert(
             X, y, sample_weight, X_tokenized, is_training=True)
 
         # Confirm the number of training steps and warmup
@@ -352,7 +360,7 @@ class BaseModule:
 
         # Convert raw data to structed data. This method
         # should be specifically implemented by child classes.
-        self.data = self.convert(
+        self.data = self._parallel_convert(
             X, None, None, X_tokenized, is_training=False)
 
         # Build the graph, and then run.
@@ -405,7 +413,7 @@ class BaseModule:
 
         # Convert raw data to structed data. This method
         # should be specifically implemented by child classes.
-        self.data = self.convert(
+        self.data = self._parallel_convert(
             X, y, sample_weight, X_tokenized, is_training=False)
 
         # Build the graph, and then run.
@@ -622,6 +630,46 @@ class BaseModule:
             self._build('export').run(
                 export_dir, rename_inputs, rename_outputs, ignore_outputs)
 
+    def _parallel_convert(self, X=None, y=None, sample_weight=None,
+                          X_tokenized=None, is_training=False):
+        ''' Parallel data conversion in multi processes, a general method. '''
+
+        if utils.NUM_PROCESSES <= 1:
+            return self.convert(X, y, sample_weight, X_tokenized, is_training)
+
+        n_inputs = len(X if X else X_tokenized)
+        n_buckets = max(min(n_inputs, utils.NUM_PROCESSES), 1)
+
+        buckets = [{'X': [] if X else None,
+                    'y': [] if y else None,
+                    'sample_weight': [] if sample_weight else None,
+                    'X_tokenized': [] if X_tokenized else None}
+                   for _ in range(n_buckets)]
+        for i in range(n_inputs):
+            index = i % n_buckets
+            if X:
+                buckets[index]['X'].append(X[i])
+            if y:
+                buckets[index]['y'].append(y[i])
+            if sample_weight:
+                buckets[index]['sample_weight'].append(sample_weight[i])
+            if X_tokenized:
+                buckets[index]['X_tokenized'].append(X_tokenized[i])
+
+        pool = multiprocessing.Pool(utils.NUM_PROCESSES)
+        values = utils.get_init_values(self)
+        args = zip([self.__class__ for _ in range(n_buckets)],
+                   [values for _ in range(n_buckets)],
+                   buckets,
+                   [is_training for _ in range(n_buckets)])
+        data_buckets = pool.map(utils._parallel_convert_single_process, args)
+
+        data = {}
+        keys = list(data_buckets[0].keys())
+        for key in keys:
+            data[key] = utils.transform([_data[key] for _data in data_buckets])
+        return data
+
     @abstractmethod
     def convert(self, *args, **kwargs):
         raise NotImplementedError()
@@ -697,7 +745,7 @@ class BaseModule:
         raise NotImplementedError()
 
     def _parallel_forward(self, is_training=True, **kwargs):
-        ''' Parallel foundation of computation graph in multi-GPUs,
+        ''' Parallel foundation of computation graph in multi GPUs,
         a general method. '''
 
         # We implement data parallelization instead of model

@@ -19,12 +19,11 @@ import re
 import json
 import time
 import copy
-import tarfile
-import zipfile
 import logging
 import requests
 import collections
 import numpy as np
+import multiprocessing
 from sys import stdout
 
 from .tools import tf
@@ -66,6 +65,45 @@ def unimported_module(name, required):
 class TFModuleError(Exception):
     def __init__(self, *args, **kwargs):
         pass
+
+
+NUM_PROCESSES = 1
+
+
+class MultiProcess:
+    def __init__(self, n_process='auto'):
+        n_cpu = multiprocessing.cpu_count()
+        if n_process != 'auto':
+            assert n_process <= n_cpu, (
+                'Invalid value of `n_process`. It can not exceed the num '
+                'of cpu cores in the device: %d.' % n_cpu)
+        else:
+            n_process = n_cpu
+        self.n = n_process
+
+    def __enter__(self):
+        global NUM_PROCESSES
+        NUM_PROCESSES = self.n
+
+    def __exit__(self, *args, **kwargs):
+        global NUM_PROCESSES
+        NUM_PROCESSES = 1
+
+
+def _parallel_convert_single_process(args):
+    app_class = args[0]
+    mapping = args[1]
+    data = args[2]
+    is_training = args[3]
+
+    # Verbosity of tensorflow in new process will be set to default,
+    # for this reason we just have to silence the logging and don't
+    # have to care about the recovery.
+    tf.logging.set_verbosity(tf.logging.FATAL)
+    model = app_class(*mapping)
+
+    return model.convert(data['X'], data['y'], data['sample_weight'],
+                         data['X_tokenized'], is_training)
 
 
 def load(code, cache_file='./.cache', **kwargs):
@@ -369,13 +407,62 @@ def set_log(log_file):
     log.addHandler(fh)
 
 
+def write_tfrecords_multi_process(data, tfrecords_file):
+    writer = tf.python_io.TFRecordWriter(tfrecords_file)
+    data_items = list(data.items())
+    data_keys = [item[0] for item in data_items]
+    data_values = [item[1] for item in data_items]
+    examples = list(zip(*data_values))
+
+    NUM_BUCKETS = 20
+    buckets = [[] for _ in range(NUM_BUCKETS)]
+    n = len(examples)
+    while n > 0:
+        bucket_id = n % NUM_BUCKETS
+        buckets[bucket_id].append(examples.pop())
+        n -= 1
+
+    n_cpu = multiprocessing.cpu_count()
+    pool = multiprocessing.Pool(n_cpu)
+    args = zip(buckets, [data_keys for _ in range(NUM_BUCKETS)])
+    features_lists = pool.map(write_tfrecords_single_process, args)
+
+    for features_list in features_lists:
+        for features in features_list:
+            tf_example = tf.train.Example(
+                features=tf.train.Features(feature=features))
+            writer.write(tf_example.SerializeToString())
+
+
+def write_tfrecords_single_process(args):
+    examples = args[0]
+    data_keys = args[1]
+    features_list = []
+    for example in examples:
+        features = collections.OrderedDict()
+        for i, value in enumerate(example):
+            if isinstance(value, int):
+                features[data_keys[i]] = create_int_feature([value])
+            elif isinstance(value, float):
+                features[data_keys[i]] = create_float_feature([value])
+            elif value.dtype.name.startswith('int'):
+                features[data_keys[i]] = create_int_feature(value.tolist())
+            elif value.dtype.name.startswith('float'):
+                features[data_keys[i]] = create_float_feature(value.tolist())
+            else:
+                raise ValueError('Invalid data type: %s.' % type(value))
+        features_list.append(features)
+    return features_list
+
+
 def write_tfrecords(data, tfrecords_file):
     writer = tf.python_io.TFRecordWriter(tfrecords_file)
     data_items = list(data.items())
     data_keys = [item[0] for item in data_items]
     data_values = [item[1] for item in data_items]
+    examples = zip(*data_values)
 
-    for example in zip(*data_values):
+    for example in examples:
         features = collections.OrderedDict()
         for i, value in enumerate(example):
             if isinstance(value, int):
@@ -391,6 +478,17 @@ def write_tfrecords(data, tfrecords_file):
         tf_example = tf.train.Example(
             features=tf.train.Features(feature=features))
         writer.write(tf_example.SerializeToString())
+
+
+def get_init_values(model):
+    values = []
+    for key in model.__class__.__init__.__code__.co_varnames[1:]:
+        try:
+            value = model.__getattribute__(key)
+        except:
+            value = model.__init_args__[key]
+        values.append(value)
+    return values
 
 
 def get_tfrecords_keys(tfrecords_file):
@@ -774,7 +872,9 @@ def align_tokens_with_text(tokens, text, lower_case):
     return mapping_start, mapping_end
 
 
-def transform(output_arrays, n_inputs, reshape=False):
+def transform(output_arrays, n_inputs=None, reshape=False):
+    if not n_inputs:
+        n_inputs = 100000000
     if len(output_arrays[0].shape) > 1:
         return np.vstack(output_arrays)[:n_inputs]
     if reshape:

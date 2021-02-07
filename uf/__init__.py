@@ -13,12 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__version__ = '2.6.6'
-__date__ = '2/4/2020'
+__version__ = '2.7.0'
+__date__ = '2/7/2020'
 
 
 from .application import *
 
+from .utils import MultiProcess
 from .utils import load
 from .utils import download
 from .utils import download_all
@@ -36,6 +37,7 @@ set_verbosity()
 __all__ = [
 
     # handy methods
+    'MultiProcess',
     'load',
     'download',
     'download_all',

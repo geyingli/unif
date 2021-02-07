@@ -10,7 +10,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-beta v2.6.6-blue">
+        <img src="https://img.shields.io/badge/version-beta v2.7.0-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-1.x\2.x-yellow">
@@ -25,7 +25,7 @@
 
 ### 特性
 
-- API 简单：三行代码完成训练及推理，并一键设置多 GPU 并行
+- API 简单：三行代码完成训练及推理，并一键设置多 GPU/多进程并行
 - 品类丰富：支持 40+ 种模型类
 - 唯一依赖：Tensorflow 1.x/2.x
 - 高分保证：提供分层学习率、对抗式训练等多项训练技巧
@@ -156,27 +156,30 @@ model = uf.load('key', cache_file='.cache')
 ## 训练/推理/评分
 
 ``` python
-# 训练
-model.fit(
-    X=None, y=None, sample_weight=None,
-    X_tokenized=None,    # 特定场景下使用，e.g. 使用你自己的分词工具
-    batch_size=32,
-    learning_rate=5e-05,
-    target_steps=None,    # 放空代表直接训练到 `total_steps`，不中途停止；否则为本次训练暂停点
-    total_steps=-3,    # -3 代表自动计算数据量并循环三轮
-    warmup_ratio=0.1,
-    print_per_secs=1,    # 多少秒打印一次信息
-    save_per_steps=1000,
-    **kwargs)    # 其他参数，下文介绍
+# 开启多进程 (加速数据处理)
+with uf.MultiProcess():    # 数据量达到十万级以上时，可提速数倍 (数据量小时，建议删去此行)
+  
+    # 训练
+    model.fit(
+        X=None, y=None, sample_weight=None,
+        X_tokenized=None,    # 特定场景下使用，e.g. 使用你自己的分词工具/语言模型推理时在输入加 [MASK]
+        batch_size=32,
+        learning_rate=5e-05,
+        target_steps=None,    # 放空代表直接训练到 `total_steps`，不中途停止；否则为本次训练暂停点
+        total_steps=-3,    # -3 代表自动计算数据量并循环三轮
+        warmup_ratio=0.1,
+        print_per_secs=1,    # 多少秒打印一次信息
+        save_per_steps=1000,
+        **kwargs)    # 其他参数，下文介绍
 
-# 推理
-model.predict(
-    X=None, X_tokenized=None, batch_size=8)
+    # 推理
+    model.predict(
+        X=None, X_tokenized=None, batch_size=8)
 
-# 评分
-model.score(
-    X=None, y=None, sample_weight=None, X_tokenized=None,
-    batch_size=8)
+    # 评分
+    model.score(
+        X=None, y=None, sample_weight=None, X_tokenized=None,
+        batch_size=8)
 
 # 常规训练流程示范
 assert model.output_dir is not None    # 非空才能保存模型参数
@@ -189,23 +192,25 @@ for loop_id in range(10):    # 假设训练途中一共验证 10 次
 复用训练数据？可以尝试先存为 TFRecords，训练时读取：
 
 ```python
-# 缓存数据
-model.to_tfrecords(
-    X=None, y=None, sample_weight=None, X_tokenized=None,
-    tfrecords_file='./train.tfrecords')    # 一次只能存一个文件
+with uf.MultiProcess():
 
-# 边读边训
-model.fit_from_tfrecords(
-    tfrecords_files=['./train.tfrecords-0', './.tfrecords-1'],    # 同时从两个 TFRecords 文件读取
-    n_jobs=3,    # 启动三个线程
-    batch_size=32,    # 以下参数和 `.fit()` 中参数相同
-    learning_rate=5e-05,
-    target_steps=None,
-    total_steps=-3,
-    warmup_ratio=0.1,
-    print_per_secs=1,
-    save_per_steps=1000,
-    **kwargs)
+    # 缓存数据
+    model.to_tfrecords(
+        X=None, y=None, sample_weight=None, X_tokenized=None,
+        tfrecords_file='./train.tfrecords')    # 一次只能存一个文件
+
+    # 边读边训
+    model.fit_from_tfrecords(
+        tfrecords_files=['./train.tfrecords-0', './.tfrecords-1'],    # 同时从两个 TFRecords 文件读取
+        n_jobs=3,    # 启动三个线程
+        batch_size=32,    # 以下参数和 `.fit()` 中参数相同
+        learning_rate=5e-05,
+        target_steps=None,
+        total_steps=-3,
+        warmup_ratio=0.1,
+        print_per_secs=1,
+        save_per_steps=1000,
+        **kwargs)
 ```
 
 训练所用的条件参数 kwargs：
@@ -323,6 +328,7 @@ model.export(
 
 beta v2.5.0 -> Now：
 
+- 新增：添加 `uf.MultiProcess()`，可以通过多线程加速模型前的数据解析流程
 - 新增：添加 `uf.list_resources()` 和 `uf.download()` 用法，方便地下载公开预训练参数
 - 新增：使用 `model.cache()` 缓存模型时，可以传入 `note` 参数作为备注
 - 新增：添加完整的示范代码，在 unif/examples 目录下

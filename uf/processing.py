@@ -18,6 +18,7 @@ import os
 import time
 import random
 import numpy as np
+import multiprocessing
 from abc import abstractmethod
 
 from .tools import tf
@@ -44,6 +45,8 @@ class BaseTask:
 
         if self.from_tfrecords:
             self.n_inputs = utils.get_tfrecords_length(self.tfrecords_files)
+            if self.n_jobs is None:
+                self.n_jobs = max(multiprocessing.cpu_count() - 1, 1)
         else:
             self.n_inputs = len(list(module.data.values())[0])
         if not self.n_inputs:
@@ -131,6 +134,8 @@ class BasicTraining(BaseTask):
 
         if self.from_tfrecords:
             self.n_inputs = utils.get_tfrecords_length(self.tfrecords_files)
+            if self.n_jobs is None:
+                self.n_jobs = max(multiprocessing.cpu_count() - 1, 1)
         else:
             self.n_inputs = len(list(module.data.values())[0])
         if not self.n_inputs:
@@ -200,6 +205,9 @@ class BasicTraining(BaseTask):
             max_to_keep=self._kwargs.get('max_to_keep', 1000000))
 
         if not module._graph_built:
+            os.environ['CUDA_VISIBLE_DEVICES'] = ','.join(module._gpu_ids)
+            config = tf.ConfigProto(allow_soft_placement=True)
+            module.sess = tf.Session(graph=module.graph, config=config)
             self._init_variables(module.global_variables)
         else:
             variables = []
@@ -710,6 +718,9 @@ class EMDTraining(BasicTraining):
             max_to_keep=self._kwargs.get('max_to_keep', 1000000))
 
         if not module._graph_built:
+            os.environ['CUDA_VISIBLE_DEVICES'] = ','.join(module._gpu_ids)
+            config = tf.ConfigProto(allow_soft_placement=True)
+            module.sess = tf.Session(graph=module.graph, config=config)
             self._init_variables(module.global_variables)
         else:
             variables = []
@@ -888,6 +899,9 @@ class BasicInference(BaseTask):
         module = self.module
 
         if not module._graph_built:
+            os.environ['CUDA_VISIBLE_DEVICES'] = ','.join(module._gpu_ids)
+            config = tf.ConfigProto(allow_soft_placement=True)
+            module.sess = tf.Session(graph=module.graph, config=config)
             self._init_variables(module.global_variables)
 
         # Now we can infer without rebuilding the graph, which
@@ -953,6 +967,9 @@ class Initialization(BaseTask):
         module = self.module
 
         if not module._graph_built or reinit_all:
+            os.environ['CUDA_VISIBLE_DEVICES'] = ','.join(module._gpu_ids)
+            config = tf.ConfigProto(allow_soft_placement=True)
+            module.sess = tf.Session(graph=module.graph, config=config)
             self._init_variables(module.global_variables, ignore_checkpoint)
         else:
             variables = []
@@ -999,6 +1016,9 @@ class ExportInference(BaseTask):
         module = self.module
 
         if not module._graph_built:
+            os.environ['CUDA_VISIBLE_DEVICES'] = ','.join(module._gpu_ids)
+            config = tf.ConfigProto(allow_soft_placement=True)
+            module.sess = tf.Session(graph=module.graph, config=config)
             self._init_variables(module.global_variables)
 
         # Now we can infer without rebuilding the graph, which
@@ -1110,6 +1130,9 @@ class BasicScoring(BaseTask):
             raise ValueError('0 samples of input recognized.')
 
         if not module._graph_built:
+            os.environ['CUDA_VISIBLE_DEVICES'] = ','.join(module._gpu_ids)
+            config = tf.ConfigProto(allow_soft_placement=True)
+            module.sess = tf.Session(graph=module.graph, config=config)
             self._init_variables(module.global_variables)
 
         # Now we can infer without rebuilding the graph, which

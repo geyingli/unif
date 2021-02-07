@@ -328,7 +328,7 @@ model.export(
 
 beta v2.5.0 -> Now：
 
-- 新增：添加 `uf.MultiProcess()`，可以通过多线程加速模型前的数据解析流程
+- 新增：添加 `uf.MultiProcess`，可以通过多进程加速模型前的数据解析流程
 - 新增：添加 `uf.list_resources()` 和 `uf.download()` 用法，方便地下载公开预训练参数
 - 新增：使用 `model.cache()` 缓存模型时，可以传入 `note` 参数作为备注
 - 新增：添加完整的示范代码，在 unif/examples 目录下

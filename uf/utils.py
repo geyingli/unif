@@ -91,10 +91,11 @@ class MultiProcess:
 
 
 def _parallel_convert_single_process(args):
-    app_class = args[0]
-    mapping = args[1]
-    data = args[2]
-    is_training = args[3]
+    bucket_id = args[0]
+    app_class = args[1]
+    mapping = args[2]
+    data = args[3]
+    is_training = args[4]
 
     # Verbosity of tensorflow in new process will be set to default,
     # for this reason we just have to silence the logging and don't
@@ -102,8 +103,10 @@ def _parallel_convert_single_process(args):
     tf.logging.set_verbosity(tf.logging.FATAL)
     model = app_class(*mapping)
 
-    return model.convert(data['X'], data['y'], data['sample_weight'],
-                         data['X_tokenized'], is_training)
+    data = model.convert(
+        data['X'], data['y'], data['sample_weight'], data['X_tokenized'],
+        is_training)
+    return (bucket_id, data)
 
 
 def load(code, cache_file='./.cache', **kwargs):

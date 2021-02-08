@@ -641,7 +641,7 @@ class BaseModule:
         if utils.NUM_PROCESSES <= 1:
             return self.convert(X, y, sample_weight, X_tokenized, is_training)
 
-        tf.logging.info('Parsing inputs on %d parallel processes'
+        tf.logging.info('Parsing input data on %d parallel processes'
                         % utils.NUM_PROCESSES)
 
         n_inputs = len(X if X else X_tokenized)
@@ -665,16 +665,19 @@ class BaseModule:
 
         pool = multiprocessing.Pool(utils.NUM_PROCESSES)
         values = utils.get_init_values(self)
-        args = zip([self.__class__ for _ in range(n_buckets)],
+        args = zip(list(range(n_buckets)),
+                   [self.__class__ for _ in range(n_buckets)],
                    [values for _ in range(n_buckets)],
                    buckets,
                    [is_training for _ in range(n_buckets)])
         data_buckets = pool.map(utils._parallel_convert_single_process, args)
 
         data = {}
-        keys = list(data_buckets[0].keys())
+        data_buckets.sort(key=lambda x: x[0])    # re-order inputs
+        keys = list(data_buckets[0][1].keys())
         for key in keys:
-            data[key] = utils.transform([_data[key] for _data in data_buckets])
+            data[key] = utils.transform(
+                [_data[1][key] for _data in data_buckets])
         return data
 
     @abstractmethod

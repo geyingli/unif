@@ -637,6 +637,9 @@ class BaseModule:
         if utils.NUM_PROCESSES <= 1:
             return self.convert(X, y, sample_weight, X_tokenized, is_training)
 
+        tf.logging.info('Parsing inputs on %d parallel processes'
+                        % utils.NUM_PROCESSES)
+
         n_inputs = len(X if X else X_tokenized)
         n_buckets = max(min(n_inputs, utils.NUM_PROCESSES), 1)
 

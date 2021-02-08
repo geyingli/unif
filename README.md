@@ -10,7 +10,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-beta v2.7.0-blue">
+        <img src="https://img.shields.io/badge/version-beta v2.7.1-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-1.x\2.x-yellow">
@@ -158,7 +158,7 @@ model = uf.load('key', cache_file='.cache')
 ``` python
 # 开启多进程 (加速数据处理)
 with uf.MultiProcess():    # 数据量达到十万级以上时，可提速数倍 (数据量小时，建议删去此行)
-  
+
     # 训练
     model.fit(
         X=None, y=None, sample_weight=None,

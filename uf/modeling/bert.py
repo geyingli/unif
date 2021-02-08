@@ -504,7 +504,7 @@ class BERTDecoder(BaseDecoder):
                  masked_lm_positions,
                  masked_lm_ids,
                  masked_lm_weights,
-                 next_sentence_labels,
+                 next_sentence_labels=None,
                  sample_weight=None,
                  scope_lm='cls/predictions',
                  scope_cls='cls/seq_relationship',
@@ -573,39 +573,40 @@ class BERTDecoder(BaseDecoder):
             self.preds['MLM_preds'] = tf.argmax(probs, axis=-1)
 
         # next sentence prediction
-        with tf.variable_scope(scope_cls):
-            output_weights = tf.get_variable(
-                'output_weights',
-                shape=[2, bert_config.hidden_size],
-                initializer=util.create_initializer(
-                    bert_config.initializer_range),
-                trainable=trainable)
-            output_bias = tf.get_variable(
-                'output_bias', shape=[2],
-                initializer=tf.zeros_initializer(),
-                trainable=trainable)
+        if next_sentence_labels is not None:
+            with tf.variable_scope(scope_cls):
+                output_weights = tf.get_variable(
+                    'output_weights',
+                    shape=[2, bert_config.hidden_size],
+                    initializer=util.create_initializer(
+                        bert_config.initializer_range),
+                    trainable=trainable)
+                output_bias = tf.get_variable(
+                    'output_bias', shape=[2],
+                    initializer=tf.zeros_initializer(),
+                    trainable=trainable)
 
-            logits = tf.matmul(encoder.get_pooled_output(),
-                               output_weights, transpose_b=True)
-            logits = tf.nn.bias_add(logits, output_bias)
-            probs = tf.nn.softmax(logits, axis=-1, name='probs')
-            log_probs = tf.nn.log_softmax(logits, axis=-1)
+                logits = tf.matmul(encoder.get_pooled_output(),
+                                   output_weights, transpose_b=True)
+                logits = tf.nn.bias_add(logits, output_bias)
+                probs = tf.nn.softmax(logits, axis=-1, name='probs')
+                log_probs = tf.nn.log_softmax(logits, axis=-1)
 
-            labels = tf.reshape(next_sentence_labels, [-1])
-            one_hot_labels = tf.one_hot(labels, depth=2, dtype=tf.float32)
-            per_example_loss = -tf.reduce_sum(
-                one_hot_labels * log_probs, axis=-1)
-            if sample_weight is not None:
-                per_example_loss = (
-                    tf.cast(sample_weight, dtype=tf.float32) *
-                    per_example_loss)
-            loss = tf.reduce_mean(per_example_loss)
+                labels = tf.reshape(next_sentence_labels, [-1])
+                one_hot_labels = tf.one_hot(labels, depth=2, dtype=tf.float32)
+                per_example_loss = -tf.reduce_sum(
+                    one_hot_labels * log_probs, axis=-1)
+                if sample_weight is not None:
+                    per_example_loss = (
+                        tf.cast(sample_weight, dtype=tf.float32) *
+                        per_example_loss)
+                loss = tf.reduce_mean(per_example_loss)
 
-            if use_nsp_loss:
-                scalar_losses.append(loss)
-            self.losses['NSP_losses'] = per_example_loss
-            self.probs['NSP_probs'] = probs
-            self.preds['NSP_preds'] = tf.argmax(probs, axis=-1)
+                if use_nsp_loss:
+                    scalar_losses.append(loss)
+                self.losses['NSP_losses'] = per_example_loss
+                self.probs['NSP_probs'] = probs
+                self.preds['NSP_preds'] = tf.argmax(probs, axis=-1)
 
         self.total_loss = tf.add_n(scalar_losses)
 

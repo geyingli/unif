@@ -421,12 +421,15 @@ class BaseModule:
                 tf.variable_scope('', reuse=tf.AUTO_REUSE):
             return self._build('score').run()
 
-    def save(self):
+    def save(self, max_to_keep=10000):
         ''' Save model into checkpoint file.
 
         When attribute `output_dir` is None, the method is illegal. Otherwise
         the model will be saved into `"model.checkpoint-%s" % step` under
         the directory of `output_dir`.
+
+        Args:
+            max_to_keep: int. Max number of checkpoints to save.
         '''
         if not self._graph_built:
             raise ValueError(
@@ -443,16 +446,17 @@ class BaseModule:
             self.output_dir + '/model.ckpt-%d' % self.step)
 
         with self.graph.as_default():
-            saver = tf.train.Saver(max_to_keep=1000000)
+            saver = tf.train.Saver(max_to_keep=max_to_keep)
             saver.save(self.sess, self.init_checkpoint)
 
-    def cache(self, code, cache_file='./.cache', note=''):
+    def cache(self, code, cache_file='./.cache', max_to_keep=10000, note=''):
         ''' Save model configurations into cache file.
 
         Args:
             code: string. Unique name of configuration to save. Can be any
               kind of string.
             cache_file: string. The path of cache file.
+            max_to_keep: int. Max number of checkpoints to save.
             note: string. The information you with to note.
         Returns:
             None
@@ -461,7 +465,7 @@ class BaseModule:
         model into checkpoint file simultaneously.
         '''
         if self.output_dir and self._graph_built:
-            self.save()
+            self.save(max_to_keep)
         tf.logging.info('Saving model configuration `%s` into %s'
                         % (code, cache_file))
 

@@ -187,9 +187,10 @@ class BaseModule:
         # Get absolute path of tf.records file
         if not tfrecords_files:
             if self.output_dir:
-                tfrecords_files = [os.path.join(self.output_dir, '.tfrecords')]
+                tfrecords_files = \
+                    [os.path.join(self.output_dir, 'train.tfrecords')]
             else:
-                tfrecords_files = ['.tfrecords']
+                tfrecords_files = ['train.tfrecords']
         elif isinstance(tfrecords_files, str):
             tfrecords_files = tfrecords_files.split(',')
 

@@ -672,6 +672,8 @@ class BaseModule:
                    buckets,
                    [is_training for _ in range(n_buckets)])
         data_buckets = pool.map(utils._parallel_convert_single_process, args)
+        pool.close()
+        pool.join()
 
         data = {}
         data_buckets.sort(key=lambda x: x[0])    # re-order inputs

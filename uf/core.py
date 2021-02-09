@@ -17,7 +17,6 @@
 import os
 import json
 import collections
-import multiprocessing
 from abc import abstractmethod
 
 from .tools import tf
@@ -664,16 +663,13 @@ class BaseModule:
             if X_tokenized:
                 buckets[index]['X_tokenized'].append(X_tokenized[i])
 
-        pool = multiprocessing.Pool(utils.NUM_PROCESSES)
         values = utils.get_init_values(self)
         args = zip(list(range(n_buckets)),
                    [self.__class__ for _ in range(n_buckets)],
                    [values for _ in range(n_buckets)],
                    buckets,
                    [is_training for _ in range(n_buckets)])
-        data_buckets = pool.map(utils._parallel_convert_single_process, args)
-        pool.close()
-        pool.join()
+        data_buckets = utils.pool.map(utils._parallel_convert_single_process, args)
 
         data = {}
         data_buckets.sort(key=lambda x: x[0])    # re-order inputs

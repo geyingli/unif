@@ -10,7 +10,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-beta v2.7.1-blue">
+        <img src="https://img.shields.io/badge/version-beta v2.7.2-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-1.x\2.x-yellow">
@@ -156,27 +156,30 @@ model = uf.load('key', cache_file='.cache')
 ## 训练/推理/评分
 
 ``` python
-# 训练
-model.fit(
-    X=None, y=None, sample_weight=None,
-    X_tokenized=None,    # 特定场景下使用，e.g. 使用你自己的分词工具/语言模型推理时在输入加 [MASK]
-    batch_size=32,
-    learning_rate=5e-05,
-    target_steps=None,    # 放空代表直接训练到 `total_steps`，不中途停止；否则为本次训练暂停点
-    total_steps=-3,    # -3 代表自动计算数据量并循环三轮
-    warmup_ratio=0.1,
-    print_per_secs=1,    # 多少秒打印一次信息
-    save_per_steps=1000,
-    **kwargs)    # 其他参数，下文介绍
+# 开启多进程 (加速数据处理)
+with uf.MultiProcess():    # 建议在这一步之后再读取大批量数据，否则容易内存爆炸
 
-# 推理
-model.predict(
-    X=None, X_tokenized=None, batch_size=8)
+    # 训练
+    model.fit(
+        X=None, y=None, sample_weight=None,
+        X_tokenized=None,    # 特定场景下使用，e.g. 使用你自己的分词工具/语言模型推理时在输入加 [MASK]
+        batch_size=32,
+        learning_rate=5e-05,
+        target_steps=None,    # 放空代表直接训练到 `total_steps`，不中途停止；否则为本次训练暂停点
+        total_steps=-3,    # -3 代表自动计算数据量并循环三轮
+        warmup_ratio=0.1,
+        print_per_secs=1,    # 多少秒打印一次信息
+        save_per_steps=1000,
+        **kwargs)    # 其他参数，下文介绍
 
-# 评分
-model.score(
-    X=None, y=None, sample_weight=None, X_tokenized=None,
-    batch_size=8)
+    # 推理
+    model.predict(
+        X=None, X_tokenized=None, batch_size=8)
+
+    # 评分
+    model.score(
+        X=None, y=None, sample_weight=None, X_tokenized=None,
+        batch_size=8)
 
 # 常规训练流程示范
 assert model.output_dir is not None    # 非空才能保存模型参数
@@ -189,8 +192,7 @@ for loop_id in range(10):    # 假设训练途中一共验证 10 次
 复用训练数据？可以尝试先存为 TFRecords，训练时读取：
 
 ```python
-# 开启多进程
-with uf.MultiProcess():    # 数据量达到十万级以上时，可提速数倍
+with uf.MultiProcess():
 
     # 缓存数据
     model.to_tfrecords(

@@ -161,7 +161,7 @@ with uf.MultiProcess():    # 建议在这一步之后再读取大批量数据，
 
     # 训练
     model.fit(
-        X=None, y=None, sample_weight=None,
+        X=X, y=y, sample_weight=None,
         X_tokenized=None,    # 特定场景下使用，e.g. 使用你自己的分词工具/语言模型推理时在输入加 [MASK]
         batch_size=32,
         learning_rate=5e-05,
@@ -174,11 +174,11 @@ with uf.MultiProcess():    # 建议在这一步之后再读取大批量数据，
 
     # 推理
     model.predict(
-        X=None, X_tokenized=None, batch_size=8)
+        X=X, X_tokenized=None, batch_size=8)
 
     # 评分
     model.score(
-        X=None, y=None, sample_weight=None, X_tokenized=None,
+        X=X, y=y, sample_weight=None, X_tokenized=None,
         batch_size=8)
 
 # 常规训练流程示范
@@ -196,7 +196,7 @@ with uf.MultiProcess():
 
     # 缓存数据
     model.to_tfrecords(
-        X=None, y=None, sample_weight=None, X_tokenized=None,
+        X=X, y=y, sample_weight=None, X_tokenized=None,
         tfrecords_file='./train.tfrecords')    # 一次只能存一个文件
 
 # 边读边训

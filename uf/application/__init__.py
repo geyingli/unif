@@ -23,6 +23,7 @@ from .electra import ELECTRALM
 from .dilated import DilatedLM
 from .rec_bert import RecBERTLM
 from .vae import VAELM
+from .spe import SPELM
 from .gpt2 import GPT2LM
 from .unilm import UniLM
 from .text_cnn import TextCNNClassifier
@@ -36,6 +37,7 @@ from .performer import PerformerClassifier
 from .uda import UDAClassifier
 from .tiny_bert import TinyBERTClassifier
 from .fast_bert import FastBERTClassifier
+from .stock_bert import StockBERTClassifier
 from .bert import BERTBinaryClassifier
 from .roberta import RoBERTaBinaryClassifier
 from .albert import ALBERTBinaryClassifier
@@ -84,6 +86,7 @@ __all__ = [
     'ELECTRALM',
     'DilatedLM',
     'RecBERTLM',
+    'SPELM',
     'VAELM',
     'GPT2LM',
     'UniLM',
@@ -98,6 +101,7 @@ __all__ = [
     'UDAClassifier',
     'TinyBERTClassifier',
     'FastBERTClassifier',
+    'StockBERTClassifier',
     'BERTBinaryClassifier',
     'XLNetBinaryClassifier',
     'RoBERTaBinaryClassifier',

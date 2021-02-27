@@ -297,8 +297,6 @@ class SPELM(BERTLM, LMModule):
 
         # MLM accuracy
         batch_mlm_preds = output_arrays[1]
-        batch_mlm_positions = np.reshape(batch_mlm_positions, [-1])
-        batch_mlm_labels = np.reshape(batch_mlm_labels, [-1])
         batch_mlm_mask = (batch_mlm_positions > 0)
         mlm_accuracy = (
             np.sum((batch_mlm_preds == batch_mlm_labels) * batch_mlm_mask) /

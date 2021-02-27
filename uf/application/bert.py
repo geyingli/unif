@@ -2748,7 +2748,7 @@ class BERTLM(LMModule):
         # MLM preds
         mlm_preds = []
         mlm_positions = self.data['masked_lm_positions']
-        all_preds = utils.transform(output_arrays[0], n_inputs, reshape=True)
+        all_preds = utils.transform(output_arrays[0], n_inputs).tolist()
         for ex_id, _preds in enumerate(all_preds):
             _ids = []
             for p_id, _id in enumerate(_preds):

@@ -887,9 +887,6 @@ def transform(output_arrays, n_inputs=None, reshape=False):
         n_inputs = 100000000
     if len(output_arrays[0].shape) > 1:
         return np.vstack(output_arrays)[:n_inputs]
-    if reshape:
-        return np.vstack(np.reshape(
-            output_arrays, [n_inputs, -1]))[:n_inputs]
     return np.hstack(output_arrays)[:n_inputs]
 
 

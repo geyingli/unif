@@ -244,6 +244,7 @@ class ALBERTDecoder(BaseDecoder):
                 input_tensor, encoder.get_embedding_table(), transpose_b=True)
             logits = tf.nn.bias_add(logits, output_bias)
             probs = tf.nn.softmax(logits, axis=-1, name='MLM_probs')
+            probs = tf.reshape(probs, [-1, masked_lm_positions.shape[-1], albert_config.vocab_size])
             log_probs = tf.nn.log_softmax(logits, axis=-1)
 
             label_ids = tf.reshape(masked_lm_ids, [-1])

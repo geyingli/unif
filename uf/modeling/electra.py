@@ -134,6 +134,8 @@ class ELECTRA(BaseDecoder):
                 transpose_b=True)
             logits = tf.nn.bias_add(logits, output_bias)
             probs = tf.nn.softmax(logits, axis=-1, name='MLM_probs')
+            probs = tf.reshape(
+                probs, [-1, inputs.masked_lm_positions.shape[-1], self.bert_config.vocab_size])
             preds = tf.argmax(logits, axis=-1)
             log_probs = tf.nn.log_softmax(logits, axis=-1)
 

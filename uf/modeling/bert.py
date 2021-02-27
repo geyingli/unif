@@ -530,8 +530,7 @@ class BERTDecoder(BaseDecoder):
         scalar_losses = []
 
         # masked language modeling
-        input_tensor = gather_indexes(
-            encoder.get_sequence_output(), masked_lm_positions)
+        input_tensor = gather_indexes(encoder.get_sequence_output(), masked_lm_positions)
         with tf.variable_scope(scope_lm):
             with tf.variable_scope('transform'):
                 input_tensor = tf.layers.dense(
@@ -550,6 +549,8 @@ class BERTDecoder(BaseDecoder):
                 input_tensor, encoder.get_embedding_table(), transpose_b=True)
             logits = tf.nn.bias_add(logits, output_bias)
             probs = tf.nn.softmax(logits, axis=-1, name='MLM_probs')
+            probs = tf.reshape(
+                probs, [-1, masked_lm_positions.shape[-1], bert_config.vocab_size])
             log_probs = tf.nn.log_softmax(logits, axis=-1)
 
             label_ids = tf.reshape(masked_lm_ids, [-1])

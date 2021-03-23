@@ -489,16 +489,6 @@ class AdversarialTraining(BasicTraining):
         with tf.control_dependencies([init_op]):    # fix perturbation
             # Scale randomly initialized permutation, to make sure norm
             # of `r` is smaller than epsilon.
-            shape = tf.cast(np.prod(init_r.shape.as_list()), tf.float32)
-            r = tf.divide(init_r, tf.sqrt(shape))
-            r = tf.IndexedSlices(values=r,
-                                 indices=grad.indices,
-                                 dense_shape=grad.dense_shape)
-            attack_op = param.assign(param + r)
-
-        with tf.control_dependencies([init_op]):    # fix perturbation
-            # Scale randomly initialized permutation, to make sure norm
-            # of `r` is smaller than epsilon.
             r = tf.divide(init_r, tf.norm(init_r, np.inf))
             r = tf.IndexedSlices(values=r,
                                  indices=grad.indices,

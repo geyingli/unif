@@ -440,7 +440,9 @@ class AdversarialTraining(BasicTraining):
                 # induced perturbation, we use norm to scale instead of
                 # simply clip the values.
                 norm = tf.norm(acc_r + tmp_r)
-                cur_r = (acc_r + tmp_r) * tf.divide(epsilon, norm)
+                cur_r = tf.cond(norm > epsilon,
+                                lambda: (acc_r + tmp_r) * tf.divide(epsilon, norm),
+                                lambda: (acc_r + tmp_r))
                 r = cur_r - acc_r    # calculate current step
                 attack_op = param.assign(param + r)
                 acc_r = cur_r
@@ -512,7 +514,9 @@ class AdversarialTraining(BasicTraining):
                 # induced perturbation, we use norm to scale instead of
                 # simply clip the values.
                 norm = tf.norm(acc_r + tmp_r)
-                cur_r = (acc_r + tmp_r) * tf.divide(epsilon, norm)
+                cur_r = tf.cond(norm > epsilon,
+                                lambda: (acc_r + tmp_r) * tf.divide(epsilon, norm),
+                                lambda: (acc_r + tmp_r))
                 r = cur_r - acc_r    # calculate current step
                 attack_op = param.assign(param + r)
                 acc_r = cur_r
@@ -564,7 +568,9 @@ class AdversarialTraining(BasicTraining):
                 sign = tf.cast(tf.greater(values, 0.0), tf.float32)
                 r = last_r + tf.multiply(epsilon, sign) if k > 0 else \
                     tf.multiply(epsilon, sign)
-                r *= tf.divide(epsilon, tf.norm(r))
+                r = tf.cond(tf.norm(r) > ARGS.epsilon,
+                            lambda: r * tf.divide(ARGS.epsilon, tf.norm(r)),
+                            lambda: r)
                 r_slice = tf.IndexedSlices(
                     values=r,
                     indices=grad.indices,

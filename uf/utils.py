@@ -746,6 +746,8 @@ def count_params(global_variables, trainable_variables):
 
 
 def average_n_grads(split_grads):
+    split_grads = [grad for grad in split_grads if grad is not None]
+
     # Dealing with IndexedSlices for large-dimensional embedding
     # matrix. The gradient of an embedding matrix is not a tensor,
     # but a tuple-like object named `IndexedSlices`, for this one,

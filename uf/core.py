@@ -597,13 +597,14 @@ class BaseModule:
         return self.graph._collections.get('variables', [])
 
     def export(self, export_dir, rename_inputs=None, rename_outputs=None,
-               ignore_outputs=None):
+               ignore_inputs=None, ignore_outputs=None):
         ''' Export model into SavedModel files.
 
         Args:
             export_dir: str. Directory to which the model is saved.
             rename_inputs: dict. Mapping of original name to target name.
             rename_outputs: dict. Mapping of original name to target name.
+            ignore_inputs: list. Name of inputs to ignore.
             ignore_outputs: list. Name of outputs to ignore.
         Returns:
             None
@@ -632,7 +633,8 @@ class BaseModule:
         with self.graph.as_default(), \
                 tf.variable_scope('', reuse=tf.AUTO_REUSE):
             self._build('export').run(
-                export_dir, rename_inputs, rename_outputs, ignore_outputs)
+                export_dir, rename_inputs, rename_outputs,
+                ignore_inputs, ignore_outputs)
 
     def _parallel_convert(self, X=None, y=None, sample_weight=None,
                           X_tokenized=None, is_training=False):

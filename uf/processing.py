@@ -1008,7 +1008,7 @@ class ExportInference(BaseTask):
                 module.global_variables, module.trainable_variables)
 
     def run(self, export_dir, rename_inputs=None, rename_outputs=None,
-            ignore_outputs=None):
+            ignore_inputs=None, ignore_outputs=None):
         module = self.module
 
         if not module._graph_built:
@@ -1026,10 +1026,10 @@ class ExportInference(BaseTask):
         inputs = {}
         def set_input(key, value):
             inputs[key] = tf.saved_model.utils.build_tensor_info(value)
-            tf.logging.info('Define input: %s, %s, %s' % (
+            tf.logging.info('Register Input: %s, %s, %s' % (
                 key, value.shape.as_list(), value.dtype.name))
         for key, value in list(module.placeholders.items()):
-            if key == 'sample_weight':
+            if key == 'sample_weight' or key in ignore_inputs:
                 continue
             if rename_inputs and key in rename_inputs:
                 key = rename_inputs[key]
@@ -1039,7 +1039,7 @@ class ExportInference(BaseTask):
         outputs = {}
         def set_output(key, value):
             outputs[key] = tf.saved_model.utils.build_tensor_info(value)
-            tf.logging.info('Define output: %s, %s, %s' % (
+            tf.logging.info('Register Output: %s, %s, %s' % (
                 key, value.shape.as_list(), value.dtype.name))
         if not ignore_outputs:
             ignore_outputs = []
@@ -1056,7 +1056,7 @@ class ExportInference(BaseTask):
             inputs, outputs,
             tf.saved_model.signature_constants.PREDICT_METHOD_NAME)
         signature_def_map = {'predict': signature}
-        tf.logging.info('Define signature: predict')
+        tf.logging.info('Register Signature: predict')
 
         legacy_init_op = tf.group(
             tf.tables_initializer(), name='legacy_init_op')

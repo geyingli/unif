@@ -82,7 +82,7 @@ class CLSDecoder(BaseDecoder):
             logits = tf.matmul(output_layer, output_weights, transpose_b=True)
             logits = tf.nn.bias_add(logits, output_bias)
 
-            self.preds['preds'] = tf.argmax(logits, axis=-1)
+            self.preds['preds'] = tf.argmax(logits, axis=-1, name='preds')
             self.probs['probs'] = tf.nn.softmax(logits, axis=-1, name='probs')
 
             log_probs = tf.nn.log_softmax(logits, axis=-1)
@@ -141,7 +141,7 @@ class BinaryCLSDecoder(BaseDecoder):
             probs = tf.nn.sigmoid(logits, name='probs')
 
             self.probs['probs'] = probs
-            self.preds['preds'] = tf.greater(probs, 0.5)
+            self.preds['preds'] = tf.greater(probs, 0.5, name='preds')
 
             per_label_loss = tf.nn.sigmoid_cross_entropy_with_logits(
                 logits=logits,
@@ -196,7 +196,7 @@ class SeqCLSDecoder(BaseDecoder):
             logits = tf.nn.bias_add(logits, output_bias)
             logits = tf.reshape(logits, [-1, seq_length, label_size])
 
-            self.preds['preds'] = tf.argmax(logits, axis=-1)
+            self.preds['preds'] = tf.argmax(logits, axis=-1, name='preds')
             self.probs['probs'] = tf.nn.softmax(logits, axis=-1, name='probs')
 
             log_probs = tf.nn.log_softmax(logits, axis=-1)
@@ -254,7 +254,7 @@ class MRCDecoder(BaseDecoder):
             logits = tf.transpose(logits, [0, 2, 1])
             probs = tf.nn.softmax(logits, axis=-1, name='probs')
             self.probs['probs'] = probs
-            self.preds['preds'] = tf.argmax(logits, axis=-1)
+            self.preds['preds'] = tf.argmax(logits, axis=-1, name='preds')
 
             start_one_hot_labels = tf.one_hot(
                 label_ids[:, 0], depth=seq_length, dtype=tf.float32)

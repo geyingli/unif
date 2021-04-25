@@ -1028,6 +1028,8 @@ class ExportInference(BaseTask):
             inputs[key] = tf.saved_model.utils.build_tensor_info(value)
             tf.logging.info('Register Input: %s, %s, %s' % (
                 key, value.shape.as_list(), value.dtype.name))
+        if not ignore_inputs:
+            ignore_inputs = []
         for key, value in list(module.placeholders.items()):
             if key == 'sample_weight' or key in ignore_inputs:
                 continue

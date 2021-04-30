@@ -752,17 +752,6 @@ def average_n_grads(split_grads):
     # matrix. The gradient of an embedding matrix is not a tensor,
     # but a tuple-like object named `IndexedSlices`, for this one,
     # we need to take special processings.
-    if split_grads[0].__str__().startswith('IndexedSlices'):
-        all_values = [grad.values for grad in split_grads]
-
-        values = tf.divide(tf.add_n(all_values), len(split_grads))
-        indices = split_grads[0].indices
-        dense_shape = split_grads[0].dense_shape
-
-        return tf.IndexedSlices(
-            values=values,
-            indices=indices,
-            dense_shape=dense_shape)
     return tf.divide(tf.add_n(split_grads), len(split_grads))
 
 

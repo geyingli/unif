@@ -747,11 +747,24 @@ def count_params(global_variables, trainable_variables):
 
 def average_n_grads(split_grads):
     split_grads = [grad for grad in split_grads if grad is not None]
+    if len(split_grads) == 1:
+        return split_grads[0]
 
     # Dealing with IndexedSlices for large-dimensional embedding
     # matrix. The gradient of an embedding matrix is not a tensor,
     # but a tuple-like object named `IndexedSlices`, for this one,
     # we need to take special processings.
+    if split_grads[0].__str__().startswith('IndexedSlices'):
+
+        values = tf.concat([grad.values for grad in split_grads], axis=0)
+        indices = tf.concat([grad.indices for grad in split_grads], axis=0)
+        dense_shape = split_grads[0].dense_shape
+        
+        return tf.IndexedSlices(
+            values=values,
+            indices=indices,
+            dense_shape=dense_shape)
+
     return tf.divide(tf.add_n(split_grads), len(split_grads))
 
 

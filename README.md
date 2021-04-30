@@ -10,7 +10,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-beta v2.7.5-blue">
+        <img src="https://img.shields.io/badge/version-beta v2.7.6-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-1.x\2.x-yellow">
@@ -342,6 +342,7 @@ beta v2.5.0 -> Now：
 - 变更：`UniLM` 在 `s2s` 模式下的结尾 token 从 `[SEP]` 改为 `[EOS]`
 - 变更：`VAELM` 取消返回 `[CLS]`
 - 修复：修复了 `RoBERTaLM` 相关的若干 bug
+- 修复：修复了多GPU训练及对抗式学习的若干 bug
 
 ## 尾声
 

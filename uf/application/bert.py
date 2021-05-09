@@ -196,8 +196,7 @@ class BERTClassifier(ClassifierModule):
             except Exception:
                 pass
             if len(self._id_to_label) < self.label_size:
-                for i in range(len(self._id_to_label), self.label_size):
-                    self._id_to_label.append(i)
+                self._id_to_label = list(range(self.label_size))
 
         # automatically set `label_to_id` for prediction
         self._label_to_id = {
@@ -390,8 +389,7 @@ class BERTBinaryClassifier(BERTClassifier, ClassifierModule):
             except Exception:
                 pass
             if len(self._id_to_label) < self.label_size:
-                for i in range(len(self._id_to_label), self.label_size):
-                    self._id_to_label.append(i)
+                self._id_to_label = list(range(self.label_size))
 
         # automatically set `label_to_id` for prediction
         self._label_to_id = {
@@ -606,8 +604,7 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
             except Exception:
                 pass
             if len(self._id_to_label) < self.label_size:
-                for i in range(len(self._id_to_label), self.label_size):
-                    self._id_to_label.append(i)
+                self._id_to_label = list(range(self.label_size))
 
         # automatically set `label_to_id` for prediction
         self._label_to_id = {
@@ -2616,8 +2613,7 @@ class BERTLM(LMModule):
             except Exception:
                 pass
             if len(self._id_to_label) < self.label_size:
-                for i in range(len(self._id_to_label), self.label_size):
-                    self._id_to_label.append(i)
+                self._id_to_label = list(range(self.label_size))
 
         # automatically set `label_to_id` for prediction
         self._label_to_id = {

@@ -10,7 +10,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-beta v2.7.6-blue">
+        <img src="https://img.shields.io/badge/version-beta v2.7.7-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-1.x\2.x-yellow">
@@ -108,6 +108,7 @@ print(model.predict(X))
 |  		| `ALBERTSeqClassifier` 		| Each token belongs to one single class |
 |  		| `ELECTRASeqClassifier` 		| Each token belongs to one single class |
 | Knowledge Distillation | `TinyBERTClassifier` 		| Largely reduce the size of parameters |
+|       | `TinyBERTBinaryClassifier`     | - |
 |  		| `FastBERTClassifier` 		| Dynamic inference who allows easy samples exit early |
 
 More details about the usage as well as positional arguments, check through `help(XXX)`, e.g. `help(uf.BERTCRFCascadeNER)`.

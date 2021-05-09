@@ -10,7 +10,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-beta v2.7.6-blue">
+        <img src="https://img.shields.io/badge/version-beta v2.7.7-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-1.x\2.x-yellow">
@@ -101,6 +101,7 @@ print(model.predict(X))
 |  		| `ALBERTSeqClassifier` 		| - |
 |  		| `ELECTRASeqClassifier` 		| - |
 | 模型蒸馏 | `TinyBERTClassifier` 		| 大幅压缩模型参数，提速十倍以上 |
+|       | `TinyBERTBinaryClassifier`     | - |
 |  		| `FastBERTClassifier` 		| 动态推理，易分样本提前离开模型 |
 
 文档目前还不完善，善用  `help(XXX)` 能帮你获得更多 API 的使用细节。
@@ -328,6 +329,7 @@ model.export(
 
 beta v2.5.0 -> Now：
 
+- 新增：添加 `uf.TinyBERTBinaryClassifier`，使用TinyBERT架构蒸馏BERT多分类模型
 - 新增：添加 `uf.MultiProcess`，可以通过多进程加速模型前的数据解析流程
 - 新增：添加 `uf.list_resources()` 和 `uf.download()` 用法，方便地下载公开预训练参数
 - 新增：使用 `model.cache()` 缓存模型时，可以传入 `note` 参数作为备注，传入 `max_to_keep` 参数限制 checkpoint 数量

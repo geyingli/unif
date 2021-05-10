@@ -110,7 +110,7 @@ class TinyBERTCLSDistillor(BaseDecoder):
             distill_loss = (embedding_loss + attention_loss +
                             hidden_loss + pred_loss)
             self.total_loss = distill_loss
-            self.losses['losses'] = distill_loss
+            self.losses['losses'] = tf.reshape(distill_loss, [1])
 
         else:
             self._infer(student_logits, label_ids, sample_weight, label_size)

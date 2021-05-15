@@ -292,9 +292,10 @@ model.cache('key')
 assert model.output_dir is not None
 model.export(
     export_dir,    # 导出目录
-    rename_inputs=None,    # 重命名输入
-    rename_outputs=None,    # 重命名输出
-    ignore_outputs=None)    # 裁剪多余输出
+    rename_inputs={},    # 重命名输入
+    rename_outputs={},    # 重命名输出
+    ignore_inputs=[],    # 剪裁多余输入
+    ignore_outputs=[])    # 裁剪多余输出
 ```
 
 ## FAQ

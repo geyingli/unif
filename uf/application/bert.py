@@ -366,8 +366,15 @@ class BERTBinaryClassifier(BERTClassifier, ClassifierModule):
         try:
             label_set = set()
             for sample in y:
+                _label_set = set()
                 for _y in sample:
+                    if _y in _label_set:
+                        raise ValueError(
+                            'The element of `y` should be a '
+                            'list of multiple answers. '
+                            'E.g. y=[[1,3], [0], [0,2]].')
                     label_set.add(_y)
+                    _label_set.add(_y)
         except:
             raise ValueError(
                 'The element of `y` should be a list of labels.')

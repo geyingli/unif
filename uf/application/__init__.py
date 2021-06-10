@@ -36,6 +36,7 @@ from .sem_bert import SemBERTClassifier
 from .performer import PerformerClassifier
 from .uda import UDAClassifier
 from .tiny_bert import TinyBERTClassifier
+from .tiny_bert import TinyBERTBinaryClassifier
 from .fast_bert import FastBERTClassifier
 from .stock_bert import StockBERTClassifier
 from .bert import BERTBinaryClassifier
@@ -100,6 +101,7 @@ __all__ = [
     'SemBERTClassifier',
     'UDAClassifier',
     'TinyBERTClassifier',
+    'TinyBERTBinaryClassifier',
     'FastBERTClassifier',
     'StockBERTClassifier',
     'BERTBinaryClassifier',

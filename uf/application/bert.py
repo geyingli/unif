@@ -196,8 +196,7 @@ class BERTClassifier(ClassifierModule):
             except Exception:
                 pass
             if len(self._id_to_label) < self.label_size:
-                for i in range(len(self._id_to_label), self.label_size):
-                    self._id_to_label.append(i)
+                self._id_to_label = list(range(self.label_size))
 
         # automatically set `label_to_id` for prediction
         self._label_to_id = {
@@ -367,11 +366,15 @@ class BERTBinaryClassifier(BERTClassifier, ClassifierModule):
         try:
             label_set = set()
             for sample in y:
+                _label_set = set()
                 for _y in sample:
+                    assert _y not in _label_set
                     label_set.add(_y)
+                    _label_set.add(_y)
         except:
             raise ValueError(
-                'The element of `y` should be a list of labels.')
+                'The element of `y` should be a list of multiple answers. '
+                'E.g. y=[[1, 3], [0], [0, 2]].')
 
         # automatically set `label_size`
         if self.label_size:
@@ -390,8 +393,7 @@ class BERTBinaryClassifier(BERTClassifier, ClassifierModule):
             except Exception:
                 pass
             if len(self._id_to_label) < self.label_size:
-                for i in range(len(self._id_to_label), self.label_size):
-                    self._id_to_label.append(i)
+                self._id_to_label = list(range(self.label_size))
 
         # automatically set `label_to_id` for prediction
         self._label_to_id = {
@@ -606,8 +608,7 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
             except Exception:
                 pass
             if len(self._id_to_label) < self.label_size:
-                for i in range(len(self._id_to_label), self.label_size):
-                    self._id_to_label.append(i)
+                self._id_to_label = list(range(self.label_size))
 
         # automatically set `label_to_id` for prediction
         self._label_to_id = {
@@ -2616,8 +2617,7 @@ class BERTLM(LMModule):
             except Exception:
                 pass
             if len(self._id_to_label) < self.label_size:
-                for i in range(len(self._id_to_label), self.label_size):
-                    self._id_to_label.append(i)
+                self._id_to_label = list(range(self.label_size))
 
         # automatically set `label_to_id` for prediction
         self._label_to_id = {

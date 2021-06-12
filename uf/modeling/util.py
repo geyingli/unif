@@ -67,7 +67,8 @@ def layer_norm(input_tensor,
                outputs_collections=None,
                begin_norm_axis=-1,
                begin_params_axis=-1,
-               trainable=True):
+               trainable=True,
+               name='LayerNorm'):
     ''' Runs layer normalization on the last dimension of the tensor.
 
     Args:
@@ -102,7 +103,7 @@ def layer_norm(input_tensor,
         time, or if `input_tensor.shape[begin_params_axis:]` is not fully
         defined at graph build time.
     '''
-    with tf.variable_scope('LayerNorm'):
+    with tf.variable_scope(name):
         inputs_shape = input_tensor.shape
         inputs_rank = inputs_shape.ndims
         if inputs_rank is None:

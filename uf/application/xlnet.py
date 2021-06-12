@@ -81,27 +81,46 @@ class XLNetClassifier(BERTClassifier, ClassifierModule):
         self._key_to_depths = get_key_to_depths(self.xlnet_config.n_layer)
 
     def _convert_X(self, X_target, tokenized):
+
+        # tokenize input texts
+        segment_input_tokens = []
+        for ex_id, example in enumerate(X_target):
+            try:
+                segment_input_tokens.append(self._convert_x(example, tokenized))
+            except Exception:
+                raise ValueError(
+                    'Wrong input format (line %d): \'%s\'. '
+                    % (ex_id, example))
+
         input_ids = []
         input_mask = []
         segment_ids = []
-
-        # tokenize input texts
-        for ex_id, example in enumerate(X_target):
-            _input_tokens = self._convert_x(example, tokenized)
+        for ex_id, segments in enumerate(segment_input_tokens):
+            _input_ids = []
+            _input_mask = []
+            _segment_ids = []
 
             utils.truncate_segments(
-                [_input_tokens], self.max_seq_length,
+                segments, self.max_seq_length - len(segments) - 1,
                 truncate_method=self.truncate_method)
 
-            _input_ids = self.tokenizer.convert_tokens_to_ids(_input_tokens)
-            _input_mask = [0 for _ in range(len(_input_tokens))]
-            _segment_ids = [0 for _ in range(len(_input_tokens))]
+            for s_id, segment in enumerate(segments):
+                _segment_id = min(s_id, 1)
+                _input_ids.extend(self.tokenizer.convert_tokens_to_ids(
+                    segment) + [SEP_ID])
+                _input_mask.extend([1] * (len(segment) + 1))
+                _segment_ids.extend([_segment_id] * (len(segment) + 1))
+
+            _input_ids.append(CLS_ID)
+            _input_mask.append(1)
+            _segment_ids.append(SEG_ID_CLS)
 
             # padding
-            for _ in range(self.max_seq_length - len(_input_ids)):
-                _input_ids.insert(0, 0)
-                _input_mask.insert(0, 1)  # it's 1, no error
-                _segment_ids.insert(0, SEG_ID_PAD)
+            if len(_input_ids) < self.max_seq_length:
+                delta_len = self.max_seq_length - len(_input_ids)
+                _input_ids = [0] * delta_len + _input_ids
+                _input_mask = [0] * delta_len + _input_mask  # it's 1 in source code
+                _segment_ids = [SEG_ID_PAD] * delta_len + _segment_ids
 
             input_ids.append(_input_ids)
             input_mask.append(_input_mask)
@@ -205,7 +224,7 @@ class XLNetBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
             if len(_input_ids) < self.max_seq_length:
                 delta_len = self.max_seq_length - len(_input_ids)
                 _input_ids = [0] * delta_len + _input_ids
-                _input_mask = [1] * delta_len + _input_mask  # it's 1, no error
+                _input_mask = [0] * delta_len + _input_mask  # it's 1 in source code
                 _segment_ids = [SEG_ID_PAD] * delta_len + _segment_ids
 
             input_ids.append(_input_ids)
@@ -310,13 +329,13 @@ class XLNetSeqClassifier(BERTSeqClassifier, ClassifierModule):
             if len(_input_ids) < self.max_seq_length:
                 delta_len = self.max_seq_length - len(_input_ids)
                 _input_ids = [0] * delta_len + _input_ids
-                _input_mask = [1] * delta_len + _input_mask  # it's 1, no error
+                _input_mask = [0] * delta_len + _input_mask  # it's 1 in source code
                 _segment_ids = [SEG_ID_PAD] * delta_len + _segment_ids
 
             input_ids.append(_input_ids)
             input_mask.append(_input_mask)
             segment_ids.append(_segment_ids)
-
+            
         return input_ids, input_mask, segment_ids
 
     def _forward(self, is_training, split_placeholders, **kwargs):

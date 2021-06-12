@@ -131,7 +131,16 @@ class XLNetEncoder(BaseEncoder):
         self.run_config = run_config
 
     def get_pooled_output(self):
-        return self.output[0]
+        '''
+        Returns:
+          float32 Tensor in shape [len, bsz, d_model]. The last layer hidden
+          representation of XLNet.
+        '''
+        seq_length = self.output.shape.as_list()[0]
+        mask = tf.cast(tf.expand_dims(self.input_mask, axis=-1), tf.float32)
+        length = tf.reduce_sum(mask, axis=0, keepdims=True)
+        output = self.output * mask * (seq_length / length)
+        return tf.reduce_mean(output, axis=0)
 
     def get_sequence_output(self):
         '''
@@ -139,7 +148,7 @@ class XLNetEncoder(BaseEncoder):
           float32 Tensor in shape [len, bsz, d_model]. The last layer hidden
           representation of XLNet.
         '''
-        seq_length, _, hidden_size = self.output.shape.as_list()
+        seq_length, batch_size, hidden_size = self.output.shape.as_list()
         return tf.transpose(self.output, [1, 0, 2])
 
     def get_new_memory(self):
@@ -391,11 +400,9 @@ def post_attention(h, attn_vec, d_model, n_head, d_head, dropout, is_training,
 
     attn_out = tf.layers.dropout(attn_out, dropout, training=is_training)
     if residual:
-        output = util.layer_norm(
-            attn_out + h, name='LayerNorm')
+        output = util.layer_norm(attn_out + h)
     else:
-        output = util.layer_norm(
-            attn_out, name='LayerNorm')
+        output = util.L(attn_out)
 
     return output
 

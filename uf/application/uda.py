@@ -144,7 +144,7 @@ class UDAClassifier(BERTClassifier, ClassifierModule):
                     is_supervised.append(1)
             except AssertionError:
                 raise AssertionError (
-                    'Must have exactly two inputs for an '
+                    'Must have exactly two sentence input for an '
                     'unsupervised example, respectively original '
                     'and augmented.')
             except Exception:

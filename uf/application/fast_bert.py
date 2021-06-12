@@ -18,7 +18,7 @@ import numpy as np
 
 from uf.tools import tf
 from .base import ClassifierModule
-from uf.modeling.fast_bert import FastBERTCLSDistillor
+from uf.modeling.fast_bert import FastBERTCLSDistillor, convert_ignore_cls
 from .bert import BERTClassifier, get_bert_config
 from uf.tokenization.word_piece import get_word_piece_tokenizer
 import uf.utils as utils
@@ -48,7 +48,7 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
         self.label_size = label_size
         self.truncate_method = truncate_method
         self._cls_model = cls_model
-        self._ignore_cls = '0'
+        self._ignore_cls = [0]
         self._speed = 0.1
         self._drop_pooler = drop_pooler
         self._id_to_label = None
@@ -86,7 +86,7 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
         '''
 
         if ignore_cls != self._ignore_cls:
-            self._ignore_cls = ignore_cls
+            self._ignore_cls = convert_ignore_cls(ignore_cls)
             self._graph_mode = None
 
         if speed != self._speed:
@@ -117,7 +117,7 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
         '''
 
         if ignore_cls != self._ignore_cls:
-            self._ignore_cls = ignore_cls
+            self._ignore_cls = convert_ignore_cls(ignore_cls)
             self._graph_mode = None
 
         if speed != self._speed:
@@ -146,7 +146,7 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
         '''
 
         if ignore_cls != self._ignore_cls:
-            self._ignore_cls = ignore_cls
+            self._ignore_cls = convert_ignore_cls(ignore_cls)
             self._graph_mode = None
 
         if speed != self._speed:
@@ -250,7 +250,7 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
             keep_cls = [
                 cls_idx for cls_idx \
                 in list(range(self.bert_config.num_hidden_layers + 1)) \
-                if cls_idx not in self._ignore_cls]
+                if str(cls_idx) not in self._ignore_cls]
             i = 0
 
             for d in range(n_device):

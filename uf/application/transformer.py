@@ -47,7 +47,7 @@ class TransformerMT(MTModule):
                  output_dir=None,
                  gpu_ids=None,
                  hidden_size=768,
-                 num_hidden_layers=6,
+                 num_hidden_layers=12,
                  num_attention_heads=12,
                  do_lower_case=True,
                  truncate_method='LIFO'):

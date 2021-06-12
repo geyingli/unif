@@ -40,7 +40,8 @@ class ELECTRA(BaseDecoder):
                  is_training,
                  placeholders,
                  sample_weight,
-                 electra_objective=False,
+                 max_predictions_per_seq=20,
+                 electra_objective=True,
                  **kwargs):
         super().__init__()
 
@@ -52,7 +53,9 @@ class ELECTRA(BaseDecoder):
         if is_training:
             if electra_objective:
                 tf.logging.info(
-                    'Training on Generator and Discriminator.')
+                    'Training on Generator and Discriminator. '
+                    '(Pass `electra_objective=False` to exclude '
+                    'Discriminator)')
             else:
                 tf.logging.info(
                     'Training on Generator, with Discriminator frozen. '
@@ -74,7 +77,8 @@ class ELECTRA(BaseDecoder):
             masked_inputs, sample_weight, generator)
         self.total_loss = self.config.gen_weight * mlm_output.loss
         self.losses['MLM_losses'] = mlm_output.per_example_loss
-        self.preds['MLM_preds'] = mlm_output.preds
+        self.preds['MLM_preds'] = tf.reshape(
+            mlm_output.preds, [-1, max_predictions_per_seq])
 
         # Discriminator
         fake_data = self._get_fake_data(masked_inputs, mlm_output.logits)

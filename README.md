@@ -10,7 +10,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-beta v2.7.7-blue">
+        <img src="https://img.shields.io/badge/version-beta v2.8.0-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-1.x\2.x-yellow">
@@ -88,7 +88,6 @@ print(model.predict(X))
 |  		| `ELECTRAClassifier` 		| - |
 |  		| `WideAndDeepClassifier` | 通过 Wide & Deep 架构融合句子级别特征 |
 |  		| `SemBERTClassifier` 		| 通过 SemBERT 架构融合字级别的特征 |
-|  		| `PerformerClassifier` 		| 引入 FAVOR+ 加速推理 |
 |  		| `UDAClassifier` 		| 结合一致性学习的半监督学习算法 |
 | 多 Label 分类 | `BERTBinaryClassifier` 		| - |
 |  		| `XLNetBinaryClassifier` 		| - |
@@ -96,7 +95,6 @@ print(model.predict(X))
 |  		| `ALBERTBinaryClassifier` 		| - |
 |  		| `ELECTRABinaryClassifier` 		| - |
 | 序列标注 | `BERTSeqClassifier` 		| - |
-|  		| `XLNetSeqClassifier` 		| - |
 |  		| `RoBERTaSeqClassifier` 		| - |
 |  		| `ALBERTSeqClassifier` 		| - |
 |  		| `ELECTRASeqClassifier` 		| - |

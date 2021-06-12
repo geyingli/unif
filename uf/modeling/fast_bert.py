@@ -40,21 +40,9 @@ class FastBERTCLSDistillor(BaseDecoder, BERTEncoder):
                  cls_model='self-attention',
                  label_size=2,
                  speed=0.1,
-                 ignore_cls='0',
+                 ignore_cls=[0],
                  **kwargs):
         super(FastBERTCLSDistillor, self).__init__()
-
-        if not ignore_cls:
-            ignore_cls = []
-        if isinstance(ignore_cls, str):
-            ignore_cls = ignore_cls.replace(' ','').split(',')
-            ignore_cls = list(map(int, ignore_cls))
-        elif isinstance(ignore_cls, list):
-            ignore_cls = list(map(int, ignore_cls))
-        else:
-            raise ValueError(
-                '`ignore_cls` should be a list of child-classifier ids or '
-                'a string seperated with commas.')
 
         if not speed:
             raise ValueError(
@@ -541,3 +529,18 @@ class FastBERTCLSDistillor(BaseDecoder, BERTEncoder):
             cls_output = tf.nn.bias_add(cls_logits, cls_output_bias)
 
         return cls_output
+
+
+def convert_ignore_cls(ignore_cls):
+    if not ignore_cls:
+        ignore_cls = []
+    if isinstance(ignore_cls, str):
+        ignore_cls = ignore_cls.replace(' ','').split(',')
+        ignore_cls = list(map(int, ignore_cls))
+    elif isinstance(ignore_cls, list):
+        ignore_cls = list(map(int, ignore_cls))
+    else:
+        raise ValueError(
+            '`ignore_cls` should be a list of child-classifier ids or '
+            'a string seperated with commas.')
+    return ignore_cls

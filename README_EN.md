@@ -10,7 +10,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-beta v2.7.7-blue">
+        <img src="https://img.shields.io/badge/version-beta v2.8.0-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-1.x\2.x-yellow">
@@ -95,7 +95,6 @@ print(model.predict(X))
 |  		| `ELECTRAClassifier` 		| Each sample belongs to one class |
 |  		| `WideAndDeepClassifier` 		| Each sample belongs to one class.<br>Combined with more sentence-level features through Wide&Deep structure |
 |  		| `SemBERTClassifier` 		| Each sample belongs to one class.<br>Combined with more token-level features through SemBERT structure |
-|  		| `PerformerClassifier` 		| Each sample belongs to one class.<br>Accelerate inference with FAVOR+ |
 |  		| `UDAClassifier` 		| Semi-supervised algorithm with consistency training |
 | Multi-label Classification | `BERTBinaryClassifier` 		| Each sample belongs to zero or multiple classes |
 |  		| `XLNetBinaryClassifier` 		| Each sample belongs to zero or multiple classes |
@@ -103,7 +102,6 @@ print(model.predict(X))
 |  		| `ALBERTBinaryClassifier` 		| Each sample belongs to zero or multiple classes |
 |  		| `ELECTRABinaryClassifier` 		| Each sample belongs to zero or multiple classes |
 | Sequence Labeling | `BERTSeqClassifier` 		| Each token belongs to one single class |
-|  		| `XLNetSeqClassifier` 		| Each token belongs to one single class |
 |  		| `RoBERTaSeqClassifier` 		| Each token belongs to one single class |
 |  		| `ALBERTSeqClassifier` 		| Each token belongs to one single class |
 |  		| `ELECTRASeqClassifier` 		| Each token belongs to one single class |

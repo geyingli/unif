@@ -76,7 +76,7 @@ class TextCNNEncoder(BaseEncoder):
                 with tf.variable_scope('conv_%s' % filter_size):
 
                     # Convolution Layer
-                    filter_shape = [filter_size, embedding_size, 1, num_channels]
+                    filter_shape = [int(filter_size), embedding_size, 1, num_channels]
                     W = tf.get_variable(
                         name='W',
                         shape=filter_shape,

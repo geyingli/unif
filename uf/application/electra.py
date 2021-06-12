@@ -500,6 +500,7 @@ class ELECTRALM(BERTLM, LMModule):
             is_training=is_training,
             placeholders=split_placeholders,
             sample_weight=split_placeholders.get('sample_weight'),
+            max_predictions_per_seq=self._max_predictions_per_seq,
             gen_weight=self.generator_weight,
             disc_weight=self.discriminator_weight,
             **kwargs)
@@ -578,6 +579,8 @@ class ELECTRALM(BERTLM, LMModule):
         mlm_preds = []
         mlm_positions = self.data['masked_lm_positions']
         all_preds = utils.transform(output_arrays[0], n_inputs)
+        tf.logging.info(output_arrays[0])
+        tf.logging.info(all_preds)
         for ex_id, _preds in enumerate(all_preds):
             _ids = []
             for p_id, _id in enumerate(_preds):

@@ -1046,8 +1046,8 @@ class BERTNER(BERTClassifier, NERModule):
         loss = np.mean(batch_losses)
 
         info = ''
-        info += ', f1 (T) %.4f' % f1_token
-        info += ', f1 (E) %.4f' % f1_entity
+        info += ', f1/token %.4f' % f1_token
+        info += ', f1/entity %.4f' % f1_entity
         info += ', loss %.6f' % loss
 
         return info
@@ -1124,8 +1124,8 @@ class BERTNER(BERTClassifier, NERModule):
         loss = np.mean(losses)
 
         outputs = {}
-        outputs['f1 (T)'] = f1_token
-        outputs['f1 (E)'] = f1_entity
+        outputs['f1/token'] = f1_token
+        outputs['f1/entity'] = f1_entity
         outputs['loss'] = loss
 
         return outputs
@@ -1194,8 +1194,8 @@ class BERTCRFNER(BERTNER, NERModule):
         loss = np.mean(batch_losses)
 
         info = ''
-        info += ', f1 (T) %.4f' % f1_token
-        info += ', f1 (E) %.4f' % f1_entity
+        info += ', f1/token %.4f' % f1_token
+        info += ', f1/entity %.4f' % f1_entity
         info += ', loss %.6f' % loss
 
         return info
@@ -1283,8 +1283,8 @@ class BERTCRFNER(BERTNER, NERModule):
         loss = np.mean(losses)
 
         outputs = {}
-        outputs['f1 (T)'] = f1_token
-        outputs['f1 (E)'] = f1_entity
+        outputs['f1/token'] = f1_token
+        outputs['f1/entity'] = f1_entity
         outputs['loss'] = loss
 
         return outputs

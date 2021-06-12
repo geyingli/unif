@@ -44,22 +44,22 @@ class NERModule(BaseModule):
             B_ids.append(B_id)
             f1_token, f1_entity = self._get_f1(
                 preds, labels, mask, B_id=B_id)
-            metrics['f1 (%s-T)' % entity_type] = f1_token
-            metrics['f1 (%s-E)' % entity_type] = f1_entity
+            metrics['f1/%s-token' % entity_type] = f1_token
+            metrics['f1/%s-entity' % entity_type] = f1_entity
 
         # macro f1
         f1_macro_token = np.mean(
             [metrics[key] for key in metrics if '-T)' in key])
         f1_macro_entity = np.mean(
             [metrics[key] for key in metrics if '-E)' in key])
-        metrics['f1 <Macro-T>'] = f1_macro_token
-        metrics['f1 <Macro-E>'] = f1_macro_entity
+        metrics['macro f1/token'] = f1_macro_token
+        metrics['macro f1/entity'] = f1_macro_entity
 
         # micro f1
         f1_micro_token, f1_micro_entity = self._get_f1(
             preds, labels, mask, B_id=B_ids)
-        metrics['f1 <Micro-T>'] = f1_micro_token
-        metrics['f1 <Micro-E>'] = f1_micro_entity
+        metrics['micro f1/token'] = f1_micro_token
+        metrics['micro f1/entity'] = f1_micro_entity
 
         return metrics
 

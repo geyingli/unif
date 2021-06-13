@@ -49,9 +49,9 @@ class NERModule(BaseModule):
 
         # macro f1
         f1_macro_token = np.mean(
-            [metrics[key] for key in metrics if '-T)' in key])
+            [metrics[key] for key in metrics if '-token' in key])
         f1_macro_entity = np.mean(
-            [metrics[key] for key in metrics if '-E)' in key])
+            [metrics[key] for key in metrics if '-entity' in key])
         metrics['macro f1/token'] = f1_macro_token
         metrics['macro f1/entity'] = f1_macro_entity
 

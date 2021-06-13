@@ -79,7 +79,7 @@ class TinyBERTClassifier(BERTClassifier, ClassifierModule):
         ''' Isolate student tiny_bert out of traing graph. '''
         if not self._graph_built:
             raise ValueError(
-                'Fit, predict or score before saving checkpoint.')
+                'Init, fit, predict or score before saving checkpoint.')
 
         if not self.output_dir:
             raise ValueError('Attribute `output_dir` is None.')
@@ -224,7 +224,7 @@ class TinyBERTBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
         ''' Isolate student tiny_bert out of traing graph. '''
         if not self._graph_built:
             raise ValueError(
-                'Fit, predict or score before saving checkpoint.')
+                'Init, fit, predict or score before saving checkpoint.')
 
         if not self.output_dir:
             raise ValueError('Attribute `output_dir` is None.')

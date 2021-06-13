@@ -1,5 +1,5 @@
 # coding:=utf-8
-# Copyright 2020 Tencent. All rights reserved.
+# Copyright 2021 Tencent. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,7 +20,10 @@ import json
 import time
 import copy
 import logging
-import requests
+try:
+    import requests
+except:
+    pass
 import collections
 import numpy as np
 import multiprocessing
@@ -35,8 +38,6 @@ from uf.tokenization.word_piece import (
 from . import application
 
 PACK_DIR = os.path.dirname(__file__)
-SIGNS = ('~`!@#$%^&*()_-+=][\}{|;\':",./><?·！@#￥%……&*（）——+'
-         '【】「」：；”    “’‘《，》。？、')
 
 
 
@@ -65,6 +66,15 @@ def unimported_module(name, required):
 class TFModuleError(Exception):
     def __init__(self, *args, **kwargs):
         pass
+
+
+def warning(func):
+    def wrapper(*args, **kwargs):
+        try:
+            func(*args, **kwargs)
+        except Exception as e:
+            tf.logging.warning(e)
+    return wrapper
 
 
 NUM_PROCESSES = 1

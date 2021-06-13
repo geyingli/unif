@@ -1,5 +1,11 @@
 UPDATION
 test.py
 *.sh
-unif.tar.gz
+*.tar.gz
+*.zip
+
+build
+dist
+uf.egg-info
+tmp
 

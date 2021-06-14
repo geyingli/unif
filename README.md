@@ -29,8 +29,7 @@
 - 品类丰富：支持 40+ 种模型类
 - 唯一依赖：Tensorflow 1.x/2.x
 - 高分保证：提供分层学习率、对抗式训练等多项训练技巧
-- 高扩展性：代码高度抽象、易扩展，能够高效支持更多 SOTA 算法
-- 可供部署：导出 SavedModel，供部署使用
+- 可供部署：导出模型 PB 文件，供部署使用
 
 ### 安装
 
@@ -46,7 +45,7 @@ python3 setup.py install --user
 import uf
 
 # 载入模型（使用 demo 配置文件进行示范）
-model = uf.BERTClassifier(config_file='demo/bert_config.json', vocab_file='demo/vocab.txt')
+model = uf.BERTClassifier(config_file='./demo/bert_config.json', vocab_file='./demo/vocab.txt')
 
 # 定义训练样本
 X, y = ['久旱逢甘露', '他乡遇故知'], [1, 0]
@@ -102,7 +101,7 @@ print(model.predict(X))
 |       | [`TinyBERTBinaryClassifier`](./examples/TinyBERTBinaryClassifier.ipynb)     | - |
 |  		| [`FastBERTClassifier`](./examples/FastBERTClassifier.ipynb) 		| 动态推理，易分样本提前离开模型 |
 
-文档目前还不完善，善用  `help(XXX)` 能帮你获得更多 API 的使用细节。
+点击上方模型名称，查看简要的使用示范。此外，善用  `help(XXX)` 能帮你获得更多 API 的使用细节。
 
 ## 建模
 
@@ -286,10 +285,9 @@ model.cache('key')
 ## TFServing
 
 ``` python
-# 导出 PB 文件到 `output_dir` 下
-assert model.output_dir is not None
+# 导出 PB 文件到指定目录下
 model.export(
-    export_dir,    # 导出目录
+    'serving',    # 导出目录
     rename_inputs={},    # 重命名输入
     rename_outputs={},    # 重命名输出
     ignore_inputs=[],    # 剪裁多余输入

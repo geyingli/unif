@@ -84,9 +84,10 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
         Returns:
             A dict object of model outputs.
         '''
+        ignore_cls = convert_ignore_cls(ignore_cls)
 
         if ignore_cls != self._ignore_cls:
-            self._ignore_cls = convert_ignore_cls(ignore_cls)
+            self._ignore_cls = ignore_cls
             self._graph_mode = None
 
         if speed != self._speed:
@@ -115,9 +116,10 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
         Returns:
             A dict object of output metrics.
         '''
+        ignore_cls = convert_ignore_cls(ignore_cls)
 
         if ignore_cls != self._ignore_cls:
-            self._ignore_cls = convert_ignore_cls(ignore_cls)
+            self._ignore_cls = ignore_cls
             self._graph_mode = None
 
         if speed != self._speed:
@@ -144,9 +146,10 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
         Returns:
             None
         '''
+        ignore_cls = convert_ignore_cls(ignore_cls)
 
         if ignore_cls != self._ignore_cls:
-            self._ignore_cls = convert_ignore_cls(ignore_cls)
+            self._ignore_cls = ignore_cls
             self._graph_mode = None
 
         if speed != self._speed:
@@ -250,7 +253,7 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
             keep_cls = [
                 cls_idx for cls_idx \
                 in list(range(self.bert_config.num_hidden_layers + 1)) \
-                if str(cls_idx) not in self._ignore_cls]
+                if cls_idx not in self._ignore_cls]
             i = 0
 
             for d in range(n_device):

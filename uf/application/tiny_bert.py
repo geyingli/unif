@@ -75,20 +75,19 @@ class TinyBERTClassifier(BERTClassifier, ClassifierModule):
             self.student_config.vocab_size += 1
             tf.logging.info('Add necessary token `[SEP]` into vocabulary.')
 
-    def to_bert(self):
+    def to_bert(self, save_dir):
         ''' Isolate student tiny_bert out of traing graph. '''
         if not self._graph_built:
             raise ValueError(
                 'Init, fit, predict or score before saving checkpoint.')
-
-        if not self.output_dir:
-            raise ValueError('Attribute `output_dir` is None.')
+                
+        tf.gfile.MakeDirs(save_dir)
 
         tf.logging.info(
             'Saving checkpoint into %s/bert_model.ckpt'
-            % (self.output_dir))
+            % (save_dir))
         self.init_checkpoint = (
-            self.output_dir + '/bert_model.ckpt')
+            save_dir + '/bert_model.ckpt')
 
         assignment_map = {}
         for var in self.global_variables:
@@ -98,7 +97,7 @@ class TinyBERTClassifier(BERTClassifier, ClassifierModule):
         saver.save(self.sess, self.init_checkpoint)
 
         self.student_config.to_json_file(
-            os.path.join(self.output_dir, 'bert_config.json'))
+            os.path.join(save_dir, 'bert_config.json'))
 
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
                 is_training=False):
@@ -220,20 +219,19 @@ class TinyBERTBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
             self.student_config.vocab_size += 1
             tf.logging.info('Add necessary token `[SEP]` into vocabulary.')
 
-    def to_bert(self):
+    def to_bert(self, save_dir):
         ''' Isolate student tiny_bert out of traing graph. '''
         if not self._graph_built:
             raise ValueError(
                 'Init, fit, predict or score before saving checkpoint.')
-
-        if not self.output_dir:
-            raise ValueError('Attribute `output_dir` is None.')
+                
+        tf.gfile.MakeDirs(save_dir)
 
         tf.logging.info(
             'Saving checkpoint into %s/bert_model.ckpt'
-            % (self.output_dir))
+            % (save_dir))
         self.init_checkpoint = (
-            self.output_dir + '/bert_model.ckpt')
+            save_dir + '/bert_model.ckpt')
 
         assignment_map = {}
         for var in self.global_variables:
@@ -243,7 +241,7 @@ class TinyBERTBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
         saver.save(self.sess, self.init_checkpoint)
 
         self.student_config.to_json_file(
-            os.path.join(self.output_dir, 'bert_config.json'))
+            os.path.join(save_dir, 'bert_config.json'))
 
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
                 is_training=False):

@@ -10,7 +10,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-beta v2.8.0-blue">
+        <img src="https://img.shields.io/badge/version-beta v2.8.1-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-1.x\2.x-yellow">
@@ -62,45 +62,45 @@ print(model.predict(X))
 
 | 领域 | API 				| 简介                                               |
 | :---------- | :----------- | :----------- |
-| 语言模型 | `BERTLM` 		| 结合 MLM 和 NSP 任务，随机采样自下文及其他文档 |
-|  		| `RoBERTaLM` 		| 仅 MLM 任务，采样至文档结束 |
-|  		| `ALBERTLM` 		| 结合 MLM 和 SOP，随机采样自上下文及其他文档 |
-|  		| `ELECTRALM` 		| 结合 MLM 和 RTD，生成器与判别器联合训练 |
-|       | `VAELM` | 可生成语言文本负样本，也可提取向量用于聚类 |
-|  | `GPT2LM` | 自回归式文本生成 |
-|       | `UniLM` | 结合双向、单向及 Seq2Seq 建模的全能语言模型 |
-| 命名实体识别 | `BERTNER` 		| - |
-|  		| `BERTCRFNER` 		| 结合 CRF |
-|  | `BERTCRFCascadeNER` | 识别与分类同时进行的级联架构 |
-| 机器翻译 | `TransformerMT` | 共享词表，标准 Seq2Seq 架构 |
-| 机器阅读理解 | `BERTMRC` 		| - |
-|  		| `RoBERTaMRC` 		| - |
-|  		| `ALBERTMRC` 		| - |
-|  		| `ELECTRAMRC` 		| - |
-|  		| `SANetMRC` 		| 引入 Sentence Attention |
-|  | `BERTVerifierMRC` | 抽取 answer span 的同时判断可答性 |
-|  | `RetroReaderMRC` | 抽取 answer span 的同时判断可答性 |
-| 单 Label 分类 | `TextCNNClassifier` 		| 小而快 |
-|  		| `BERTClassifier` 		| - |
-|  		| `XLNetClassifier` 		| - |
-|  		| `RoBERTaClassifier` 		| - |
-|  		| `ALBERTClassifier` 		| - |
-|  		| `ELECTRAClassifier` 		| - |
-|  		| `WideAndDeepClassifier` | 通过 Wide & Deep 架构融合句子级别特征 |
-|  		| `SemBERTClassifier` 		| 通过 SemBERT 架构融合字级别的特征 |
-|  		| `UDAClassifier` 		| 结合一致性学习的半监督学习算法 |
-| 多 Label 分类 | `BERTBinaryClassifier` 		| - |
-|  		| `XLNetBinaryClassifier` 		| - |
-|  		| `RoBERTaBinaryClassifier` 		| - |
-|  		| `ALBERTBinaryClassifier` 		| - |
-|  		| `ELECTRABinaryClassifier` 		| - |
-| 序列标注 | `BERTSeqClassifier` 		| - |
-|  		| `RoBERTaSeqClassifier` 		| - |
-|  		| `ALBERTSeqClassifier` 		| - |
-|  		| `ELECTRASeqClassifier` 		| - |
-| 模型蒸馏 | `TinyBERTClassifier` 		| 大幅压缩模型参数，提速十倍以上 |
-|       | `TinyBERTBinaryClassifier`     | - |
-|  		| `FastBERTClassifier` 		| 动态推理，易分样本提前离开模型 |
+| 语言模型 | [`BERTLM`](./examples/BERTLM.ipynb) | 结合 MLM 和 NSP 任务，随机采样自下文及其他文档 |
+|  		| [`RoBERTaLM`](./examples/RoBERTaLM.ipynb) 		| 仅 MLM 任务，采样至文档结束 |
+|  		| [`ALBERTLM`](./examples/ALBERTLM.ipynb) 		| 结合 MLM 和 SOP，随机采样自上下文及其他文档 |
+|  		| [`ELECTRALM`](./examples/ELECTRALM.ipynb) 		| 结合 MLM 和 RTD，生成器与判别器联合训练 |
+|       | [`VAELM`](./examples/VAELM.ipynb) | 可生成语言文本负样本，也可提取向量用于聚类 |
+|  | [`GPT2LM`](./examples/GPT2LM.ipynb) | 自回归式文本生成 |
+|       | [`UniLM`](./examples/UniLM.ipynb) | 结合双向、单向及 Seq2Seq 建模的全能语言模型 |
+| 命名实体识别 | [`BERTNER`](./examples/BERTNER.ipynb) 		| - |
+|  		| [`BERTCRFNER`](./examples/BERTCRFNER.ipynb) 		| 结合 CRF |
+|  | [`BERTCRFCascadeNER`](./examples/BERTCRFCascadeNER.ipynb) | 识别与分类同时进行的级联架构 |
+| 机器翻译 | [`TransformerMT`](./examples/TransformerMT.ipynb) | 共享词表，标准 Seq2Seq 架构 |
+| 机器阅读理解 | [`BERTMRC`](./examples/BERTMRC.ipynb) 		| - |
+|  		| [`RoBERTaMRC`](./examples/RoBERTaMRC.ipynb) 		| - |
+|  		| [`ALBERTMRC`](./examples/ALBERTMRC.ipynb) 		| - |
+|  		| [`ELECTRAMRC`](./examples/ELECTRAMRC.ipynb) 		| - |
+|  		| [`SANetMRC`](./examples/SANetMRC.ipynb) 		| 引入 Sentence Attention |
+|  | [`BERTVerifierMRC`](./examples/BERTVerifierMRC.ipynb) | 抽取 answer span 的同时判断可答性 |
+|  | [`RetroReaderMRC`](./examples/RetroReaderMRC.ipynb) | 抽取 answer span 的同时判断可答性 |
+| 单 Label 分类 | [`TextCNNClassifier`](./examples/TextCNNClassifier.ipynb) 		| 小而快 |
+|  		| [`BERTClassifier`](./examples/BERTClassifier.ipynb) 		| - |
+|  		| [`XLNetClassifier`](./examples/XLNetClassifier.ipynb) 		| - |
+|  		| [`RoBERTaClassifier`](./examples/RoBERTaClassifier.ipynb) 		| - |
+|  		| [`ALBERTClassifier`](./examples/ALBERTClassifier.ipynb) 		| - |
+|  		| [`ELECTRAClassifier`](./examples/ELECTRAClassifier.ipynb) 		| - |
+|  		| [`WideAndDeepClassifier`](./examples/WideAndDeepClassifier.ipynb) | 通过 Wide & Deep 架构融合句子级别特征 |
+|  		| [`SemBERTClassifier`](./examples/SemBERTClassifier.ipynb) 		| 通过 SemBERT 架构融合字级别的特征 |
+|  		| [`UDAClassifier`](./examples/UDAClassifier.ipynb) 		| 结合一致性学习的半监督学习算法 |
+| 多 Label 分类 | [`BERTBinaryClassifier`](./examples/BERTBinaryClassifier.ipynb) 		| - |
+|  		| [`XLNetBinaryClassifier`](./examples/XLNetBinaryClassifier.ipynb) 		| - |
+|  		| [`RoBERTaBinaryClassifier`](./examples/RoBERTaBinaryClassifier.ipynb) 		| - |
+|  		| [`ALBERTBinaryClassifier`](./examples/ALBERTBinaryClassifier.ipynb) 		| - |
+|  		| [`ELECTRABinaryClassifier`](./examples/ELECTRABinaryClassifier.ipynb) 		| - |
+| 序列标注 | [`BERTSeqClassifier`](./examples/BERTSeqClassifier.ipynb) 		| - |
+|  		| [`RoBERTaSeqClassifier`](./examples/RoBERTaSeqClassifier.ipynb) 		| - |
+|  		| [`ALBERTSeqClassifier`](./examples/ALBERTSeqClassifier.ipynb) 		| - |
+|  		| [`ELECTRASeqClassifier`](./examples/ELECTRASeqClassifier.ipynb) 		| - |
+| 模型蒸馏 | [`TinyBERTClassifier`](./examples/TinyBERTClassifier.ipynb) 		| 大幅压缩模型参数，提速十倍以上 |
+|       | [`TinyBERTBinaryClassifier`](./examples/TinyBERTBinaryClassifier.ipynb)     | - |
+|  		| [`FastBERTClassifier`](./examples/FastBERTClassifier.ipynb) 		| 动态推理，易分样本提前离开模型 |
 
 文档目前还不完善，善用  `help(XXX)` 能帮你获得更多 API 的使用细节。
 

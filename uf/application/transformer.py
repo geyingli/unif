@@ -61,7 +61,6 @@ class TransformerMT(MTModule):
         self._hidden_size = hidden_size
         self._num_hidden_layers = num_hidden_layers
         self._num_attention_heads = num_attention_heads
-        self._id_to_label = None
         self.__init_args__ = locals()
 
         self.tokenizer = get_word_piece_tokenizer(vocab_file, do_lower_case)
@@ -75,7 +74,7 @@ class TransformerMT(MTModule):
             tf.logging.info('Add necessary token `</s>` into vocabulary.')
 
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
-                is_training=False):
+                is_training=False, is_parallel=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
 
         if is_training:

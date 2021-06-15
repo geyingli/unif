@@ -61,7 +61,6 @@ class VAELM(BERTClassifier, LMModule):
         self._num_hidden_layers = num_hidden_layers
         self._num_attention_heads = num_attention_heads
         self._bias = 0
-        self._id_to_label = None
         self.__init_args__ = locals()
 
         self.tokenizer = get_word_piece_tokenizer(vocab_file, do_lower_case)
@@ -116,7 +115,7 @@ class VAELM(BERTClassifier, LMModule):
             export_dir, rename_inputs, rename_outputs, ignore_outputs)
 
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
-                is_training=False):
+                is_training=False, is_parallel=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
 
         assert y is None, (

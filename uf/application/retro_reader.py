@@ -87,7 +87,7 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
             tf.logging.info('Add necessary token `[SEP]` into vocabulary.')
 
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
-                is_training=False):
+                is_training=False, is_parallel=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
 
         if is_training:
@@ -100,7 +100,7 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
         if X or X_tokenized:
             tokenized = False if X else X_tokenized
             X_target = X_tokenized if tokenized else X
-            (input_ids, input_mask, query_mask, segment_ids,
+            (input_tokens, input_ids, input_mask, query_mask, segment_ids,
              doc_ids, doc_text, doc_start) = self._convert_X(
                 X_target, tokenized=tokenized)
             data['input_ids'] = np.array(input_ids, dtype=np.int32)
@@ -110,9 +110,9 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
             n_inputs = len(input_ids)
 
             # backup for answer mapping
-            if self._on_predict:
-                self._tokenized = tokenized
-                self._X_target = X_target
+            data[utils.BACKUP_DATA + 'input_tokens'] = input_tokens
+            data[utils.BACKUP_DATA + 'tokenized'] = [tokenized]
+            data[utils.BACKUP_DATA + 'X_target'] = X_target
 
             if n_inputs < self.batch_size:
                 self.batch_size = max(n_inputs, len(self._gpu_ids))
@@ -147,10 +147,7 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
                     '`X = [{\'doc\': \'...\', \'question\': \'...\', ...}, '
                     '...]`' % (ex_id, example))
 
-        # backup for answer mapping
-        if self._on_predict:
-            self._input_tokens = []
-
+        input_tokens = []
         input_ids = []
         input_mask = []
         query_mask = []
@@ -180,10 +177,7 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
                     _query_mask.extend([1] * (len(segment) + 1))
                 _segment_ids.extend([_segment_id] * (len(segment) + 1))
             _doc_start = len(_input_tokens) - len(_doc_tokens) - 1
-
-            # backup for answer mapping
-            if self._on_predict:
-                self._input_tokens.append(_input_tokens)
+            
             _input_ids = self.tokenizer.convert_tokens_to_ids(_input_tokens)
             _doc_ids = _input_ids[_doc_start: -1]
 
@@ -195,6 +189,7 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
             for _ in range(self.max_seq_length - len(_query_mask)):
                 _query_mask.append(0)
 
+            input_tokens.append(_input_tokens)
             input_ids.append(_input_ids)
             input_mask.append(_input_mask)
             query_mask.append(_query_mask)
@@ -203,7 +198,7 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
             doc_text.append(X_target[ex_id]['doc'])
             doc_start.append(_doc_start)
 
-        return (input_ids, input_mask, query_mask, segment_ids,
+        return (input_tokens, input_ids, input_mask, query_mask, segment_ids,
                 doc_ids, doc_text, doc_start)
 
     def _set_placeholders(self, target, on_export=False, **kwargs):
@@ -353,19 +348,22 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
         preds = []
         probs = utils.transform(output_arrays[2], n_inputs)
         mrc_preds = utils.transform(output_arrays[3], n_inputs)
+        tokens = self.data[utils.BACKUP_DATA + 'input_tokens']
+        text = self.data[utils.BACKUP_DATA + 'X_target']
+        tokenized = self.data[utils.BACKUP_DATA + 'tokenized'][0]
         for ex_id, _preds in enumerate(mrc_preds):
             _start, _end = int(_preds[0]), int(_preds[1])
             if verifier_preds[ex_id] == 0 or _start == 0 or _end == 0 \
                     or _start > _end:
                 preds.append(None)
                 continue
-            _tokens = self._input_tokens[ex_id]
+            _tokens = tokens[ex_id]
 
-            if self._tokenized:
+            if tokenized:
                 _span_tokens = _tokens[_start: _end + 1]
                 preds.append(_span_tokens)
             else:
-                _sample = self._X_target[ex_id]
+                _sample = text[ex_id]
                 _text = [_sample[key] for key in _sample if key != 'doc']
                 _text.append(_sample['doc'])
                 _text = ' '.join(_text)

@@ -110,6 +110,8 @@ class BaseTask:
 
         feed_dict = {}
         for key, data in self.module.data.items():
+            if key.startswith(utils.BACKUP_DATA):
+                continue
             ptr = self._ptr
             batch = data[ptr: ptr + self.module.batch_size]
             ptr += self.module.batch_size
@@ -258,6 +260,8 @@ class BasicTraining(BaseTask):
         index_list = list(range(len(list(self.module.data.values())[0])))
         random.shuffle(index_list)
         for key, data in self.module.data.items():
+            if key.startswith(utils.BACKUP_DATA):
+                continue
             self.module.data[key] = self.module.data[key][index_list]
 
     def _train_one_batch(self, step, last_tic, last_step, target_steps,

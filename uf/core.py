@@ -648,6 +648,7 @@ class BaseModule:
 
         n_inputs = len(X if X else X_tokenized)
         n_buckets = max(min(n_inputs, utils.NUM_PROCESSES), 1)
+        bucket_size = (n_inputs - 1) // n_buckets + 1
 
         buckets = [{'X': [] if X else None,
                     'y': [] if y else None,
@@ -655,7 +656,7 @@ class BaseModule:
                     'X_tokenized': [] if X_tokenized else None}
                    for _ in range(n_buckets)]
         for i in range(n_inputs):
-            index = i % n_buckets
+            index = i // bucket_size
             if X:
                 buckets[index]['X'].append(X[i])
             if y:
@@ -675,10 +676,10 @@ class BaseModule:
 
         data = {}
         data_buckets.sort(key=lambda x: x[0])    # re-order inputs
-        keys = list(data_buckets[0][1].keys())
-        for key in keys:
+        
+        for key in data_buckets[0][1].keys():
             data[key] = utils.transform(
-                [_data[1][key] for _data in data_buckets])
+                [_data[key] for _bucket_id, _data in data_buckets])
         return data
 
     @abstractmethod

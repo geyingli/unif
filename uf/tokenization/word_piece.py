@@ -50,7 +50,7 @@ class WordPieceTokenizer:
 
     def convert_tokens_to_ids(self, tokens):
         ids = convert_by_vocab(self.vocab, tokens)
-        return [_id if _id else self.vocab['[UNK]'] for _id in ids]
+        return [_id if _id else self.vocab.get('[UNK]', 0) for _id in ids]
 
     def convert_ids_to_tokens(self, ids):
         tokens = convert_by_vocab(self.inv_vocab, ids)

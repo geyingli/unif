@@ -75,7 +75,6 @@ class RoBERTaLM(BERTLM, LMModule):
         self.truncate_method = truncate_method
         self._drop_pooler = drop_pooler
         self._max_predictions_per_seq = max_predictions_per_seq
-        self._id_to_label = None
         self.__init_args__ = locals()
 
         self.bert_config = get_bert_config(config_file)
@@ -93,7 +92,7 @@ class RoBERTaLM(BERTLM, LMModule):
             tf.logging.info('Add necessary token `[SEP]` into vocabulary.')
 
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
-                is_training=False):
+                is_training=False, is_parallel=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
 
         assert y is None, (

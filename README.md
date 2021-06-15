@@ -10,7 +10,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-beta v2.8.1-blue">
+        <img src="https://img.shields.io/badge/version-beta v2.8.2-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-1.x\2.x-yellow">
@@ -154,8 +154,8 @@ model = uf.load('key', cache_file='.cache')
 ## 训练/推理/评分
 
 ``` python
-# 开启多进程 (加速数据处理)
-with uf.MultiProcess():    # 建议在这一步之后再读取大批量数据，否则容易内存爆炸
+# 开启多进程 (加速数据预处理)
+with uf.MultiProcess():    # 多进程的本质是将当前进程进行复制，因此建议读取数据的代码写在这一步之后，否则容易内存爆炸
 
     # 训练
     model.fit(
@@ -296,21 +296,29 @@ model.export(
 
 ## FAQ
 
-- 问：如何实现多个 segment 的输入？
+- 问：模型输入有什么限制吗？
 
-  答：使用 list 组合多个 segment 的输入，如 `X = [['文档1句子1', '文档1句子2', '文档1句子3'], ['文档2句子1', '文档2句子2']]`，模型会自动按顺序拼接并添加分隔符。
+  答：对于大多数模型来说，没有限制。一条样本，可以是一个字符串，也可以是多个字符串。以 BERT 为例，完全不必局限于一到两个句子的输入，而是可以通过 list 组合多个 segment，e.g.  `X = [['文档1句子1', '文档1句子2', '文档1句子3'], ['文档2句子1', '文档2句子2']]`，模型会自动按顺序拼接并添加分隔符。
 
 - 问：如何查看切词结果？
 
-  答：通过 `model.tokenizer.tokenize(text)` 可查看切词结果。另外也可通过 `model.convert(X)` 查看切词与 ID 转换后的矩阵。
+  答：通过 `model.tokenizer.tokenize(text)` 可查看切词结果。另外也可通过 `model.convert(X)` 查看经过预处理的实际的模型输入。
 
-- 问：如何使用自己的切词工具？
+- 问：如果我想使用自己的切词工具，该怎么做？
 
-  答：在训练和推理时预先将传入参数 `X` 改为 `X_tokenized`，模型将直接跳过原有的的分词步骤。需要注意的是，分词结果同样需要基于 `list` 承载，例如原先由 `x` 承载的 `['黎明与夕阳']`，由 `X_tokenized` 承载后需呈现 `['黎', '##明', '与', '夕', '##阳']` 的形式。
+  答：提前使用自己的工具做好分词，而后在训练和推理时将原先的传入参数由 `X` 改为 `X_tokenized`。例如，原本传入 `model.fit(X=['黎明与夕阳', ...], ...)`，使用自己的分词工具后，改为传入 `model.fit(X_tokenized=[['黎', '##明', '与', '夕', '##阳'], ...], ...)`。此外，还需保证分词在 vocab 文件中存在。
 
-- 问：如何实现 TinyBERT 和 FastBERT 复蒸馏？
+- 问：如何实现 TinyBERT 和 FastBERT 二重蒸馏？
 
-  答：`TinyBERTClassifier` 训练完成后使用 `.to_bert()` 将变量重命名保存，而后使用 `FastBERTClassifier` 常规读取生成的 checkpoint 和配置文件即可。
+  答：`TinyBERTClassifier` 训练完成后使用 `.to_bert()` 提取子模型为 BERT 重新保存，而后使用 `FastBERTClassifier` 常规读取生成的 checkpoint 和配置文件即可。
+  
+- 问：我可以用这个框架做哪些有趣的事情？
+
+  答：只要有数据，大多数 NLP 领域的事情都能做。可以用 `GPT2LM` 来生成古诗/小说，可以使用 `TransformerMT` 搭建简单的聊天机器人，可以组合 `ELECTRALM` 和 `BERTLM` 进行文本纠错等等。
+
+- 问：Warning信息太多，该怎么剔除？
+
+  答：这是 tensorflow 一直饱受诟病之处，我们也与你一同深受困扰。曾经尝试过修改 tf 源码来禁掉所有 warning，但仍然屡禁不止。UNIF 暂时没有什么好的方案。
 
 ## 开发需知
 
@@ -321,7 +329,6 @@ model.export(
     	<img src="./docs/framework.png" style="zoom:50%"/>
     <br>
 <p>
-
 ## 重要更新
 
 beta v2.5.0 -> Now：
@@ -329,20 +336,17 @@ beta v2.5.0 -> Now：
 - 新增：添加 `uf.TinyBERTBinaryClassifier`，使用TinyBERT架构蒸馏BERT多分类模型
 - 新增：添加 `uf.MultiProcess`，可以通过多进程加速模型前的数据解析流程
 - 新增：添加 `uf.list_resources()` 和 `uf.download()` 用法，方便地下载公开预训练参数
-- 新增：使用 `model.cache()` 缓存模型时，可以传入 `note` 参数作为备注，传入 `max_to_keep` 参数限制 checkpoint 数量
+- 新增：使用 `model.cache()` 缓存模型时，可以传入 `note` 参数作为备注
 - 新增：添加完整的示范代码，在 unif/examples 目录下
 - 变更：取消训练结束自动保存模型参数，用户需要通过 `model.save()` 或 `model.cache()` 自行保存
 - 变更：默认打印所有信息，无需用户再行输入 `uf.set_verbosity()`
-- 变更：在 vocab 中添加新的 token 时进行提示
 - 变更：将优化器动量从 `model.uninited_vars` 中删除
-- 变更：加载预训练参数时，跳过形状不一致的参数，避免报错
+- 变更：加载预训练参数时，跳过名称一致但形状不一致的参数，避免报错
 - 变更：添加语言模型采样 `[MASK]` 进度提示
-- 变更：`FastBERTClassifier` 设置为默认跳过第一个子分类器
+- 变更：`FastBERTClassifier` 改为默认跳过第一个子分类器
 - 变更：`UniLM` 在 `s2s` 模式下的结尾 token 从 `[SEP]` 改为 `[EOS]`
 - 变更：`VAELM` 取消返回 `[CLS]`
-- 修复：修复了 `RoBERTaLM` 相关的若干 bug
-- 修复：修复了多GPU训练及对抗式学习的若干 bug
 
 ## 尾声
 
-框架目前主要为我个人及团队所用，靠兴趣推动至今。如果能受到更多人，包括您的认可，我们会愿意投入更多精力进行丰富与完善，早日推出第一个正式版本。如果您喜欢，请点个 star 作为支持。如果有希望实现的 SOTA 算法，留下 issue，我们会酌情考虑，并安排时间为你编写。通常三日以内可以实现。任何需求和建议都不尽欢迎。最后，感谢你读到这里。
+框架目前主要为我个人及团队所用，靠兴趣推动至今。如果能受到更多人，包括您的认可，我们会愿意投入更多精力进行丰富与完善，早日推出第一个正式版本。如果您喜欢，请点个 star 作为支持。如果有希望实现的 SOTA 算法，留下 issue，我们会酌情考虑，并安排时间为你编写。任何需求和建议都不尽欢迎。最后，感谢你读到这里。

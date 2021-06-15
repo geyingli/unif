@@ -113,7 +113,7 @@ class DilatedLM(LMModule):
         return super(LMModule, self).export(export_dir)
 
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
-                is_training=False):
+                is_training=False, is_parallel=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
 
         assert y is None, ('%s is unsupervised. `y` should be None.'

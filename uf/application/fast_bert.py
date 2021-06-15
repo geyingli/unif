@@ -58,6 +58,7 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
         self.tokenizer = get_word_piece_tokenizer(vocab_file, do_lower_case)
         self._key_to_depths = 'unsupported'
 
+        assert label_size, ('`label_size` can\'t be None.')
         if '[CLS]' not in self.tokenizer.vocab:
             self.tokenizer.add('[CLS]')
             self.bert_config.vocab_size += 1
@@ -160,7 +161,7 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
             export_dir, rename_inputs, rename_outputs, ignore_outputs)
 
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
-                is_training=False):
+                is_training=False, is_parallel=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
 
         if is_training:

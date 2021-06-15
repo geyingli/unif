@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-""" Useful methods to support applications. """
+''' Useful methods to support the frameword. '''
 
 import os
 import re
@@ -122,7 +122,7 @@ def _parallel_convert_single_process(args):
 
     data = model.convert(
         data['X'], data['y'], data['sample_weight'], data['X_tokenized'],
-        is_training)
+        is_training, True)
     return (bucket_id, data)
 
 
@@ -427,72 +427,30 @@ def set_log(log_file):
     log.addHandler(fh)
 
 
-def write_tfrecords_multi_process(data, tfrecords_file):
-    writer = tf.python_io.TFRecordWriter(tfrecords_file)
-    data_items = list(data.items())
-    data_keys = [item[0] for item in data_items]
-    data_values = [item[1] for item in data_items]
-    examples = list(zip(*data_values))
-
-    NUM_BUCKETS = 20
-    buckets = [[] for _ in range(NUM_BUCKETS)]
-    n = len(examples)
-    while n > 0:
-        bucket_id = n % NUM_BUCKETS
-        buckets[bucket_id].append(examples.pop())
-        n -= 1
-
-    n_cpu = multiprocessing.cpu_count()
-    pool = multiprocessing.Pool(n_cpu)
-    args = zip(buckets, [data_keys for _ in range(NUM_BUCKETS)])
-    features_lists = pool.map(write_tfrecords_single_process, args)
-
-    for features_list in features_lists:
-        for features in features_list:
-            tf_example = tf.train.Example(
-                features=tf.train.Features(feature=features))
-            writer.write(tf_example.SerializeToString())
-
-
-def write_tfrecords_single_process(args):
-    examples = args[0]
-    data_keys = args[1]
-    features_list = []
-    for example in examples:
-        features = collections.OrderedDict()
-        for i, value in enumerate(example):
-            if isinstance(value, int):
-                features[data_keys[i]] = create_int_feature([value])
-            elif isinstance(value, float):
-                features[data_keys[i]] = create_float_feature([value])
-            elif value.dtype.name.startswith('int'):
-                features[data_keys[i]] = create_int_feature(value.tolist())
-            elif value.dtype.name.startswith('float'):
-                features[data_keys[i]] = create_float_feature(value.tolist())
-            else:
-                raise ValueError('Invalid data type: %s.' % type(value))
-        features_list.append(features)
-    return features_list
-
+BACKUP_DATA = 'ex:'
 
 def write_tfrecords(data, tfrecords_file):
     writer = tf.python_io.TFRecordWriter(tfrecords_file)
-    data_items = list(data.items())
-    data_keys = [item[0] for item in data_items]
-    data_values = [item[1] for item in data_items]
-    examples = zip(*data_values)
+    keys = []
+    values = []
+    for key, value in data.items():
+        if key.startswith(BACKUP_DATA):
+            continue
+        keys.append(key)
+        values.append(value)
+    examples = zip(*values)
 
     for example in examples:
         features = collections.OrderedDict()
         for i, value in enumerate(example):
             if isinstance(value, int):
-                features[data_keys[i]] = create_int_feature([value])
+                features[keys[i]] = create_int_feature([value])
             elif isinstance(value, float):
-                features[data_keys[i]] = create_float_feature([value])
+                features[keys[i]] = create_float_feature([value])
             elif value.dtype.name.startswith('int'):
-                features[data_keys[i]] = create_int_feature(value.tolist())
+                features[keys[i]] = create_int_feature(value.tolist())
             elif value.dtype.name.startswith('float'):
-                features[data_keys[i]] = create_float_feature(value.tolist())
+                features[keys[i]] = create_float_feature(value.tolist())
             else:
                 raise ValueError('Invalid data type: %s.' % type(value))
         tf_example = tf.train.Example(
@@ -899,9 +857,16 @@ def align_tokens_with_text(tokens, text, lower_case):
 def transform(output_arrays, n_inputs=None, reshape=False):
     if not n_inputs:
         n_inputs = 100000000
-    if len(output_arrays[0].shape) > 1:
-        return np.vstack(output_arrays)[:n_inputs]
-    return np.hstack(output_arrays)[:n_inputs]
+
+    if isinstance(output_arrays[0], np.ndarray):
+        if len(output_arrays[0].shape) > 1:
+            return np.vstack(output_arrays)[:n_inputs]
+        return np.hstack(output_arrays)[:n_inputs]
+    elif isinstance(output_arrays[0], list):    # flatten
+        return [item for output_array in output_arrays 
+            for item in output_array]
+    else:
+        return output_arrays
 
 
 def truncate_segments(segments, max_seq_length, truncate_method='LIFO'):

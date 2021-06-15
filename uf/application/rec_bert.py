@@ -87,7 +87,7 @@ class RecBERTLM(LMModule):
         return ret
 
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
-                is_training=False):
+                is_training=False, is_parallel=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
 
         assert y is None, ('%s is unsupervised. `y` should be None.'
@@ -100,9 +100,9 @@ class RecBERTLM(LMModule):
         if X or X_tokenized:
             tokenized = False if X else X_tokenized
             X_target = X_tokenized if tokenized else X
-            (input_ids, add_label_ids, del_label_ids) = self._convert_X(
-                X_target, tokenized=tokenized,
-                is_training=is_training)
+            (input_tokens, input_ids, add_label_ids, del_label_ids) = \
+                self._convert_X(
+                    X_target, tokenized=tokenized, is_training=is_training)
             data['input_ids'] = np.array(input_ids, dtype=np.int32)
 
             if is_training:
@@ -112,9 +112,9 @@ class RecBERTLM(LMModule):
                     del_label_ids, dtype=np.int32)
 
             # backup for answer mapping
-            if self._on_predict:
-                self._tokenized = tokenized
-                self._X_target = X_target
+            data[utils.BACKUP_DATA + 'input_tokens'] = input_tokens
+            data[utils.BACKUP_DATA + 'tokenized'] = [tokenized]
+            data[utils.BACKUP_DATA + 'X_target'] = X_target
 
             n_inputs = len(input_ids)
             if n_inputs < self.batch_size:
@@ -130,11 +130,8 @@ class RecBERTLM(LMModule):
 
     def _convert_X(self, X_target, tokenized, is_training):
 
-        # backup for answer mapping
-        if self._on_predict:
-            self._input_tokens = []
-
         # tokenize input texts and scan over corpus
+        input_tokens = []
         tokenized_input_ids = []
         vocab_size = len(self.tokenizer.vocab)
         vocab_ind = list(range(vocab_size))
@@ -152,16 +149,13 @@ class RecBERTLM(LMModule):
                     [_input_tokens], self.max_seq_length,
                     truncate_method=self.truncate_method)
 
-            # backup for answer mapping
-            if self._on_predict:
-                self._input_tokens.append(_input_tokens)
-
             # count char
             _input_ids = self.tokenizer.convert_tokens_to_ids(_input_tokens)
             if is_training:
                 for _input_id in _input_ids:
                     vocab_p[_input_id] += 1
 
+            input_tokens.append(_input_tokens)
             tokenized_input_ids.append(_input_ids)
         if is_training:
             vocab_p_sum = sum(vocab_p)
@@ -206,7 +200,7 @@ class RecBERTLM(LMModule):
             add_label_ids.append(_add_label_ids)
             del_label_ids.append(_del_label_ids)
 
-        return input_ids, add_label_ids, del_label_ids
+        return input_tokens, input_ids, add_label_ids, del_label_ids
 
     def _convert_x(self, x, tokenized):
         try:
@@ -331,14 +325,17 @@ class RecBERTLM(LMModule):
         preds = []
         add_preds = utils.transform(output_arrays[0], n_inputs)
         del_preds = utils.transform(output_arrays[1], n_inputs)
+        tokens = self.data[utils.BACKUP_DATA + 'input_tokens']
+        text = self.data[utils.BACKUP_DATA + 'X_target']
+        tokenized = self.data[utils.BACKUP_DATA + 'tokenized'][0]
         for ex_id in range(n_inputs):
             _add_preds = add_preds[ex_id]
             _del_preds = del_preds[ex_id]
             _input_length = np.sum(mask[ex_id])
-            _input_tokens = self._input_tokens[ex_id]
+            _input_tokens = tokens[ex_id]
             _output_tokens = [token for token in _input_tokens]
 
-            if self._tokenized:
+            if tokenized:
                 n = 0
                 for i in range(_input_length):
                     if self._del_prob > 0 and _del_preds[i] != 0:
@@ -352,7 +349,7 @@ class RecBERTLM(LMModule):
                         n += 1
                 preds.append(_output_tokens)
             else:
-                _text = self._X_target[ex_id]
+                _text = text[ex_id]
                 _mapping_start, _mapping_end = utils.align_tokens_with_text(
                     _input_tokens, _text, self._do_lower_case)
 

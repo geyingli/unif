@@ -64,14 +64,17 @@ class StockBERTClassifier(BERTClassifier, ClassifierModule):
             self.bert_config.num_hidden_layers)
 
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
-                is_training=False):
+                is_training=False, is_parallel=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
 
         assert X is None, ('`%s` is a model with continuous input. '
-                           '`X` should be None.'
+                           '`X` should be None. Use `X_tokenized` instead.'
                            % (self.__class__.__name__))
         if is_training:
             assert y is not None, '`y` can\'t be None.'
+        if is_parallel:
+            assert self.label_size, ('Can\'t parse data on multi-processing '
+                'when `label_size` is None.')
 
         n_inputs = None
         data = {}

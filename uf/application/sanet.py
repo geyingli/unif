@@ -79,7 +79,7 @@ class SANetMRC(BERTMRC, MRCModule):
             tf.logging.info('Add necessary token `[SEP]` into vocabulary.')
 
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
-                is_training=False):
+                is_training=False, is_parallel=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
 
         if is_training:
@@ -92,7 +92,7 @@ class SANetMRC(BERTMRC, MRCModule):
         if X or X_tokenized:
             tokenized = False if X else X_tokenized
             X_target = X_tokenized if tokenized else X
-            (input_ids, input_mask, sa_mask, segment_ids,
+            (input_tokens, input_ids, input_mask, sa_mask, segment_ids,
              doc_ids, doc_text, doc_start) = self._convert_X(
                 X_target, tokenized=tokenized)
             data['input_ids'] = np.array(input_ids, dtype=np.int32)
@@ -102,9 +102,9 @@ class SANetMRC(BERTMRC, MRCModule):
             n_inputs = len(input_ids)
 
             # backup for answer mapping
-            if self._on_predict:
-                self._tokenized = tokenized
-                self._X_target = X_target
+            data[utils.BACKUP_DATA + 'input_tokens'] = input_tokens
+            data[utils.BACKUP_DATA + 'tokenized'] = [tokenized]
+            data[utils.BACKUP_DATA + 'X_target'] = X_target
 
             if n_inputs < self.batch_size:
                 self.batch_size = max(n_inputs, len(self._gpu_ids))
@@ -138,10 +138,7 @@ class SANetMRC(BERTMRC, MRCModule):
                     '`X = [{\'doc\': \'...\', \'question\': \'...\', ...}, '
                     '...]`' % (ex_id, example))
 
-        # backup for answer mapping
-        if self._on_predict:
-            self._input_tokens = []
-
+        input_tokens = []
         input_ids = []
         input_mask = []
         sa_mask = []
@@ -193,10 +190,7 @@ class SANetMRC(BERTMRC, MRCModule):
             _input_tokens.append('[SEP]')
             _input_mask.append(1)
             _segment_ids.append(1)
-
-            # backup for answer mapping
-            if self._on_predict:
-                self._input_tokens.append(_input_tokens)
+            
             _input_ids = self.tokenizer.convert_tokens_to_ids(_input_tokens)
             _doc_ids = _input_ids[_doc_start: -1]
 
@@ -206,6 +200,7 @@ class SANetMRC(BERTMRC, MRCModule):
                 _input_mask.append(0)
                 _segment_ids.append(0)
 
+            input_tokens.append(_input_tokens)
             input_ids.append(_input_ids)
             input_mask.append(_input_mask)
             sa_mask.append(np.reshape(_sa_mask, [-1]).tolist())
@@ -214,7 +209,7 @@ class SANetMRC(BERTMRC, MRCModule):
             doc_text.append(X_target[ex_id]['doc'])
             doc_start.append(_doc_start)
 
-        return (input_ids, input_mask, sa_mask, segment_ids,
+        return (input_tokens, input_ids, input_mask, sa_mask, segment_ids,
                 doc_ids, doc_text, doc_start)
 
     def _convert_x(self, x, tokenized):

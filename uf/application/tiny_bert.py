@@ -63,7 +63,7 @@ class TinyBERTClassifier(BERTClassifier, ClassifierModule):
         self.student_config.intermediate_size = 4 * hidden_size
         self.student_config.num_hidden_layers = num_hidden_layers
 
-        assert label_size is not None, ('`label_size` cannot be None.')
+        assert label_size, ('`label_size` can\'t be None.')
         if '[CLS]' not in self.tokenizer.vocab:
             self.tokenizer.add('[CLS]')
             self.bert_config.vocab_size += 1
@@ -100,7 +100,7 @@ class TinyBERTClassifier(BERTClassifier, ClassifierModule):
             os.path.join(save_dir, 'bert_config.json'))
 
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
-                is_training=False):
+                is_training=False, is_parallel=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
 
         if is_training:
@@ -207,7 +207,7 @@ class TinyBERTBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
         self.student_config.intermediate_size = 4 * hidden_size
         self.student_config.num_hidden_layers = num_hidden_layers
 
-        assert label_size is not None, ('`label_size` cannot be None.')
+        assert label_size, ('`label_size` can\'t be None.')
         if '[CLS]' not in self.tokenizer.vocab:
             self.tokenizer.add('[CLS]')
             self.bert_config.vocab_size += 1
@@ -244,7 +244,7 @@ class TinyBERTBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
             os.path.join(save_dir, 'bert_config.json'))
 
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
-                is_training=False):
+                is_training=False, is_parallel=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
 
         if is_training:

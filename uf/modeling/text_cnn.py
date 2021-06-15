@@ -76,19 +76,16 @@ class TextCNNEncoder(BaseEncoder):
                 with tf.variable_scope('conv_%s' % filter_size):
 
                     # Convolution Layer
-                    filter_shape = [int(filter_size), embedding_size, 1, num_channels]
                     W = tf.get_variable(
                         name='W',
-                        shape=filter_shape,
-                        initializer=\
-                            tf.truncated_normal_initializer(0.1),
+                        shape=[int(filter_size), embedding_size, 1, num_channels],
+                        initializer=tf.truncated_normal_initializer(0.1),
                         dtype=tf.float32,
                         trainable=trainable)
                     b = tf.get_variable(
                         name='b',
                         shape=[num_channels],
-                        initializer=\
-                            tf.constant_initializer(0.1),
+                        initializer=tf.constant_initializer(0.1),
                         dtype=tf.float32,
                         trainable=trainable)
                     conv = tf.nn.conv2d(

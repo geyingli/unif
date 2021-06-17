@@ -316,9 +316,9 @@ model.export(
 
   答：只要有数据，大多数 NLP 领域的事情都能做。可以用 `GPT2LM` 来生成古诗/小说，可以使用 `TransformerMT` 搭建简单的聊天机器人，可以组合 `ELECTRALM` 和 `BERTLM` 进行文本纠错等等。
 
-- 问：Warning信息太多，该怎么剔除？
+- 问：无意义的 warning 信息太多，该怎么剔除？
 
-  答：这是 tensorflow 一直饱受诟病之处，我们也与你一同深受困扰。曾经尝试过修改 tf 源码来禁掉所有 warning，但仍然屡禁不止。UNIF 暂时没有什么好的方案。
+  答：这是 tensorflow 一直饱受诟病之处，我们也与你一同深受困扰。暂时没有有效的同时又兼容各个 tf 版本的解决方案。
 
 ## 开发需知
 
@@ -329,6 +329,7 @@ model.export(
     	<img src="./docs/framework.png" style="zoom:50%"/>
     <br>
 <p>
+
 ## 重要更新
 
 beta v2.5.0 -> Now：

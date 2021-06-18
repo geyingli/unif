@@ -41,7 +41,7 @@ class SANetMRC(BERTMRC, MRCModule):
                  gpu_ids=None,
                  do_lower_case=True,
                  reading_module='bert',
-                 split_sign='. ',
+                 split_signs=',，。?？!！;；',
                  alpha=0.5,
                  truncate_method='longer-FO'):
         super(MRCModule, self).__init__(
@@ -50,7 +50,7 @@ class SANetMRC(BERTMRC, MRCModule):
         self.batch_size = 0
         self.max_seq_length = max_seq_length
         self.truncate_method = truncate_method
-        self.split_sign = split_sign
+        self.split_signs = list(map(str, split_signs))
         self._do_lower_case = do_lower_case
         self._on_predict = False
         self._reading_module = reading_module
@@ -156,35 +156,36 @@ class SANetMRC(BERTMRC, MRCModule):
             _sa_mask[0, 0] = 1
 
             _doc_sent_tokens = segments.pop('doc')
-            _doc_sent_len = len(_doc_sent_tokens)
+            _doc_sent_num = len(_doc_sent_tokens)
             segments = list(segments.values()) + _doc_sent_tokens
             utils.truncate_segments(
                 segments,
-                self.max_seq_length - len(segments) - _doc_sent_len - 2,
+                self.max_seq_length - (len(segments) - _doc_sent_num + 1) - 1,
                 truncate_method=self.truncate_method)
-            _doc_sent_tokens = segments[-_doc_sent_len:]
 
-            segments = segments[:-_doc_sent_len]
-            for s_id, segment in enumerate(segments):
-                _segment_len = len(segment) + 1
+            # split doc and other infos after truncation
+            non_doc_segments = segments[:-_doc_sent_num]
+            doc_segments = segments[-_doc_sent_num:]
+
+            # non-doc
+            for s_id, segment in enumerate(non_doc_segments):
+                _segment_len = len(segment) + 1    # [SEP]
                 _start_pos = len(_input_tokens)
                 _end_pos = _start_pos + len(segment)
                 _sa_mask[_start_pos: _end_pos, _start_pos: _end_pos] = 1
-                _sa_mask[_end_pos, _end_pos] = 1
+                _sa_mask[_end_pos, _end_pos] = 1    # [SEP] pay attention to itself
                 _input_tokens.extend(segment + ['[SEP]'])
-                _input_mask.extend([1] * (len(segment) + 1))
-                _segment_ids.extend([min(s_id, 1)] * (len(segment) + 1))
+                _input_mask.extend([1] * _segment_len)
+                _segment_ids.extend([min(s_id, 1)] * _segment_len)
+
+            # doc
             _doc_start = len(_input_tokens)
-            if not tokenized:
-                _split_tokens = self.tokenizer.tokenize(self.split_sign)
-            else:
-                _split_tokens = []
-            for s_id, segment in enumerate(_doc_sent_tokens):
-                _segment_len = len(segment) + len(_split_tokens)
+            for s_id, segment in enumerate(doc_segments):
+                _segment_len = len(segment)
                 _start_pos = len(_input_tokens)
                 _end_pos = _start_pos + _segment_len
                 _sa_mask[_start_pos: _end_pos, _start_pos: _end_pos] = 1
-                _input_tokens.extend(segment + _split_tokens)
+                _input_tokens.extend(segment)
                 _input_mask.extend([1] * _segment_len)
                 _segment_ids.extend([1] * _segment_len)
             _input_tokens.append('[SEP]')
@@ -223,16 +224,22 @@ class SANetMRC(BERTMRC, MRCModule):
 
         for key in x:
             if not tokenized:
+                chars = self.tokenizer.tokenize(x[key])
+
                 # deal with general inputs
                 if key == 'doc':
-                    sents = x[key].split(self.split_sign)
-                    if sents[-1] == '':
-                        sents.pop()
-                    sents = [sent + self.split_sign for sent in sents]
-                    output[key] = \
-                        [self.tokenizer.tokenize(sent) for sent in sents]
+                    sents = []
+                    last = []
+                    for char in chars:
+                        last.append(char)
+                        if char in self.split_signs:
+                            sents.append(last)
+                            last = []
+                    if last:
+                        sents.append(last)
+                    output[key] = sents
                     continue
-                output[key] = self.tokenizer.tokenize(x[key])
+                output[key] = chars
                 continue
 
             # deal with tokenized inputs

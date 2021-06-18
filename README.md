@@ -10,7 +10,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-beta v2.8.2-blue">
+        <img src="https://img.shields.io/badge/version-beta v2.8.3-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-1.x\2.x-yellow">
@@ -341,6 +341,7 @@ beta v2.5.0 -> Now：
 - 新增：添加完整的示范代码，在 unif/examples 目录下
 - 变更：取消训练结束自动保存模型参数，用户需要通过 `model.save()` 或 `model.cache()` 自行保存
 - 变更：默认打印所有信息，无需用户再行输入 `uf.set_verbosity()`
+- 变更：将 `SANetMRC` 的 `split_sign` 属性改为 `split_signs`，支持多个句子分隔符
 - 变更：将优化器动量从 `model.uninited_vars` 中删除
 - 变更：加载预训练参数时，跳过名称一致但形状不一致的参数，避免报错
 - 变更：添加语言模型采样 `[MASK]` 进度提示

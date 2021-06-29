@@ -136,11 +136,8 @@ class XLNetEncoder(BaseEncoder):
           float32 Tensor in shape [len, bsz, d_model]. The last layer hidden
           representation of XLNet.
         '''
-        seq_length = self.output.shape.as_list()[0]
-        mask = tf.cast(tf.expand_dims(self.input_mask, axis=-1), tf.float32)
-        length = tf.reduce_sum(mask, axis=0, keepdims=True)
-        output = self.output * mask * (seq_length / length)
-        return tf.reduce_mean(output, axis=0)
+        # use "last" token as cls representation of sequence
+        return self.output[-1]
 
     def get_sequence_output(self):
         '''

@@ -149,7 +149,7 @@ model.cache('key', cache_file='.cache')
 model = uf.load('key', cache_file='.cache')
 ```
 
-程序还没执行结束，内存就不够用了？试试删除模型 `del model` 或重置 `model.reset()`。
+模型使用完毕了，想要清出内存？试试 `del model` 或重置 `model.reset()`。
 
 ## 训练/推理/评分
 
@@ -299,6 +299,10 @@ model.export(
 - 问：模型输入有什么限制吗？
 
   答：对于大多数模型来说，没有限制。一条样本，可以是一个字符串，也可以是多个字符串。以 BERT 为例，完全不必局限于一到两个句子的输入，而是可以通过 list 组合多个 segment，e.g.  `X = [['文档1句子1', '文档1句子2', '文档1句子3'], ['文档2句子1', '文档2句子2']]`，模型会自动按顺序拼接并添加分隔符。
+
+- 问：数据体量庞大，内存不够用，该怎么办？
+
+  答：可以尝试通过 `model.to_tfrecords()` 分批将数据写入 TFRecords 文件，而后通过 `model.fit_from_tfrecords()` 读取进行训练。
 
 - 问：如何查看切词结果？
 

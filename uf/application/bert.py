@@ -1086,9 +1086,11 @@ class BERTNER(BERTClassifier, NERModule):
                     _entity_tokens = _tokens[_start: _end + 1]
                     _preds.append(_entity_tokens)
                 else:
-                    _text_start = _mapping_start[_start]
-                    _text_end = _mapping_end[_end]
+                    _text_start = _mapping_start.get(_start, 0)
+                    _text_end = _mapping_end.get(_end, 0)
                     _entity_text = _text[_text_start: _text_end]
+                    if _entity_text == '':
+                        continue
                     _preds.append(_entity_text)
             preds.append(_preds)
 
@@ -1235,9 +1237,11 @@ class BERTCRFNER(BERTNER, NERModule):
                     _entity_tokens = _tokens[_start: _end + 1]
                     _preds.append(_entity_tokens)
                 else:
-                    _text_start = _mapping_start[_start]
-                    _text_end = _mapping_end[_end]
+                    _text_start = _mapping_start.get(_start, 0)
+                    _text_end = _mapping_end.get(_end, 0)
                     _entity_text = _text[_text_start: _text_end]
+                    if _entity_text == '':
+                        continue
                     _preds.append(_entity_text)
             preds.append(_preds)
 
@@ -1564,9 +1568,11 @@ class BERTCRFCascadeNER(BERTCRFNER, NERModule):
                             _entity_tokens = _tokens[_start: _end + 1]
                             _preds[entity_type].append(_entity_tokens)
                         else:
-                            _text_start = _mapping_start[_start]
-                            _text_end = _mapping_end[_end]
+                            _text_start = _mapping_start.get(_start, 0)
+                            _text_end = _mapping_end.get(_end, 0)
                             _entity_text = _text[_text_start: _text_end]
+                            if _entity_text == '':
+                                continue
                             _preds[entity_type].append(_entity_text)
             preds.append(_preds)
 
@@ -1966,9 +1972,12 @@ class BERTMRC(BERTClassifier, MRCModule):
                 _mapping_start, _mapping_end = utils.align_tokens_with_text(
                     _tokens, _text, self._do_lower_case)
 
-                _text_start = _mapping_start[_start]
-                _text_end = _mapping_end[_end]
+                _text_start = _mapping_start.get(_start, 0)
+                _text_end = _mapping_end.get(_end, 0)
                 _span_text = _text[_text_start: _text_end]
+                if _span_text == '':
+                    preds.append(None)
+                    continue
                 preds.append(_span_text)
 
         outputs = {}
@@ -2335,9 +2344,12 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
                 _mapping_start, _mapping_end = utils.align_tokens_with_text(
                     _tokens, _text, self._do_lower_case)
 
-                _text_start = _mapping_start[_start]
-                _text_end = _mapping_end[_end]
+                _text_start = _mapping_start.get(_start, 0)
+                _text_end = _mapping_end.get(_end, 0)
                 _span_text = _text[_text_start: _text_end]
+                if _span_text == '':
+                    preds.append(None)
+                    continue
                 preds.append(_span_text)
 
         outputs = {}

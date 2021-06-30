@@ -64,7 +64,7 @@ class XLNetEncoder(BaseEncoder):
               1 for tokens with losses and 0 for tokens without losses.
               Only used during pretraining for two-stream attention.
               Set to None during finetuning.
-        '''
+        ''' 
 
         run_config = XLNetRunConfig(
             is_training=is_training,

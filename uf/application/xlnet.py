@@ -126,7 +126,7 @@ class XLNetClassifier(BERTClassifier, ClassifierModule):
             input_mask.append(_input_mask)
             segment_ids.append(_segment_ids)
 
-        return input_ids, input_mask, segment_ids
+        return input_ids, input_mask, segment_ids 
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 

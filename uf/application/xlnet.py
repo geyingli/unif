@@ -213,18 +213,18 @@ class XLNetBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
                 _segment_id = min(s_id, 1)
                 _input_ids.extend(self.tokenizer.convert_tokens_to_ids(
                     segment) + [SEP_ID])
-                _input_mask.extend([1] * (len(segment) + 1))
+                _input_mask.extend([0] * (len(segment) + 1))
                 _segment_ids.extend([_segment_id] * (len(segment) + 1))
 
             _input_ids.append(CLS_ID)
-            _input_mask.append(1)
+            _input_mask.append(0)
             _segment_ids.append(SEG_ID_CLS)
 
             # padding
             if len(_input_ids) < self.max_seq_length:
                 delta_len = self.max_seq_length - len(_input_ids)
                 _input_ids = [0] * delta_len + _input_ids
-                _input_mask = [0] * delta_len + _input_mask  # it's 1 in source code
+                _input_mask = [1] * delta_len + _input_mask  # it's 1 in source code
                 _segment_ids = [SEG_ID_PAD] * delta_len + _segment_ids
 
             input_ids.append(_input_ids)

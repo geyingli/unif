@@ -119,7 +119,7 @@ class XLNetClassifier(BERTClassifier, ClassifierModule):
             if len(_input_ids) < self.max_seq_length:
                 delta_len = self.max_seq_length - len(_input_ids)
                 _input_ids = [0] * delta_len + _input_ids
-                _input_mask = [0] * delta_len + _input_mask  # it's 1 in source code
+                _input_mask = [1] * delta_len + _input_mask  # it's 1 in source code
                 _segment_ids = [SEG_ID_PAD] * delta_len + _segment_ids
 
             input_ids.append(_input_ids)

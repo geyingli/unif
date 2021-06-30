@@ -187,7 +187,7 @@ for loop_id in range(10):    # 假设训练途中一共验证 10 次
     print(model.score(X_dev, y_dev))    # 查看模型表现
 ```
 
-复用训练数据？可以尝试先存为 TFRecords，训练时读取：
+数据体量太大，老是爆内存？可以尝试先分批将数据写入不同的 TFRecords 文件，训练时同步读取：
 
 ```python
 with uf.MultiProcess():

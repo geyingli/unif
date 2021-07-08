@@ -21,15 +21,15 @@
 </p>
 
 
-有数据，想要快速实现你的想法？轻便、易使用的自然语言处理联合框架，帮你快速搭建各类常用深度学习模型 (Transformer, GPT-2, BERT, ALBERT, UniLM, XLNet, ELECTRA)，同时对于 BERT 系列，支持高效用的蒸馏 (TinyBERT, FastBERT)。支持各类上下游任务 (语言模型、文本分类、文本生成、命名实体识别、机器阅读理解、机器翻译、序列标注等)。
+快速搭建各类深度学习模型 (Transformer, GPT-2, BERT, ALBERT, UniLM, XLNet, ELECTRA 等)，完成语言模型/文本分类/文本生成/命名实体识别/机器阅读理解/机器翻译/序列标注/知识蒸馏任务。
 
 ### 特性
 
-- API 简单：三行代码完成训练及推理，并一键设置多 GPU 并行
-- 品类丰富：支持 40+ 种模型类
-- 唯一依赖：Tensorflow 1.x/2.x
+- API 简单：三行代码完成训练及推理，并一键设置多进程/多 GPU 并行
+- 品类丰富：支持约 40 种模型类
+- 依赖简单：Tensorflow 1.x/2.x
 - 高分保证：提供分层学习率、对抗式训练等多项训练技巧
-- 可供部署：导出模型 PB 文件，供部署使用
+- 可供部署：导出模型 PB 文件，供线上部署
 
 ### 安装
 
@@ -44,7 +44,7 @@ python3 setup.py install --user
 ``` python
 import uf
 
-# 载入模型（使用 demo 配置文件进行示范）
+# 新建模型（使用 demo 配置文件进行示范）
 model = uf.BERTClassifier(config_file='./demo/bert_config.json', vocab_file='./demo/vocab.txt')
 
 # 定义训练样本
@@ -138,7 +138,7 @@ uf.list_resources()
 uf.download('bert-wwm-ext-base-zh')
 ```
 
-任务后期需要大量的训练，可以通过配置文件，方便地整理和读取模型：
+任务后期需要大量的训练，可以通过配置文件，方便地管理模型：
 
 ``` python
 # 写入配置文件
@@ -149,21 +149,23 @@ model.cache('key', cache_file='.cache')
 model = uf.load('key', cache_file='.cache')
 ```
 
-模型使用完毕了，想要清出内存？试试 `del model` 或重置 `model.reset()`。
+模型使用完毕，想清出内存？试试 `del model` 或重置 `model.reset()`。
 
 ## 训练/推理/评分
 
 ``` python
 # 开启多进程 (加速数据预处理)
 with uf.MultiProcess():    # 多进程的本质是将当前进程进行复制，因此建议读取数据的代码写在这一步之后，否则容易内存爆炸
+    X, y = load_data()
 
     # 训练
     model.fit(
-        X=X, y=y, sample_weight=None,
+        X=X, y=y, 
+        sample_weight=None,    # 样本权重，放空则默认每条样本权重为 1.0
         X_tokenized=None,    # 特定场景下使用，e.g. 使用你自己的分词工具/语言模型推理时在输入加 [MASK]
         batch_size=32,
         learning_rate=5e-05,
-        target_steps=None,    # 放空代表直接训练到 `total_steps`，不中途停止；否则为本次训练暂停点
+        target_steps=None,    # 放空代表直接训练到 `total_steps`，不中途停止；否则为本次训练断点
         total_steps=-3,    # -3 代表自动计算数据量并循环三轮
         warmup_ratio=0.1,
         print_per_secs=1,    # 多少秒打印一次信息
@@ -172,7 +174,8 @@ with uf.MultiProcess():    # 多进程的本质是将当前进程进行复制，
 
     # 推理
     model.predict(
-        X=X, X_tokenized=None, batch_size=8)
+        X=X, X_tokenized=None, 
+        batch_size=8)
 
     # 评分
     model.score(
@@ -187,7 +190,7 @@ for loop_id in range(10):    # 假设训练途中一共验证 10 次
     print(model.score(X_dev, y_dev))    # 查看模型表现
 ```
 
-数据体量太大，老是爆内存？可以尝试先分批将数据写入不同的 TFRecords 文件，训练时同步读取：
+数据体量太大，爆内存？可以尝试先分批将数据写入不同的 TFRecords 文件，训练时同步读取：
 
 ```python
 with uf.MultiProcess():
@@ -199,7 +202,7 @@ with uf.MultiProcess():
 
 # 边读边训
 model.fit_from_tfrecords(
-    tfrecords_files=['./train.tfrecords-0', './.tfrecords-1'],    # 同时从两个 TFRecords 文件读取
+    tfrecords_files=['./train.tfrecords-0', './.tfrecords-1'],    # 同步从多个 TFRecords 文件读取
     n_jobs=3,    # 启动三个线程
     batch_size=32,    # 以下参数和 `.fit()` 中参数相同
     learning_rate=5e-05,
@@ -222,7 +225,7 @@ model.fit(X, y, ..., optimizer='lamb')
 
 # 分层学习率 (少量模型不适用)
 model.fit(X, y, ..., layerwise_lr_decay_ratio=0.85)    # 默认为 None
-print(model._key_to_depths)    # 衰减比率
+print(model._key_to_depths)    # 衰减比率 (可手动进行修改，修改完成后训练即生效)
 
 # 对抗式训练
 model.fit(X, y, ..., adversarial='fgm', epsilon=0.5)    # FGM
@@ -245,18 +248,11 @@ assert model.init_checkpoint is not None
 model.init()
 print(model.uninited_vars)
 
-# 在 `checkpoint` 中寻找对应的参数名
-print(uf.list_variables(model.init_checkpoint))
-
-# 人工添加映射关系到 `assignment_map`
-model.assignment_map['var_1_in_ckpt'] = model.uninited_vars['var_1_in_model']
-model.assignment_map['var_2_in_ckpt'] = model.uninited_vars['var_2_in_model']
-
-# 重新读取预训练参数
-model.reinit_from_checkpoint()
-
-# 看看变量是否从初始化失败的名单中消失
-print(model.uninited_vars)
+# 人工构建变量名映射规则，重新读取变量
+print(uf.list_variables(model.init_checkpoint))    # 在 `checkpoint` 中寻找对应的参数名
+model.assignment_map['var_name_from_ckpt_file'] = model.uninited_vars['var_name_in_uf_model']    # 添加映射关系
+model.reinit_from_checkpoint()    # 重新读取预训练参数
+print(model.uninited_vars)    # 看看变量是否从初始化失败的名单中消失
 
 # 保存参数及配置（避免下次载入预训练参数时，重复上述步骤）
 assert model.output_dir is not None
@@ -266,16 +262,9 @@ model.cache('key')
 直接给参数赋值如何？当然是可以的：
 
 ```python
-import numpy as np
-
-# 获取参数
-variable = model.trainable_variables[0]
-
-# 赋值
-model.assign(variable, value)
-
-# 查看参数
-print(model.sess.run(variable))
+variable = model.trainable_variables[0]    # 获取参数
+model.assign(variable, value)    # 赋值
+print(model.sess.run(variable))    # 查看参数
 
 # 保存赋值后的参数及配置
 assert model.output_dir is not None
@@ -284,8 +273,10 @@ model.cache('key')
 
 ## TFServing
 
+导出 PB 文件到指定目录下：
+
 ``` python
-# 导出 PB 文件到指定目录下
+
 model.export(
     'serving',    # 导出目录
     rename_inputs={},    # 重命名输入
@@ -322,7 +313,7 @@ model.export(
 
 - 问：无意义的 warning 信息太多，该怎么剔除？
 
-  答：这是 tensorflow 一直饱受诟病之处，我们也与你一同深受困扰。暂时没有有效的同时又兼容各个 tf 版本的解决方案。
+  答：这是 tensorflow 一直饱受诟病之处，我们也与你一同深受困扰。暂时没有有效的同时，又兼容各个 tf 版本的解决方案。
 
 ## 开发需知
 

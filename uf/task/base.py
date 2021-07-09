@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-''' Training methods including basic training and adversarial training. '''
 
 import os
 import time
@@ -271,7 +270,7 @@ class Inference(BaseTask):
         self.m = module
 
         # ignore redundant building of the work flow
-        if self.m._session_mode not in ('predict', 'score'):
+        if self.m._session_mode != 'infer':
             self.decorate()
 
     def decorate(self):
@@ -288,7 +287,7 @@ class Inference(BaseTask):
         if not self.m._session_built:
             utils.count_params(self.m.global_variables, self.m.trainable_variables)
             self._init_session()
-        self.m._session_mode = 'predict'
+        self.m._session_mode = 'infer'
 
         self._ptr = 0
         last_tic = time.time()
@@ -325,8 +324,13 @@ class Scoring(BaseTask):
         self.m = module
 
         # ignore redundant building of the work flow
-        if self.m._session_mode not in ('predict', 'score'):
-            self.decorate(self.m)
+        if self.m._session_mode != 'infer':
+            self.decorate()
+
+    def decorate(self):
+        self.m._set_placeholders('placeholder', is_training=False)
+
+        (_, self.m._losses, self.m._probs, self.m._preds) = self.m._parallel_forward(False)
 
     def run(self):
         n_inputs = len(list(self.m.data.values())[0])
@@ -337,7 +341,7 @@ class Scoring(BaseTask):
         if not self.m._session_built:
             utils.count_params(self.m.global_variables, self.m.trainable_variables)
             self._init_session()
-        self.m._session_mode = 'score'
+        self.m._session_mode = 'infer'
 
         self._ptr = 0
         last_tic = time.time()
@@ -400,7 +404,7 @@ class Initialization(BaseTask):
                     'Global variables already initialized. To '
                     're-initialize all, pass `reinit_all` to '
                     'True.')
-        self.m._session_mode = 'predict'
+        self.m._session_mode = 'infer'
 
     def _init_session(self, ignore_checkpoint):
         os.environ['CUDA_VISIBLE_DEVICES'] = ','.join(self.m._gpu_ids)
@@ -430,7 +434,7 @@ class Exportation(BaseTask):
             utils.count_params(
                 self.m.global_variables, self.m.trainable_variables)
             self._init_session()
-        self.m._session_mode = 'predict'
+        self.m._session_mode = 'infer'
 
         def set_input(key, value):
             inputs[key] = tf.saved_model.utils.build_tensor_info(value)

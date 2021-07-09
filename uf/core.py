@@ -215,9 +215,10 @@ class BaseModule:
                 **kwargs)
             kwargs.update(tfrecords_files=tfrecords_files, n_jobs=n_jobs)
 
-            t = task.base.Training(self, **kwargs)
             if kwargs.get('adversarial'):
                 t = task.adversarial.AdversarialTraining(self, **kwargs)
+            else:
+                t = task.base.Training(self, **kwargs)
             return t.run(
                 target_steps,
                 print_per_secs=print_per_secs,
@@ -308,9 +309,10 @@ class BaseModule:
                 key_to_depths=self._key_to_depths,
                 **kwargs)
 
-            t = task.base.Training(self, **kwargs)
             if kwargs.get('adversarial'):
                 t = task.adversarial.AdversarialTraining(self, **kwargs)
+            else:
+                t = task.base.Training(self, **kwargs)
             return t.run(
                 target_steps,
                 print_per_secs=print_per_secs,

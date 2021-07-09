@@ -1,5 +1,5 @@
 # coding:=utf-8
-# Copyright 2020 Tencent. All rights reserved.
+# Copyright 2021 Tencent. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
 # you may not use this file except in compliance with the License.
@@ -17,14 +17,13 @@
 import copy
 import numpy as np
 
-from uf.tools import tf
+from ..tools import tf
 from .base import ClassifierModule
 from .bert import BERTClassifier, get_bert_config
-from uf.modeling.bert import BERTEncoder
-from uf.modeling.sem_bert import SemBERTDecoder
-from uf.tokenization.word_piece import get_word_piece_tokenizer
-import uf.utils as utils
-
+from ..modeling.bert import BERTEncoder
+from ..modeling.sem_bert import SemBERTDecoder
+from ..tokenization.word_piece import get_word_piece_tokenizer
+from .. import utils
 
 
 class SemBERTClassifier(BERTClassifier, ClassifierModule):
@@ -76,7 +75,8 @@ class SemBERTClassifier(BERTClassifier, ClassifierModule):
         if is_training:
             assert y is not None, '`y` can\'t be None.'
         if is_parallel:
-            assert self.label_size, ('Can\'t parse data on multi-processing '
+            assert self.label_size, (
+                'Can\'t parse data on multi-processing '
                 'when `label_size` is None.')
 
         n_inputs = None
@@ -179,7 +179,7 @@ class SemBERTClassifier(BERTClassifier, ClassifierModule):
                 for feature in segment[:n]:
                     try:
                         _sem_features.append(sem_features_map[feature])
-                    except:
+                    except Exception:
                         tf.logging.warning(
                             'Unregistered semantic feature: %s. Ignored.'
                             % feature)
@@ -250,7 +250,6 @@ class SemBERTClassifier(BERTClassifier, ClassifierModule):
             **kwargs)
         (total_loss, losses, probs, preds) = decoder.get_forward_outputs()
         return (total_loss, losses, probs, preds)
-
 
 
 def get_key_to_depths(num_hidden_layers):

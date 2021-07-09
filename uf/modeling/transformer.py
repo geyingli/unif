@@ -1,5 +1,5 @@
 # coding:=utf-8
-# Copyright 2020 Tencent. All rights reserved.
+# Copyright 2021 Tencent. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
 # you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@
 import math
 import numpy as np
 
-from uf.tools import tf
+from ..tools import tf
 from .base import BaseEncoder, BaseDecoder
 from . import util
 
@@ -37,8 +37,15 @@ class Transformer(BaseDecoder, BaseEncoder):
                  num_attention_heads=12,
                  scope='transformer',
                  use_label_smoothing=False,
+                 use_tilda_embedding=False,
                  **kwargs):
         super().__init__()
+
+        # Tilda embeddings for SMART algorithm
+        tilda_embeddings = None
+        if use_tilda_embedding:
+            with tf.variable_scope('', reuse=True):
+                tilda_embeddings = tf.get_variable('tilda_embeddings')
 
         dropout_rate = 0.0
         if is_training:
@@ -49,13 +56,6 @@ class Transformer(BaseDecoder, BaseEncoder):
         batch_size = source_shape[0]
         source_max_seq_length = source_shape[1]
         target_max_seq_length = target_shape[1]
-
-        # Tilda embeddings for SMART algorithm
-        tilda_embeddings = None
-        use_tilda_embedding=kwargs.get('use_tilda_embedding')
-        if use_tilda_embedding:
-            with tf.variable_scope('', reuse=True):
-                tilda_embeddings = tf.get_variable('tilda_embeddings')
 
         with tf.variable_scope(scope):
             source_mask = tf.math.equal(source_ids, 0)

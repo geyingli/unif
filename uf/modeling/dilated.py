@@ -1,5 +1,5 @@
 # coding:=utf-8
-# Copyright 2020 Tencent. All rights reserved.
+# Copyright 2021 Tencent. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,11 +14,10 @@
 # limitations under the License.
 ''' Dilated language modeling. '''
 
-from uf.tools import tf
+from ..tools import tf
 from .base import BaseDecoder
 from .bert import BERTEncoder
 from . import util
-
 
 
 class DLM(BaseDecoder, BERTEncoder):
@@ -36,18 +35,18 @@ class DLM(BaseDecoder, BERTEncoder):
                  **kwargs):
         super().__init__()
 
+        # Tilda embeddings for SMART algorithm
+        tilda_embeddings = None
+        if use_tilda_embedding:
+            with tf.variable_scope('', reuse=True):
+                tilda_embeddings = tf.get_variable('tilda_embeddings')
+
         dilated_mask = tf.cast(
             tf.not_equal(dilated_ids, 0), tf.float32)
 
         shape = util.get_shape_list(dilated_ids, expected_rank=2)
         batch_size = shape[0]
         dilated_seq_length = shape[1]
-
-        # Tilda embeddings for SMART algorithm
-        tilda_embeddings = None
-        if use_tilda_embedding:
-            with tf.variable_scope('', reuse=True):
-                tilda_embeddings = tf.get_variable('tilda_embeddings')
 
         with tf.variable_scope(scope):
 

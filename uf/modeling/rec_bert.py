@@ -14,11 +14,10 @@
 # limitations under the License.
 ''' Recorrection language modeling. '''
 
-from uf.tools import tf
+from ..tools import tf
 from .base import BaseDecoder
 from .bert import BERTEncoder
 from . import util
-
 
 
 class RecBERT(BaseDecoder, BERTEncoder):
@@ -36,6 +35,12 @@ class RecBERT(BaseDecoder, BERTEncoder):
                  **kwargs):
         super().__init__()
 
+        # Tilda embeddings for SMART algorithm
+        tilda_embeddings = None
+        if use_tilda_embedding:
+            with tf.variable_scope('', reuse=True):
+                tilda_embeddings = tf.get_variable('tilda_embeddings')
+
         input_mask = tf.cast(
             tf.not_equal(input_ids, 0), tf.float32)
 
@@ -46,12 +51,6 @@ class RecBERT(BaseDecoder, BERTEncoder):
         if not is_training:
             bert_config.hidden_dropout_prob = 0.0
             bert_config.attention_probs_dropout_prob = 0.0
-
-        # Tilda embeddings for SMART algorithm
-        tilda_embeddings = None
-        if use_tilda_embedding:
-            with tf.variable_scope('', reuse=True):
-                tilda_embeddings = tf.get_variable('tilda_embeddings')
 
         with tf.variable_scope(scope):
 

@@ -1,5 +1,5 @@
 # coding:=utf-8
-# Copyright 2020 Tencent. All rights reserved.
+# Copyright 2021 Tencent. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import copy
 import json
 import numpy as np
 
-from uf.tools import tf
+from ..tools import tf
 from .base import BaseEncoder, BaseDecoder
 from . import util
 
@@ -37,6 +37,7 @@ class ALBERTEncoder(BaseEncoder):
                scope='bert',
                drop_pooler=False,
                trainable=True,
+               use_tilda_embedding=False,
                **kwargs):
     """Constructor for AlbertModel.
 
@@ -55,6 +56,13 @@ class ALBERTEncoder(BaseEncoder):
       ValueError: The config is invalid or one of the input tensor shapes
         is invalid.
     """
+
+    # Tilda embeddings for SMART algorithm
+    tilda_embeddings = None
+    if use_tilda_embedding:
+      with tf.variable_scope('', reuse=True):
+        tilda_embeddings = tf.get_variable('tilda_embeddings')
+
     albert_config = copy.deepcopy(albert_config)
     if not is_training:
       albert_config.hidden_dropout_prob = 0.0
@@ -69,13 +77,6 @@ class ALBERTEncoder(BaseEncoder):
 
     if segment_ids is None:
       segment_ids = tf.zeros(shape=[batch_size, seq_length], dtype=tf.int32)
-
-    # Tilda embeddings for SMART algorithm
-    tilda_embeddings = None
-    use_tilda_embedding=kwargs.get('use_tilda_embedding')
-    if use_tilda_embedding:
-      with tf.variable_scope('', reuse=True):
-        tilda_embeddings = tf.get_variable('tilda_embeddings')
 
     with tf.variable_scope(scope):
       with tf.variable_scope("embeddings"):

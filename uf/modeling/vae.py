@@ -1,5 +1,5 @@
 # coding:=utf-8
-# Copyright 2020 Tencent. All rights reserved.
+# Copyright 2021 Tencent. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 ''' The text generation model VAE we utilize in clustering, feature extraction
 and negative sample generation. '''
 
-from uf.tools import tf
+from ..tools import tf
 from .base import BaseDecoder
 from .bert import BERTEncoder
 from . import util
@@ -37,8 +37,15 @@ class VAE(BaseDecoder, BERTEncoder):
                  bias=0,
                  scope='vae',
                  trainable=True,
+                 use_tilda_embedding=False,
                  **kwargs):
         super().__init__()
+
+        # Tilda embeddings for SMART algorithm
+        tilda_embeddings = None
+        if use_tilda_embedding:
+            with tf.variable_scope('', reuse=True):
+                tilda_embeddings = tf.get_variable('tilda_embeddings')
 
         # freeze parameters
         config = Config(
@@ -53,13 +60,6 @@ class VAE(BaseDecoder, BERTEncoder):
         input_shape = util.get_shape_list(input_ids, expected_rank=2)
         batch_size = input_shape[0]
         seq_length = input_shape[1]
-
-        # Tilda embeddings for SMART algorithm
-        tilda_embeddings = None
-        use_tilda_embedding=kwargs.get('use_tilda_embedding')
-        if use_tilda_embedding:
-            with tf.variable_scope('', reuse=True):
-                tilda_embeddings = tf.get_variable('tilda_embeddings')
 
         with tf.variable_scope(scope):
             with tf.variable_scope('embeddings'):

@@ -1,5 +1,5 @@
 # coding:=utf-8
-# Copyright 2020 Tencent. All rights reserved.
+# Copyright 2021 Tencent. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
 # you may not use this file except in compliance with the License.
@@ -19,14 +19,13 @@ import random
 import collections
 import numpy as np
 
-from uf.tools import tf
+from ..tools import tf
 from .base import LMModule
 from .bert import BERTLM, create_instances_from_document
-from uf.modeling.unilm import UniLMEncoder
-from uf.modeling.bert import BERTDecoder, BERTConfig
-from uf.tokenization.word_piece import get_word_piece_tokenizer
-import uf.utils as utils
-
+from ..modeling.unilm import UniLMEncoder
+from ..modeling.bert import BERTDecoder, BERTConfig
+from ..tokenization.word_piece import get_word_piece_tokenizer
+from .. import utils
 
 
 class UniLM(BERTLM, LMModule):
@@ -429,7 +428,6 @@ class UniLM(BERTLM, LMModule):
             outputs['nsp_probs'] = nsp_probs
 
         return outputs
-
 
 
 MaskedLmInstance = collections.namedtuple('MaskedLmInstance',

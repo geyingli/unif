@@ -1,5 +1,5 @@
 # coding:=utf-8
-# Copyright 2020 Tencent. All rights reserved.
+# Copyright 2021 Tencent. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
 # you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@
 import os
 import json
 
-from uf.tools import tf
+from ..tools import tf
 from .base import BaseEncoder, BaseDecoder
 from . import util
 
@@ -39,6 +39,7 @@ class XLNetEncoder(BaseEncoder):
                  perm_mask=None,
                  target_mapping=None,
                  inp_q=None,
+                 use_tilda_embedding=False,
                  **kwargs):
         '''
         Args:
@@ -66,6 +67,12 @@ class XLNetEncoder(BaseEncoder):
               Set to None during finetuning.
         '''
 
+        # Tilda embeddings for SMART algorithm
+        tilda_embeddings = None
+        if use_tilda_embedding:
+            with tf.variable_scope('', reuse=True):
+                tilda_embeddings = tf.get_variable('tilda_embeddings')
+
         run_config = XLNetRunConfig(
             is_training=is_training,
             bi_data=False,
@@ -78,13 +85,6 @@ class XLNetEncoder(BaseEncoder):
             init_std=0.02,
             clamp_len=-1)
         initializer = _get_initializer(run_config)
-
-        # Tilda embeddings for SMART algorithm
-        tilda_embeddings = None
-        use_tilda_embedding=kwargs.get('use_tilda_embedding')
-        if use_tilda_embedding:
-            with tf.variable_scope('', reuse=True):
-                tilda_embeddings = tf.get_variable('tilda_embeddings')
 
         tfm_args = dict(
             n_token=xlnet_config.n_token,

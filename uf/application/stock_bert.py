@@ -16,13 +16,12 @@
 
 import numpy as np
 
-from uf.tools import tf
+from ..tools import tf
 from .base import ClassifierModule
 from .bert import BERTClassifier, get_bert_config, get_key_to_depths
-from uf.modeling.stock_bert import StockBERTEncoder
-from uf.modeling.base import CLSDecoder
-import uf.utils as utils
-
+from ..modeling.stock_bert import StockBERTEncoder
+from ..modeling.base import CLSDecoder
+from .. import utils
 
 
 class StockBERTClassifier(BERTClassifier, ClassifierModule):
@@ -73,7 +72,8 @@ class StockBERTClassifier(BERTClassifier, ClassifierModule):
         if is_training:
             assert y is not None, '`y` can\'t be None.'
         if is_parallel:
-            assert self.label_size, ('Can\'t parse data on multi-processing '
+            assert self.label_size, (
+                'Can\'t parse data on multi-processing '
                 'when `label_size` is None.')
 
         n_inputs = None

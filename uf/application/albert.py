@@ -1,5 +1,5 @@
 # coding:=utf-8
-# Copyright 2020 Tencent. All rights reserved.
+# Copyright 2021 Tencent. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,16 +19,14 @@ import random
 import collections
 import numpy as np
 
-from uf.tools import tf
 from .base import ClassifierModule, MRCModule, LMModule
-from uf.modeling.albert import ALBERTEncoder, ALBERTDecoder, ALBERTConfig
 from .bert import (BERTClassifier, BERTBinaryClassifier, BERTSeqClassifier,
                    BERTMRC, BERTLM)
-from uf.modeling.base import (CLSDecoder, BinaryCLSDecoder, SeqCLSDecoder,
-                              MRCDecoder)
-from uf.tokenization.word_piece import get_word_piece_tokenizer
-import uf.utils as utils
-
+from ..modeling.albert import ALBERTEncoder, ALBERTDecoder, ALBERTConfig
+from ..modeling.base import CLSDecoder, BinaryCLSDecoder, SeqCLSDecoder, MRCDecoder
+from ..tokenization.word_piece import get_word_piece_tokenizer
+from ..tools import tf
+from .. import utils
 
 
 class ALBERTClassifier(BERTClassifier, ClassifierModule):
@@ -93,7 +91,6 @@ class ALBERTClassifier(BERTClassifier, ClassifierModule):
             **kwargs)
         (total_loss, losses, probs, preds) = decoder.get_forward_outputs()
         return (total_loss, losses, probs, preds)
-
 
 
 class ALBERTBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
@@ -163,7 +160,6 @@ class ALBERTBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
         return (total_loss, losses, probs, preds)
 
 
-
 class ALBERTSeqClassifier(BERTSeqClassifier, ClassifierModule):
     ''' Sequence labeling classifier on ALBERT. '''
     _INFER_ATTRIBUTES = BERTSeqClassifier._INFER_ATTRIBUTES
@@ -226,7 +222,6 @@ class ALBERTSeqClassifier(BERTSeqClassifier, ClassifierModule):
         return (total_loss, losses, probs, preds)
 
 
-
 class ALBERTMRC(BERTMRC, MRCModule):
     ''' Machine reading comprehension on ALBERT. '''
     _INFER_ATTRIBUTES = BERTMRC._INFER_ATTRIBUTES
@@ -285,7 +280,6 @@ class ALBERTMRC(BERTMRC, MRCModule):
             **kwargs)
         (total_loss, losses, probs, preds) = decoder.get_forward_outputs()
         return (total_loss, losses, probs, preds)
-
 
 
 class ALBERTLM(BERTLM, LMModule):
@@ -568,8 +562,7 @@ class ALBERTLM(BERTLM, LMModule):
             masked_lm_positions=split_placeholders['masked_lm_positions'],
             masked_lm_ids=split_placeholders['masked_lm_ids'],
             masked_lm_weights=split_placeholders['masked_lm_weights'],
-            sentence_order_labels=\
-                split_placeholders.get('sentence_order_labels'),
+            sentence_order_labels=split_placeholders.get('sentence_order_labels'),
             sample_weight=split_placeholders.get('sample_weight'),
             scope_lm='cls/predictions',
             scope_cls='cls/seq_relationship',
@@ -939,8 +932,8 @@ def create_masked_lm_predictions(tokens,
     masked_lms = sorted(masked_lms, key=lambda x: x.index)
 
     for p in masked_lms:
-      masked_lm_positions.append(p.index)
-      masked_lm_labels.append(p.label)
+        masked_lm_positions.append(p.index)
+        masked_lm_labels.append(p.label)
     return (output_tokens, masked_lm_positions, masked_lm_labels)
 
 

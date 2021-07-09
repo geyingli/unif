@@ -1,5 +1,5 @@
 # coding:=utf-8
-# Copyright 2020 Tencent. All rights reserved.
+# Copyright 2021 Tencent. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@
 import copy
 import collections
 
-from uf.tools import tf
+from ..tools import tf
 from .bert import BERTEncoder
 from .base import BaseDecoder
 from . import util

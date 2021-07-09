@@ -17,17 +17,17 @@
 import os
 import numpy as np
 
-from uf.tools import tf
+from ..tools import tf
 from .base import ClassifierModule, MRCModule, LMModule
 from .bert import (
     BERTClassifier, BERTBinaryClassifier, BERTSeqClassifier, BERTMRC)
 from .bert import BERTLM, create_masked_lm_predictions, get_key_to_depths
-from uf.modeling.bert import BERTEncoder, BERTConfig
-from uf.modeling.electra import ELECTRA
-from uf.modeling.base import (
+from ..modeling.bert import BERTEncoder, BERTConfig
+from ..modeling.electra import ELECTRA
+from ..modeling.base import (
     CLSDecoder, BinaryCLSDecoder, SeqCLSDecoder, MRCDecoder)
-from uf.tokenization.word_piece import get_word_piece_tokenizer
-import uf.utils as utils
+from ..tokenization.word_piece import get_word_piece_tokenizer
+from .. import utils
 
 
 class ELECTRAClassifier(BERTClassifier, ClassifierModule):
@@ -90,7 +90,6 @@ class ELECTRAClassifier(BERTClassifier, ClassifierModule):
             **kwargs)
         (total_loss, losses, probs, preds) = decoder.get_forward_outputs()
         return (total_loss, losses, probs, preds)
-
 
 
 class ELECTRABinaryClassifier(BERTBinaryClassifier, ClassifierModule):
@@ -158,7 +157,6 @@ class ELECTRABinaryClassifier(BERTBinaryClassifier, ClassifierModule):
         return (total_loss, losses, probs, preds)
 
 
-
 class ELECTRASeqClassifier(BERTSeqClassifier, ClassifierModule):
     ''' Sequence labeling classifier on ELECTRA. '''
     _INFER_ATTRIBUTES = BERTSeqClassifier._INFER_ATTRIBUTES
@@ -222,7 +220,6 @@ class ELECTRASeqClassifier(BERTSeqClassifier, ClassifierModule):
         return (total_loss, losses, probs, preds)
 
 
-
 class ELECTRAMRC(BERTMRC, MRCModule):
     ''' Machine reading comprehension on ELECTRA. '''
     _INFER_ATTRIBUTES = BERTMRC._INFER_ATTRIBUTES
@@ -282,7 +279,6 @@ class ELECTRAMRC(BERTMRC, MRCModule):
             **kwargs)
         (total_loss, losses, probs, preds) = decoder.get_forward_outputs()
         return (total_loss, losses, probs, preds)
-
 
 
 class ELECTRALM(BERTLM, LMModule):
@@ -345,8 +341,7 @@ class ELECTRALM(BERTLM, LMModule):
 
             (input_ids, input_mask, segment_ids,
              masked_lm_positions, masked_lm_ids, masked_lm_weights) = \
-                 self._convert_X(X_tokenized if tokenized else X,
-                                 is_training, tokenized=tokenized)
+                self._convert_X(X_tokenized if tokenized else X, is_training, tokenized=tokenized)
 
             data['input_ids'] = np.array(input_ids, dtype=np.int32)
             data['input_mask'] = np.array(input_mask, dtype=np.int32)
@@ -593,7 +588,7 @@ class ELECTRALM(BERTLM, LMModule):
         rtd_preds = []
         input_ids = self.data['input_ids']
         input_mask = self.data['input_mask']
-        all_preds =  utils.transform(output_arrays[1], n_inputs).tolist()
+        all_preds = utils.transform(output_arrays[1], n_inputs).tolist()
         for ex_id, _preds in enumerate(all_preds):
             _tokens = []
             _end = sum(input_mask[ex_id])

@@ -17,12 +17,11 @@
 import random
 import numpy as np
 
-from uf.tools import tf
+from ..tools import tf
 from .base import LMModule
 from .bert import get_bert_config, get_word_piece_tokenizer, get_key_to_depths
-from uf.modeling.rec_bert import RecBERT
-import uf.utils as utils
-
+from ..modeling.rec_bert import RecBERT
+from .. import utils
 
 
 class RecBERTLM(LMModule):
@@ -283,14 +282,11 @@ class RecBERTLM(LMModule):
 
         # add accuracy
         batch_add_preds = output_arrays[1]
-        add_accuracy = np.sum((batch_add_preds == batch_add_labels) \
-            * batch_mask) / (np.sum(batch_mask) + 1e-6)
+        add_accuracy = np.sum((batch_add_preds == batch_add_labels) * batch_mask) / (np.sum(batch_mask) + 1e-6)
 
         # del accuracy
         batch_del_preds = output_arrays[2]
-        del_accuracy = \
-            np.sum((batch_del_preds == batch_del_labels) \
-            * batch_mask) / (np.sum(batch_mask) + 1e-6)
+        del_accuracy = np.sum((batch_del_preds == batch_del_labels) * batch_mask) / (np.sum(batch_mask) + 1e-6)
 
         # add loss
         batch_add_losses = output_arrays[3]
@@ -376,7 +372,6 @@ class RecBERTLM(LMModule):
         outputs['preds'] = preds
 
         return outputs
-
 
 
 def sample_wrong_tokens(_input_ids, _add_label_ids, _del_label_ids,

@@ -16,7 +16,7 @@
 
 import copy
 
-from uf.tools import tf
+from ..tools import tf
 from .base import BaseEncoder
 from .bert import BERTEncoder
 from . import util

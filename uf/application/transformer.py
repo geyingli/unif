@@ -1,5 +1,5 @@
 # coding:=utf-8
-# Copyright 2020 Tencent. All rights reserved.
+# Copyright 2021 Tencent. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
 # you may not use this file except in compliance with the License.
@@ -16,12 +16,11 @@
 
 import numpy as np
 
-from uf.tools import tf
+from ..tools import tf
 from .base import MTModule
-from uf.modeling.transformer import Transformer
-from uf.tokenization.word_piece import get_word_piece_tokenizer
-import uf.utils as utils
-
+from ..modeling.transformer import Transformer
+from ..tokenization.word_piece import get_word_piece_tokenizer
+from .. import utils
 
 
 class TransformerMT(MTModule):
@@ -296,7 +295,8 @@ class TransformerMT(MTModule):
 def get_key_to_depths(num_hidden_layers):
     key_to_depths = {
         '/embeddings': num_hidden_layers + 1,
-        'cls': 0,}
+        'cls': 0,
+    }
     for layer_idx in range(num_hidden_layers):
         key_to_depths['/block_%d/' % layer_idx] = num_hidden_layers - layer_idx
     return key_to_depths

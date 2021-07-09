@@ -1,5 +1,5 @@
 # coding:=utf-8
-# Copyright 2020 Tencent. All rights reserved.
+# Copyright 2021 Tencent. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
 # you may not use this file except in compliance with the License.
@@ -19,15 +19,14 @@ import random
 import collections
 import numpy as np
 
-from uf.tools import tf
+from ..tools import tf
 from .base import ClassifierModule, LMModule, NERModule, MRCModule
-from uf.modeling.bert import BERTEncoder, BERTDecoder, BERTConfig
-from uf.modeling.base import (
+from ..modeling.bert import BERTEncoder, BERTDecoder, BERTConfig
+from ..modeling.base import (
     CLSDecoder, BinaryCLSDecoder, SeqCLSDecoder, MRCDecoder)
-from uf.modeling.crf import CRFDecoder, viterbi_decode
-from uf.tokenization.word_piece import get_word_piece_tokenizer
-import uf.utils as utils
-
+from ..modeling.crf import CRFDecoder, viterbi_decode
+from ..tokenization.word_piece import get_word_piece_tokenizer
+from .. import utils
 
 
 class BERTClassifier(ClassifierModule):
@@ -86,7 +85,8 @@ class BERTClassifier(ClassifierModule):
         if is_training:
             assert y is not None, '`y` can\'t be None.'
         if is_parallel:
-            assert self.label_size, ('Can\'t parse data on multi-processing '
+            assert self.label_size, (
+                'Can\'t parse data on multi-processing '
                 'when `label_size` is None.')
 
         n_inputs = None
@@ -322,7 +322,6 @@ class BERTClassifier(ClassifierModule):
         return outputs
 
 
-
 class BERTBinaryClassifier(BERTClassifier, ClassifierModule):
     ''' Multi-label classifier on BERT. '''
     _INFER_ATTRIBUTES = BERTClassifier._INFER_ATTRIBUTES
@@ -374,7 +373,7 @@ class BERTBinaryClassifier(BERTClassifier, ClassifierModule):
                     assert _y not in _label_set
                     label_set.add(_y)
                     _label_set.add(_y)
-        except:
+        except Exception:
             raise ValueError(
                 'The element of `y` should be a list of multiple answers. '
                 'E.g. y=[[1, 3], [0], [0, 2]].')
@@ -475,7 +474,6 @@ class BERTBinaryClassifier(BERTClassifier, ClassifierModule):
         return outputs
 
 
-
 class BERTSeqClassifier(BERTClassifier, ClassifierModule):
     ''' Sequence labeling classifier on BERT. '''
     _INFER_ATTRIBUTES = BERTClassifier._INFER_ATTRIBUTES
@@ -512,7 +510,8 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
         if is_training:
             assert y is not None, '`y` can\'t be None.'
         if is_parallel:
-            assert self.label_size, ('Can\'t parse data on multi-processing '
+            assert self.label_size, (
+                'Can\'t parse data on multi-processing '
                 'when `label_size` is None.')
 
         n_inputs = None
@@ -593,7 +592,7 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
             for sample in y:
                 for _y in sample:
                     label_set.add(_y)
-        except:
+        except Exception:
             raise ValueError(
                 'The element of `y` should be a list of labels.')
 
@@ -764,7 +763,6 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
         return outputs
 
 
-
 class BERTNER(BERTClassifier, NERModule):
     ''' Named entity recognition on BERT. '''
     _INFER_ATTRIBUTES = {
@@ -821,7 +819,7 @@ class BERTNER(BERTClassifier, NERModule):
     predict.__doc__ = NERModule.predict.__doc__
 
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
-            is_training=False, is_parallel=False):
+                is_training=False, is_parallel=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
 
         if is_training:
@@ -1089,7 +1087,7 @@ class BERTNER(BERTClassifier, NERModule):
                     try:
                         _text_start = _mapping_start[_start]
                         _text_end = _mapping_end[_end]
-                    except:
+                    except Exception:
                         continue
                     _entity_text = _text[_text_start: _text_end]
                     _preds.append(_entity_text)
@@ -1125,7 +1123,6 @@ class BERTNER(BERTClassifier, NERModule):
         outputs['loss'] = loss
 
         return outputs
-
 
 
 class BERTCRFNER(BERTNER, NERModule):
@@ -1241,7 +1238,7 @@ class BERTCRFNER(BERTNER, NERModule):
                     try:
                         _text_start = _mapping_start[_start]
                         _text_end = _mapping_end[_end]
-                    except:
+                    except Exception:
                         continue
                     _entity_text = _text[_text_start: _text_end]
                     _preds.append(_entity_text)
@@ -1288,7 +1285,6 @@ class BERTCRFNER(BERTNER, NERModule):
         outputs['loss'] = loss
 
         return outputs
-
 
 
 class BERTCRFCascadeNER(BERTCRFNER, NERModule):
@@ -1340,13 +1336,14 @@ class BERTCRFCascadeNER(BERTCRFNER, NERModule):
             tf.logging.info('Add necessary token `[SEP]` into vocabulary.')
 
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
-            is_training=False, is_parallel=False):
+                is_training=False, is_parallel=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
 
         if is_training:
             assert y is not None, '`y` can\'t be None.'
         if is_parallel:
-            assert self.entity_types, ('Can\'t parse data on multi-processing '
+            assert self.entity_types, (
+                'Can\'t parse data on multi-processing '
                 'when `entity_types` is None.')
 
         n_inputs = None
@@ -1573,7 +1570,7 @@ class BERTCRFCascadeNER(BERTCRFNER, NERModule):
                             try:
                                 _text_start = _mapping_start[_start]
                                 _text_end = _mapping_end[_end]
-                            except:
+                            except Exception:
                                 continue
                             _entity_text = _text[_text_start: _text_end]
                             _preds[entity_type].append(_entity_text)
@@ -1620,7 +1617,6 @@ class BERTCRFCascadeNER(BERTCRFNER, NERModule):
         outputs['loss'] = loss
 
         return outputs
-
 
 
 class BERTMRC(BERTClassifier, MRCModule):
@@ -1978,7 +1974,7 @@ class BERTMRC(BERTClassifier, MRCModule):
                 try:
                     _text_start = _mapping_start[_start]
                     _text_end = _mapping_end[_end]
-                except:
+                except Exception:
                     preds.append(None)
                     continue
                 _span_text = _text[_text_start: _text_end]
@@ -2012,7 +2008,6 @@ class BERTMRC(BERTClassifier, MRCModule):
         outputs['loss'] = loss
 
         return outputs
-
 
 
 class BERTVerifierMRC(BERTMRC, MRCModule):
@@ -2351,7 +2346,7 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
                 try:
                     _text_start = _mapping_start[_start]
                     _text_end = _mapping_end[_end]
-                except:
+                except Exception:
                     preds.append(None)
                     continue
                 _span_text = _text[_text_start: _text_end]
@@ -2403,7 +2398,6 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
         outputs['mrc_loss'] = loss
 
         return outputs
-
 
 
 class BERTLM(LMModule):
@@ -2918,22 +2912,22 @@ def create_masked_lm_predictions(tokens,
 
     cand_indexes = []
     for (i, token) in enumerate(tokens):
-      if token == '[CLS]' or token == '[SEP]':
-        continue
-      # Whole Word Masking means that if we mask all of the wordpieces
-      # corresponding to an original word. When a word has been split into
-      # WordPieces, the first token does not have any marker and any
-      # subsequence tokens are prefixed with ##. So whenever we see the
-      # `##` token, we append it to the previous set of word indexes.
-      #
-      # Note that Whole Word Masking does *not* change the training code
-      # at all -- we still predict each WordPiece independently, softmaxed
-      # over the entire vocabulary.
-      if (do_whole_word_mask and len(cand_indexes) >= 1 and
-          token.startswith('##')):
-        cand_indexes[-1].append(i)
-      else:
-        cand_indexes.append([i])
+        if token == '[CLS]' or token == '[SEP]':
+            continue
+        # Whole Word Masking means that if we mask all of the wordpieces
+        # corresponding to an original word. When a word has been split into
+        # WordPieces, the first token does not have any marker and any
+        # subsequence tokens are prefixed with ##. So whenever we see the
+        # `##` token, we append it to the previous set of word indexes.
+        #
+        # Note that Whole Word Masking does *not* change the training code
+        # at all -- we still predict each WordPiece independently, softmaxed
+        # over the entire vocabulary.
+        if (do_whole_word_mask and len(cand_indexes) >= 1 and
+                token.startswith('##')):
+            cand_indexes[-1].append(i)
+        else:
+            cand_indexes.append([i])
 
     random.shuffle(cand_indexes)
 

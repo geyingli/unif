@@ -1,5 +1,5 @@
 # coding:=utf-8
-# Copyright 2020 Tencent. All rights reserved.
+# Copyright 2021 Tencent. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
 # you may not use this file except in compliance with the License.
@@ -16,16 +16,15 @@
 
 import numpy as np
 
-from uf.tools import tf
+from ..tools import tf
 from .base import MRCModule
 from .bert import BERTMRC, get_bert_config
 from .albert import get_albert_config
-from uf.modeling.bert import BERTEncoder
-from uf.modeling.albert import ALBERTEncoder
-from uf.modeling.sanet import SANetDecoder
-from uf.tokenization.word_piece import get_word_piece_tokenizer
-import uf.utils as utils
-
+from ..modeling.bert import BERTEncoder
+from ..modeling.albert import ALBERTEncoder
+from ..modeling.sanet import SANetDecoder
+from ..tokenization.word_piece import get_word_piece_tokenizer
+from .. import utils
 
 
 class SANetMRC(BERTMRC, MRCModule):
@@ -191,7 +190,7 @@ class SANetMRC(BERTMRC, MRCModule):
             _input_tokens.append('[SEP]')
             _input_mask.append(1)
             _segment_ids.append(1)
-            
+
             _input_ids = self.tokenizer.convert_tokens_to_ids(_input_tokens)
             _doc_ids = _input_ids[_doc_start: -1]
 

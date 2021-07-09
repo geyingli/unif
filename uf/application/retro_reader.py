@@ -1,5 +1,5 @@
 # coding:=utf-8
-# Copyright 2020 Tencent. All rights reserved.
+# Copyright 2021 Tencent. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
 # you may not use this file except in compliance with the License.
@@ -16,16 +16,15 @@
 
 import numpy as np
 
-from uf.tools import tf
+from ..tools import tf
 from .base import MRCModule
 from .bert import BERTVerifierMRC, get_bert_config
 from .albert import get_albert_config
-from uf.modeling.bert import BERTEncoder
-from uf.modeling.albert import ALBERTEncoder
-from uf.modeling.retro_reader import RetroReaderDecoder
-from uf.tokenization.word_piece import get_word_piece_tokenizer
-import uf.utils as utils
-
+from ..modeling.bert import BERTEncoder
+from ..modeling.albert import ALBERTEncoder
+from ..modeling.retro_reader import RetroReaderDecoder
+from ..tokenization.word_piece import get_word_piece_tokenizer
+from .. import utils
 
 
 class RetroReaderMRC(BERTVerifierMRC, MRCModule):
@@ -177,7 +176,7 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
                     _query_mask.extend([1] * (len(segment) + 1))
                 _segment_ids.extend([_segment_id] * (len(segment) + 1))
             _doc_start = len(_input_tokens) - len(_doc_tokens) - 1
-            
+
             _input_ids = self.tokenizer.convert_tokens_to_ids(_input_tokens)
             _doc_ids = _input_ids[_doc_start: -1]
 
@@ -260,7 +259,7 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
             return sketchy_encoder
 
         sketchy_encoder = _get_encoder(self._reading_module)
-        intensive_encoder = sketchy_encoder    #TODO: experiment with different encoder
+        intensive_encoder = sketchy_encoder    # TODO: experiment with different encoder
         decoder = RetroReaderDecoder(
             bert_config=self.bert_config,
             is_training=is_training,
@@ -373,7 +372,7 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
                 try:
                     _text_start = _mapping_start[_start]
                     _text_end = _mapping_end[_end]
-                except:
+                except Exception:
                     preds.append(None)
                     continue
                 _span_text = _text[_text_start: _text_end]

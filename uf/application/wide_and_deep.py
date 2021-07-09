@@ -1,5 +1,5 @@
 # coding:=utf-8
-# Copyright 2020 Tencent. All rights reserved.
+# Copyright 2021 Tencent. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
 # you may not use this file except in compliance with the License.
@@ -17,16 +17,15 @@
 import copy
 import numpy as np
 
-from uf.tools import tf
+from ..tools import tf
 from .base import ClassifierModule
 from .bert import BERTClassifier, get_bert_config
 from .albert import get_albert_config
-from uf.modeling.bert import BERTEncoder
-from uf.modeling.albert import ALBERTEncoder
-from uf.modeling.wide_and_deep import WideAndDeepDecoder
-from uf.tokenization.word_piece import get_word_piece_tokenizer
-import uf.utils as utils
-
+from ..modeling.bert import BERTEncoder
+from ..modeling.albert import ALBERTEncoder
+from ..modeling.wide_and_deep import WideAndDeepDecoder
+from ..tokenization.word_piece import get_word_piece_tokenizer
+from .. import utils
 
 
 class WideAndDeepClassifier(BERTClassifier, ClassifierModule):
@@ -87,7 +86,8 @@ class WideAndDeepClassifier(BERTClassifier, ClassifierModule):
         if is_training:
             assert y is not None, '`y` can\'t be None.'
         if is_parallel:
-            assert self.label_size, ('Can\'t parse data on multi-processing '
+            assert self.label_size, (
+                'Can\'t parse data on multi-processing '
                 'when `label_size` is None.')
 
         n_inputs = None
@@ -167,7 +167,7 @@ class WideAndDeepClassifier(BERTClassifier, ClassifierModule):
             for feature in segments['Wide']:
                 try:
                     _wide_features.append(wide_features_map[feature])
-                except:
+                except Exception:
                     tf.logging.warning(
                         'Unregistered wide feature: %s. Ignored.' % feature)
                     continue
@@ -274,7 +274,6 @@ class WideAndDeepClassifier(BERTClassifier, ClassifierModule):
             **kwargs)
         (total_loss, losses, probs, preds) = decoder.get_forward_outputs()
         return (total_loss, losses, probs, preds)
-
 
 
 def get_key_to_depths(num_hidden_layers):

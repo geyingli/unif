@@ -1,5 +1,5 @@
 # coding:=utf-8
-# Copyright 2020 Tencent. All rights reserved.
+# Copyright 2021 Tencent. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
 # you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 
 import numpy as np
 
-from uf.core import BaseModule
-import uf.utils as utils
+from ..core import BaseModule
+from .. import utils
 
 
 class ClassifierModule(BaseModule):
@@ -157,7 +157,6 @@ class NERModule(BaseModule):
         return entities
 
 
-
 class MRCModule(BaseModule):
     ''' Application class of machine reading comprehension (MRC). '''
 
@@ -181,10 +180,8 @@ class MRCModule(BaseModule):
             else:
                 tp = (min(end_pred, end_label) + 1 -
                       max(start_pred, start_label))
-                fp = (max(0, end_pred - end_label) +
-                       max(0, start_label - start_pred))
-                fn = (max(0, start_pred - start_label) +
-                       max(0, end_label - end_pred))
+                fp = (max(0, end_pred - end_label) + max(0, start_label - start_pred))
+                fn = (max(0, start_pred - start_label) + max(0, end_label - end_pred))
                 if fp + fn == 0:
                     em += 1
                 precision = tp / (tp + fp + 1e-6)

@@ -1,5 +1,5 @@
 # coding:=utf-8
-# Copyright 2020 Tencent. All rights reserved.
+# Copyright 2021 Tencent. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
 # you may not use this file except in compliance with the License.
@@ -16,14 +16,13 @@
 
 import numpy as np
 
-from uf.tools import tf
+from ..tools import tf
 from .bert import BERTClassifier
 from .base import ClassifierModule
-from uf.modeling.text_cnn import TextCNNEncoder
-from uf.modeling.base import CLSDecoder
-from uf.tokenization.word_piece import get_word_piece_tokenizer
-import uf.utils as utils
-
+from ..modeling.text_cnn import TextCNNEncoder
+from ..modeling.base import CLSDecoder
+from ..tokenization.word_piece import get_word_piece_tokenizer
+from .. import utils
 
 
 class TextCNNClassifier(BERTClassifier, ClassifierModule):
@@ -72,7 +71,8 @@ class TextCNNClassifier(BERTClassifier, ClassifierModule):
         if is_training:
             assert y is not None, '`y` can\'t be None.'
         if is_parallel:
-            assert self.label_size, ('Can\'t parse data on multi-processing '
+            assert self.label_size, (
+                'Can\'t parse data on multi-processing '
                 'when `label_size` is None.')
 
         n_inputs = None

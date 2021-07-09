@@ -16,16 +16,14 @@
 
 import numpy as np
 
-from uf.tools import tf
+from ..tools import tf
 from .base import LMModule
 from .bert import (BERTLM, get_bert_config,
                    get_word_piece_tokenizer, get_key_to_depths,
                    create_masked_lm_predictions)
-from uf.modeling.bert import BERTDecoder
-from uf.modeling.spe import SPEEncoder
-import uf.utils as utils
-
-
+from ..modeling.bert import BERTDecoder
+from ..modeling.spe import SPEEncoder
+from .. import utils
 
 
 class SPELM(BERTLM, LMModule):

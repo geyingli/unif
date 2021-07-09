@@ -1,5 +1,5 @@
 # coding:=utf-8
-# Copyright 2020 Tencent. All rights reserved.
+# Copyright 2021 Tencent. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,15 +16,15 @@
 
 import numpy as np
 
-from uf.tools import tf
+from ..tools import tf
 from .base import ClassifierModule, MRCModule, LMModule
-from uf.modeling.bert import BERTEncoder, BERTDecoder
+from ..modeling.bert import BERTEncoder, BERTDecoder
 from .bert import (BERTClassifier, BERTBinaryClassifier, BERTSeqClassifier,
                    BERTMRC, BERTLM,
                    get_bert_config, get_key_to_depths,
                    create_masked_lm_predictions)
-from uf.tokenization.word_piece import get_word_piece_tokenizer
-import uf.utils as utils
+from ..tokenization.word_piece import get_word_piece_tokenizer
+from .. import utils
 
 
 class RoBERTaClassifier(BERTClassifier, ClassifierModule):
@@ -108,8 +108,8 @@ class RoBERTaLM(BERTLM, LMModule):
 
             (input_ids, input_mask, segment_ids,
              masked_lm_positions, masked_lm_ids, masked_lm_weights) = \
-                 self._convert_X(X_tokenized if tokenized else X,
-                                 is_training, tokenized=tokenized)
+                self._convert_X(X_tokenized if tokenized else X,
+                                is_training, tokenized=tokenized)
 
             data['input_ids'] = np.array(input_ids, dtype=np.int32)
             data['input_mask'] = np.array(input_mask, dtype=np.int32)

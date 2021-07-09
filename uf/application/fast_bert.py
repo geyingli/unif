@@ -1,5 +1,5 @@
 # coding:=utf-8
-# Copyright 2020 Tencent. All rights reserved.
+# Copyright 2021 Tencent. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,12 +16,12 @@
 
 import numpy as np
 
-from uf.tools import tf
+from ..tools import tf
 from .base import ClassifierModule
-from uf.modeling.fast_bert import FastBERTCLSDistillor, convert_ignore_cls
+from ..modeling.fast_bert import FastBERTCLSDistillor, convert_ignore_cls
 from .bert import BERTClassifier, get_bert_config
-from uf.tokenization.word_piece import get_word_piece_tokenizer
-import uf.utils as utils
+from ..tokenization.word_piece import get_word_piece_tokenizer
+from .. import utils
 
 
 class FastBERTClassifier(BERTClassifier, ClassifierModule):
@@ -99,7 +99,7 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
             X, X_tokenized, batch_size)
 
     def score(self, X=None, y=None, sample_weight=None, X_tokenized=None,
-                batch_size=8, speed=0.1, ignore_cls='0'):
+              batch_size=8, speed=0.1, ignore_cls='0'):
         ''' Inference on the model with scoring.
 
         Args:
@@ -252,8 +252,8 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
             max_loop = \
                 self.bert_config.num_hidden_layers + 1 - len(self._ignore_cls)
             keep_cls = [
-                cls_idx for cls_idx \
-                in list(range(self.bert_config.num_hidden_layers + 1)) \
+                cls_idx for cls_idx
+                in list(range(self.bert_config.num_hidden_layers + 1))
                 if cls_idx not in self._ignore_cls]
             i = 0
 
@@ -319,8 +319,8 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
             max_loop = \
                 self.bert_config.num_hidden_layers + 1 - len(self._ignore_cls)
             keep_cls = [
-                cls_idx for cls_idx \
-                in list(range(self.bert_config.num_hidden_layers + 1)) \
+                cls_idx for cls_idx
+                in list(range(self.bert_config.num_hidden_layers + 1))
                 if cls_idx not in self._ignore_cls]
             i = 0
 

@@ -1,5 +1,5 @@
 # coding:=utf-8
-# Copyright 2020 Tencent. All rights reserved.
+# Copyright 2021 Tencent. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
 # you may not use this file except in compliance with the License.
@@ -16,12 +16,11 @@
 
 import numpy as np
 
-from uf.tools import tf
+from ..tools import tf
 from .base import LMModule
-from uf.modeling.gpt2 import GPT2
-from uf.tokenization.word_piece import get_word_piece_tokenizer
-import uf.utils as utils
-
+from ..modeling.gpt2 import GPT2
+from ..tokenization.word_piece import get_word_piece_tokenizer
+from .. import utils
 
 
 class GPT2LM(LMModule):

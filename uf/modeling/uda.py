@@ -17,10 +17,9 @@
   See `https://github.com/google-research/uda`.
 '''
 
-from uf.tools import tf
+from ..tools import tf
 from .base import BaseDecoder
 from . import util
-
 
 
 class UDADecoder(BaseDecoder):
@@ -148,7 +147,6 @@ class UDADecoder(BaseDecoder):
                 self._losses['unsupervised'] = per_example_loss
 
             self.total_loss = sup_loss + unsup_loss
-
 
 
 def get_tsa_threshold(tsa_schedule, global_step, num_train_steps, start, end):

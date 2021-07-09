@@ -1,5 +1,5 @@
 # coding:=utf-8
-# Copyright 2020 Tencent. All rights reserved.
+# Copyright 2021 Tencent. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
 # you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 # limitations under the License.
 ''' Convolutional neural network on texture analysis. '''
 
-from uf.tools import tf
+from ..tools import tf
 from .base import BaseEncoder
 from . import util
 
@@ -30,7 +30,14 @@ class TextCNNEncoder(BaseEncoder):
                  embedding_size=256,
                  dropout_prob=0.1,
                  trainable=True,
+                 use_tilda_embedding=False,
                  **kwargs):
+
+        # Tilda embeddings for SMART algorithm
+        tilda_embeddings = None
+        if use_tilda_embedding:
+            with tf.variable_scope('', reuse=True):
+                tilda_embeddings = tf.get_variable('tilda_embeddings')
 
         input_shape = util.get_shape_list(input_ids, expected_rank=2)
         batch_size = input_shape[0]
@@ -41,13 +48,6 @@ class TextCNNEncoder(BaseEncoder):
         assert isinstance(filter_sizes, list), (
             '`filter_sizes` should be a list of integers or a string '
             'seperated with commas.')
-
-        # Tilda embeddings for SMART algorithm
-        tilda_embeddings = None
-        use_tilda_embedding = kwargs.get('use_tilda_embedding')
-        if use_tilda_embedding:
-            with tf.variable_scope('', reuse=True):
-                tilda_embeddings = tf.get_variable('tilda_embeddings')
 
         with tf.variable_scope(scope):
             with tf.variable_scope('embeddings'):

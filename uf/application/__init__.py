@@ -14,7 +14,7 @@
 # limitations under the License.
 
 
-from uf.utils import unimported_module
+from ..utils import unimported_module
 
 from .bert import BERTLM
 from .roberta import RoBERTaLM

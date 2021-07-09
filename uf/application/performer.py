@@ -1,5 +1,5 @@
 # coding:=utf-8
-# Copyright 2020 Tencent. All rights reserved.
+# Copyright 2021 Tencent. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
 # you may not use this file except in compliance with the License.
@@ -14,15 +14,14 @@
 # limitations under the License.
 ''' Applications based on Performer. '''
 
-from uf.tools import tf
+from ..tools import tf
 from .base import ClassifierModule
 from .bert import (BERTClassifier,
                    get_bert_config,
                    get_word_piece_tokenizer,
                    get_key_to_depths)
-from uf.modeling.performer import PerformerEncoder
-from uf.modeling.base import CLSDecoder
-
+from ..modeling.performer import PerformerEncoder
+from ..modeling.base import CLSDecoder
 
 
 class PerformerClassifier(BERTClassifier, ClassifierModule):

@@ -1,5 +1,5 @@
 # coding:=utf-8
-# Copyright 2020 Tencent. All rights reserved.
+# Copyright 2021 Tencent. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,12 +18,11 @@ import os
 import copy
 import numpy as np
 
-from uf.tools import tf
+from ..tools import tf
 from .base import ClassifierModule
-from uf.modeling.tiny_bert import TinyBERTCLSDistillor, TinyBERTBinaryCLSDistillor
+from ..modeling.tiny_bert import TinyBERTCLSDistillor, TinyBERTBinaryCLSDistillor
 from .bert import BERTClassifier, BERTBinaryClassifier, get_bert_config
-from uf.tokenization.word_piece import get_word_piece_tokenizer
-import uf.utils as utils
+from ..tokenization.word_piece import get_word_piece_tokenizer
 
 
 class TinyBERTClassifier(BERTClassifier, ClassifierModule):
@@ -80,7 +79,7 @@ class TinyBERTClassifier(BERTClassifier, ClassifierModule):
         if not self._graph_built:
             raise ValueError(
                 'Init, fit, predict or score before saving checkpoint.')
-                
+
         tf.gfile.MakeDirs(save_dir)
 
         tf.logging.info(
@@ -224,7 +223,7 @@ class TinyBERTBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
         if not self._graph_built:
             raise ValueError(
                 'Init, fit, predict or score before saving checkpoint.')
-                
+
         tf.gfile.MakeDirs(save_dir)
 
         tf.logging.info(

@@ -1,5 +1,5 @@
 # coding:=utf-8
-# Copyright 2020 Tencent. All rights reserved.
+# Copyright 2021 Tencent. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 # limitations under the License.
 ''' TinyBERT, a distillation model of BERT. '''
 
-from uf.tools import tf
+from ..tools import tf
 from .bert import BERTEncoder
 from .base import BaseDecoder
 from . import util
@@ -35,6 +35,7 @@ class TinyBERTCLSDistillor(BaseDecoder):
                  drop_pooler=False,
                  label_size=2,
                  trainable=True,
+                 use_tilda_embedding=False,
                  **kwargs):
         super().__init__()
 
@@ -58,7 +59,6 @@ class TinyBERTCLSDistillor(BaseDecoder):
                 logits = tf.nn.bias_add(logits, output_bias)
                 return logits
 
-        use_tilda_embedding=kwargs.get('use_tilda_embedding')
         student = BERTEncoder(
             bert_config=student_config,
             is_training=is_training,

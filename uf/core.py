@@ -1,5 +1,5 @@
 # coding:=utf-8
-# Copyright 2020 Tencent. All rights reserved.
+# Copyright 2021 Tencent. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ from . import utils
 
 class BaseModule:
     ''' Parent class of all the application processors. '''
+    _INFER_ATTRIBUTES = {}    # values (with introduction) that must pass in order to infer
 
     def __init__(self, init_checkpoint, output_dir, gpu_ids):
 

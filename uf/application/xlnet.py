@@ -1,5 +1,5 @@
 # coding:=utf-8
-# Copyright 2020 Tencent. All rights reserved.
+# Copyright 2021 Tencent. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
 # you may not use this file except in compliance with the License.
@@ -18,38 +18,37 @@ import os
 import random
 import numpy as np
 
-from uf.tools import tf
+from ..tools import tf
 from .base import ClassifierModule, LMModule
 from .bert import (
     BERTClassifier, BERTBinaryClassifier, BERTSeqClassifier, BERTLM)
-from uf.modeling.base import CLSDecoder, BinaryCLSDecoder, SeqCLSDecoder
-from uf.modeling.xlnet import XLNetEncoder, XLNet, XLNetConfig
-from uf.tokenization.sentence_piece import get_sentence_piece_tokenizer
-import uf.utils as utils
+from ..modeling.base import CLSDecoder, BinaryCLSDecoder, SeqCLSDecoder
+from ..modeling.xlnet import XLNetEncoder, XLNet, XLNetConfig
+from ..tokenization.sentence_piece import get_sentence_piece_tokenizer
+from .. import utils
 
 
-SEG_ID_A   = 0
-SEG_ID_B   = 1
+SEG_ID_A = 0
+SEG_ID_B = 1
 SEG_ID_CLS = 2
 SEG_ID_SEP = 3
 SEG_ID_PAD = 4
 special_symbols = {
-    '<unk>'  : 0,
-    '<s>'    : 1,
-    '</s>'   : 2,
-    '<cls>'  : 3,
-    '<sep>'  : 4,
-    '<pad>'  : 5,
-    '<mask>' : 6,
-    '<eod>'  : 7,
-    '<eop>'  : 8,
+    '<unk>': 0,
+    '<s>': 1,
+    '</s>': 2,
+    '<cls>': 3,
+    '<sep>': 4,
+    '<pad>': 5,
+    '<mask>': 6,
+    '<eod>': 7,
+    '<eop>': 8,
 }
 UNK_ID = special_symbols['<unk>']
 CLS_ID = special_symbols['<cls>']
 SEP_ID = special_symbols['<sep>']
 MASK_ID = special_symbols['<mask>']
 EOD_ID = special_symbols['<eod>']
-
 
 
 class XLNetClassifier(BERTClassifier, ClassifierModule):
@@ -126,7 +125,7 @@ class XLNetClassifier(BERTClassifier, ClassifierModule):
             input_mask.append(_input_mask)
             segment_ids.append(_segment_ids)
 
-        return input_ids, input_mask, segment_ids 
+        return input_ids, input_mask, segment_ids
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
@@ -152,7 +151,6 @@ class XLNetClassifier(BERTClassifier, ClassifierModule):
             **kwargs)
         (total_loss, losses, probs, preds) = decoder.get_forward_outputs()
         return (total_loss, losses, probs, preds)
-
 
 
 class XLNetBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
@@ -260,7 +258,6 @@ class XLNetBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
         return (total_loss, losses, probs, preds)
 
 
-
 class XLNetSeqClassifier(BERTSeqClassifier, ClassifierModule):
     ''' Sequence labeling classifier on XLNet. '''
     _INFER_ATTRIBUTES = BERTSeqClassifier._INFER_ATTRIBUTES
@@ -335,7 +332,7 @@ class XLNetSeqClassifier(BERTSeqClassifier, ClassifierModule):
             input_ids.append(_input_ids)
             input_mask.append(_input_mask)
             segment_ids.append(_segment_ids)
-            
+
         return input_ids, input_mask, segment_ids
 
     def _forward(self, is_training, split_placeholders, **kwargs):
@@ -363,7 +360,6 @@ class XLNetSeqClassifier(BERTSeqClassifier, ClassifierModule):
             **kwargs)
         (total_loss, losses, probs, preds) = decoder.get_forward_outputs()
         return (total_loss, losses, probs, preds)
-
 
 
 class XLNetLM(BERTLM, LMModule):
@@ -746,221 +742,223 @@ def create_instances_from_document(sp, token_ids, sent_ids,
 
 
 def _split_a_and_b(data, sent_ids, begin_idx, tot_len, extend_target=False):
-  '''Split two segments from `data` starting from the index `begin_idx`.'''
+    '''Split two segments from `data` starting from the index `begin_idx`.'''
 
-  data_len = data.shape[0]
-  if begin_idx + tot_len >= data_len:
-    return None
+    data_len = data.shape[0]
+    if begin_idx + tot_len >= data_len:
+        return None
 
-  end_idx = begin_idx + 1
-  cut_points = []
-  while end_idx < data_len:
-    if sent_ids[end_idx] != sent_ids[end_idx - 1]:
-      if end_idx - begin_idx >= tot_len: break
-      cut_points.append(end_idx)
-    end_idx += 1
+    end_idx = begin_idx + 1
+    cut_points = []
+    while end_idx < data_len:
+        if sent_ids[end_idx] != sent_ids[end_idx - 1]:
+            if end_idx - begin_idx >= tot_len:
+                break
+            cut_points.append(end_idx)
+        end_idx += 1
 
-  a_begin = begin_idx
-  if len(cut_points) == 0 or random.random() < 0.5:
-    label = 0
-    if len(cut_points) == 0:
-      a_end = end_idx
+    a_begin = begin_idx
+    if len(cut_points) == 0 or random.random() < 0.5:
+        label = 0
+        if len(cut_points) == 0:
+            a_end = end_idx
+        else:
+            a_end = random.choice(cut_points)
+
+        b_len = max(1, tot_len - (a_end - a_begin))
+        # (zihang): `data_len - 1` to account for extend_target
+        b_begin = random.randint(0, data_len - 1 - b_len)
+        b_end = b_begin + b_len
+        while b_begin > 0 and sent_ids[b_begin - 1] == sent_ids[b_begin]:
+            b_begin -= 1
+        # (zihang): `data_len - 1` to account for extend_target
+        while b_end < data_len - 1 and sent_ids[b_end - 1] == sent_ids[b_end]:
+            b_end += 1
+
+        new_begin = a_end
     else:
-      a_end = random.choice(cut_points)
+        label = 1
+        a_end = random.choice(cut_points)
+        b_begin = a_end
+        b_end = end_idx
 
-    b_len = max(1, tot_len - (a_end - a_begin))
-    # (zihang): `data_len - 1` to account for extend_target
-    b_begin = random.randint(0, data_len - 1 - b_len)
-    b_end = b_begin + b_len
-    while b_begin > 0 and sent_ids[b_begin - 1] == sent_ids[b_begin]:
-      b_begin -= 1
-    # (zihang): `data_len - 1` to account for extend_target
-    while b_end < data_len - 1 and sent_ids[b_end - 1] == sent_ids[b_end]:
-      b_end += 1
+        new_begin = b_end
 
-    new_begin = a_end
-  else:
-    label = 1
-    a_end = random.choice(cut_points)
-    b_begin = a_end
-    b_end = end_idx
+    while a_end - a_begin + b_end - b_begin > tot_len:
+        if a_end - a_begin > b_end - b_begin:
+            # delete the right side only for the LM objective
+            a_end -= 1
+        else:
+            b_end -= 1
 
-    new_begin = b_end
+    ret = [data[a_begin: a_end], data[b_begin: b_end], label, new_begin]
 
-  while a_end - a_begin + b_end - b_begin > tot_len:
-    if a_end - a_begin > b_end - b_begin:
-      # delete the right side only for the LM objective
-      a_end -= 1
-    else:
-      b_end -= 1
+    if extend_target:
+        if a_end >= data_len or b_end >= data_len:
+            return None
+        a_target = data[a_begin + 1: a_end + 1]
+        b_target = data[b_begin: b_end + 1]
+        ret.extend([a_target, b_target])
 
-  ret = [data[a_begin: a_end], data[b_begin: b_end], label, new_begin]
-
-  if extend_target:
-    if a_end >= data_len or b_end >= data_len:
-      return None
-    a_target = data[a_begin + 1: a_end + 1]
-    b_target = data[b_begin: b_end + 1]
-    ret.extend([a_target, b_target])
-
-  return ret
+    return ret
 
 
 def _sample_mask(sp, seg, mask_alpha, mask_beta,
                  reverse=False, max_gram=5, goal_num_predict=None):
-  '''Sample `goal_num_predict` tokens for partial prediction.
-  About `mask_beta` tokens are chosen in a context of `mask_alpha` tokens.'''
+    '''Sample `goal_num_predict` tokens for partial prediction.
+    About `mask_beta` tokens are chosen in a context of `mask_alpha` tokens.'''
 
-  seg_len = len(seg)
-  mask = np.array([False] * seg_len, dtype=np.bool)
+    seg_len = len(seg)
+    mask = np.array([False] * seg_len, dtype=np.bool)
 
-  num_predict = 0
+    num_predict = 0
 
-  ngrams = np.arange(1, max_gram + 1, dtype=np.int64)
-  pvals = 1. / np.arange(1, max_gram + 1)
-  pvals /= pvals.sum(keepdims=True)
+    ngrams = np.arange(1, max_gram + 1, dtype=np.int64)
+    pvals = 1. / np.arange(1, max_gram + 1)
+    pvals /= pvals.sum(keepdims=True)
 
-  if reverse:
-    seg = np.flip(seg, 0)
+    if reverse:
+        seg = np.flip(seg, 0)
 
-  cur_len = 0
-  while cur_len < seg_len:
-    if goal_num_predict is not None and num_predict >= goal_num_predict: break
+    cur_len = 0
+    while cur_len < seg_len:
+        if goal_num_predict is not None and num_predict >= goal_num_predict:
+            break
 
-    n = np.random.choice(ngrams, p=pvals)
-    if goal_num_predict is not None:
-      n = min(n, goal_num_predict - num_predict)
-    ctx_size = (n * mask_alpha) // mask_beta
-    l_ctx = np.random.choice(ctx_size)
-    r_ctx = ctx_size - l_ctx
+        n = np.random.choice(ngrams, p=pvals)
+        if goal_num_predict is not None:
+            n = min(n, goal_num_predict - num_predict)
+        ctx_size = (n * mask_alpha) // mask_beta
+        l_ctx = np.random.choice(ctx_size)
+        r_ctx = ctx_size - l_ctx
 
-    # Find the start position of a complete token
-    beg = cur_len + l_ctx
-    while beg < seg_len and \
-        not _is_start_piece(sp.processor.IdToPiece(seg[beg].item())):
-      beg += 1
-    if beg >= seg_len:
-      break
+        # Find the start position of a complete token
+        beg = cur_len + l_ctx
+        while beg < seg_len and \
+                not _is_start_piece(sp.processor.IdToPiece(seg[beg].item())):
+            beg += 1
+        if beg >= seg_len:
+            break
 
-    # Find the end position of the n-gram (start pos of the n+1-th gram)
-    end = beg + 1
-    cnt_ngram = 1
-    while end < seg_len:
-      if _is_start_piece(sp.processor.IdToPiece(seg[beg].item())):
-        cnt_ngram += 1
-        if cnt_ngram > n:
-          break
-      end += 1
-    if end >= seg_len:
-      break
+        # Find the end position of the n-gram (start pos of the n+1-th gram)
+        end = beg + 1
+        cnt_ngram = 1
+        while end < seg_len:
+            if _is_start_piece(sp.processor.IdToPiece(seg[beg].item())):
+                cnt_ngram += 1
+                if cnt_ngram > n:
+                    break
+            end += 1
+        if end >= seg_len:
+            break
 
-    # Update
-    mask[beg:end] = True
-    num_predict += end - beg
+        # Update
+        mask[beg:end] = True
+        num_predict += end - beg
 
-    cur_len = end + r_ctx
+        cur_len = end + r_ctx
 
-  while goal_num_predict is not None and num_predict < goal_num_predict:
-    i = np.random.randint(seg_len)
-    if not mask[i]:
-      mask[i] = True
-      num_predict += 1
+    while goal_num_predict is not None and num_predict < goal_num_predict:
+        i = np.random.randint(seg_len)
+        if not mask[i]:
+            mask[i] = True
+            num_predict += 1
 
-  if reverse:
-    mask = np.flip(mask, 0)
+    if reverse:
+        mask = np.flip(mask, 0)
 
-  return mask
+    return mask
 
 
 def batchify(data, bsz_per_host, sent_ids=None):
-  num_step = len(data) // bsz_per_host
-  data = np.array(data[:bsz_per_host * num_step])
-  data = data.reshape(bsz_per_host, num_step)
-  if sent_ids is not None:
-    sent_ids = np.array(sent_ids[:bsz_per_host * num_step])
-    sent_ids = sent_ids.reshape(bsz_per_host, num_step)
+    num_step = len(data) // bsz_per_host
+    data = np.array(data[:bsz_per_host * num_step])
+    data = data.reshape(bsz_per_host, num_step)
+    if sent_ids is not None:
+        sent_ids = np.array(sent_ids[:bsz_per_host * num_step])
+        sent_ids = sent_ids.reshape(bsz_per_host, num_step)
 
-  if sent_ids is not None:
-    return data, sent_ids
-  return data
+    if sent_ids is not None:
+        return data, sent_ids
+    return data
 
 
 def _is_start_piece(piece):
-  special_pieces = set(list('!"#$%&\"()*+,-./:;?@[\\]^_`{|}~'))
-  if (piece.startswith("▁") or piece.startswith("<")
-      or piece in special_pieces):
-    return True
-  else:
-    return False
+    special_pieces = set(list('!"#$%&\"()*+,-./:;?@[\\]^_`{|}~'))
+    if (piece.startswith("▁") or piece.startswith("<")
+            or piece in special_pieces):
+        return True
+    else:
+        return False
 
 
 def _local_perm(inputs, targets, is_masked, perm_size, seq_len):
-  '''
-  Sample a permutation of the factorization order, and create an
-  attention mask accordingly.
+    '''
+    Sample a permutation of the factorization order, and create an
+    attention mask accordingly.
 
-  Args:
-    inputs: int64 Tensor in shape [seq_len], input ids.
-    targets: int64 Tensor in shape [seq_len], target ids.
-    is_masked: bool Tensor in shape [seq_len]. True means being selected
-      for partial prediction.
-    perm_size: the length of longest permutation. Could be set to be reuse_len.
-      Should not be larger than reuse_len or there will be data leaks.
-    seq_len: int, sequence length.
-  '''
-  batch_size = tf.shape(inputs)[0]
+    Args:
+        inputs: int64 Tensor in shape [seq_len], input ids.
+        targets: int64 Tensor in shape [seq_len], target ids.
+        is_masked: bool Tensor in shape [seq_len]. True means being selected
+            for partial prediction.
+        perm_size: the length of longest permutation. Could be set to be reuse_len.
+            Should not be larger than reuse_len or there will be data leaks.
+        seq_len: int, sequence length.
+    '''
+    batch_size = tf.shape(inputs)[0]
 
-  # Generate permutation indices
-  index = tf.range(seq_len, dtype=tf.int64)
-  index = tf.reshape(index, [-1, perm_size])
-  index = tf.transpose(index)
-  index = tf.random_shuffle(index)
-  index = tf.transpose(index)
-  index = tf.reshape(index, [1, -1])
-  index = tf.tile(index, [batch_size, 1])
+    # Generate permutation indices
+    index = tf.range(seq_len, dtype=tf.int64)
+    index = tf.reshape(index, [-1, perm_size])
+    index = tf.transpose(index)
+    index = tf.random_shuffle(index)
+    index = tf.transpose(index)
+    index = tf.reshape(index, [1, -1])
+    index = tf.tile(index, [batch_size, 1])
 
-  # `perm_mask` and `target_mask`
-  # non-functional tokens
-  non_func_tokens = tf.logical_not(tf.logical_or(
-      tf.equal(inputs, SEP_ID),
-      tf.equal(inputs, CLS_ID)))
+    # `perm_mask` and `target_mask`
+    # non-functional tokens
+    non_func_tokens = tf.logical_not(tf.logical_or(
+            tf.equal(inputs, SEP_ID),
+            tf.equal(inputs, CLS_ID)))
 
-  non_mask_tokens = tf.logical_and(tf.logical_not(is_masked), non_func_tokens)
-  masked_or_func_tokens = tf.logical_not(non_mask_tokens)
+    non_mask_tokens = tf.logical_and(tf.logical_not(is_masked), non_func_tokens)
+    masked_or_func_tokens = tf.logical_not(non_mask_tokens)
 
-  # Set the permutation indices of non-masked (& non-funcional) tokens to the
-  # smallest index (-1):
-  # (1) they can be seen by all other positions
-  # (2) they cannot see masked positions, so there won't be information leak
-  smallest_index = -tf.ones([batch_size, seq_len], dtype=tf.int64)
-  rev_index = tf.where(non_mask_tokens, smallest_index, index)
+    # Set the permutation indices of non-masked (& non-funcional) tokens to the
+    # smallest index (-1):
+    # (1) they can be seen by all other positions
+    # (2) they cannot see masked positions, so there won't be information leak
+    smallest_index = -tf.ones([batch_size, seq_len], dtype=tf.int64)
+    rev_index = tf.where(non_mask_tokens, smallest_index, index)
 
-  # Create `target_mask`: non-funcional and maksed tokens
-  # 1: use mask as input and have loss
-  # 0: use token (or [SEP], [CLS]) as input and do not have loss
-  target_tokens = tf.logical_and(masked_or_func_tokens, non_func_tokens)
-  target_mask = tf.cast(target_tokens, tf.float32)
+    # Create `target_mask`: non-funcional and maksed tokens
+    # 1: use mask as input and have loss
+    # 0: use token (or [SEP], [CLS]) as input and do not have loss
+    target_tokens = tf.logical_and(masked_or_func_tokens, non_func_tokens)
+    target_mask = tf.cast(target_tokens, tf.float32)
 
-  # Create `perm_mask`
-  # `target_tokens` cannot see themselves
-  self_rev_index = tf.where(target_tokens, rev_index, rev_index + 1)
+    # Create `perm_mask`
+    # `target_tokens` cannot see themselves
+    self_rev_index = tf.where(target_tokens, rev_index, rev_index + 1)
 
-  # 1: cannot attend if i <= j and j is not non-masked (masked_or_func_tokens)
-  # 0: can attend if i > j or j is non-masked
-  perm_mask = tf.logical_and(
-      self_rev_index[:, :, None] <= rev_index[:, None, :],
-      tf.expand_dims(masked_or_func_tokens, axis=-1))
+    # 1: cannot attend if i <= j and j is not non-masked (masked_or_func_tokens)
+    # 0: can attend if i > j or j is non-masked
+    perm_mask = tf.logical_and(
+            self_rev_index[:, :, None] <= rev_index[:, None, :],
+            tf.expand_dims(masked_or_func_tokens, axis=-1))
 
-  # new target: [next token] for LM and [curr token] (self) for PLM
-  new_targets = tf.concat([inputs[:, 0: 1], targets[:, :-1]], axis=1)
+    # new target: [next token] for LM and [curr token] (self) for PLM
+    new_targets = tf.concat([inputs[:, 0: 1], targets[:, :-1]], axis=1)
 
-  # construct inputs_k
-  inputs_k = inputs
+    # construct inputs_k
+    inputs_k = inputs
 
-  # construct inputs_q
-  inputs_q = target_mask
+    # construct inputs_q
+    inputs_q = target_mask
 
-  return perm_mask, new_targets, target_mask, inputs_k, inputs_q
+    return perm_mask, new_targets, target_mask, inputs_k, inputs_q
 
 
 def _expand_features(module, split_placeholders):
@@ -1005,7 +1003,7 @@ def _expand_features(module, split_placeholders):
     input_q = tf.concat([input_q_0, input_q_1], axis=1)
 
     if module._num_predict is not None:
-        #TODO(geying): convert tensors from 1-D to 2-D
+        # TODO(geying): convert tensors from 1-D to 2-D
 
         indices = tf.range(module.max_seq_length, dtype=tf.int64)
         indices = tf.reshape(indices, [-1, module.max_seq_length])
@@ -1013,11 +1011,11 @@ def _expand_features(module, split_placeholders):
         bool_target_mask = tf.cast(target_mask, tf.bool)
         indices = tf.boolean_mask(indices, bool_target_mask)
 
-        ##### extra padding due to CLS/SEP introduced after prepro
+        # extra padding due to CLS/SEP introduced after prepro
         actual_num_predict = tf.shape(indices)[1]
         pad_len = module._num_predict - actual_num_predict
 
-        ##### target_mapping
+        # target_mapping
         target_mapping = tf.one_hot(
             indices, module.max_seq_length, dtype=tf.float32)
         paddings = tf.zeros([pad_len, module.max_seq_length],
@@ -1026,14 +1024,14 @@ def _expand_features(module, split_placeholders):
         split_placeholders['target_mapping'] = tf.reshape(
             target_mapping, [-1, module._num_predict, module.max_seq_length])
 
-        ##### target
+        # target
         target = tf.boolean_mask(target, bool_target_mask)
         paddings = tf.zeros([pad_len], dtype=target.dtype)
         target = tf.concat([target, paddings], axis=0)
         split_placeholders['target'] = tf.reshape(
             target, [-1, module._num_predict])
 
-        ##### target mask
+        # target mask
         target_mask = tf.concat(
             [tf.ones([batch_size, actual_num_predict], dtype=tf.float32),
              tf.zeros([batch_size, pad_len], dtype=tf.float32)],

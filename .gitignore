@@ -10,4 +10,5 @@ uf.egg-info
 tmp
 examples/tmp
 examples/.*
+docs/UNIF*
 

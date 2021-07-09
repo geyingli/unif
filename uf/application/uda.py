@@ -16,15 +16,14 @@
 
 import numpy as np
 
-from uf.tools import tf
+from ..tools import tf
 from .base import ClassifierModule
 from .bert import BERTClassifier, get_bert_config, get_key_to_depths
-from uf.modeling.bert import BERTEncoder
-from uf.modeling.uda import UDADecoder
-from uf.tokenization.word_piece import get_word_piece_tokenizer
-import uf.utils as utils
-import uf.modeling.util as util
-
+from ..modeling.bert import BERTEncoder
+from ..modeling.uda import UDADecoder
+from ..tokenization.word_piece import get_word_piece_tokenizer
+from .. import utils
+from ..modeling import util
 
 
 class UDAClassifier(BERTClassifier, ClassifierModule):
@@ -85,7 +84,8 @@ class UDAClassifier(BERTClassifier, ClassifierModule):
         if is_training:
             assert y is not None, '`y` can\'t be None.'
         if is_parallel:
-            assert self.label_size, ('Can\'t parse data on multi-processing '
+            assert self.label_size, (
+                'Can\'t parse data on multi-processing '
                 'when `label_size` is None.')
 
         n_inputs = None
@@ -146,7 +146,7 @@ class UDAClassifier(BERTClassifier, ClassifierModule):
                     aug_input_tokens.append([])
                     is_supervised.append(1)
             except AssertionError:
-                raise AssertionError (
+                assert False, (
                     'Must have exactly two sentence input for an '
                     'unsupervised example, respectively original '
                     'and augmented.')
@@ -216,8 +216,8 @@ class UDAClassifier(BERTClassifier, ClassifierModule):
             aug_segment_ids.append(_segment_ids)
 
         return (input_ids, input_mask, segment_ids,
-            aug_input_ids, aug_input_mask, aug_segment_ids,
-            is_supervised)
+                aug_input_ids, aug_input_mask, aug_segment_ids,
+                is_supervised)
 
     def _convert_y(self, y):
         label_set = set(y)

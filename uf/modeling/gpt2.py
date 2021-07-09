@@ -1,5 +1,5 @@
 # coding:=utf-8
-# Copyright 2020 Tencent. All rights reserved.
+# Copyright 2021 Tencent. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
 # you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@
 
 import numpy as np
 
-from uf.tools import tf
+from ..tools import tf
 from .base import BaseEncoder, BaseDecoder
 from . import util
 
@@ -33,18 +33,18 @@ class GPT2(BaseDecoder, BaseEncoder):
                  sample_weight=None,
                  scope='model',
                  given=1,
+                 use_tilda_embedding=False,
                  **kwargs):
         super().__init__()
 
-        batch_size = util.get_shape_list(input_ids, expected_rank=2)[0]
-        max_seq_length = hparams.n_predict
-
         # Tilda embeddings for SMART algorithm
         tilda_embeddings = None
-        use_tilda_embedding=kwargs.get('use_tilda_embedding')
         if use_tilda_embedding:
             with tf.variable_scope('', reuse=True):
                 tilda_embeddings = tf.get_variable('tilda_embeddings')
+
+        batch_size = util.get_shape_list(input_ids, expected_rank=2)[0]
+        max_seq_length = hparams.n_predict
 
         with tf.variable_scope(scope):
 

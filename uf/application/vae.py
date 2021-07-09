@@ -86,7 +86,7 @@ class VAELM(BERTClassifier, LMModule):
 
         if bias != self._bias:
             self._bias = bias
-            self._graph_mode = None
+            self._session_mode = None
 
         return super(LMModule, self).predict(
             X, X_tokenized, batch_size)
@@ -108,7 +108,7 @@ class VAELM(BERTClassifier, LMModule):
 
         if bias != self._bias:
             self._bias = bias
-            self._graph_mode = None
+            self._session_mode = None
 
         return super(LMModule, self).export(
             export_dir, rename_inputs, rename_outputs, ignore_outputs)

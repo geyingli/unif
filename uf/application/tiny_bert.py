@@ -76,7 +76,7 @@ class TinyBERTClassifier(BERTClassifier, ClassifierModule):
 
     def to_bert(self, save_dir):
         ''' Isolate student tiny_bert out of traing graph. '''
-        if not self._graph_built:
+        if not self._session_built:
             raise ValueError(
                 'Init, fit, predict or score before saving checkpoint.')
 
@@ -220,7 +220,7 @@ class TinyBERTBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
 
     def to_bert(self, save_dir):
         ''' Isolate student tiny_bert out of traing graph. '''
-        if not self._graph_built:
+        if not self._session_built:
             raise ValueError(
                 'Init, fit, predict or score before saving checkpoint.')
 

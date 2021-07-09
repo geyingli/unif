@@ -112,7 +112,7 @@ class UniLM(BERTLM, LMModule):
             '`s2s` (seq-to-seq).' % mode)
 
         if mode != self.mode:
-            self._graph_mode = None
+            self._session_mode = None
         self.mode = mode
 
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,

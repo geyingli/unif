@@ -89,11 +89,11 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
 
         if ignore_cls != self._ignore_cls:
             self._ignore_cls = ignore_cls
-            self._graph_mode = None
+            self._session_mode = None
 
         if speed != self._speed:
             self._speed = speed
-            self._graph_mode = None
+            self._session_mode = None
 
         return super(ClassifierModule, self).predict(
             X, X_tokenized, batch_size)
@@ -121,11 +121,11 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
 
         if ignore_cls != self._ignore_cls:
             self._ignore_cls = ignore_cls
-            self._graph_mode = None
+            self._session_mode = None
 
         if speed != self._speed:
             self._speed = speed
-            self._graph_mode = None
+            self._session_mode = None
 
         return super(ClassifierModule, self).score(
             X, y, sample_weight, X_tokenized, batch_size)
@@ -151,11 +151,11 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
 
         if ignore_cls != self._ignore_cls:
             self._ignore_cls = ignore_cls
-            self._graph_mode = None
+            self._session_mode = None
 
         if speed != self._speed:
             self._speed = speed
-            self._graph_mode = None
+            self._session_mode = None
 
         return super(ClassifierModule, self).export(
             export_dir, rename_inputs, rename_outputs, ignore_outputs)

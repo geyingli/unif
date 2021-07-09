@@ -253,8 +253,8 @@ class RecBERT(BaseDecoder, BERTEncoder):
 
                 if prob != 0:
                     self.total_loss += tf.reduce_mean(per_example_loss)
-                self.losses[name + '_loss'] = verifier_loss
-                self.preds[name + '_preds'] = \
+                self._losses[name + '_loss'] = verifier_loss
+                self._preds[name + '_preds'] = \
                     tf.argmax(logits, axis=-1) * verifier_preds
 
     def _cls_forward(self,
@@ -295,5 +295,5 @@ class RecBERT(BaseDecoder, BERTEncoder):
 
             if prob != 0:
                 self.total_loss += tf.reduce_mean(per_example_loss)
-            self.losses[name + '_loss'] = per_example_loss
-            self.preds[name + '_preds'] = tf.argmax(logits, axis=-1)
+            self._losses[name + '_loss'] = per_example_loss
+            self._preds[name + '_preds'] = tf.argmax(logits, axis=-1)

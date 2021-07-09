@@ -70,13 +70,6 @@ except ModuleNotFoundError:
     XLNetBinaryClassifier = unimported_module(
         'XLNetBinaryClassifier', 'sentencepiece')
 
-# pyemd
-try:
-    from .bert_emd import BERTEMDClassifier
-except ModuleNotFoundError:
-    BERTEMDClassifier = unimported_module(
-        'BERTEMDClassifier', 'pyemd')
-
 del unimported_module
 
 
@@ -126,6 +119,5 @@ __all__ = [
     'TransformerMT',
 
     # trial
-    'BERTEMDClassifier',
     'PerformerClassifier',
 ]

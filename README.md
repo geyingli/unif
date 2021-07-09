@@ -10,7 +10,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-beta v2.8.4-blue">
+        <img src="https://img.shields.io/badge/version-beta v2.8.5-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-1.x\2.x-yellow">
@@ -160,7 +160,7 @@ with uf.MultiProcess():    # 多进程的本质是将当前进程进行复制，
 
     # 训练
     model.fit(
-        X=X, y=y, 
+        X=X, y=y,
         sample_weight=None,    # 样本权重，放空则默认每条样本权重为 1.0
         X_tokenized=None,    # 特定场景下使用，e.g. 使用你自己的分词工具/语言模型推理时在输入加 [MASK]
         batch_size=32,
@@ -174,7 +174,7 @@ with uf.MultiProcess():    # 多进程的本质是将当前进程进行复制，
 
     # 推理
     model.predict(
-        X=X, X_tokenized=None, 
+        X=X, X_tokenized=None,
         batch_size=8)
 
     # 评分
@@ -306,7 +306,7 @@ model.export(
 - 问：如何实现 TinyBERT 和 FastBERT 二重蒸馏？
 
   答：`TinyBERTClassifier` 训练完成后使用 `.to_bert()` 提取子模型为 BERT 重新保存，而后使用 `FastBERTClassifier` 常规读取生成的 checkpoint 和配置文件即可。
-  
+
 - 问：我可以用这个框架做哪些有趣的事情？
 
   答：只要有数据，大多数 NLP 领域的事情都能做。可以用 `GPT2LM` 来生成古诗/小说，可以使用 `TransformerMT` 搭建简单的聊天机器人，可以组合 `ELECTRALM` 和 `BERTLM` 进行文本纠错等等。

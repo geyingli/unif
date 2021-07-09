@@ -21,8 +21,8 @@ import os
 import collections
 import unicodedata
 
-from uf.tools import tf
-
+from ..utils import is_whitespace, is_control, is_punctuation, is_chinese_char
+from ..tools import tf
 
 
 def get_word_piece_tokenizer(vocab_file, do_lower_case=True):
@@ -108,7 +108,7 @@ class BasicTokenizer:
         output = []
         while i < len(chars):
             char = chars[i]
-            if _is_punctuation(char):
+            if is_punctuation(char):
                 output.append([char])
                 start_new_word = True
             else:
@@ -125,7 +125,7 @@ class BasicTokenizer:
         output = []
         for char in text:
             ord_id = ord(char)
-            if _is_chinese_char(ord_id):
+            if is_chinese_char(ord_id):
                 output.append(' ')
                 output.append(char)
                 output.append(' ')
@@ -140,9 +140,9 @@ class BasicTokenizer:
         output = []
         for char in text:
             ord_id = ord(char)
-            if ord_id == 0 or ord_id == 0xfffd or _is_control(char):
+            if ord_id == 0 or ord_id == 0xfffd or is_control(char):
                 continue
-            if _is_whitespace(char):
+            if is_whitespace(char):
                 output.append(' ')
             else:
                 output.append(char)
@@ -251,72 +251,3 @@ def whitespace_tokenize(text):
         return []
     tokens = text.split()
     return tokens
-
-
-def _is_whitespace(char):
-    '''Checks whether `chars` is a whitespace character.'''
-
-    # \t, \n, and \r are technically contorl characters but we treat them
-    # as whitespace since they are generally considered as such.
-    if char in (' ', '\t', '\n', '\r'):
-        return True
-    cat = unicodedata.category(char)
-    if cat == 'Zs':
-        return True
-    return False
-
-
-def _is_control(char):
-    '''Checks whether `chars` is a control character.'''
-
-    # These are technically control characters but we count them as whitespace
-    # characters.
-    if char in ('\t', '\n', '\r'):
-        return False
-    cat = unicodedata.category(char)
-    if cat in ('Cc', 'Cf'):
-        return True
-    return False
-
-
-def _is_punctuation(char):
-    '''Checks whether `chars` is a punctuation character.'''
-    ord_id = ord(char)
-
-    # We treat all non-letter/number ASCII as punctuation.
-    # Characters such as '^', '$', and '`' are not in the Unicode
-    # Punctuation class but we treat them as punctuation anyways, for
-    # consistency.
-    if (ord_id >= 33 and ord_id <= 47) or \
-            (ord_id >= 58 and ord_id <= 64) or \
-            (ord_id >= 91 and ord_id <= 96) or \
-            (ord_id >= 123 and ord_id <= 126):
-        return True
-    cat = unicodedata.category(char)
-    if cat.startswith('P'):
-        return True
-    return False
-
-
-def _is_chinese_char(ord_id):
-    '''Checks whether ord_id is the codepoint of a CJK character.'''
-    # This defines a `Chinese character` as anything in the CJK
-    # Unicode block:
-    # https://en.wikipedia.org/wiki/CJK_Unified_Ideographs_(Unicode_block)
-    #
-    # Note that the CJK Unicode block is NOT all Japanese and
-    # Korean characters, despite its name. The modern Korean Hangul
-    # alphabet is a different block, as is Japanese Hiragana and
-    # Katakana. Those alphabets are used to write space-separated
-    # words, so they are not treated specially and handled like the
-    # all of the other languages.
-    if (ord_id >= 0x4E00 and ord_id <= 0x9FFF) or \
-            (ord_id >= 0x3400 and ord_id <= 0x4DBF) or \
-            (ord_id >= 0x20000 and ord_id <= 0x2A6DF) or \
-            (ord_id >= 0x2A700 and ord_id <= 0x2B73F) or \
-            (ord_id >= 0x2B740 and ord_id <= 0x2B81F) or \
-            (ord_id >= 0x2B820 and ord_id <= 0x2CEAF) or \
-            (ord_id >= 0xF900 and ord_id <= 0xFAFF) or \
-            (ord_id >= 0x2F800 and ord_id <= 0x2FA1F):
-        return True
-    return False

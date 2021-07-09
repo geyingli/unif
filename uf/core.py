@@ -20,10 +20,9 @@ import collections
 from abc import abstractmethod
 
 from .tools import tf
-from . import processing
+from . import task
 from . import optimization
 from . import utils
-
 
 
 class BaseModule:
@@ -53,18 +52,15 @@ class BaseModule:
                 else:
                     self._gpu_ids = list(map(str, gpu_ids))
             except Exception:
-                raise ValueError(
-                    '`gpu_ids` should be a list of GPU ids or a string '
-                    'seperated with commas.')
+                raise ValueError('`gpu_ids` should be a list of GPU ids or a string seperated with commas.')
 
         # build graph
         self.graph = tf.Graph()
 
-        # Before we build the graph, `score` and fast `predict`
-        # is now allowed.
+        # Before we register the task, `score` and fast `predict` is not allowed.
         self.step = 0
-        self._graph_mode = None
-        self._graph_built = False
+        self._session_mode = None
+        self._session_built = False
         self._inited_vars = set()
 
     def reset(self):
@@ -74,14 +70,13 @@ class BaseModule:
         except AttributeError:
             pass
 
-        # initialize graph and session
+        # build graph
         self.graph = tf.Graph()
 
-        # Before we build the graph, `score` and fast `predict`
-        # is now allowed.
+        # Before we register the task, `score` and fast `predict` is not allowed.
         self.step = 0
-        self._graph_mode = None
-        self._graph_built = False
+        self._session_mode = None
+        self._session_built = False
         self._inited_vars = set()
 
     def __repr__(self):
@@ -89,10 +84,9 @@ class BaseModule:
         for key in self.__class__.__init__.__code__.co_varnames[1:]:
             try:
                 value = self.__getattribute__(key)
-            except:
+            except Exception:
                 value = self.__init_args__[key]
-            value = '\'%s\'' % value if isinstance(value, str) \
-                else '%s' % value
+            value = '\'%s\'' % value if isinstance(value, str) else '%s' % value
             info += '%s=%s, ' % (key, value)
         return info[:-2] + ')'
 
@@ -119,13 +113,11 @@ class BaseModule:
 
         if not tfrecords_file:
             if self.output_dir:
-                tfrecords_file = os.path.join(
-                    self.output_dir, 'train.tfrecords')
+                tfrecords_file = os.path.join(self.output_dir, 'train.tfrecords')
             else:
                 tfrecords_file = './train.tfrecords'
 
-        data = self._parallel_convert(
-            X, y, sample_weight, X_tokenized, is_training=True)
+        data = self._parallel_convert(X, y, sample_weight, X_tokenized, is_training=True)
 
         tf.logging.info('Serializing data into %s' % tfrecords_file)
         utils.write_tfrecords(data, tfrecords_file)
@@ -186,8 +178,7 @@ class BaseModule:
         # Get absolute path of tf.records file
         if not tfrecords_files:
             if self.output_dir:
-                tfrecords_files = \
-                    [os.path.join(self.output_dir, 'train.tfrecords')]
+                tfrecords_files = [os.path.join(self.output_dir, 'train.tfrecords')]
             else:
                 tfrecords_files = ['train.tfrecords']
         elif isinstance(tfrecords_files, str):
@@ -211,9 +202,8 @@ class BaseModule:
             raise ValueError('Target steps can\'t exceed total steps.')
         self.num_warmup_steps = int(self.total_steps * warmup_ratio)
 
-        # Define optimization process, build the graph, and then run.
-        with self.graph.as_default(), \
-                tf.variable_scope('', reuse=tf.AUTO_REUSE):
+        # Define optimization process, register the task, and then run.
+        with self.graph.as_default(), tf.variable_scope('', reuse=tf.AUTO_REUSE):
             self._global_step = optimization.get_global_step()
             self._optimizer = optimization.get_optimizer(
                 init_lr=learning_rate,
@@ -223,7 +213,11 @@ class BaseModule:
                 key_to_depths=self._key_to_depths,
                 **kwargs)
             kwargs.update(tfrecords_files=tfrecords_files, n_jobs=n_jobs)
-            return self._build('fit', **kwargs).run(
+
+            t = task.base.Training(self, **kwargs)
+            if kwargs.get('adversarial'):
+                t = task.adversarial.AdversarialTraining(self, **kwargs)
+            return t.run(
                 target_steps,
                 print_per_secs=print_per_secs,
                 save_per_steps=save_per_steps)
@@ -282,8 +276,7 @@ class BaseModule:
 
         # Convert raw data to structed data. This method
         # should be specifically implemented by child classes.
-        self.data = self._parallel_convert(
-            X, y, sample_weight, X_tokenized, is_training=True)
+        self.data = self._parallel_convert(X, y, sample_weight, X_tokenized, is_training=True)
 
         # Confirm the number of training steps and warmup
         # steps. In reality, we use a slanted learning rate
@@ -303,9 +296,8 @@ class BaseModule:
             raise ValueError('Target steps can\'t exceed total steps.')
         self.num_warmup_steps = int(self.total_steps * warmup_ratio)
 
-        # Define optimization process, build the graph, and then run.
-        with self.graph.as_default(), \
-                tf.variable_scope('', reuse=tf.AUTO_REUSE):
+        # Define optimization process, register the task, and then run.
+        with self.graph.as_default(), tf.variable_scope('', reuse=tf.AUTO_REUSE):
             self._global_step = optimization.get_global_step()
             self._optimizer = optimization.get_optimizer(
                 init_lr=learning_rate,
@@ -314,7 +306,11 @@ class BaseModule:
                 num_warmup_steps=self.num_warmup_steps,
                 key_to_depths=self._key_to_depths,
                 **kwargs)
-            return self._build('fit', **kwargs).run(
+
+            t = task.base.Training(self, **kwargs)
+            if kwargs.get('adversarial'):
+                t = task.adversarial.AdversarialTraining(self, **kwargs)
+            return t.run(
                 target_steps,
                 print_per_secs=print_per_secs,
                 save_per_steps=save_per_steps)
@@ -342,7 +338,7 @@ class BaseModule:
                 % (batch_size, len(self._gpu_ids)))
 
         # Make sure necessary arguments are on spot.
-        if not self._graph_built:
+        if not self._session_built:
             _attr_dict = self.__class__._INFER_ATTRIBUTES
             _miss_dict = set()
             for attr in _attr_dict:
@@ -360,13 +356,12 @@ class BaseModule:
 
         # Convert raw data to structed data. This method
         # should be specifically implemented by child classes.
-        self.data = self._parallel_convert(
-            X, None, None, X_tokenized, is_training=False)
+        self.data = self._parallel_convert(X, None, None, X_tokenized, is_training=False)
 
-        # Build the graph, and then run.
-        with self.graph.as_default(), \
-                tf.variable_scope('', reuse=tf.AUTO_REUSE):
-            return self._build('predict').run()
+        # Register the task, and then run.
+        with self.graph.as_default(), tf.variable_scope('', reuse=tf.AUTO_REUSE):
+            t = task.base.Inference(self)
+            return t.run()
 
     def score(self, X=None, y=None, sample_weight=None, X_tokenized=None,
               batch_size=8):
@@ -395,7 +390,7 @@ class BaseModule:
                 % (batch_size, len(self._gpu_ids)))
 
         # Make sure necessary arguments are on spot.
-        if not self._graph_built:
+        if not self._session_built:
             _attr_dict = self.__class__._INFER_ATTRIBUTES
             _miss_dict = set()
             for attr in _attr_dict:
@@ -413,13 +408,12 @@ class BaseModule:
 
         # Convert raw data to structed data. This method
         # should be specifically implemented by child classes.
-        self.data = self._parallel_convert(
-            X, y, sample_weight, X_tokenized, is_training=False)
+        self.data = self._parallel_convert(X, y, sample_weight, X_tokenized, is_training=False)
 
-        # Build the graph, and then run.
-        with self.graph.as_default(), \
-                tf.variable_scope('', reuse=tf.AUTO_REUSE):
-            return self._build('score').run()
+        # Register the task, and then run.
+        with self.graph.as_default(), tf.variable_scope('', reuse=tf.AUTO_REUSE):
+            t = task.base.Scoring(self)
+            return t.run()
 
     def save(self, max_to_keep=10000):
         ''' Save model into checkpoint file.
@@ -431,7 +425,7 @@ class BaseModule:
         Args:
             max_to_keep: int. Max number of checkpoints to save.
         '''
-        if not self._graph_built:
+        if not self._session_built:
             raise ValueError(
                 'Randomly initialize, fit, predict or score before saving '
                 'checkpoint.')
@@ -464,7 +458,7 @@ class BaseModule:
         When attribute `output_dir` is not None, the method will save the
         model into checkpoint file simultaneously.
         '''
-        if self.output_dir and self._graph_built:
+        if self.output_dir and self._session_built:
             self.save(max_to_keep)
         tf.logging.info('Saving model configuration `%s` into %s'
                         % (code, cache_file))
@@ -485,12 +479,11 @@ class BaseModule:
         for key in self.__class__.__init__.__code__.co_varnames[1:]:
             try:
                 value = self.__getattribute__(key)
-            except:
+            except Exception:
                 value = self.__init_args__[key]
 
             # convert to relative path
-            if key == 'init_checkpoint' or key.endswith('_dir') or \
-                    key.endswith('_file'):
+            if key == 'init_checkpoint' or key.endswith('_dir') or key.endswith('_file'):
                 if isinstance(value, str) and not value.startswith('/'):
                     value = utils.get_relative_path(
                         source=cache_file,
@@ -512,7 +505,7 @@ class BaseModule:
         '''
 
         # Make sure necessary arguments are on spot.
-        if not self._graph_built:
+        if not self._session_built:
             _attr_dict = self.__class__._INFER_ATTRIBUTES
             _miss_dict = set()
             for attr in _attr_dict:
@@ -528,10 +521,10 @@ class BaseModule:
                     'Feed value for the following necessary arguments '
                     'before initialization. (%s)' % '; '.join(_miss_info))
 
-        # Build the graph, and then run.
-        with self.graph.as_default(), \
-                tf.variable_scope('', reuse=tf.AUTO_REUSE):
-            return self._build('init').run(
+        # Register the task, and then run.
+        with self.graph.as_default(), tf.variable_scope('', reuse=tf.AUTO_REUSE):
+            t = task.base.Initialization(self)
+            return t.run(
                 reinit_all=reinit_all,
                 ignore_checkpoint=(self.init_checkpoint is None))
 
@@ -614,7 +607,7 @@ class BaseModule:
         tf.gfile.MakeDirs(export_dir)
 
         # Make sure necessary arguments are on spot.
-        if not self._graph_built:
+        if not self._session_built:
             _attr_dict = self.__class__._INFER_ATTRIBUTES
             _miss_dict = set()
             for attr in _attr_dict:
@@ -629,10 +622,10 @@ class BaseModule:
                     'before exportation of PB files. (%s)'
                     % '; '.join(_miss_info))
 
-        # Build the graph, and then run.
-        with self.graph.as_default(), \
-                tf.variable_scope('', reuse=tf.AUTO_REUSE):
-            self._build('export').run(
+        # Register the task, and then run.
+        with self.graph.as_default(), tf.variable_scope('', reuse=tf.AUTO_REUSE):
+            t = task.base.Exportation(self)
+            t.run(
                 export_dir, rename_inputs, rename_outputs,
                 ignore_inputs, ignore_outputs)
 
@@ -672,11 +665,12 @@ class BaseModule:
                    [values for _ in range(n_buckets)],
                    buckets,
                    [is_training for _ in range(n_buckets)])
-        data_buckets = utils.pool.map(utils._parallel_convert_single_process, args)
+        data_buckets = utils.pool.map(
+            utils._parallel_convert_single_process, args)
 
         data = {}
         data_buckets.sort(key=lambda x: x[0])    # re-order inputs
-        
+
         for key in data_buckets[0][1].keys():
             data[key] = utils.transform(
                 [_data[key] for _bucket_id, _data in data_buckets])
@@ -725,27 +719,6 @@ class BaseModule:
             assert len(X) == len(sample_weight), (
                 'Length of `sample_weight` should be the '
                 'same with `X/X_tokenized`. (%d vs. %d)' % (len(y), len(X)))
-
-    def _build(self, work, **kwargs):
-        ''' Build the computation graph. '''
-
-        # Build work flow with computation graph. Multi-GPU
-        # training and inference are supported. Temporarily
-        # not support running on TPUs.
-        if work == 'fit':
-            if 'EMD' in self.__class__.__name__:
-                return processing.EMDTraining(self, **kwargs)
-            if kwargs.get('adversarial'):
-                return processing.AdversarialTraining(self, **kwargs)
-            return processing.BasicTraining(self, **kwargs)
-        elif work == 'predict':
-            return processing.BasicInference(self, **kwargs)
-        elif work == 'score':
-            return processing.BasicScoring(self, **kwargs)
-        elif work == 'export':
-            return processing.ExportInference(self, **kwargs)
-        elif work == 'init':
-            return processing.Initialization(self, **kwargs)
 
     def assign(self, variable, value):
         ''' Manually assign values for a parameter. '''

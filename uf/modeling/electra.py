@@ -76,8 +76,8 @@ class ELECTRA(BaseDecoder):
         mlm_output = self._get_generator_output(
             masked_inputs, sample_weight, generator)
         self.total_loss = self.config.gen_weight * mlm_output.loss
-        self.losses['MLM_losses'] = mlm_output.per_example_loss
-        self.preds['MLM_preds'] = tf.reshape(
+        self._losses['MLM_losses'] = mlm_output.per_example_loss
+        self._preds['MLM_preds'] = tf.reshape(
             mlm_output.preds, [-1, max_predictions_per_seq])
 
         # Discriminator
@@ -97,10 +97,10 @@ class ELECTRA(BaseDecoder):
             fake_data.is_fake_tokens)
         if electra_objective:
             self.total_loss += self.config.disc_weight * disc_output.loss
-        self.losses['RTD_losses'] = disc_output.per_example_loss
-        self.probs['RTD_probs'] = disc_output.probs
-        self.preds['RTD_preds'] = disc_output.preds
-        self.preds['RTD_labels'] = disc_output.labels
+        self._losses['RTD_losses'] = disc_output.per_example_loss
+        self._probs['RTD_probs'] = disc_output.probs
+        self._preds['RTD_preds'] = disc_output.preds
+        self._preds['RTD_labels'] = disc_output.labels
 
     def _get_generator_output(self, inputs, sample_weight, generator):
         '''Masked language modeling softmax layer.'''

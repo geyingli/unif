@@ -1,5 +1,5 @@
 # coding:=utf-8
-# Copyright 2020 Tencent. All rights reserved.
+# Copyright 2021 Tencent. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -200,8 +200,7 @@ def get_optimizer(init_lr, global_step, num_train_steps,
                 'in the current module. Ignored.')
         else:
             learning_rate = {
-                key: learning_rate * \
-                    (layerwise_lr_decay_ratio ** depth)
+                key: learning_rate * layerwise_lr_decay_ratio ** depth
                 for (key, depth) in key_to_depths.items()}
 
     # optimier

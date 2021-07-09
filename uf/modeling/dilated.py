@@ -61,7 +61,7 @@ class DLM(BaseDecoder, BERTEncoder):
                     dilated_seq_length,
                     tilda_embeddings=tilda_embeddings)
 
-                self.preds['LM'] = tf.argmax(logits, axis=-1)
+                self._preds['LM'] = tf.argmax(logits, axis=-1)
 
                 # LM loss
                 log_probs = tf.nn.log_softmax(logits, axis=-1)
@@ -81,7 +81,7 @@ class DLM(BaseDecoder, BERTEncoder):
                     per_example_loss *= tf.expand_dims(sample_weight, axis=-1)
 
                 self.total_loss = tf.reduce_mean(per_example_loss)
-                self.losses['LM'] = per_example_loss
+                self._losses['LM'] = per_example_loss
 
             # forward loop
             else:
@@ -144,7 +144,7 @@ class DLM(BaseDecoder, BERTEncoder):
                     dilated_ids, dilated_mask = _forward(
                         dilated_ids, dilated_mask)
 
-                self.preds['LM'] = dilated_ids
+                self._preds['LM'] = dilated_ids
 
     def _bert_forward(self,
                      bert_config,

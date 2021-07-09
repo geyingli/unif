@@ -1764,7 +1764,7 @@ class BERTMRC(BERTClassifier, MRCModule):
                 _input_mask.extend([1] * (len(segment) + 1))
                 _segment_ids.extend([_segment_id] * (len(segment) + 1))
             _doc_start = len(_input_tokens) - len(_doc_tokens) - 1
-            
+
             _input_ids = self.tokenizer.convert_tokens_to_ids(_input_tokens)
             _doc_ids = _input_ids[_doc_start: -1]
 

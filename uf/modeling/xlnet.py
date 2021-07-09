@@ -64,7 +64,7 @@ class XLNetEncoder(BaseEncoder):
               1 for tokens with losses and 0 for tokens without losses.
               Only used during pretraining for two-stream attention.
               Set to None during finetuning.
-        ''' 
+        '''
 
         run_config = XLNetRunConfig(
             is_training=is_training,
@@ -234,9 +234,9 @@ class XLNet(BaseDecoder):
 
         self.total_loss = tf.reduce_sum(
             per_example_loss * target_mask) / tf.reduce_sum(target_mask)
-        self.losses['losses'] = per_example_loss * target_mask
-        self.preds['preds'] = preds
-        self.preds['mask'] = target_mask
+        self._losses['losses'] = per_example_loss * target_mask
+        self._preds['preds'] = preds
+        self._preds['mask'] = target_mask
 
 
 class XLNetRunConfig:

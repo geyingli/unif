@@ -98,8 +98,8 @@ class SemBERTDecoder(BaseDecoder):
             logits = tf.matmul(output_layer, output_weights, transpose_b=True)
             logits = tf.nn.bias_add(logits, output_bias)
 
-            self.preds['preds'] = tf.argmax(logits, axis=-1)
-            self.probs['probs'] = tf.nn.softmax(logits, axis=-1, name='probs')
+            self._preds['preds'] = tf.argmax(logits, axis=-1)
+            self._probs['probs'] = tf.nn.softmax(logits, axis=-1, name='probs')
 
             log_probs = tf.nn.log_softmax(logits, axis=-1)
             one_hot_labels = tf.one_hot(
@@ -113,12 +113,12 @@ class SemBERTDecoder(BaseDecoder):
             if thresh is not None:
                 assert isinstance(thresh, float), (
                     '`tsa_thresh` must be a float between 0 and 1.')
-                uncertainty = tf.reduce_sum(self.probs['probs'] * tf.log(
-                    self.probs['probs']), axis=-1)
+                uncertainty = tf.reduce_sum(self._probs['probs'] * tf.log(
+                    self._probs['probs']), axis=-1)
                 uncertainty /= tf.log(1 / label_size)
                 per_example_loss = tf.cast(
                     tf.greater(uncertainty, thresh), dtype=tf.float32) * \
                     per_example_loss
 
-            self.losses['losses'] = per_example_loss
+            self._losses['losses'] = per_example_loss
             self.total_loss = tf.reduce_mean(per_example_loss)

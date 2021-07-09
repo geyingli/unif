@@ -76,7 +76,7 @@ class UDADecoder(BaseDecoder):
                 sup_label_ids = tf.boolean_mask(
                     label_ids, mask=is_supervised, axis=0)
 
-                self.preds['preds'] = tf.argmax(sup_ori_log_probs, axis=-1)
+                self._preds['preds'] = tf.argmax(sup_ori_log_probs, axis=-1)
 
                 one_hot_labels = tf.one_hot(
                     sup_label_ids, depth=label_size, dtype=tf.float32)
@@ -108,7 +108,7 @@ class UDADecoder(BaseDecoder):
                 sup_loss = (tf.reduce_sum(per_example_loss) /
                             tf.maximum(tf.reduce_sum(loss_mask), 1))
 
-                self.losses['supervised'] = per_example_loss
+                self._losses['supervised'] = per_example_loss
 
             with tf.variable_scope('unsup_loss'):
 
@@ -145,7 +145,7 @@ class UDADecoder(BaseDecoder):
                         unsup_sample_weight, dtype=tf.float32)
                 unsup_loss = tf.reduce_mean(per_example_loss)
 
-                self.losses['unsupervised'] = per_example_loss
+                self._losses['unsupervised'] = per_example_loss
 
             self.total_loss = sup_loss + unsup_loss
 

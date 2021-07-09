@@ -22,23 +22,19 @@ import copy
 import logging
 try:
     import requests
-except:
+except Exception:
     pass
 import collections
+import unicodedata
 import numpy as np
 import multiprocessing
 from sys import stdout
 
 from .tools import tf
-from uf.tokenization.word_piece import (
-    _is_whitespace as is_whitespace,
-    _is_punctuation as is_punctuation,
-    _is_chinese_char as is_chinese_char,
-    )
 from . import application
 
 PACK_DIR = os.path.dirname(__file__)
-
+BACKUP_DATA = 'ex:'
 
 
 class Null:
@@ -309,6 +305,7 @@ def download_from_google_drive(url, path):
 
         session = requests.Session()
         r = session.get(url, params={'id': file_id}, stream=True)
+
         def _get_confirm_token(response):
             for key, value in response.cookies.items():
                 if key.startswith('download_warning'):
@@ -427,8 +424,6 @@ def set_log(log_file):
     log.addHandler(fh)
 
 
-BACKUP_DATA = 'ex:'
-
 def write_tfrecords(data, tfrecords_file):
     writer = tf.python_io.TFRecordWriter(tfrecords_file)
     keys = []
@@ -463,7 +458,7 @@ def get_init_values(model):
     for key in model.__class__.__init__.__code__.co_varnames[1:]:
         try:
             value = model.__getattribute__(key)
-        except:
+        except Exception:
             value = model.__init_args__[key]
         values.append(value)
     return values
@@ -687,12 +682,14 @@ def get_grad_and_param(variables, grads, param_name):
     for (grad, param) in zip(grads, variables):
         if param_name in param.name:
             return (grad, param)
+    return None, None
 
 
 def get_param(variables, param_name):
     for param in variables:
         if param_name in param.name:
             return param
+    return None
 
 
 def count_params(global_variables, trainable_variables):
@@ -727,7 +724,7 @@ def average_n_grads(split_grads):
         values = tf.concat([grad.values for grad in split_grads], axis=0)
         indices = tf.concat([grad.indices for grad in split_grads], axis=0)
         dense_shape = split_grads[0].dense_shape
-        
+
         return tf.IndexedSlices(
             values=values,
             indices=indices,
@@ -786,7 +783,7 @@ def is_english_char(char):
 
 
 def is_numeric_char(char):
-    if re.findall('[\d]', char):
+    if re.findall(r'[\d]', char):
         return True
     return False
 
@@ -863,8 +860,7 @@ def transform(output_arrays, n_inputs=None, reshape=False):
             return np.vstack(output_arrays)[:n_inputs]
         return np.hstack(output_arrays)[:n_inputs]
     elif isinstance(output_arrays[0], list):    # flatten
-        return [item for output_array in output_arrays 
-            for item in output_array]
+        return [item for output_array in output_arrays for item in output_array]
     else:
         return output_arrays
 
@@ -891,3 +887,72 @@ def truncate_segments(segments, max_seq_length, truncate_method='LIFO'):
             raise ValueError(
                 'Invalid value for `truncate_method`. '
                 'Pick one from `longer-FO`, `FIFO`, `LIFO`.')
+
+
+def is_whitespace(char):
+    '''Checks whether `chars` is a whitespace character.'''
+
+    # \t, \n, and \r are technically contorl characters but we treat them
+    # as whitespace since they are generally considered as such.
+    if char in (' ', '\t', '\n', '\r'):
+        return True
+    cat = unicodedata.category(char)
+    if cat == 'Zs':
+        return True
+    return False
+
+
+def is_control(char):
+    '''Checks whether `chars` is a control character.'''
+
+    # These are technically control characters but we count them as whitespace
+    # characters.
+    if char in ('\t', '\n', '\r'):
+        return False
+    cat = unicodedata.category(char)
+    if cat in ('Cc', 'Cf'):
+        return True
+    return False
+
+
+def is_punctuation(char):
+    '''Checks whether `chars` is a punctuation character.'''
+    ord_id = ord(char)
+
+    # We treat all non-letter/number ASCII as punctuation.
+    # Characters such as '^', '$', and '`' are not in the Unicode
+    # Punctuation class but we treat them as punctuation anyways, for
+    # consistency.
+    if (ord_id >= 33 and ord_id <= 47) or \
+            (ord_id >= 58 and ord_id <= 64) or \
+            (ord_id >= 91 and ord_id <= 96) or \
+            (ord_id >= 123 and ord_id <= 126):
+        return True
+    cat = unicodedata.category(char)
+    if cat.startswith('P'):
+        return True
+    return False
+
+
+def is_chinese_char(ord_id):
+    '''Checks whether ord_id is the codepoint of a CJK character.'''
+    # This defines a `Chinese character` as anything in the CJK
+    # Unicode block:
+    # https://en.wikipedia.org/wiki/CJK_Unified_Ideographs_(Unicode_block)
+    #
+    # Note that the CJK Unicode block is NOT all Japanese and
+    # Korean characters, despite its name. The modern Korean Hangul
+    # alphabet is a different block, as is Japanese Hiragana and
+    # Katakana. Those alphabets are used to write space-separated
+    # words, so they are not treated specially and handled like the
+    # all of the other languages.
+    if (ord_id >= 0x4E00 and ord_id <= 0x9FFF) or \
+            (ord_id >= 0x3400 and ord_id <= 0x4DBF) or \
+            (ord_id >= 0x20000 and ord_id <= 0x2A6DF) or \
+            (ord_id >= 0x2A700 and ord_id <= 0x2B73F) or \
+            (ord_id >= 0x2B740 and ord_id <= 0x2B81F) or \
+            (ord_id >= 0x2B820 and ord_id <= 0x2CEAF) or \
+            (ord_id >= 0xF900 and ord_id <= 0xFAFF) or \
+            (ord_id >= 0x2F800 and ord_id <= 0x2FA1F):
+        return True
+    return False

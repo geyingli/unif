@@ -123,19 +123,8 @@ model = uf.BERTClassifier(
 下载知名公开预训练参数：
 
 ```python
-# 查看可下载列表
-uf.list_resources()
-┌──────────────────────────┬──────────┬──────────────┬───────────────────────────────────────────┬───────────────────────────────────────────────────────────────────────────────────┐
-┊ Key                      ┊ Backbone ┊ Organization ┊ Site                                      ┊ URL                                                                               ┊
-├──────────────────────────┼──────────┼──────────────┼───────────────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────────┤
-┊ bert-base-zh             ┊ BERT     ┊ Google       ┊ https://github.com/google-research/bert   ┊ https://storage.googleapis.com/bert_models/2018_11_03/chinese_L-12_H-768_A-12.zip ┊
-┊ albert-tiny-zh           ┊ ALBERT   ┊ Google       ┊ https://github.com/google-research/albert ┊ https://storage.googleapis.com/albert_zh/albert_tiny_zh_google.zip                ┊
-...
-┊ electra-180g-large-zh    ┊ ELECTRA  ┊ HFL          ┊ https://github.com/ymcui/Chinese-ELECTRA  ┊ https://drive.google.com/uc?export=download&id=1P9yAuW0-HR7WvZ2r2weTnx3slo6f5u9q  ┊
-└──────────────────────────┴──────────┴──────────────┴───────────────────────────────────────────┴───────────────────────────────────────────────────────────────────────────────────┘
-
-# 下载预训练模型包
-uf.download('bert-wwm-ext-base-zh')
+uf.list_resources()    # 查看参数列表
+uf.download('bert-wwm-ext-base-zh')    # 下载预训练模型包
 ```
 
 任务后期需要大量的训练，可以通过配置文件，方便地管理模型：
@@ -276,7 +265,6 @@ model.cache('key')
 导出 PB 文件到指定目录下：
 
 ``` python
-
 model.export(
     'serving',    # 导出目录
     rename_inputs={},    # 重命名输入
@@ -314,6 +302,10 @@ model.export(
 - 问：无意义的 warning 信息太多，该怎么剔除？
 
   答：这是 tensorflow 一直饱受诟病之处，我们也与你一同深受困扰。暂时没有有效的同时，又兼容各个 tf 版本的解决方案。
+  
+- 问：如何卸载 UNIF？
+
+  答：`pip uninstall uf` 即可。
 
 ## 开发需知
 

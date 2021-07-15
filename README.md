@@ -39,6 +39,8 @@ cd unif
 python3 setup.py install --user
 ```
 
+若需卸载，通过 `pip uninstall uf` 即可。
+
 ### 快速上手
 
 ``` python
@@ -273,15 +275,29 @@ model.export(
     ignore_outputs=[])    # 裁剪多余输出
 ```
 
+## 开发需知
+
+我们欢迎一切有效的 pull request，加入我们，成为 contributors 一员。 核心的代码架构如下图所示，新的模型开发仅需要在 application 下添加新的类，这些类可以由现有算法库 modeling 中的算子组合而来，也可以自行编写。
+
+<p align="center">
+    <br>
+    	<img src="./docs/framework.png" style="zoom:50%"/>
+    <br>
+<p>
+
 ## FAQ
+
+- 问：有什么提高训练速度的方法吗？
+
+  答：首先是几种最基础的方法，减小 max_seq_length，多 GPU 并行，以及多进程数据处理。在这些之外，可以进一步尝试对输入的数据进行梯度拆分，在训练过程中逐步提高 max_seq_length、batch_size 和 dropout_rate (通过提高拟合速度，缩短整个训练周期)。当然，还有一些 UNIF 暂时无法实现的功能，可以前往其他 repo 寻求解决方案，包括但不限于混合精度训练、OP融合、使用 Linformer 等时间复杂度小于 O(N^2) 的模型。
+
+- 问：训练时内存不足，该怎么办？
+
+  答：首先需要明确是显存溢出还是内存爆炸。如果是显存溢出，则需要降低 batch_size；如果是由于数据体量过于庞大导致的内存爆炸，可以尝试通过 `model.to_tfrecords()` 分批将数据写入 TFRecords 文件，而后清出内存，通过 `model.fit_from_tfrecords()` 读取进行训练。
 
 - 问：模型输入有什么限制吗？
 
   答：对于大多数模型来说，没有限制。一条样本，可以是一个字符串，也可以是多个字符串。以 BERT 为例，完全不必局限于一到两个句子的输入，而是可以通过 list 组合多个 segment，e.g.  `X = [['文档1句子1', '文档1句子2', '文档1句子3'], ['文档2句子1', '文档2句子2']]`，模型会自动按顺序拼接并添加分隔符。
-
-- 问：数据体量庞大，内存不够用，该怎么办？
-
-  答：可以尝试通过 `model.to_tfrecords()` 分批将数据写入 TFRecords 文件，而后通过 `model.fit_from_tfrecords()` 读取进行训练。
 
 - 问：如何查看切词结果？
 
@@ -297,44 +313,11 @@ model.export(
 
 - 问：我可以用这个框架做哪些有趣的事情？
 
-  答：只要有数据，大多数 NLP 领域的事情都能做。可以用 `GPT2LM` 来生成古诗/小说，可以使用 `TransformerMT` 搭建简单的聊天机器人，可以组合 `ELECTRALM` 和 `BERTLM` 进行文本纠错等等。
+  答：可以用 `GPT2LM` 来生成古诗/小说，可以使用 `TransformerMT` 搭建简单的聊天机器人，可以组合 `ELECTRALM` 和 `BERTLM` 进行文本纠错等等。
 
 - 问：无意义的 warning 信息太多，该怎么剔除？
 
   答：这是 tensorflow 一直饱受诟病之处，我们也与你一同深受困扰。暂时没有有效的同时，又兼容各个 tf 版本的解决方案。
-  
-- 问：如何卸载 UNIF？
-
-  答：`pip uninstall uf` 即可。
-
-## 开发需知
-
-我们欢迎一切有效的 pull request，加入我们，成为 contributors 一员。 核心的代码架构如下图所示，新的模型开发仅需要在 application 下添加新的类，这些类可以由现有算法库 modeling 中的算子组合而来，也可以自行编写。
-
-<p align="center">
-    <br>
-    	<img src="./docs/framework.png" style="zoom:50%"/>
-    <br>
-<p>
-
-## 重要更新
-
-beta v2.5.0 -> Now：
-
-- 新增：添加 `uf.TinyBERTBinaryClassifier`，使用TinyBERT架构蒸馏BERT多分类模型
-- 新增：添加 `uf.MultiProcess`，可以通过多进程加速模型前的数据解析流程
-- 新增：添加 `uf.list_resources()` 和 `uf.download()` 用法，方便地下载公开预训练参数
-- 新增：使用 `model.cache()` 缓存模型时，可以传入 `note` 参数作为备注
-- 新增：添加完整的示范代码，在 unif/examples 目录下
-- 变更：取消训练结束自动保存模型参数，用户需要通过 `model.save()` 或 `model.cache()` 自行保存
-- 变更：默认打印所有信息，无需用户再行输入 `uf.set_verbosity()`
-- 变更：将 `SANetMRC` 的 `split_sign` 属性改为 `split_signs`，支持多个句子分隔符
-- 变更：将优化器动量从 `model.uninited_vars` 中删除
-- 变更：加载预训练参数时，跳过名称一致但形状不一致的参数，避免报错
-- 变更：添加语言模型采样 `[MASK]` 进度提示
-- 变更：`FastBERTClassifier` 改为默认跳过第一个子分类器
-- 变更：`UniLM` 在 `s2s` 模式下的结尾 token 从 `[SEP]` 改为 `[EOS]`
-- 变更：`VAELM` 取消返回 `[CLS]`
 
 ## 尾声
 

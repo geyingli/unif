@@ -24,7 +24,7 @@ from ..tools import tf
 from .. import utils
 
 
-class BaseTask:
+class Task:
     ''' Parent class of all tasks.
 
     This is an internal class that does not provide interface
@@ -105,7 +105,7 @@ class BaseTask:
         return feed_dict
 
 
-class Training(BaseTask):
+class Training(Task):
 
     def __init__(self, module, **kwargs):
         self.m = module
@@ -120,22 +120,21 @@ class Training(BaseTask):
         update_params_op = utils.update_global_params(
             self.m.trainable_variables, self.m._global_step, self.m._optimizer, grads)
         update_step_op = self.m._global_step.assign(self.m._global_step + 1)
-        self.m._train_op = tf.group([update_params_op, update_step_op])
+        self.train_op = tf.group([update_params_op, update_step_op])
+
+        self.accumulate_grads_op = 1
 
     def run(self, target_steps,
             print_per_secs=60,
             save_per_steps=1000):
-        adversarial = ''
-        if self._kwargs.get('adversarial'):
-            adversarial = self._kwargs.get('adversarial').lower()
+        adversarial = self._kwargs.get('adversarial', '').lower()
 
         if self._kwargs.get('shuffle', True) and not self.tfrecords_files:
             self._shuffle()
 
         # init session
         if not self.m._session_built:
-            utils.count_params(
-                self.m.global_variables, self.m.trainable_variables)
+            utils.count_params(self.m.global_variables, self.m.trainable_variables)
             self._init_session()
         else:
             variables = []
@@ -158,7 +157,7 @@ class Training(BaseTask):
 
         # SMART: initialize tilda_embedding
         if adversarial == 'smart':
-            self.m.sess.run(self.m._init_tilda_op)
+            self.m.sess.run(self.init_tilda_op)
 
         self._ptr = 0
         last_tic = time.time()
@@ -232,8 +231,16 @@ class Training(BaseTask):
         if not self.from_tfrecords:
             feed_dict = self._build_feed_dict()
             as_feature = False
+        fit_ops = [self.train_op] + self.m._get_fit_ops(as_feature)
 
-        output_arrays = self.m.sess.run(self.m._get_fit_ops(as_feature), feed_dict=feed_dict)
+        # # accumulate gradients
+        # update_per_steps = self._kwargs.get('update_per_steps', 1)
+        # last_grads = tf.no_op()
+        # for i in range(update_per_steps):
+        #     with tf.control_dependencies([last_grads]):
+        #         pass
+
+        output_arrays = self.m.sess.run(fit_ops, feed_dict=feed_dict)
 
         # print
         if time.time() - last_tic > print_per_secs or step == target_steps:
@@ -253,7 +260,7 @@ class Training(BaseTask):
 
         # SMART: update tilda_embedding
         if step % self.m.steps_per_epoch == 0 and adversarial == 'smart':
-            self.m.sess.run(self.m._update_tilda_op)
+            self.m.sess.run(self.update_tilda_op)
 
         # save
         if self.m.output_dir and step % save_per_steps == 0:
@@ -264,7 +271,7 @@ class Training(BaseTask):
         return last_tic, last_step
 
 
-class Inference(BaseTask):
+class Inference(Task):
 
     def __init__(self, module):
         self.m = module
@@ -301,7 +308,8 @@ class Inference(BaseTask):
     def _predict_one_batch(self, step, last_tic,
                            total_steps, batch_outputs):
         feed_dict = self._build_feed_dict()
-        output_arrays = self.m.sess.run(self.m._get_predict_ops(), feed_dict=feed_dict)
+        predict_ops = self.m._get_predict_ops()
+        output_arrays = self.m.sess.run(predict_ops, feed_dict=feed_dict)
 
         # cache
         batch_outputs.append(output_arrays)
@@ -318,7 +326,7 @@ class Inference(BaseTask):
             tf.logging.info(info)
 
 
-class Scoring(BaseTask):
+class Scoring(Task):
 
     def __init__(self, module):
         self.m = module
@@ -355,7 +363,8 @@ class Scoring(BaseTask):
     def _score_one_batch(self, step, last_tic,
                          total_steps, batch_outputs):
         feed_dict = self._build_feed_dict()
-        output_arrays = self.m.sess.run(self.m._get_score_ops(), feed_dict=feed_dict)
+        score_ops = self.m._get_score_ops()
+        output_arrays = self.m.sess.run(score_ops, feed_dict=feed_dict)
 
         # cache
         batch_outputs.append(output_arrays)
@@ -372,7 +381,7 @@ class Scoring(BaseTask):
             tf.logging.info(info)
 
 
-class Initialization(BaseTask):
+class Initialization(Task):
 
     def __init__(self, module):
         self.m = module
@@ -414,7 +423,7 @@ class Initialization(BaseTask):
         self.m._session_built = True
 
 
-class Exportation(BaseTask):
+class Exportation(Task):
 
     def __init__(self, module):
         self.m = module
@@ -431,8 +440,7 @@ class Exportation(BaseTask):
 
         # init session
         if not self.m._session_built:
-            utils.count_params(
-                self.m.global_variables, self.m.trainable_variables)
+            utils.count_params(self.m.global_variables, self.m.trainable_variables)
             self._init_session()
         self.m._session_mode = 'infer'
 

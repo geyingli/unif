@@ -81,7 +81,7 @@ class AdversarialTraining(Training):
             self.m.trainable_variables, self.m._global_step,
             self.m._optimizer, grads)
         update_step_op = self.m._global_step.assign(self.m._global_step + 1)
-        self.m._train_op = tf.group([update_params_op, update_step_op])
+        self.train_op = tf.group([update_params_op, update_step_op])
 
     def _pgd(self, epsilon=0.05, n_loop=2, **kwargs):
         # PGD takes average on actual gradient and last_tic gradient under
@@ -132,7 +132,7 @@ class AdversarialTraining(Training):
             self.m.trainable_variables, self.m._global_step,
             self.m._optimizer, grads)
         update_step_op = self.m._global_step.assign(self.m._global_step + 1)
-        self.m._train_op = tf.group([update_params_op, update_step_op])
+        self.train_op = tf.group([update_params_op, update_step_op])
 
     def _freelb(self, epsilon=0.3, n_loop=3, **kwargs):
         # FreeLB is similar to PGD, but uses average gradients from loop.
@@ -206,7 +206,7 @@ class AdversarialTraining(Training):
             self.m.trainable_variables, self.m._global_step,
             self.m._optimizer, grads)
         update_step_op = self.m._global_step.assign(self.m._global_step + 1)
-        self.m._train_op = tf.group([update_params_op, update_step_op])
+        self.train_op = tf.group([update_params_op, update_step_op])
 
     def _freeat(self, epsilon=0.001, n_loop=3, **kwargs):
         # (epsilon: the range of perturbation over gradient,
@@ -249,7 +249,7 @@ class AdversarialTraining(Training):
                 last_r = r
                 last_r_slice = r_slice
         update_step_op = self.m._global_step.assign(self.m._global_step + 1)
-        self.m._train_op = tf.group([update_params_op, update_step_op])
+        self.train_op = tf.group([update_params_op, update_step_op])
 
     def _smart(self, epsilon=0.01, n_loop=2,
                prtb_lambda=0.5, breg_miu=0.2, tilda_beta=0.3,
@@ -355,11 +355,11 @@ class AdversarialTraining(Training):
             self.m.trainable_variables, self.m._global_step,
             self.m._optimizer, grads)
         update_step_op = self.m._global_step.assign(self.m._global_step + 1)
-        self.m._train_op = tf.group([update_params_op, update_step_op])
+        self.train_op = tf.group([update_params_op, update_step_op])
 
         # runs at the start of each epoch
-        self.m._init_tilda_op = tilda.assign(param)
+        self.init_tilda_op = tilda.assign(param)
 
         # runs at the end of each epoch
-        self.m._update_tilda_op = tilda.assign(
+        self.update_tilda_op = tilda.assign(
             (1 - tilda_beta) * param + tilda_beta * tilda)

@@ -561,8 +561,7 @@ class XLNetLM(BERTLM, LMModule):
         return (total_loss, losses, probs, preds)
 
     def _get_fit_ops(self, as_feature=False):
-        ops = [self._train_op,
-               self._preds['preds'], self._preds['mask'],
+        ops = [self._preds['preds'], self._preds['mask'],
                self._losses['losses']]
         if as_feature:
             ops.extend(

@@ -252,7 +252,7 @@ class BERTClassifier(ClassifierModule):
         return (total_loss, losses, probs, preds)
 
     def _get_fit_ops(self, as_feature=False):
-        ops = [self._train_op, self._preds['preds'], self._losses['losses']]
+        ops = [self._preds['preds'], self._losses['losses']]
         if as_feature:
             ops.extend([self.placeholders['label_ids']])
         return ops
@@ -681,7 +681,7 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
         return (total_loss, losses, probs, preds)
 
     def _get_fit_ops(self, as_feature=False):
-        ops = [self._train_op, self._preds['preds'], self._losses['losses']]
+        ops = [self._preds['preds'], self._losses['losses']]
         if as_feature:
             ops.extend([self.placeholders['input_mask'],
                         self.placeholders['label_ids']])
@@ -1011,7 +1011,7 @@ class BERTNER(BERTClassifier, NERModule):
         return (total_loss, losses, probs, preds)
 
     def _get_fit_ops(self, as_feature=False):
-        ops = [self._train_op, self._preds['preds'], self._losses['losses']]
+        ops = [self._preds['preds'], self._losses['losses']]
         if as_feature:
             ops.extend([self.placeholders['input_mask'],
                         self.placeholders['label_ids']])
@@ -1153,8 +1153,7 @@ class BERTCRFNER(BERTNER, NERModule):
         return (total_loss, losses, probs, preds)
 
     def _get_fit_ops(self, as_feature=False):
-        ops = [self._train_op,
-               self._probs['logits'], self._probs['transition_matrix'],
+        ops = [self._probs['logits'], self._probs['transition_matrix'],
                self._losses['losses']]
         if as_feature:
             ops.extend([self.placeholders['input_mask'],
@@ -1483,8 +1482,7 @@ class BERTCRFCascadeNER(BERTCRFNER, NERModule):
         return (total_loss, losses, probs, preds)
 
     def _get_fit_ops(self, as_feature=False):
-        ops = [self._train_op,
-               self._probs['logits'], self._probs['transition_matrix'],
+        ops = [self._probs['logits'], self._probs['transition_matrix'],
                self._losses['losses']]
         if as_feature:
             ops.extend([self.placeholders['input_mask'],
@@ -1910,7 +1908,7 @@ class BERTMRC(BERTClassifier, MRCModule):
         return (total_loss, losses, probs, preds)
 
     def _get_fit_ops(self, as_feature=False):
-        ops = [self._train_op, self._preds['preds'], self._losses['losses']]
+        ops = [self._preds['preds'], self._losses['losses']]
         if as_feature:
             ops.extend([self.placeholders['label_ids']])
         return ops
@@ -2254,8 +2252,7 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
         return (total_loss, losses, probs, preds)
 
     def _get_fit_ops(self, as_feature=False):
-        ops = [self._train_op,
-               self._preds['verifier_preds'],
+        ops = [self._preds['verifier_preds'],
                self._losses['verifier_losses'],
                self._preds['mrc_preds'],
                self._losses['mrc_losses']]
@@ -2727,8 +2724,7 @@ class BERTLM(LMModule):
         return (total_loss, losses, probs, preds)
 
     def _get_fit_ops(self, as_feature=False):
-        ops = [self._train_op,
-               self._preds['MLM_preds'], self._preds['NSP_preds'],
+        ops = [self._preds['MLM_preds'], self._preds['NSP_preds'],
                self._losses['MLM_losses'], self._losses['NSP_losses']]
         if as_feature:
             ops.extend(

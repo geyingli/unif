@@ -345,11 +345,9 @@ class UDAClassifier(BERTClassifier, ClassifierModule):
         return (total_loss, losses, probs, preds)
 
     def _get_fit_ops(self, as_feature=False):
-        ops = [self._train_op,
-               self._preds['preds'],
+        ops = [self._preds['preds'],
                self._losses['supervised'],
-               self._losses['unsupervised'],
-               ]
+               self._losses['unsupervised']]
         if as_feature:
             ops.extend([self.placeholders['is_supervised'],
                         self.placeholders['label_ids']])

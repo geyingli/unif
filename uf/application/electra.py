@@ -504,8 +504,7 @@ class ELECTRALM(BERTLM, LMModule):
         return (total_loss, losses, probs, preds)
 
     def _get_fit_ops(self, as_feature=False):
-        ops = [self._train_op,
-               self._preds['MLM_preds'],
+        ops = [self._preds['MLM_preds'],
                self._preds['RTD_preds'],
                self._preds['RTD_labels'],
                self._losses['MLM_losses'],

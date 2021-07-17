@@ -255,8 +255,7 @@ class RecBERTLM(LMModule):
         return (total_loss, losses, probs, preds)
 
     def _get_fit_ops(self, as_feature=False):
-        ops = [self._train_op,
-               self._preds['add_preds'],
+        ops = [self._preds['add_preds'],
                self._preds['del_preds'],
                self._losses['add_loss'],
                self._losses['del_loss']]

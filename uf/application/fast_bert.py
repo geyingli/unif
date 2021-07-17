@@ -218,7 +218,7 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
         return (total_loss, losses, probs, preds)
 
     def _get_fit_ops(self, as_feature=False):
-        return [self._train_op, self._losses['losses']]
+        return [self._losses['losses']]
 
     def _get_fit_info(self, output_arrays, feed_dict, as_feature=False):
 

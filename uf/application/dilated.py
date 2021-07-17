@@ -242,7 +242,7 @@ class DilatedLM(LMModule):
         return (total_loss, losses, probs, preds)
 
     def _get_fit_ops(self, as_feature=False):
-        ops = [self._train_op, self._preds['LM'], self._losses['LM']]
+        ops = [self._preds['LM'], self._losses['LM']]
         if as_feature:
             ops.extend([self.placeholders['dilated_ids'],
                         self.placeholders['label_ids']])

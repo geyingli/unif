@@ -336,8 +336,7 @@ class UniLM(BERTLM, LMModule):
         return (total_loss, losses, probs, preds)
 
     def _get_fit_ops(self, as_feature=False):
-        ops = [self._train_op,
-               self._preds['MLM_preds'], self._losses['MLM_losses']]
+        ops = [self._preds['MLM_preds'], self._losses['MLM_losses']]
         if self.mode == 'bi':
             ops += [self._preds['NSP_preds'], self._losses['NSP_losses']]
         if as_feature:

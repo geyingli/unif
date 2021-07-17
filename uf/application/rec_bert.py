@@ -280,19 +280,19 @@ class RecBERTLM(LMModule):
         batch_mask = (batch_inputs != 0)
 
         # add accuracy
-        batch_add_preds = output_arrays[1]
+        batch_add_preds = output_arrays[0]
         add_accuracy = np.sum((batch_add_preds == batch_add_labels) * batch_mask) / (np.sum(batch_mask) + 1e-6)
 
         # del accuracy
-        batch_del_preds = output_arrays[2]
+        batch_del_preds = output_arrays[1]
         del_accuracy = np.sum((batch_del_preds == batch_del_labels) * batch_mask) / (np.sum(batch_mask) + 1e-6)
 
         # add loss
-        batch_add_losses = output_arrays[3]
+        batch_add_losses = output_arrays[2]
         add_loss = np.mean(batch_add_losses)
 
         # del loss
-        batch_del_losses = output_arrays[4]
+        batch_del_losses = output_arrays[3]
         del_loss = np.mean(batch_del_losses)
 
         info = ''

@@ -597,22 +597,22 @@ class ALBERTLM(BERTLM, LMModule):
                 feed_dict[self.placeholders['sentence_order_labels']]
 
         # MLM accuracy
-        batch_mlm_preds = output_arrays[1]
+        batch_mlm_preds = output_arrays[0]
         batch_mlm_mask = (batch_mlm_positions > 0)
         mlm_accuracy = (
             np.sum((batch_mlm_preds == batch_mlm_labels) * batch_mlm_mask) /
             batch_mlm_mask.sum())
 
         # SOP accuracy
-        batch_sop_preds = output_arrays[2]
+        batch_sop_preds = output_arrays[1]
         SOP_accuracy = np.mean(batch_sop_preds == batch_sop_labels)
 
         # MLM loss
-        batch_mlm_losses = output_arrays[3]
+        batch_mlm_losses = output_arrays[2]
         mlm_loss = np.mean(batch_mlm_losses)
 
         # SOP loss
-        batch_SOP_losses = output_arrays[4]
+        batch_SOP_losses = output_arrays[3]
         SOP_loss = np.mean(batch_SOP_losses)
 
         info = ''

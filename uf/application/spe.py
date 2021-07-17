@@ -292,14 +292,14 @@ class SPELM(BERTLM, LMModule):
                 feed_dict[self.placeholders['masked_lm_ids']]
 
         # MLM accuracy
-        batch_mlm_preds = output_arrays[1]
+        batch_mlm_preds = output_arrays[0]
         batch_mlm_mask = (batch_mlm_positions > 0)
         mlm_accuracy = (
             np.sum((batch_mlm_preds == batch_mlm_labels) * batch_mlm_mask) /
             batch_mlm_mask.sum())
 
         # MLM loss
-        batch_mlm_losses = output_arrays[2]
+        batch_mlm_losses = output_arrays[1]
         mlm_loss = np.mean(batch_mlm_losses)
 
         info = ''

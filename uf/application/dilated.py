@@ -258,13 +258,13 @@ class DilatedLM(LMModule):
             batch_labels = feed_dict[self.placeholders['label_ids']]
 
         # accuracy
-        batch_preds = output_arrays[1]
+        batch_preds = output_arrays[0]
         batch_mask = (batch_inputs != batch_labels)
         accuracy = np.sum((batch_preds == batch_labels) * batch_mask) / \
             (np.sum(batch_mask) + 1e-6)
 
         # loss
-        batch_losses = output_arrays[2]
+        batch_losses = output_arrays[1]
         loss = np.mean(batch_losses)
 
         info = ''

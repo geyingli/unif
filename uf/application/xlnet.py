@@ -576,8 +576,8 @@ class XLNetLM(BERTLM, LMModule):
             batch_plm_labels = feed_dict[self.placeholders['target']]
 
         # PLM accuracy
-        batch_plm_preds = output_arrays[1]
-        batch_plm_mask = output_arrays[2]
+        batch_plm_preds = output_arrays[0]
+        batch_plm_mask = output_arrays[1]
         plm_accuracy = (
             np.sum((batch_plm_preds == batch_plm_labels) * batch_plm_mask) /
             batch_plm_mask.sum())
@@ -586,7 +586,7 @@ class XLNetLM(BERTLM, LMModule):
         print(batch_plm_mask[0], batch_plm_mask.shape)
 
         # PLM loss
-        batch_plm_losses = output_arrays[3]
+        batch_plm_losses = output_arrays[2]
         plm_loss = np.mean(batch_plm_losses)
 
         info = ''

@@ -221,7 +221,7 @@ class GPT2LM(LMModule):
             batch_target = feed_dict[self.placeholders['input_ids']]
 
         # accuracy
-        batch_preds = output_arrays[1]
+        batch_preds = output_arrays[0]
         batch_labels = np.hstack(
             (batch_target[:, 1:], np.zeros((self.batch_size, 1))))
         batch_mask = (batch_labels > 0)
@@ -229,7 +229,7 @@ class GPT2LM(LMModule):
             np.sum(batch_mask)
 
         # loss
-        batch_losses = output_arrays[2]
+        batch_losses = output_arrays[1]
         loss = np.mean(batch_losses)
 
         info = ''

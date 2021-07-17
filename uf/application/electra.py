@@ -531,25 +531,25 @@ class ELECTRALM(BERTLM, LMModule):
                 feed_dict[self.placeholders['masked_lm_ids']]
 
         # MLM accuracy
-        batch_mlm_preds = output_arrays[1]
+        batch_mlm_preds = output_arrays[0]
         batch_mlm_mask = (batch_mlm_positions > 0)
         mlm_accuracy = (
             np.sum((batch_mlm_preds == batch_mlm_labels) * batch_mlm_mask) /
             batch_mlm_mask.sum())
 
         # RTD accuracy
-        batch_rtd_preds = output_arrays[2]
-        batch_rtd_labels = output_arrays[3]
+        batch_rtd_preds = output_arrays[1]
+        batch_rtd_labels = output_arrays[2]
         rtd_accuracy = (
             np.sum((batch_rtd_preds == batch_rtd_labels) * batch_input_mask) /
             batch_input_mask.sum())
 
         # MLM loss
-        batch_mlm_losses = output_arrays[4]
+        batch_mlm_losses = output_arrays[3]
         mlm_loss = np.mean(batch_mlm_losses)
 
         # RTD loss
-        batch_rtd_losses = output_arrays[5]
+        batch_rtd_losses = output_arrays[4]
         rtd_loss = np.mean(batch_rtd_losses)
 
         info = ''

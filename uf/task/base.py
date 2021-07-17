@@ -122,7 +122,8 @@ class Training(Task):
         update_step_op = self.m._global_step.assign(self.m._global_step + 1)
         self.train_op = tf.group([update_params_op, update_step_op])
 
-        self.accumulate_grads_op = 1
+        self.update_per_steps = int(self._kwargs.get('update_per_steps', '1'))
+        self.acc_train_ops = [grads, update_step_op]
 
     def run(self, target_steps,
             print_per_secs=60,
@@ -231,7 +232,7 @@ class Training(Task):
         if not self.from_tfrecords:
             feed_dict = self._build_feed_dict()
             as_feature = False
-        fit_ops = [self.train_op] + self.m._get_fit_ops(as_feature)
+        fit_ops = self.m._get_fit_ops(as_feature) + [self.train_op]
 
         # # accumulate gradients
         # update_per_steps = self._kwargs.get('update_per_steps', 1)

@@ -300,23 +300,23 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
                 self.placeholders['has_answer']]
 
         # verifier accuracy
-        batch_has_answer_preds = output_arrays[1]
+        batch_has_answer_preds = output_arrays[0]
         has_answer_accuracy = np.mean(
             batch_has_answer_preds == batch_has_answer)
 
         # mrc exact match & f1
-        batch_preds = output_arrays[2]
+        batch_preds = output_arrays[1]
         for i in range(len(batch_has_answer_preds)):
             if batch_has_answer_preds[i] == 0:
                 batch_preds[i] = 0
         exact_match, f1 = self._get_em_and_f1(batch_preds, batch_labels)
 
         # sketchy loss
-        batch_sketchy_losses = output_arrays[3]
+        batch_sketchy_losses = output_arrays[2]
         sketchy_loss = np.mean(batch_sketchy_losses)
 
         # intensive loss
-        batch_intensive_losses = output_arrays[4]
+        batch_intensive_losses = output_arrays[3]
         intensive_loss = np.mean(batch_intensive_losses)
 
         info = ''

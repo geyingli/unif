@@ -361,14 +361,14 @@ class UniLM(BERTLM, LMModule):
                 feed_dict[self.placeholders['next_sentence_labels']]
 
         # MLM accuracy
-        batch_mlm_preds = output_arrays[1]
+        batch_mlm_preds = output_arrays[0]
         batch_mlm_mask = (batch_mlm_positions > 0)
         mlm_accuracy = (
             np.sum((batch_mlm_preds == batch_mlm_labels) * batch_mlm_mask) /
             batch_mlm_mask.sum())
 
         # MLM loss
-        batch_mlm_losses = output_arrays[2]
+        batch_mlm_losses = output_arrays[1]
         mlm_loss = np.mean(batch_mlm_losses)
 
         info = ''
@@ -378,11 +378,11 @@ class UniLM(BERTLM, LMModule):
         if self.mode == 'bi':
 
             # NSP accuracy
-            batch_nsp_preds = output_arrays[3]
+            batch_nsp_preds = output_arrays[2]
             nsp_accuracy = np.mean(batch_nsp_preds == batch_nsp_labels)
 
             # NSP loss
-            batch_nsp_losses = output_arrays[4]
+            batch_nsp_losses = output_arrays[3]
             nsp_loss = np.mean(batch_nsp_losses)
 
             info += ', NSP accuracy %.4f' % nsp_accuracy

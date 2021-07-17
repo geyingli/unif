@@ -160,7 +160,7 @@ class TinyBERTClassifier(BERTClassifier, ClassifierModule):
     def _get_fit_info(self, output_arrays, feed_dict, as_feature=False):
 
         # loss
-        batch_losses = output_arrays[1]
+        batch_losses = output_arrays[0]
         loss = np.mean(batch_losses)
 
         info = ''
@@ -304,7 +304,7 @@ class TinyBERTBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
     def _get_fit_info(self, output_arrays, feed_dict, as_feature=False):
 
         # loss
-        batch_losses = output_arrays[1]
+        batch_losses = output_arrays[0]
         loss = np.mean(batch_losses)
 
         info = ''

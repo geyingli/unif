@@ -363,16 +363,16 @@ class UDAClassifier(BERTClassifier, ClassifierModule):
             batch_labels = feed_dict[self.placeholders['label_ids']]
 
         # accuracy
-        batch_preds = output_arrays[1]
+        batch_preds = output_arrays[0]
         accuracy = np.sum((batch_preds == batch_labels) * batch_is_sup) / \
             np.sum(batch_is_sup)
 
         # supervised loss
-        batch_sup_losses = output_arrays[2]
+        batch_sup_losses = output_arrays[1]
         sup_loss = np.mean(batch_sup_losses)
 
         # supervised loss
-        batch_unsup_losses = output_arrays[3]
+        batch_unsup_losses = output_arrays[2]
         unsup_loss = np.mean(batch_unsup_losses)
 
         info = ''

@@ -245,13 +245,13 @@ class VAELM(BERTClassifier, LMModule):
             batch_mask = feed_dict[self.placeholders['input_mask']]
 
         # accuracy
-        batch_preds = output_arrays[1]
+        batch_preds = output_arrays[0]
         accuracy = (
             np.sum((batch_preds == batch_labels) * batch_mask) /
             batch_mask.sum())
 
         # loss
-        batch_losses = output_arrays[2]
+        batch_losses = output_arrays[1]
         loss = np.mean(batch_losses)
 
         info = ''

@@ -265,11 +265,11 @@ class BERTClassifier(ClassifierModule):
             batch_labels = feed_dict[self.placeholders['label_ids']]
 
         # accuracy
-        batch_preds = output_arrays[1]
+        batch_preds = output_arrays[0]
         accuracy = np.mean(batch_preds == batch_labels)
 
         # loss
-        batch_losses = output_arrays[2]
+        batch_losses = output_arrays[1]
         loss = np.mean(batch_losses)
 
         info = ''
@@ -697,12 +697,12 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
             batch_labels = feed_dict[self.placeholders['label_ids']]
 
         # accuracy
-        batch_preds = output_arrays[1]
+        batch_preds = output_arrays[0]
         accuracy = (np.sum((batch_preds == batch_labels) * batch_mask) /
                     batch_mask.sum())
 
         # loss
-        batch_losses = output_arrays[2]
+        batch_losses = output_arrays[1]
         loss = np.mean(batch_losses)
 
         info = ''
@@ -1027,12 +1027,12 @@ class BERTNER(BERTClassifier, NERModule):
             batch_labels = feed_dict[self.placeholders['label_ids']]
 
         # f1
-        batch_preds = output_arrays[1]
+        batch_preds = output_arrays[0]
         f1_token, f1_entity = self._get_f1(
             batch_preds, batch_labels, batch_mask)
 
         # loss
-        batch_losses = output_arrays[2]
+        batch_losses = output_arrays[1]
         loss = np.mean(batch_losses)
 
         info = ''
@@ -1170,8 +1170,8 @@ class BERTCRFNER(BERTNER, NERModule):
             batch_labels = feed_dict[self.placeholders['label_ids']]
 
         # f1
-        batch_logits = output_arrays[1]
-        batch_transition_matrix = output_arrays[2]
+        batch_logits = output_arrays[0]
+        batch_transition_matrix = output_arrays[1]
         batch_input_length = np.sum(batch_mask, axis=-1)
         batch_preds = []
         for logit, seq_len in zip(batch_logits, batch_input_length):
@@ -1182,7 +1182,7 @@ class BERTCRFNER(BERTNER, NERModule):
             batch_preds, batch_labels, batch_mask)
 
         # loss
-        batch_losses = output_arrays[3]
+        batch_losses = output_arrays[2]
         loss = np.mean(batch_losses)
 
         info = ''
@@ -1499,8 +1499,8 @@ class BERTCRFCascadeNER(BERTCRFNER, NERModule):
             batch_labels = feed_dict[self.placeholders['label_ids']]
 
         # f1
-        batch_logits = output_arrays[1]
-        batch_transition_matrix = output_arrays[2]
+        batch_logits = output_arrays[0]
+        batch_transition_matrix = output_arrays[1]
         batch_input_length = np.sum(batch_mask, axis=-1)
         batch_preds = []
         for logit, seq_len in zip(batch_logits, batch_input_length):
@@ -1511,7 +1511,7 @@ class BERTCRFCascadeNER(BERTCRFNER, NERModule):
             batch_preds, batch_labels, batch_mask)
 
         # loss
-        batch_losses = output_arrays[3]
+        batch_losses = output_arrays[2]
         loss = np.mean(batch_losses)
 
         info = ''
@@ -1921,11 +1921,11 @@ class BERTMRC(BERTClassifier, MRCModule):
             batch_labels = feed_dict[self.placeholders['label_ids']]
 
         # exact match & f1
-        batch_preds = output_arrays[1]
+        batch_preds = output_arrays[0]
         exact_match, f1 = self._get_em_and_f1(batch_preds, batch_labels)
 
         # loss
-        batch_losses = output_arrays[2]
+        batch_losses = output_arrays[1]
         loss = np.mean(batch_losses)
 
         info = ''
@@ -2272,23 +2272,23 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
                 self.placeholders['has_answer']]
 
         # verifier accuracy
-        batch_has_answer_preds = output_arrays[1]
+        batch_has_answer_preds = output_arrays[0]
         has_answer_accuracy = np.mean(
             batch_has_answer_preds == batch_has_answer)
 
         # verifier loss
-        batch_verifier_losses = output_arrays[2]
+        batch_verifier_losses = output_arrays[1]
         verifier_loss = np.mean(batch_verifier_losses)
 
         # mrc exact match & f1
-        batch_preds = output_arrays[3]
+        batch_preds = output_arrays[2]
         for i in range(len(batch_has_answer_preds)):
             if batch_has_answer_preds[i] == 0:
                 batch_preds[i] = 0
         exact_match, f1 = self._get_em_and_f1(batch_preds, batch_labels)
 
         # mrc loss
-        batch_losses = output_arrays[4]
+        batch_losses = output_arrays[3]
         loss = np.mean(batch_losses)
 
         info = ''
@@ -2748,22 +2748,22 @@ class BERTLM(LMModule):
                 feed_dict[self.placeholders['next_sentence_labels']]
 
         # MLM accuracy
-        batch_mlm_preds = output_arrays[1]
+        batch_mlm_preds = output_arrays[0]
         batch_mlm_mask = (batch_mlm_positions > 0)
         mlm_accuracy = (
             np.sum((batch_mlm_preds == batch_mlm_labels) * batch_mlm_mask) /
             batch_mlm_mask.sum())
 
         # NSP accuracy
-        batch_nsp_preds = output_arrays[2]
+        batch_nsp_preds = output_arrays[1]
         nsp_accuracy = np.mean(batch_nsp_preds == batch_nsp_labels)
 
         # MLM loss
-        batch_mlm_losses = output_arrays[3]
+        batch_mlm_losses = output_arrays[2]
         mlm_loss = np.mean(batch_mlm_losses)
 
         # NSP loss
-        batch_nsp_losses = output_arrays[4]
+        batch_nsp_losses = output_arrays[3]
         nsp_loss = np.mean(batch_nsp_losses)
 
         info = ''

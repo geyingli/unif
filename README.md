@@ -21,13 +21,12 @@
 </p>
 
 
-快速搭建各类深度学习模型 (Transformer, GPT-2, BERT, ALBERT, UniLM, XLNet, ELECTRA 等)，完成语言模型/文本分类/文本生成/命名实体识别/机器阅读理解/机器翻译/序列标注/知识蒸馏任务。
+针对 NLP 工业界人士设计。基于 Tensorflow1.x/2.x，快速搭建各类深度学习模型 (Transformer, GPT-2, BERT, ALBERT, UniLM, XLNet, ELECTRA 等)，完成语言模型/文本分类/文本生成/命名实体识别/机器阅读理解/机器翻译/序列标注/知识蒸馏任务。
 
 ### 特性
 
 - API 简单：三行代码完成训练及推理，并一键设置多进程/多 GPU 并行
 - 品类丰富：支持约 40 种模型类
-- 依赖简单：Tensorflow 1.x/2.x
 - 高分保证：提供分层学习率、对抗式训练等多项训练技巧
 - 可供部署：导出模型 PB 文件，供线上部署
 
@@ -205,7 +204,7 @@ model.fit_from_tfrecords(
     **kwargs)
 ```
 
-其他训练参数：
+## 训练技巧/实用方法
 
 ```python
 # 优化器

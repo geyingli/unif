@@ -147,10 +147,11 @@ class Training(Task):
 
             if grad.__str__().startswith('IndexedSlices'):
                 dense_shape = grad.dense_shape
+                n_elements = self.module.batch_size * self.module.max_seq_length
 
                 # variable to store values
-                values_shape = grad.values.shape.as_list()
-                values_shape[0] = int(self.module.batch_size * self.grad_acc_steps)
+                values_shape = grad.values.shape.as_list()    # [None, max_seq_length]
+                values_shape[0] = int(n_elements * self.grad_acc_steps)
                 values_variable = tf.get_variable(
                     name=param_name + '/grad_values',
                     shape=values_shape,
@@ -159,8 +160,8 @@ class Training(Task):
                     initializer=tf.zeros_initializer())
 
                 # variable to store indices
-                indices_shape = grad.indices.shape.as_list()
-                indices_shape[0] = int(self.module.batch_size * self.grad_acc_steps)
+                indices_shape = grad.indices.shape.as_list()    # [None]
+                indices_shape[0] = int(n_elements * self.grad_acc_steps)
                 indices_variable = tf.get_variable(
                     name=param_name + '/grad_indices',
                     shape=indices_shape,
@@ -169,11 +170,11 @@ class Training(Task):
                     initializer=tf.zeros_initializer())
 
                 # add new values
-                new_values = tf.concat([values_variable[self.module.batch_size:], grad.values / self.grad_acc_steps], axis=0)
+                new_values = tf.concat([values_variable[n_elements:], grad.values / self.grad_acc_steps], axis=0)
                 values_assign_op = tf.assign(values_variable, new_values)
 
                 # add new indices
-                new_indices = tf.concat([indices_variable[self.module.batch_size:], grad.indices], axis=0)
+                new_indices = tf.concat([indices_variable[n_elements:], grad.indices], axis=0)
                 indices_assign_op = tf.assign(indices_variable, new_indices)
 
                 # obtain new gradient
@@ -185,14 +186,16 @@ class Training(Task):
                 update_grad_op = tf.group([values_assign_op, indices_assign_op])
                 new_grads.append(new_grad)
             else:
-                new_grad = tf.get_variable(
+                grad_shape = grad.shape.as_list()
+                grad_variable = tf.get_variable(
                     name=param_name + '/grad',
-                    shape=grad.shape.as_list(),
+                    shape=grad_shape,
                     dtype=tf.float32,
                     trainable=False,
                     initializer=tf.zeros_initializer())
-                update_grad_op = tf.add(new_grad, grad / self.grad_acc_steps)
-                new_grads.append(new_grad)
+                new_grad = grad_variable + grad / self.grad_acc_steps
+                update_grad_op = tf.assign(grad_variable, new_grad)
+                new_grads.append(grad_variable)
 
             params.append(param)
             update_grad_ops.append(update_grad_op)

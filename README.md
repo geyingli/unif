@@ -227,8 +227,8 @@ model.fit(X, y, ..., adversarial='smart', epsilon=0.01, n_loop=2, prtb_lambda=0.
 # 置信度过滤：样本置信度达到阈值后不再参与训练，避免过拟合 (仅 Classifier 可用)
 model.fit(X, y, ..., conf_thresh=0.99)    # 默认为 None
 
-# 梯度累积：当 batch_size 过小以至于模型拟合困难时，梯度累积可以显著提高拟合速度
-model.fit(X, y, ..., grad_acc_steps=5)    # 默认为 1
+# 梯度累积：当 batch_size 过小以至于模型拟合困难时，梯度累积可以显著提高拟合速度 (功能测试中…)
+model.fit(X, y, ..., grad_acc_steps=5)    # 默认为 1，即不累积
 ```
 
 ## 迁移学习

@@ -22,31 +22,26 @@ from .base import Training
 
 class AdversarialTraining(Training):
 
-    def __init__(self, module, **kwargs):
-        self.adversarial = kwargs.get('adversarial', '')
-        super(AdversarialTraining, self).__init__(module, **kwargs)
-
-    def decorate(self):
+    def decorate(self, **kwargs):
         self._set_placeholders()
 
-        self.adversarial = self.adversarial.lower()
         try:
             ok = True
             if self.adversarial == 'fgm':
-                self._fgm(**self._kwargs)
+                self._fgm(**kwargs)
             elif self.adversarial == 'pgd':
-                self._pgd(**self._kwargs)
+                self._pgd(**kwargs)
             elif self.adversarial == 'freelb':
-                self._freelb(**self._kwargs)
+                self._freelb(**kwargs)
             elif self.adversarial == 'freeat':
-                self._freeat(**self._kwargs)
+                self._freeat(**kwargs)
             elif self.adversarial == 'smart':
-                self._smart(**self._kwargs)
+                self._smart(**kwargs)
             else:
                 ok = False
         except Exception:
             raise ValueError('`%s` does not support adversarial training.'
-                             % self.m.__class__.__name__)
+                             % self.module.__class__.__name__)
         if not ok:
             raise ValueError(
                 'Wrong adversarial algorithm `%s`. '
@@ -63,14 +58,14 @@ class AdversarialTraining(Training):
         # must be smaller than one)
 
         # attack
-        (actual_grads, self.m._losses, self.m._probs, self.m._preds) = self.m._parallel_forward(**self._kwargs)
-        grad, param = utils.get_grad_and_param(self.m.trainable_variables, actual_grads, 'word_embedding')
+        (actual_grads, self.module._losses, self.module._probs, self.module._preds) = self.module._parallel_forward(**kwargs)
+        grad, param = utils.get_grad_and_param(self.module.trainable_variables, actual_grads, 'word_embedding')
         r = tf.multiply(epsilon, grad / (tf.norm(grad) + 1e-9))
         attack_op = param.assign(param + r)
 
         # restore
         with tf.control_dependencies([attack_op]):
-            (attack_grads, _, _, _) = self.m._parallel_forward(**self._kwargs)
+            (attack_grads, _, _, _) = self.module._parallel_forward(**kwargs)
             restore_op = param.assign(param - r)
 
         # sum up
@@ -78,10 +73,10 @@ class AdversarialTraining(Training):
             grads = [utils.average_n_grads([actual_grad, attack_grad])
                      for (actual_grad, attack_grad) in zip(actual_grads, attack_grads)]
         update_params_op = utils.update_global_params(
-            self.m.trainable_variables, self.m._global_step,
-            self.m._optimizer, grads)
-        update_step_op = self.m._global_step.assign(self.m._global_step + 1)
-        self.train_op = tf.group([update_params_op, update_step_op])
+            self.module.trainable_variables, self.module._global_step,
+            self.module._optimizer, grads)
+        update_step_op = self.module._global_step.assign(self.module._global_step + 1)
+        self.train_ops = [update_params_op, update_step_op]
 
     def _pgd(self, epsilon=0.05, n_loop=2, **kwargs):
         # PGD takes average on actual gradient and last_tic gradient under
@@ -99,11 +94,11 @@ class AdversarialTraining(Training):
         attack_op = tf.no_op()
         for k in range(n_loop):
             with tf.control_dependencies([attack_op]):
-                (d_grads, losses, probs, preds) = self.m._parallel_forward(**self._kwargs)
+                (d_grads, losses, probs, preds) = self.module._parallel_forward(**kwargs)
                 if k == 0:
                     actual_grads = d_grads
-                    (self.m._losses, self.m._probs, self.m._preds) = losses, probs, preds
-                grad, param = utils.get_grad_and_param(self.m.trainable_variables, d_grads, 'word_embedding')
+                    (self.module._losses, self.module._probs, self.module._preds) = losses, probs, preds
+                grad, param = utils.get_grad_and_param(self.module.trainable_variables, d_grads, 'word_embedding')
                 tmp_r = tf.multiply(1 / n_loop, grad / (tf.norm(grad) + 1e-9))
 
                 # In order not to shuffle the distribution of gradient-
@@ -120,7 +115,7 @@ class AdversarialTraining(Training):
 
         # restore
         with tf.control_dependencies([attack_op]):
-            (attack_grads, _, _, _) = self.m._parallel_forward(**self._kwargs)
+            (attack_grads, _, _, _) = self.module._parallel_forward(**kwargs)
             restore_op = param.assign(param - acc_r)
 
         # sum up
@@ -129,10 +124,10 @@ class AdversarialTraining(Training):
                      for (actual_grad, attack_grad) in zip(
                          actual_grads, attack_grads)]
         update_params_op = utils.update_global_params(
-            self.m.trainable_variables, self.m._global_step,
-            self.m._optimizer, grads)
-        update_step_op = self.m._global_step.assign(self.m._global_step + 1)
-        self.train_op = tf.group([update_params_op, update_step_op])
+            self.module.trainable_variables, self.module._global_step,
+            self.module._optimizer, grads)
+        update_step_op = self.module._global_step.assign(self.module._global_step + 1)
+        self.train_ops = [update_params_op, update_step_op]
 
     def _freelb(self, epsilon=0.3, n_loop=3, **kwargs):
         # FreeLB is similar to PGD, but uses average gradients from loop.
@@ -147,11 +142,11 @@ class AdversarialTraining(Training):
         # norm of gradients)
 
         # initialize
-        (d_grads, self.m._losses, self.m._probs, self.m._preds) = self.m._parallel_forward(**self._kwargs)
-        grad, param = utils.get_grad_and_param(self.m.trainable_variables, d_grads, 'word_embedding')
+        (d_grads, self.module._losses, self.module._probs, self.module._preds) = self.module._parallel_forward(**kwargs)
+        grad, param = utils.get_grad_and_param(self.module.trainable_variables, d_grads, 'word_embedding')
         init_r = tf.get_variable(
             'init_r',
-            shape=[self.m.batch_size * self.m.max_seq_length,
+            shape=[self.module.batch_size * self.module.max_seq_length,
                    param.shape.as_list()[-1]],
             initializer=tf.random_uniform_initializer(
                 minval=-epsilon, maxval=epsilon),
@@ -172,10 +167,10 @@ class AdversarialTraining(Training):
         for k in range(n_loop):
             with tf.control_dependencies([attack_op]):
                 (attack_grads, _, _, _) = \
-                    self.m._parallel_forward(**self._kwargs)
+                    self.module._parallel_forward(**kwargs)
                 all_grads.append(attack_grads)
                 grad, _ = utils.get_grad_and_param(
-                    self.m.trainable_variables,
+                    self.module.trainable_variables,
                     attack_grads, 'word_embedding')
                 tmp_r = tf.multiply(1 / n_loop, grad / (tf.norm(grad) + 1e-9))
 
@@ -194,7 +189,7 @@ class AdversarialTraining(Training):
         # restore
         with tf.control_dependencies([attack_op]):
             (attack_grads, _, _, _) = \
-                self.m._parallel_forward(**self._kwargs)
+                self.module._parallel_forward(**kwargs)
             all_grads.append(attack_grads)
             restore_op = param.assign(param - acc_r)
 
@@ -203,10 +198,10 @@ class AdversarialTraining(Training):
             grads = [utils.average_n_grads(split_grad) for split_grad in zip(
                 *all_grads)]
         update_params_op = utils.update_global_params(
-            self.m.trainable_variables, self.m._global_step,
-            self.m._optimizer, grads)
-        update_step_op = self.m._global_step.assign(self.m._global_step + 1)
-        self.train_op = tf.group([update_params_op, update_step_op])
+            self.module.trainable_variables, self.module._global_step,
+            self.module._optimizer, grads)
+        update_step_op = self.module._global_step.assign(self.module._global_step + 1)
+        self.train_ops = [update_params_op, update_step_op]
 
     def _freeat(self, epsilon=0.001, n_loop=3, **kwargs):
         # (epsilon: the range of perturbation over gradient,
@@ -221,15 +216,15 @@ class AdversarialTraining(Training):
             # update
             with tf.control_dependencies([attack_op]):
                 (grads, losses, probs, preds) = \
-                    self.m._parallel_forward(**self._kwargs)
+                    self.module._parallel_forward(**kwargs)
                 if k == 0:
-                    (self.m._losses, self.m._probs, self.m._preds) = \
+                    (self.module._losses, self.module._probs, self.module._preds) = \
                         losses, probs, preds
                 grad, param = utils.get_grad_and_param(
-                    self.m.trainable_variables, grads, 'word_embedding')
+                    self.module.trainable_variables, grads, 'word_embedding')
                 update_params_op = utils.update_global_params(
-                    self.m.trainable_variables, self.m._global_step,
-                    self.m._optimizer, grads)
+                    self.module.trainable_variables, self.module._global_step,
+                    self.module._optimizer, grads)
 
             # attack
             with tf.control_dependencies([update_params_op]):
@@ -248,8 +243,8 @@ class AdversarialTraining(Training):
                 attack_op = param.assign(param - last_r_slice + r_slice)
                 last_r = r
                 last_r_slice = r_slice
-        update_step_op = self.m._global_step.assign(self.m._global_step + 1)
-        self.train_op = tf.group([update_params_op, update_step_op])
+        update_step_op = self.module._global_step.assign(self.module._global_step + 1)
+        self.train_ops = [update_params_op, update_step_op]
 
     def _smart(self, epsilon=0.01, n_loop=2,
                prtb_lambda=0.5, breg_miu=0.2, tilda_beta=0.3,
@@ -266,20 +261,20 @@ class AdversarialTraining(Training):
         # the largest value of gradients)
 
         # initialize
-        (unused_grads, self.m._losses, self.m._probs, self.m._preds) = \
-            self.m._parallel_forward(**self._kwargs)
-        cls_loss = tf.reduce_mean(list(self.m._losses.values())[0])
+        (unused_grads, self.module._losses, self.module._probs, self.module._preds) = \
+            self.module._parallel_forward(**kwargs)
+        cls_loss = tf.reduce_mean(list(self.module._losses.values())[0])
 
         # Bregman proximal point optimization
-        param = utils.get_param(self.m.trainable_variables, 'word_embedding')
+        param = utils.get_param(self.module.trainable_variables, 'word_embedding')
         embedding_shape = param.shape.as_list()
         tilda = tf.get_variable(
             name='tilda_embeddings',
             shape=embedding_shape,
             initializer=tf.zeros_initializer, trainable=False)
         (_, _, breg_probs, _) = \
-            self.m._parallel_forward(use_tilda_embedding=True, **self._kwargs)
-        probs = list(self.m._probs.values())[0]
+            self.module._parallel_forward(use_tilda_embedding=True, **kwargs)
+        probs = list(self.module._probs.values())[0]
         probs_breg = list(breg_probs.values())[0]
         per_example_loss = tf.reduce_sum(
             probs_breg * (tf.log(probs_breg) - tf.log(probs)), axis=-1)
@@ -288,16 +283,16 @@ class AdversarialTraining(Training):
         breg_loss = breg_miu * (
             tf.reduce_mean(per_example_loss) +
             tf.reduce_mean(per_example_loss_breg))
-        self.m._losses['breg'] = breg_miu * (
+        self.module._losses['breg'] = breg_miu * (
             per_example_loss +
             per_example_loss_breg)
 
         # perturbation
         grad, param = utils.get_grad_and_param(
-            self.m.trainable_variables, unused_grads, 'word_embedding')
+            self.module.trainable_variables, unused_grads, 'word_embedding')
         init_r = tf.get_variable(
             'init_r',
-            shape=[self.m.batch_size * self.m.max_seq_length,
+            shape=[self.module.batch_size * self.module.max_seq_length,
                    embedding_shape[-1]],
             initializer=tf.random_normal_initializer(stddev=epsilon),
             trainable=False)
@@ -317,7 +312,7 @@ class AdversarialTraining(Training):
         for k in range(n_loop):
             with tf.control_dependencies([attack_op]):
                 (_, _, prtb_probs, _) = \
-                    self.m._parallel_forward(**self._kwargs)
+                    self.module._parallel_forward(**kwargs)
 
                 # smoothness-inducing adversarial regulization
                 probs_prtb = list(prtb_probs.values())[0]
@@ -328,15 +323,15 @@ class AdversarialTraining(Training):
                 prtb_loss = prtb_lambda * (
                     tf.reduce_mean(per_example_loss) +
                     tf.reduce_mean(per_example_loss_prtb))
-                self.m._losses['prtb'] = prtb_lambda * (
+                self.module._losses['prtb'] = prtb_lambda * (
                     per_example_loss +
                     per_example_loss_prtb)
 
                 # sum up
                 total_loss = cls_loss + breg_loss + prtb_loss
-                grads = tf.gradients(total_loss, self.m.trainable_variables)
+                grads = tf.gradients(total_loss, self.module.trainable_variables)
                 grad, _ = utils.get_grad_and_param(
-                    self.m.trainable_variables, grads, 'word_embedding')
+                    self.module.trainable_variables, grads, 'word_embedding')
 
                 tmp_r = tf.multiply(1 / n_loop, grad / (
                     tf.norm(grad, np.inf) + 1e-9))
@@ -352,10 +347,10 @@ class AdversarialTraining(Training):
 
         # update
         update_params_op = utils.update_global_params(
-            self.m.trainable_variables, self.m._global_step,
-            self.m._optimizer, grads)
-        update_step_op = self.m._global_step.assign(self.m._global_step + 1)
-        self.train_op = tf.group([update_params_op, update_step_op])
+            self.module.trainable_variables, self.module._global_step,
+            self.module._optimizer, grads)
+        update_step_op = self.module._global_step.assign(self.module._global_step + 1)
+        self.train_ops = [update_params_op, update_step_op]
 
         # runs at the start of each epoch
         self.init_tilda_op = tilda.assign(param)

@@ -20,6 +20,7 @@
 import re
 
 from .tools import tf
+from . import utils
 
 
 class UnifiedOptimizer:
@@ -45,6 +46,22 @@ class UnifiedOptimizer:
         elif self.optimizer == 'lamb':
             self.prefix = 'lamb'
 
+    def get_mv(self, param):
+        param_name = utils.get_param_name(param)
+        m = tf.get_variable(
+            name=param_name + '/%s_m' % self.prefix,
+            shape=param.shape.as_list(),
+            dtype=tf.float32,
+            trainable=False,
+            initializer=tf.zeros_initializer())
+        v = tf.get_variable(
+            name=param_name + '/%s_v' % self.prefix,
+            shape=param.shape.as_list(),
+            dtype=tf.float32,
+            trainable=False,
+            initializer=tf.zeros_initializer())
+        return m, v
+
     def _apply_gradients(self, grads_and_vars, learning_rate, global_step):
         assignments = []
         for (grad, param) in grads_and_vars:
@@ -55,20 +72,7 @@ class UnifiedOptimizer:
                 update = grad
 
             else:
-                param_name = self._get_variable_name(param.name)
-                m = tf.get_variable(
-                    name=param_name + '/%s_m' % self.prefix,
-                    shape=param.shape.as_list(),
-                    dtype=tf.float32,
-                    trainable=False,
-                    initializer=tf.zeros_initializer())
-                v = tf.get_variable(
-                    name=param_name + '/%s_v' % self.prefix,
-                    shape=param.shape.as_list(),
-                    dtype=tf.float32,
-                    trainable=False,
-                    initializer=tf.zeros_initializer())
-
+                m, v = self.get_mv(param)
                 next_m = (tf.multiply(self.beta_1, m) +
                           tf.multiply(1.0 - self.beta_1, grad))
                 next_v = (tf.multiply(self.beta_2, v) +
@@ -78,8 +82,7 @@ class UnifiedOptimizer:
                 update = next_m / (tf.sqrt(next_v) + 1e-6)
 
                 # weight decay regularization
-                if self.optimizer in ('adamw', 'lamb') and \
-                        self._do_use_weight_decay(param_name):
+                if self.optimizer in ('adamw', 'lamb') and self._do_use_weight_decay(param):
                     update += self.weight_decay_rate * param
 
                 # implemente lamb
@@ -139,7 +142,8 @@ class UnifiedOptimizer:
 
         return tf.group(*assignments, name=name)
 
-    def _do_use_weight_decay(self, param_name):
+    def _do_use_weight_decay(self, param):
+        param_name = utils.get_param_name(param)
         if not self.weight_decay_rate:
             return False
         if self.exclude_from_weight_decay:
@@ -147,13 +151,6 @@ class UnifiedOptimizer:
                 if re.search(hint, param_name) is not None:
                     return False
         return True
-
-    @staticmethod
-    def _get_variable_name(param_name):
-        res = re.match('^(.*):\\d+$', param_name)
-        if res is not None:
-            param_name = res.group(1)
-        return param_name
 
 
 def get_global_step():

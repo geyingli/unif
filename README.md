@@ -10,7 +10,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-beta v2.9.2-blue">
+        <img src="https://img.shields.io/badge/version-beta v2.9.3-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-1.x\2.x-yellow">
@@ -205,7 +205,7 @@ model.fit_from_tfrecords(
     **kwargs)
 ```
 
-训练所用的条件参数 kwargs：
+其他训练参数：
 
 ```python
 # 优化器
@@ -214,19 +214,22 @@ model.fit(X, y, ..., optimizer='adam')
 model.fit(X, y, ..., optimizer='adamw')    # 默认
 model.fit(X, y, ..., optimizer='lamb')
 
-# 分层学习率 (少量模型不适用)
+# 分层学习率：应对迁移学习中的 catastrophic forgetting 问题 (少量模型不适用)
 model.fit(X, y, ..., layerwise_lr_decay_ratio=0.85)    # 默认为 None
 print(model._key_to_depths)    # 衰减比率 (可手动进行修改，修改完成后训练即生效)
 
-# 对抗式训练
+# 对抗式训练：在输入中添加扰动，以提高模型的鲁棒性和泛化能力
 model.fit(X, y, ..., adversarial='fgm', epsilon=0.5)    # FGM
 model.fit(X, y, ..., adversarial='pgd', epsilon=0.05, n_loop=2)    # PGD
 model.fit(X, y, ..., adversarial='freelb', epsilon=0.3, n_loop=3)    # FreeLB
 model.fit(X, y, ..., adversarial='freeat', epsilon=0.001, n_loop=3)    # FreeAT
 model.fit(X, y, ..., adversarial='smart', epsilon=0.01, n_loop=2, prtb_lambda=0.5, breg_miu=0.2, tilda_beta=0.3)    # SMART (仅 Classifier 可用)
 
-# 置信度过滤 (仅 Classifier 可用)
+# 置信度过滤：样本置信度达到阈值后不再参与训练，避免过拟合 (仅 Classifier 可用)
 model.fit(X, y, ..., conf_thresh=0.99)    # 默认为 None
+
+# 梯度累积： batch_size 时，梯度累积可以提高拟合能力
+model.fit(X, y, ..., grad_acc_steps=5)    # 默认为 1
 ```
 
 ## 迁移学习
@@ -289,7 +292,7 @@ model.export(
 
 - 问：有什么提高训练速度的方法吗？
 
-  答：首先是几种最基础的方法，减小 max_seq_length，多 GPU 并行，以及多进程数据处理。在这些之外，可以进一步尝试对输入的数据进行梯度拆分，在训练过程中逐步提高 max_seq_length、batch_size 和 dropout_rate (通过提高拟合速度，缩短整个训练周期)。当然，还有一些 UNIF 暂时无法实现的功能，可以前往其他 repo 寻求解决方案，包括但不限于混合精度训练、OP融合、使用 Linformer 等时间复杂度小于 O(N^2) 的模型。
+  答：首先是几种我们能立即实施的基础方法：减小 max_seq_length，多 GPU 并行，多进程数据处理，以及梯度累积。在这些之外，可以进一步尝试对输入的数据进行拆分，在训练过程中逐步提高 max_seq_length、batch_size 和 dropout_rate (通过提高拟合速度，缩短整个训练周期)。当然，还有一些在 UNIF 暂时无法实现的功能，可以前往其他 repo 寻求解决方案，包括但不限于混合精度训练、OP融合、使用 Linformer 等时间复杂度小于 O(N^2) 的模型。
 
 - 问：训练时内存不足，该怎么办？
 

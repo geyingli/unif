@@ -39,39 +39,39 @@ class Task:
         raise NotImplementedError()
 
     def _init_session(self):
-        os.environ['CUDA_VISIBLE_DEVICES'] = ','.join(self.m._gpu_ids)
+        os.environ['CUDA_VISIBLE_DEVICES'] = ','.join(self.module._gpu_ids)
         config = tf.ConfigProto(allow_soft_placement=True)
-        self.m.sess = tf.Session(graph=self.m.graph, config=config)
-        self._init_variables(self.m.global_variables)
-        self.m._session_built = True
+        self.module.sess = tf.Session(graph=self.module.graph, config=config)
+        self._init_variables(self.module.global_variables)
+        self.module._session_built = True
 
     def _init_variables(self, variables, ignore_checkpoint=False):
 
         tf.logging.info('Running local_init_op')
         local_init_op = tf.variables_initializer(variables)
-        self.m.sess.run(local_init_op)
-        self.m._inited_vars |= set(variables)
+        self.module.sess.run(local_init_op)
+        self.module._inited_vars |= set(variables)
         tf.logging.info('Done running local_init_op')
 
-        if not ignore_checkpoint and self.m.init_checkpoint:
-            checkpoint_path = utils.get_checkpoint_path(self.m.init_checkpoint)
+        if not ignore_checkpoint and self.module.init_checkpoint:
+            checkpoint_path = utils.get_checkpoint_path(self.module.init_checkpoint)
             if not checkpoint_path:
                 raise ValueError('Checkpoint file \'%s\' does not exist. '
                                  'Make sure you pass correct value to '
                                  '`init_checkpoint`.'
-                                 % self.m.init_checkpoint)
-            self.m.init_checkpoint = checkpoint_path
+                                 % self.module.init_checkpoint)
+            self.module.init_checkpoint = checkpoint_path
 
             # `continual` means we tend to succeed the training step
             # and momentums variables in optimization
-            continual = os.path.dirname(checkpoint_path) == self.m.output_dir
+            continual = os.path.dirname(checkpoint_path) == self.module.output_dir
             if continual:
-                self.m.step = int(checkpoint_path.split('-')[-1])
+                self.module.step = int(checkpoint_path.split('-')[-1])
 
             (assignment_map, uninited_vars) = utils.get_assignment_map(
                 checkpoint_path, variables, continual=continual)
-            self.m.assignment_map = assignment_map
-            self.m.uninited_vars = uninited_vars
+            self.module.assignment_map = assignment_map
+            self.module.uninited_vars = uninited_vars
 
             if uninited_vars:
                 tf.logging.info(
@@ -79,28 +79,28 @@ class Task:
                     'checkpoint file. Check more details through '
                     '`.uninited_vars`.' % len(uninited_vars))
 
-            if not self.m.assignment_map:    # no variables to restore
+            if not self.module.assignment_map:    # no variables to restore
                 return
-            loader = tf.train.Saver(self.m.assignment_map)
-            loader.restore(self.m.sess, checkpoint_path)
+            loader = tf.train.Saver(self.module.assignment_map)
+            loader.restore(self.module.sess, checkpoint_path)
 
-            if '_global_step' in self.m.__dict__:
-                self.m.sess.run(tf.assign(self.m._global_step, self.m.step))
+            if '_global_step' in self.module.__dict__:
+                self.module.sess.run(tf.assign(self.module._global_step, self.module.step))
 
     def _build_feed_dict(self):
         feed_dict = {}
-        for key, data in self.m.data.items():
+        for key, data in self.module.data.items():
             if key.startswith(utils.BACKUP_DATA):
                 continue
             ptr = self._ptr
-            batch = data[ptr: ptr + self.m.batch_size]
-            ptr += self.m.batch_size
-            while len(batch) < self.m.batch_size:
-                ptr = self.m.batch_size - len(batch)
+            batch = data[ptr: ptr + self.module.batch_size]
+            ptr += self.module.batch_size
+            while len(batch) < self.module.batch_size:
+                ptr = self.module.batch_size - len(batch)
                 remainder = data[:ptr]
                 concat_func = np.vstack if len(batch.shape) > 1 else np.hstack
                 batch = concat_func((batch, remainder))
-            feed_dict[self.m.placeholders[key]] = batch
+            feed_dict[self.module.placeholders[key]] = batch
         self._ptr = ptr
         return feed_dict
 
@@ -108,80 +108,158 @@ class Task:
 class Training(Task):
 
     def __init__(self, module, **kwargs):
-        self.m = module
-        self._kwargs = kwargs
+        self.module = module
+        self.grad_acc_steps = float(kwargs.get('grad_acc_steps', '1'))    # gradient accumulation
+        self.shuffle = kwargs.get('shuffle', True)    # if to shuffle the training data
+        self.adversarial = kwargs.get('adversarial', '').lower()    # adversarial training algorithm
+        self.from_tfrecords = bool(kwargs.get('tfrecords_files'))    # if to reader data from tfrecords
+        self.tfrecords_files = kwargs.get('tfrecords_files', [])    # paths of tfrecords
+        self.n_jobs = kwargs.get('n_jobs', max(multiprocessing.cpu_count() - 1, 1))    # number of threads loading tfrecords
+        self.max_to_keep = kwargs.get('max_to_keep', 1000000)
 
-        self.decorate()
+        self.decorate(**kwargs)
 
-    def decorate(self):
+    def decorate(self, **kwargs):
         self._set_placeholders()
 
-        (grads, self.m._losses, self.m._probs, self.m._preds) = self.m._parallel_forward(**self._kwargs)
-        update_params_op = utils.update_global_params(
-            self.m.trainable_variables, self.m._global_step, self.m._optimizer, grads)
-        update_step_op = self.m._global_step.assign(self.m._global_step + 1)
-        self.train_op = tf.group([update_params_op, update_step_op])
+        # accumulate gradients for updation
+        if self.grad_acc_steps > 1:
+            self._accumulate_gradients(**kwargs)
+        else:
+            (grads, self.module._losses, self.module._probs, self.module._preds) = self.module._parallel_forward(**kwargs)
+            update_params_op = utils.update_global_params(
+                self.module.trainable_variables, self.module._global_step, self.module._optimizer, grads)
+            update_step_op = self.module._global_step.assign(self.module._global_step + 1)
+            self.train_ops = [update_params_op, update_step_op]
 
-        self.update_per_steps = int(self._kwargs.get('update_per_steps', '1'))
-        self.acc_train_ops = [grads, update_step_op]
+    def _accumulate_gradients(self, **kwargs):
+        (grads, self.module._losses, self.module._probs, self.module._preds) = self.module._parallel_forward(**kwargs)
+
+        params = []
+        new_grads = []
+        update_grad_ops = []
+        for i, grad in enumerate(grads):
+            if grad is None:
+                continue
+
+            param = self.module.trainable_variables[i]
+            param_name = utils.get_param_name(param)
+
+            if grad.__str__().startswith('IndexedSlices'):
+                dense_shape = grad.dense_shape
+
+                # variable to store values
+                values_shape = grad.values.shape.as_list()
+                values_shape[0] = int(self.module.batch_size * self.grad_acc_steps)
+                values_variable = tf.get_variable(
+                    name=param_name + '/grad_values',
+                    shape=values_shape,
+                    dtype=tf.float32,
+                    trainable=False,
+                    initializer=tf.zeros_initializer())
+
+                # variable to store indices
+                indices_shape = grad.indices.shape.as_list()
+                indices_shape[0] = int(self.module.batch_size * self.grad_acc_steps)
+                indices_variable = tf.get_variable(
+                    name=param_name + '/grad_indices',
+                    shape=indices_shape,
+                    dtype=tf.int32,
+                    trainable=False,
+                    initializer=tf.zeros_initializer())
+
+                # add new values
+                new_values = tf.concat([values_variable[self.module.batch_size:], grad.values / self.grad_acc_steps], axis=0)
+                values_assign_op = tf.assign(values_variable, new_values)
+
+                # add new indices
+                new_indices = tf.concat([indices_variable[self.module.batch_size:], grad.indices], axis=0)
+                indices_assign_op = tf.assign(indices_variable, new_indices)
+
+                # obtain new gradient
+                new_grad = tf.IndexedSlices(
+                    values=values_variable,
+                    indices=indices_variable,
+                    dense_shape=dense_shape)
+
+                update_grad_op = tf.group([values_assign_op, indices_assign_op])
+                new_grads.append(new_grad)
+            else:
+                new_grad = tf.get_variable(
+                    name=param_name + '/grad',
+                    shape=grad.shape.as_list(),
+                    dtype=tf.float32,
+                    trainable=False,
+                    initializer=tf.zeros_initializer())
+                update_grad_op = tf.add(new_grad, grad / self.grad_acc_steps)
+                new_grads.append(new_grad)
+
+            params.append(param)
+            update_grad_ops.append(update_grad_op)
+
+        update_grads_op = tf.group(update_grad_ops)
+        update_step_op = self.module._global_step.assign(self.module._global_step + 1)
+        self.train_ops = [update_grads_op, update_step_op]
+        self.update_params_op = utils.update_global_params(
+            params, self.module._global_step, self.module._optimizer, new_grads)
 
     def run(self, target_steps,
             print_per_secs=60,
             save_per_steps=1000):
-        adversarial = self._kwargs.get('adversarial', '').lower()
 
-        if self._kwargs.get('shuffle', True) and not self.tfrecords_files:
+        if self.shuffle and not self.tfrecords_files:
             self._shuffle()
 
         # init session
-        if not self.m._session_built:
-            utils.count_params(self.m.global_variables, self.m.trainable_variables)
+        if not self.module._session_built:
+            utils.count_params(self.module.global_variables, self.module.trainable_variables)
             self._init_session()
         else:
             variables = []
-            for var in self.m.global_variables:
-                if var not in self.m._inited_vars:
+            for var in self.module.global_variables:
+                if var not in self.module._inited_vars:
                     variables.append(var)
             if variables:
                 self._init_variables(variables)
-        self.m._session_mode = 'train'
+        self.module._session_mode = 'train'
 
         # print
-        if adversarial:
+        if self.adversarial:
             tf.logging.info(
                 'Running adversarial training `%s` on %d samples (step %d -> %d)',
-                adversarial, self.n_inputs, self.m.step, target_steps)
+                self.adversarial, self.n_inputs, self.module.step, target_steps)
         else:
             tf.logging.info(
                 'Running training on %d samples (step %d -> %d)',
-                self.n_inputs, self.m.step, target_steps)
+                self.n_inputs, self.module.step, target_steps)
+        if self.grad_acc_steps > 1:
+            tf.logging.info('Accumulate gradients every %d steps' % self.grad_acc_steps)
 
         # SMART: initialize tilda_embedding
-        if adversarial == 'smart':
-            self.m.sess.run(self.init_tilda_op)
+        if self.adversarial == 'smart':
+            self.module.sess.run(self.init_tilda_op)
 
         self._ptr = 0
         last_tic = time.time()
-        last_step = self.m.step
-        saver = tf.train.Saver(max_to_keep=self._kwargs.get('max_to_keep', 1000000))
-        for _ in range(target_steps - self.m.step):
+        last_step = self.module.step
+        saver = tf.train.Saver(max_to_keep=self.max_to_keep)
+        for i in range(target_steps - self.module.step):
             last_tic, last_step = self._train_one_batch(
-                self.m.step + 1, last_tic, last_step, target_steps,
+                self.module.step + 1, last_tic, last_step, target_steps,
                 print_per_secs, save_per_steps, saver,
-                adversarial)
-            self.m.step += 1
+                self.adversarial)
+            self.module.step += 1
+
+            # use accumulated gradients to update parameters
+            if (self.grad_acc_steps > 1) and (i % self.grad_acc_steps == 0):
+                self.module.sess.run(self.update_params_op)
 
     def _set_placeholders(self):
-        self.from_tfrecords = bool(self._kwargs.get('tfrecords_files'))
-        self.tfrecords_files = self._kwargs.get('tfrecords_files', [])
-        self.n_jobs = self._kwargs.get('n_jobs')
         if self.from_tfrecords:
             self.n_inputs = utils.get_tfrecords_length(self.tfrecords_files)
-            if self.n_jobs is None:
-                self.n_jobs = max(multiprocessing.cpu_count() - 1, 1)
 
-            self.m._set_placeholders('feature', is_training=True)
-            features = {key: self.m.placeholders[key]
+            self.module._set_placeholders('feature', is_training=True)
+            features = {key: self.module.placeholders[key]
                         for key in utils.get_tfrecords_keys(
                             self.tfrecords_files[0])}
 
@@ -203,26 +281,26 @@ class Training(Task):
                 map_and_batch = tf.data.experimental.map_and_batch
             dataset = dataset.apply(map_and_batch(
                 decode_record,
-                batch_size=self.m.batch_size,
+                batch_size=self.module.batch_size,
                 num_parallel_batches=self.n_jobs,
                 drop_remainder=True))
             dataset = dataset.shuffle(buffer_size=100)
             iterator = dataset.make_one_shot_iterator()    # never stop
-            self.m.placeholders = iterator.get_next()
+            self.module.placeholders = iterator.get_next()
         else:
-            self.n_inputs = len(list(self.m.data.values())[0])
-            self.m._set_placeholders('placeholder', is_training=True)
+            self.n_inputs = len(list(self.module.data.values())[0])
+            self.module._set_placeholders('placeholder', is_training=True)
 
         if not self.n_inputs:
             raise ValueError('0 input samples recognized.')
 
     def _shuffle(self):
-        index_list = list(range(len(list(self.m.data.values())[0])))
+        index_list = list(range(len(list(self.module.data.values())[0])))
         random.shuffle(index_list)
-        for key, data in self.m.data.items():
+        for key, data in self.module.data.items():
             if key.startswith(utils.BACKUP_DATA):
                 continue
-            self.m.data[key] = self.m.data[key][index_list]
+            self.module.data[key] = self.module.data[key][index_list]
 
     def _train_one_batch(self, step, last_tic, last_step, target_steps,
                          print_per_secs, save_per_steps, saver,
@@ -232,42 +310,35 @@ class Training(Task):
         if not self.from_tfrecords:
             feed_dict = self._build_feed_dict()
             as_feature = False
-        fit_ops = self.m._get_fit_ops(as_feature) + [self.train_op]
+        fit_ops = self.module._get_fit_ops(as_feature) + self.train_ops
 
-        # # accumulate gradients
-        # update_per_steps = self._kwargs.get('update_per_steps', 1)
-        # last_grads = tf.no_op()
-        # for i in range(update_per_steps):
-        #     with tf.control_dependencies([last_grads]):
-        #         pass
-
-        output_arrays = self.m.sess.run(fit_ops, feed_dict=feed_dict)
+        output_arrays = self.module.sess.run(fit_ops, feed_dict=feed_dict)[:-len(self.train_ops)]
 
         # print
         if time.time() - last_tic > print_per_secs or step == target_steps:
             info = 'step %d' % step
 
             # print processor-specific information
-            info += self.m._get_fit_info(output_arrays, feed_dict, as_feature)
+            info += self.module._get_fit_info(output_arrays, feed_dict, as_feature)
 
             # print training efficiency
             if time.time() - last_tic > print_per_secs or step == target_steps:
                 info += ', %.2f steps/sec' % ((step - last_step) / (time.time() - last_tic))
-                info += ', %.2f examples/sec' % ((step - last_step) / (time.time() - last_tic) * self.m.batch_size)
+                info += ', %.2f examples/sec' % ((step - last_step) / (time.time() - last_tic) * self.module.batch_size)
 
             tf.logging.info(info)
             last_tic = time.time()
             last_step = step
 
         # SMART: update tilda_embedding
-        if step % self.m.steps_per_epoch == 0 and adversarial == 'smart':
-            self.m.sess.run(self.update_tilda_op)
+        if step % self.module.steps_per_epoch == 0 and adversarial == 'smart':
+            self.module.sess.run(self.update_tilda_op)
 
         # save
-        if self.m.output_dir and step % save_per_steps == 0:
-            tf.logging.info('Saving checkpoint for %d into %s/model.ckpt' % (step, self.m.output_dir))
-            self.m.init_checkpoint = (self.m.output_dir + '/model.ckpt-%d' % step)
-            saver.save(self.m.sess, self.m.init_checkpoint)
+        if self.module.output_dir and step % save_per_steps == 0:
+            tf.logging.info('Saving checkpoint for %d into %s/model.ckpt' % (step, self.module.output_dir))
+            self.module.init_checkpoint = (self.module.output_dir + '/model.ckpt-%d' % step)
+            saver.save(self.module.sess, self.module.init_checkpoint)
 
         return last_tic, last_step
 
@@ -275,42 +346,42 @@ class Training(Task):
 class Inference(Task):
 
     def __init__(self, module):
-        self.m = module
+        self.module = module
 
         # ignore redundant building of the work flow
-        if self.m._session_mode != 'infer':
+        if self.module._session_mode != 'infer':
             self.decorate()
 
     def decorate(self):
-        self.m._set_placeholders('placeholder', is_training=False)
+        self.module._set_placeholders('placeholder', is_training=False)
 
-        (_, self.m._losses, self.m._probs, self.m._preds) = self.m._parallel_forward(False)
+        (_, self.module._losses, self.module._probs, self.module._preds) = self.module._parallel_forward(False)
 
     def run(self):
-        n_inputs = len(list(self.m.data.values())[0])
+        n_inputs = len(list(self.module.data.values())[0])
         if not n_inputs:
             raise ValueError('0 input samples recognized.')
 
         # init session
-        if not self.m._session_built:
-            utils.count_params(self.m.global_variables, self.m.trainable_variables)
+        if not self.module._session_built:
+            utils.count_params(self.module.global_variables, self.module.trainable_variables)
             self._init_session()
-        self.m._session_mode = 'infer'
+        self.module._session_mode = 'infer'
 
         self._ptr = 0
         last_tic = time.time()
         batch_outputs = []
-        total_steps = (n_inputs - 1) // self.m.batch_size + 1
+        total_steps = (n_inputs - 1) // self.module.batch_size + 1
         for step in range(total_steps):
             self._predict_one_batch(step, last_tic, total_steps, batch_outputs)
 
-        return self.m._get_predict_outputs(batch_outputs)
+        return self.module._get_predict_outputs(batch_outputs)
 
     def _predict_one_batch(self, step, last_tic,
                            total_steps, batch_outputs):
         feed_dict = self._build_feed_dict()
-        predict_ops = self.m._get_predict_ops()
-        output_arrays = self.m.sess.run(predict_ops, feed_dict=feed_dict)
+        predict_ops = self.module._get_predict_ops()
+        output_arrays = self.module.sess.run(predict_ops, feed_dict=feed_dict)
 
         # cache
         batch_outputs.append(output_arrays)
@@ -322,7 +393,7 @@ class Inference(Task):
             diff_tic = time.time() - last_tic
             info = 'Time usage %dm-%.2fs' % (diff_tic // 60, diff_tic % 60)
             info += ', %.2f steps/sec' % (total_steps / diff_tic)
-            info += ', %.2f examples/sec' % (total_steps / diff_tic * self.m.batch_size)
+            info += ', %.2f examples/sec' % (total_steps / diff_tic * self.module.batch_size)
 
             tf.logging.info(info)
 
@@ -330,42 +401,42 @@ class Inference(Task):
 class Scoring(Task):
 
     def __init__(self, module):
-        self.m = module
+        self.module = module
 
         # ignore redundant building of the work flow
-        if self.m._session_mode != 'infer':
+        if self.module._session_mode != 'infer':
             self.decorate()
 
     def decorate(self):
-        self.m._set_placeholders('placeholder', is_training=False)
+        self.module._set_placeholders('placeholder', is_training=False)
 
-        (_, self.m._losses, self.m._probs, self.m._preds) = self.m._parallel_forward(False)
+        (_, self.module._losses, self.module._probs, self.module._preds) = self.module._parallel_forward(False)
 
     def run(self):
-        n_inputs = len(list(self.m.data.values())[0])
+        n_inputs = len(list(self.module.data.values())[0])
         if not n_inputs:
             raise ValueError('0 input samples recognized.')
 
         # init session
-        if not self.m._session_built:
-            utils.count_params(self.m.global_variables, self.m.trainable_variables)
+        if not self.module._session_built:
+            utils.count_params(self.module.global_variables, self.module.trainable_variables)
             self._init_session()
-        self.m._session_mode = 'infer'
+        self.module._session_mode = 'infer'
 
         self._ptr = 0
         last_tic = time.time()
         batch_outputs = []
-        total_steps = (n_inputs - 1) // self.m.batch_size + 1
+        total_steps = (n_inputs - 1) // self.module.batch_size + 1
         for step in range(total_steps):
             self._score_one_batch(step, last_tic, total_steps, batch_outputs)
 
-        return self.m._get_score_outputs(batch_outputs)
+        return self.module._get_score_outputs(batch_outputs)
 
     def _score_one_batch(self, step, last_tic,
                          total_steps, batch_outputs):
         feed_dict = self._build_feed_dict()
-        score_ops = self.m._get_score_ops()
-        output_arrays = self.m.sess.run(score_ops, feed_dict=feed_dict)
+        score_ops = self.module._get_score_ops()
+        output_arrays = self.module.sess.run(score_ops, feed_dict=feed_dict)
 
         # cache
         batch_outputs.append(output_arrays)
@@ -377,7 +448,7 @@ class Scoring(Task):
             diff_tic = time.time() - last_tic
             info = 'Time usage %dm-%.2fs' % (diff_tic // 60, diff_tic % 60)
             info += ', %.2f steps/sec' % (total_steps / diff_tic)
-            info += ', %.2f examples/sec' % (total_steps / diff_tic * self.m.batch_size)
+            info += ', %.2f examples/sec' % (total_steps / diff_tic * self.module.batch_size)
 
             tf.logging.info(info)
 
@@ -385,65 +456,64 @@ class Scoring(Task):
 class Initialization(Task):
 
     def __init__(self, module):
-        self.m = module
+        self.module = module
 
         self.decorate()
 
     def decorate(self):
-        self.m._set_placeholders('placeholder', is_training=False)
+        self.module._set_placeholders('placeholder', is_training=False)
 
-        (_, self.m._losses, self.m._probs, self.m._preds) = self.m._parallel_forward(False)
+        (_, self.module._losses, self.module._probs, self.module._preds) = self.module._parallel_forward(False)
 
     def run(self, reinit_all, ignore_checkpoint):
 
         # init session
-        if not self.m._session_built:
-            utils.count_params(self.m.global_variables, self.m.trainable_variables)
+        if not self.module._session_built:
+            utils.count_params(self.module.global_variables, self.module.trainable_variables)
             self._init_session(ignore_checkpoint)
         elif reinit_all:
             self._init_session(ignore_checkpoint)
         else:
             variables = []
-            for var in self.m.global_variables:
-                if var not in self.m._inited_vars:
+            for var in self.module.global_variables:
+                if var not in self.module._inited_vars:
                     variables.append(var)
             if variables:
                 self._init_variables(variables, ignore_checkpoint)
             else:
                 tf.logging.info(
-                    'Global variables already initialized. To '
-                    're-initialize all, pass `reinit_all` to '
-                    'True.')
-        self.m._session_mode = 'infer'
+                    'Global variables already initialized. '
+                    'To re-initialize all, pass `reinit_all` to True.')
+        self.module._session_mode = 'infer'
 
     def _init_session(self, ignore_checkpoint):
-        os.environ['CUDA_VISIBLE_DEVICES'] = ','.join(self.m._gpu_ids)
+        os.environ['CUDA_VISIBLE_DEVICES'] = ','.join(self.module._gpu_ids)
         config = tf.ConfigProto(allow_soft_placement=True)
-        self.m.sess = tf.Session(graph=self.m.graph, config=config)
-        self._init_variables(self.m.global_variables, ignore_checkpoint)
-        self.m._session_built = True
+        self.module.sess = tf.Session(graph=self.module.graph, config=config)
+        self._init_variables(self.module.global_variables, ignore_checkpoint)
+        self.module._session_built = True
 
 
 class Exportation(Task):
 
     def __init__(self, module):
-        self.m = module
+        self.module = module
 
         self.decorate()
 
     def decorate(self):
-        self.m._set_placeholders('placeholder', on_export=True, is_training=False)
+        self.module._set_placeholders('placeholder', on_export=True, is_training=False)
 
-        (_, self.m._losses, self.m._probs, self.m._preds) = self.m._parallel_forward(False)
+        (_, self.module._losses, self.module._probs, self.module._preds) = self.module._parallel_forward(False)
 
     def run(self, export_dir, rename_inputs=None, rename_outputs=None,
             ignore_inputs=None, ignore_outputs=None):
 
         # init session
-        if not self.m._session_built:
-            utils.count_params(self.m.global_variables, self.m.trainable_variables)
+        if not self.module._session_built:
+            utils.count_params(self.module.global_variables, self.module.trainable_variables)
             self._init_session()
-        self.m._session_mode = 'infer'
+        self.module._session_mode = 'infer'
 
         def set_input(key, value):
             inputs[key] = tf.saved_model.utils.build_tensor_info(value)
@@ -454,7 +524,7 @@ class Exportation(Task):
         inputs = {}
         if not ignore_inputs:
             ignore_inputs = []
-        for key, value in list(self.m.placeholders.items()):
+        for key, value in list(self.module.placeholders.items()):
             if key == 'sample_weight' or key in ignore_inputs:
                 continue
             if rename_inputs and key in rename_inputs:
@@ -470,8 +540,8 @@ class Exportation(Task):
         outputs = {}
         if not ignore_outputs:
             ignore_outputs = []
-        for key, value in (list(self.m._preds.items()) +
-                           list(self.m._probs.items())):
+        for key, value in (list(self.module._preds.items()) +
+                           list(self.module._probs.items())):
             if key in ignore_outputs:
                 continue
             if rename_outputs and key in rename_outputs:
@@ -491,7 +561,7 @@ class Exportation(Task):
             os.path.join(export_dir, time.strftime('%Y%m%d.%H%M%S')))
         try:
             builder.add_meta_graph_and_variables(
-                self.m.sess, [tf.saved_model.tag_constants.SERVING],
+                self.module.sess, [tf.saved_model.tag_constants.SERVING],
                 signature_def_map=signature_def_map,
                 legacy_init_op=legacy_init_op)
         except Exception:

@@ -67,8 +67,7 @@ class NERModule(BaseModule):
 
         tp_token, fp_token, fn_token = 0, 0, 0
         tp_entity, fp_entity, fn_entity = 0, 0, 0
-        for _preds, _labels, _mask in zip(
-                preds, labels, mask):
+        for _preds, _labels, _mask in zip(preds, labels, mask):
             length = int(np.sum(_mask))
 
             # entity metrics

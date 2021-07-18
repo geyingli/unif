@@ -251,14 +251,13 @@ class RecBERTLM(LMModule):
             del_prob=self._del_prob,
             scope='bert',
             **kwargs)
-        (total_loss, losses, probs, preds) = model.get_forward_outputs()
-        return (total_loss, losses, probs, preds)
+        return model.get_forward_outputs()
 
     def _get_fit_ops(self, as_feature=False):
-        ops = [self._preds['add_preds'],
-               self._preds['del_preds'],
-               self._losses['add_loss'],
-               self._losses['del_loss']]
+        ops = [self._tensors['add_preds'],
+               self._tensors['del_preds'],
+               self._tensors['add_loss'],
+               self._tensors['del_loss']]
         if as_feature:
             ops.extend([self.placeholders['input_ids'],
                         self.placeholders['add_label_ids'],
@@ -306,8 +305,8 @@ class RecBERTLM(LMModule):
         return info
 
     def _get_predict_ops(self):
-        return [self._preds['add_preds'],
-                self._preds['del_preds']]
+        return [self._tensors['add_preds'],
+                self._tensors['del_preds']]
 
     def _get_predict_outputs(self, batch_outputs):
         n_inputs = len(list(self.data.values())[0])

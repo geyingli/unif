@@ -90,5 +90,4 @@ class PerformerClassifier(BERTClassifier, ClassifierModule):
             sample_weight=split_placeholders.get('sample_weight'),
             scope='cls/seq_relationship',
             **kwargs)
-        (total_loss, losses, probs, preds) = decoder.get_forward_outputs()
-        return (total_loss, losses, probs, preds)
+        return decoder.get_forward_outputs()

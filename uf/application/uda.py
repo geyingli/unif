@@ -341,13 +341,12 @@ class UDAClassifier(BERTClassifier, ClassifierModule):
             uda_confidence_thresh=self._uda_confidence_thresh,
             tsa_schedule=self._tsa_schedule,
             **kwargs)
-        (total_loss, losses, probs, preds) = decoder.get_forward_outputs()
-        return (total_loss, losses, probs, preds)
+        return decoder.get_forward_outputs()
 
     def _get_fit_ops(self, as_feature=False):
-        ops = [self._preds['preds'],
-               self._losses['supervised'],
-               self._losses['unsupervised']]
+        ops = [self._tensors['preds'],
+               self._tensors['supervised'],
+               self._tensors['unsupervised']]
         if as_feature:
             ops.extend([self.placeholders['is_supervised'],
                         self.placeholders['label_ids']])

@@ -570,8 +570,8 @@ class BERTDecoder(BaseDecoder):
             loss = numerator / denominator
 
             scalar_losses.append(loss)
-            self._losses['MLM_losses'] = per_example_loss
-            self._preds['MLM_preds'] = tf.argmax(probs, axis=-1)
+            self._tensors['MLM_losses'] = per_example_loss
+            self._tensors['MLM_preds'] = tf.argmax(probs, axis=-1)
 
         # next sentence prediction
         if next_sentence_labels is not None:
@@ -605,9 +605,9 @@ class BERTDecoder(BaseDecoder):
 
                 if use_nsp_loss:
                     scalar_losses.append(loss)
-                self._losses['NSP_losses'] = per_example_loss
-                self._probs['NSP_probs'] = probs
-                self._preds['NSP_preds'] = tf.argmax(probs, axis=-1)
+                self._tensors['NSP_losses'] = per_example_loss
+                self._tensors['NSP_probs'] = probs
+                self._tensors['NSP_preds'] = tf.argmax(probs, axis=-1)
 
         self.total_loss = tf.add_n(scalar_losses)
 

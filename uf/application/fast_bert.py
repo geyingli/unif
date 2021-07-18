@@ -200,7 +200,7 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
-        distillor = FastBERTCLSDistillor(
+        model = FastBERTCLSDistillor(
             bert_config=self.bert_config,
             is_training=is_training,
             input_ids=split_placeholders['input_ids'],
@@ -214,11 +214,10 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
             cls_model=self._cls_model,
             label_size=self.label_size,
             **kwargs)
-        (total_loss, losses, probs, preds) = distillor.get_forward_outputs()
-        return (total_loss, losses, probs, preds)
+        return model.get_forward_outputs()
 
     def _get_fit_ops(self, as_feature=False):
-        return [self._losses['losses']]
+        return [self._tensors['losses']]
 
     def _get_fit_info(self, output_arrays, feed_dict, as_feature=False):
 
@@ -232,7 +231,7 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
         return info
 
     def _get_predict_ops(self):
-        return [self._probs['probs']]
+        return [self._tensors['probs']]
 
     def _get_predict_outputs(self, batch_outputs):
         n_inputs = len(list(self.data.values())[0])
@@ -299,7 +298,7 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
         return outputs
 
     def _get_score_ops(self):
-        return [self._probs['probs']]
+        return [self._tensors['probs']]
 
     def _get_score_outputs(self, batch_outputs):
         n_inputs = len(list(self.data.values())[0])

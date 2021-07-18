@@ -152,8 +152,8 @@ class VAE(BaseDecoder, BERTEncoder):
                             stddev=config.initializer_range),
                         name='sigma',
                         trainable=trainable)
-                    self._probs['miu'] = miu
-                    self._probs['sigma'] = sigma
+                    self._tensors['miu'] = miu
+                    self._tensors['sigma'] = sigma
 
             with tf.variable_scope('decoder'):
                 with tf.variable_scope('projection'):
@@ -235,7 +235,7 @@ class VAE(BaseDecoder, BERTEncoder):
             probs = tf.nn.softmax(logits, axis=-1, name='probs')
             lm_log_probs = tf.nn.log_softmax(logits, axis=-1)
 
-            self._preds['preds'] = tf.argmax(probs, axis=-1)
+            self._tensors['preds'] = tf.argmax(probs, axis=-1)
             one_hot_labels = tf.one_hot(
                 input_ids, depth=config.vocab_size, dtype=tf.float32)
             per_example_loss = -tf.reduce_sum(
@@ -247,7 +247,7 @@ class VAE(BaseDecoder, BERTEncoder):
                 tf.reduce_mean(per_example_loss) +
                 tf.reduce_mean(tf.square(miu)) +
                 tf.reduce_mean(tf.exp(sigma) - sigma - 1))
-            self._losses['losses'] = per_example_loss
+            self._tensors['losses'] = per_example_loss
 
 
 class Config:

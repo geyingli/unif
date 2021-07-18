@@ -138,7 +138,7 @@ class TinyBERTClassifier(BERTClassifier, ClassifierModule):
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
-        distillor = TinyBERTCLSDistillor(
+        model = TinyBERTCLSDistillor(
             student_config=self.student_config,
             bert_config=self.bert_config,
             is_training=is_training,
@@ -151,11 +151,10 @@ class TinyBERTClassifier(BERTClassifier, ClassifierModule):
             drop_pooler=self._drop_pooler,
             label_size=self.label_size,
             **kwargs)
-        (total_loss, losses, probs, preds) = distillor.get_forward_outputs()
-        return (total_loss, losses, probs, preds)
+        return model.get_forward_outputs()
 
     def _get_fit_ops(self, as_feature=False):
-        return [self._losses['losses']]
+        return [self._tensors['losses']]
 
     def _get_fit_info(self, output_arrays, feed_dict, as_feature=False):
 
@@ -282,7 +281,7 @@ class TinyBERTBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
-        distillor = TinyBERTBinaryCLSDistillor(
+        model = TinyBERTBinaryCLSDistillor(
             student_config=self.student_config,
             bert_config=self.bert_config,
             is_training=is_training,
@@ -295,11 +294,10 @@ class TinyBERTBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
             drop_pooler=self._drop_pooler,
             label_size=self.label_size,
             **kwargs)
-        (total_loss, losses, probs, preds) = distillor.get_forward_outputs()
-        return (total_loss, losses, probs, preds)
+        return model.get_forward_outputs()
 
     def _get_fit_ops(self, as_feature=False):
-        return [self._losses['losses']]
+        return [self._tensors['losses']]
 
     def _get_fit_info(self, output_arrays, feed_dict, as_feature=False):
 

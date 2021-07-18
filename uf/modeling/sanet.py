@@ -79,8 +79,8 @@ class SANetDecoder(BaseDecoder):
             logits = tf.reshape(logits, [-1, seq_length, 2])
             logits = tf.transpose(logits, [0, 2, 1])
             probs = tf.nn.softmax(logits, axis=-1, name='probs')
-            self._probs['probs'] = probs
-            self._preds['preds'] = tf.argmax(logits, axis=-1)
+            self._tensors['probs'] = probs
+            self._tensors['preds'] = tf.argmax(logits, axis=-1)
 
             start_one_hot_labels = tf.one_hot(
                 label_ids[:, 0], depth=seq_length, dtype=tf.float32)
@@ -97,7 +97,7 @@ class SANetDecoder(BaseDecoder):
                 per_example_loss *= sample_weight
 
             self.total_loss = tf.reduce_mean(per_example_loss)
-            self._losses['losses'] = per_example_loss
+            self._tensors['losses'] = per_example_loss
 
     def attention_layer(self,
                         from_tensor,

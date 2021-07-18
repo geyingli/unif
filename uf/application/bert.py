@@ -248,11 +248,10 @@ class BERTClassifier(ClassifierModule):
             sample_weight=split_placeholders.get('sample_weight'),
             scope='cls/seq_relationship',
             **kwargs)
-        (total_loss, losses, probs, preds) = decoder.get_forward_outputs()
-        return (total_loss, losses, probs, preds)
+        return decoder.get_forward_outputs()
 
     def _get_fit_ops(self, as_feature=False):
-        ops = [self._preds['preds'], self._losses['losses']]
+        ops = [self._tensors['preds'], self._tensors['losses']]
         if as_feature:
             ops.extend([self.placeholders['label_ids']])
         return ops
@@ -279,7 +278,7 @@ class BERTClassifier(ClassifierModule):
         return info
 
     def _get_predict_ops(self):
-        return [self._probs['probs']]
+        return [self._tensors['probs']]
 
     def _get_predict_outputs(self, batch_outputs):
         n_inputs = len(list(self.data.values())[0])
@@ -300,7 +299,7 @@ class BERTClassifier(ClassifierModule):
         return outputs
 
     def _get_score_ops(self):
-        return [self._preds['preds'], self._losses['losses']]
+        return [self._tensors['preds'], self._tensors['losses']]
 
     def _get_score_outputs(self, batch_outputs):
         n_inputs = len(list(self.data.values())[0])
@@ -446,11 +445,10 @@ class BERTBinaryClassifier(BERTClassifier, ClassifierModule):
             label_weight=self.label_weight,
             scope='cls/seq_relationship',
             **kwargs)
-        (total_loss, losses, probs, preds) = decoder.get_forward_outputs()
-        return (total_loss, losses, probs, preds)
+        return decoder.get_forward_outputs()
 
     def _get_predict_ops(self):
-        return [self._probs['probs']]
+        return [self._tensors['probs']]
 
     def _get_predict_outputs(self, batch_outputs):
         n_inputs = len(list(self.data.values())[0])
@@ -677,11 +675,10 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
             sample_weight=split_placeholders.get('sample_weight'),
             scope='cls/sequence',
             **kwargs)
-        (total_loss, losses, probs, preds) = decoder.get_forward_outputs()
-        return (total_loss, losses, probs, preds)
+        return decoder.get_forward_outputs()
 
     def _get_fit_ops(self, as_feature=False):
-        ops = [self._preds['preds'], self._losses['losses']]
+        ops = [self._tensors['preds'], self._tensors['losses']]
         if as_feature:
             ops.extend([self.placeholders['input_mask'],
                         self.placeholders['label_ids']])
@@ -712,7 +709,7 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
         return info
 
     def _get_predict_ops(self):
-        return [self._probs['probs']]
+        return [self._tensors['probs']]
 
     def _get_predict_outputs(self, batch_outputs):
         n_inputs = len(list(self.data.values())[0])
@@ -739,7 +736,7 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
         return outputs
 
     def _get_score_ops(self):
-        return [self._preds['preds'], self._losses['losses']]
+        return [self._tensors['preds'], self._tensors['losses']]
 
     def _get_score_outputs(self, batch_outputs):
         n_inputs = len(list(self.data.values())[0])
@@ -1007,11 +1004,10 @@ class BERTNER(BERTClassifier, NERModule):
             sample_weight=split_placeholders.get('sample_weight'),
             scope='cls/sequence',
             **kwargs)
-        (total_loss, losses, probs, preds) = decoder.get_forward_outputs()
-        return (total_loss, losses, probs, preds)
+        return decoder.get_forward_outputs()
 
     def _get_fit_ops(self, as_feature=False):
-        ops = [self._preds['preds'], self._losses['losses']]
+        ops = [self._tensors['preds'], self._tensors['losses']]
         if as_feature:
             ops.extend([self.placeholders['input_mask'],
                         self.placeholders['label_ids']])
@@ -1043,7 +1039,7 @@ class BERTNER(BERTClassifier, NERModule):
         return info
 
     def _get_predict_ops(self):
-        return [self._probs['probs']]
+        return [self._tensors['probs']]
 
     def _get_predict_outputs(self, batch_outputs):
         n_inputs = len(list(self.data.values())[0])
@@ -1100,7 +1096,7 @@ class BERTNER(BERTClassifier, NERModule):
         return outputs
 
     def _get_score_ops(self):
-        return [self._preds['preds'], self._losses['losses']]
+        return [self._tensors['preds'], self._tensors['losses']]
 
     def _get_score_outputs(self, batch_outputs):
         n_inputs = len(list(self.data.values())[0])
@@ -1149,12 +1145,11 @@ class BERTCRFNER(BERTNER, NERModule):
             sample_weight=split_placeholders.get('sample_weight'),
             scope='cls/sequence',
             **kwargs)
-        (total_loss, losses, probs, preds) = decoder.get_forward_outputs()
-        return (total_loss, losses, probs, preds)
+        return decoder.get_forward_outputs()
 
     def _get_fit_ops(self, as_feature=False):
-        ops = [self._probs['logits'], self._probs['transition_matrix'],
-               self._losses['losses']]
+        ops = [self._tensors['logits'], self._tensors['transition_matrix'],
+               self._tensors['losses']]
         if as_feature:
             ops.extend([self.placeholders['input_mask'],
                         self.placeholders['label_ids']])
@@ -1193,7 +1188,7 @@ class BERTCRFNER(BERTNER, NERModule):
         return info
 
     def _get_predict_ops(self):
-        return [self._probs['logits'], self._probs['transition_matrix']]
+        return [self._tensors['logits'], self._tensors['transition_matrix']]
 
     def _get_predict_outputs(self, batch_outputs):
         n_inputs = len(list(self.data.values())[0])
@@ -1253,8 +1248,8 @@ class BERTCRFNER(BERTNER, NERModule):
         return outputs
 
     def _get_score_ops(self):
-        return [self._probs['logits'], self._probs['transition_matrix'],
-                self._losses['losses']]
+        return [self._tensors['logits'], self._tensors['transition_matrix'],
+                self._tensors['losses']]
 
     def _get_score_outputs(self, batch_outputs):
         n_inputs = len(list(self.data.values())[0])
@@ -1478,12 +1473,11 @@ class BERTCRFCascadeNER(BERTCRFNER, NERModule):
             sample_weight=split_placeholders.get('sample_weight'),
             scope='cls/sequence',
             **kwargs)
-        (total_loss, losses, probs, preds) = decoder.get_forward_outputs()
-        return (total_loss, losses, probs, preds)
+        return decoder.get_forward_outputs()
 
     def _get_fit_ops(self, as_feature=False):
-        ops = [self._probs['logits'], self._probs['transition_matrix'],
-               self._losses['losses']]
+        ops = [self._tensors['logits'], self._tensors['transition_matrix'],
+               self._tensors['losses']]
         if as_feature:
             ops.extend([self.placeholders['input_mask'],
                         self.placeholders['label_ids']])
@@ -1522,7 +1516,7 @@ class BERTCRFCascadeNER(BERTCRFNER, NERModule):
         return info
 
     def _get_predict_ops(self):
-        return [self._probs['logits'], self._probs['transition_matrix']]
+        return [self._tensors['logits'], self._tensors['transition_matrix']]
 
     def _get_predict_outputs(self, batch_outputs):
         n_inputs = len(list(self.data.values())[0])
@@ -1584,8 +1578,8 @@ class BERTCRFCascadeNER(BERTCRFNER, NERModule):
         return outputs
 
     def _get_score_ops(self):
-        return [self._probs['logits'], self._probs['transition_matrix'],
-                self._losses['losses']]
+        return [self._tensors['logits'], self._tensors['transition_matrix'],
+                self._tensors['losses']]
 
     def _get_score_outputs(self, batch_outputs):
         n_inputs = len(list(self.data.values())[0])
@@ -1904,11 +1898,10 @@ class BERTMRC(BERTClassifier, MRCModule):
             sample_weight=split_placeholders.get('sample_weight'),
             scope='mrc',
             **kwargs)
-        (total_loss, losses, probs, preds) = decoder.get_forward_outputs()
-        return (total_loss, losses, probs, preds)
+        return decoder.get_forward_outputs()
 
     def _get_fit_ops(self, as_feature=False):
-        ops = [self._preds['preds'], self._losses['losses']]
+        ops = [self._tensors['preds'], self._tensors['losses']]
         if as_feature:
             ops.extend([self.placeholders['label_ids']])
         return ops
@@ -1936,7 +1929,7 @@ class BERTMRC(BERTClassifier, MRCModule):
         return info
 
     def _get_predict_ops(self):
-        return [self._probs['probs'], self._preds['preds']]
+        return [self._tensors['probs'], self._tensors['preds']]
 
     def _get_predict_outputs(self, batch_outputs):
         n_inputs = len(list(self.data.values())[0])
@@ -1985,7 +1978,7 @@ class BERTMRC(BERTClassifier, MRCModule):
         return outputs
 
     def _get_score_ops(self):
-        return [self._preds['preds'], self._losses['losses']]
+        return [self._tensors['preds'], self._tensors['losses']]
 
     def _get_score_outputs(self, batch_outputs):
         n_inputs = len(list(self.data.values())[0])
@@ -2227,35 +2220,23 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
             scope='mrc',
             **kwargs)
 
-        (verifier_total_loss, verifier_losses, verifier_probs,
-         verifier_preds) = verifier.get_forward_outputs()
-        (decoder_total_loss, decoder_losses, decoder_probs,
-         decoder_preds) = decoder.get_forward_outputs()
+        verifier_total_loss, verifier_tensors = verifier.get_forward_outputs()
+        decoder_total_loss, decoder_tensors = decoder.get_forward_outputs()
 
         total_loss = verifier_total_loss + decoder_total_loss
-        losses = collections.OrderedDict()
-        probs = collections.OrderedDict()
-        preds = collections.OrderedDict()
-        for key in verifier_losses:
-            losses['verifier_' + key] = verifier_losses[key]
-        for key in verifier_probs:
-            probs['verifier_' + key] = verifier_probs[key]
-        for key in verifier_preds:
-            preds['verifier_' + key] = verifier_preds[key]
-        for key in decoder_losses:
-            losses['mrc_' + key] = decoder_losses[key]
-        for key in decoder_probs:
-            probs['mrc_' + key] = decoder_probs[key]
-        for key in decoder_preds:
-            preds['mrc_' + key] = decoder_preds[key]
+        tensors = collections.OrderedDict()
+        for key in verifier_tensors:
+            tensors['verifier_' + key] = verifier_tensors[key]
+        for key in decoder_tensors:
+            tensors['mrc_' + key] = decoder_tensors[key]
 
-        return (total_loss, losses, probs, preds)
+        return total_loss, tensors
 
     def _get_fit_ops(self, as_feature=False):
-        ops = [self._preds['verifier_preds'],
-               self._losses['verifier_losses'],
-               self._preds['mrc_preds'],
-               self._losses['mrc_losses']]
+        ops = [self._tensors['verifier_preds'],
+               self._tensors['verifier_losses'],
+               self._tensors['mrc_preds'],
+               self._tensors['mrc_losses']]
         if as_feature:
             ops.extend([self.placeholders['label_ids']])
             ops.extend([self.placeholders['has_answer']])
@@ -2301,10 +2282,10 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
         return info
 
     def _get_predict_ops(self):
-        return [self._probs['verifier_probs'],
-                self._preds['verifier_preds'],
-                self._probs['mrc_probs'],
-                self._preds['mrc_preds']]
+        return [self._tensors['verifier_probs'],
+                self._tensors['verifier_preds'],
+                self._tensors['mrc_probs'],
+                self._tensors['mrc_preds']]
 
     def _get_predict_outputs(self, batch_outputs):
         n_inputs = len(list(self.data.values())[0])
@@ -2358,10 +2339,10 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
         return outputs
 
     def _get_score_ops(self):
-        return [self._preds['verifier_preds'],
-                self._losses['verifier_losses'],
-                self._preds['mrc_preds'],
-                self._losses['mrc_losses']]
+        return [self._tensors['verifier_preds'],
+                self._tensors['verifier_losses'],
+                self._tensors['mrc_preds'],
+                self._tensors['mrc_losses']]
 
     def _get_score_outputs(self, batch_outputs):
         n_inputs = len(list(self.data.values())[0])
@@ -2720,12 +2701,11 @@ class BERTLM(LMModule):
             scope_lm='cls/predictions',
             scope_cls='cls/seq_relationship',
             **kwargs)
-        (total_loss, losses, probs, preds) = decoder.get_forward_outputs()
-        return (total_loss, losses, probs, preds)
+        return decoder.get_forward_outputs()
 
     def _get_fit_ops(self, as_feature=False):
-        ops = [self._preds['MLM_preds'], self._preds['NSP_preds'],
-               self._losses['MLM_losses'], self._losses['NSP_losses']]
+        ops = [self._tensors['MLM_preds'], self._tensors['NSP_preds'],
+               self._tensors['MLM_losses'], self._tensors['NSP_losses']]
         if as_feature:
             ops.extend(
                 [self.placeholders['masked_lm_positions'],
@@ -2775,9 +2755,9 @@ class BERTLM(LMModule):
         return info
 
     def _get_predict_ops(self):
-        return [self._preds['MLM_preds'],
-                self._preds['NSP_preds'],
-                self._probs['NSP_probs']]
+        return [self._tensors['MLM_preds'],
+                self._tensors['NSP_preds'],
+                self._tensors['NSP_probs']]
 
     def _get_predict_outputs(self, batch_outputs):
         n_inputs = len(list(self.data.values())[0])

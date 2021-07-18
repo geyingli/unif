@@ -332,13 +332,12 @@ class UniLM(BERTLM, LMModule):
             scope_lm='cls/predictions',
             scope_cls='cls/seq_relationship',
             **kwargs)
-        (total_loss, losses, probs, preds) = decoder.get_forward_outputs()
-        return (total_loss, losses, probs, preds)
+        return decoder.get_forward_outputs()
 
     def _get_fit_ops(self, as_feature=False):
-        ops = [self._preds['MLM_preds'], self._losses['MLM_losses']]
+        ops = [self._tensors['MLM_preds'], self._tensors['MLM_losses']]
         if self.mode == 'bi':
-            ops += [self._preds['NSP_preds'], self._losses['NSP_losses']]
+            ops += [self._tensors['NSP_preds'], self._tensors['NSP_losses']]
         if as_feature:
             ops.extend(
                 [self.placeholders['masked_lm_positions'],
@@ -391,9 +390,9 @@ class UniLM(BERTLM, LMModule):
         return info
 
     def _get_predict_ops(self):
-        ops = [self._preds['MLM_preds']]
+        ops = [self._tensors['MLM_preds']]
         if self.mode == 'bi':
-            ops += [self._preds['NSP_preds'], self._probs['NSP_probs']]
+            ops += [self._tensors['NSP_preds'], self._tensors['NSP_probs']]
         return ops
 
     def _get_predict_outputs(self, batch_outputs):

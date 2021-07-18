@@ -89,8 +89,7 @@ class ALBERTClassifier(BERTClassifier, ClassifierModule):
             sample_weight=split_placeholders.get('sample_weight'),
             scope='cls/seq_relationship',
             **kwargs)
-        (total_loss, losses, probs, preds) = decoder.get_forward_outputs()
-        return (total_loss, losses, probs, preds)
+        return decoder.get_forward_outputs()
 
 
 class ALBERTBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
@@ -156,8 +155,7 @@ class ALBERTBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
             label_weight=self.label_weight,
             scope='cls/seq_relationship',
             **kwargs)
-        (total_loss, losses, probs, preds) = decoder.get_forward_outputs()
-        return (total_loss, losses, probs, preds)
+        return decoder.get_forward_outputs()
 
 
 class ALBERTSeqClassifier(BERTSeqClassifier, ClassifierModule):
@@ -218,8 +216,7 @@ class ALBERTSeqClassifier(BERTSeqClassifier, ClassifierModule):
             sample_weight=split_placeholders.get('sample_weight'),
             scope='cls/sequence',
             **kwargs)
-        (total_loss, losses, probs, preds) = decoder.get_forward_outputs()
-        return (total_loss, losses, probs, preds)
+        return decoder.get_forward_outputs()
 
 
 class ALBERTMRC(BERTMRC, MRCModule):
@@ -278,8 +275,7 @@ class ALBERTMRC(BERTMRC, MRCModule):
             sample_weight=split_placeholders.get('sample_weight'),
             scope='mrc',
             **kwargs)
-        (total_loss, losses, probs, preds) = decoder.get_forward_outputs()
-        return (total_loss, losses, probs, preds)
+        return decoder.get_forward_outputs()
 
 
 class ALBERTLM(BERTLM, LMModule):
@@ -567,14 +563,13 @@ class ALBERTLM(BERTLM, LMModule):
             scope_lm='cls/predictions',
             scope_cls='cls/seq_relationship',
             **kwargs)
-        (total_loss, losses, probs, preds) = decoder.get_forward_outputs()
-        return (total_loss, losses, probs, preds)
+        return decoder.get_forward_outputs()
 
     def _get_fit_ops(self, as_feature=False):
-        ops = [self._preds['MLM_preds'],
-               self._preds['SOP_preds'],
-               self._losses['MLM_losses'],
-               self._losses['SOP_losses']]
+        ops = [self._tensors['MLM_preds'],
+               self._tensors['SOP_preds'],
+               self._tensors['MLM_losses'],
+               self._tensors['SOP_losses']]
         if as_feature:
             ops.extend(
                 [self.placeholders['masked_lm_positions'],
@@ -624,9 +619,9 @@ class ALBERTLM(BERTLM, LMModule):
         return info
 
     def _get_predict_ops(self):
-        return [self._preds['MLM_preds'],
-                self._preds['SOP_preds'],
-                self._probs['SOP_probs']]
+        return [self._tensors['MLM_preds'],
+                self._tensors['SOP_preds'],
+                self._tensors['SOP_probs']]
 
     def _get_predict_outputs(self, batch_outputs):
         n_inputs = len(list(self.data.values())[0])

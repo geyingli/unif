@@ -276,14 +276,13 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
             threshold=self._threshold,
             trainable=True,
             **kwargs)
-        (total_loss, losses, probs, preds) = decoder.get_forward_outputs()
-        return (total_loss, losses, probs, preds)
+        return decoder.get_forward_outputs()
 
     def _get_fit_ops(self, as_feature=False):
-        ops = [self._preds['verifier_preds'],
-               self._preds['mrc_preds'],
-               self._losses['sketchy_losses'],
-               self._losses['intensive_losses']]
+        ops = [self._tensors['verifier_preds'],
+               self._tensors['mrc_preds'],
+               self._tensors['sketchy_losses'],
+               self._tensors['intensive_losses']]
         if as_feature:
             ops.extend([self.placeholders['label_ids']])
             ops.extend([self.placeholders['has_answer']])
@@ -329,10 +328,10 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
         return info
 
     def _get_predict_ops(self):
-        return [self._probs['verifier_probs'],
-                self._preds['verifier_preds'],
-                self._probs['mrc_probs'],
-                self._preds['mrc_preds']]
+        return [self._tensors['verifier_probs'],
+                self._tensors['verifier_preds'],
+                self._tensors['mrc_probs'],
+                self._tensors['mrc_preds']]
 
     def _get_predict_outputs(self, batch_outputs):
         n_inputs = len(list(self.data.values())[0])
@@ -386,10 +385,10 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
         return outputs
 
     def _get_score_ops(self):
-        return [self._preds['verifier_preds'],
-                self._preds['mrc_preds'],
-                self._losses['sketchy_losses'],
-                self._losses['intensive_losses']]
+        return [self._tensors['verifier_preds'],
+                self._tensors['mrc_preds'],
+                self._tensors['sketchy_losses'],
+                self._tensors['intensive_losses']]
 
     def _get_score_outputs(self, batch_outputs):
         n_inputs = len(list(self.data.values())[0])

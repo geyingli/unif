@@ -204,11 +204,10 @@ class GPT2LM(LMModule):
             scope='model',
             given=self._given,
             **kwargs)
-        (total_loss, losses, probs, preds) = model.get_forward_outputs()
-        return (total_loss, losses, probs, preds)
+        return model.get_forward_outputs()
 
     def _get_fit_ops(self, as_feature=False):
-        ops = [self._preds['preds'], self._losses['losses']]
+        ops = [self._tensors['preds'], self._tensors['losses']]
         if as_feature:
             ops.extend([self.placeholders['input_ids']])
         return ops
@@ -239,7 +238,7 @@ class GPT2LM(LMModule):
         return info
 
     def _get_predict_ops(self):
-        return [self._preds['preds']]
+        return [self._tensors['preds']]
 
     def _get_predict_outputs(self, batch_outputs):
         n_inputs = len(list(self.data.values())[0])

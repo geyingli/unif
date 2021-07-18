@@ -268,12 +268,11 @@ class SPELM(BERTLM, LMModule):
             scope_lm='cls/predictions',
             scope_cls='cls/seq_relationship',
             **kwargs)
-        (total_loss, losses, probs, preds) = decoder.get_forward_outputs()
-        return (total_loss, losses, probs, preds)
+        return decoder.get_forward_outputs()
 
     def _get_fit_ops(self, as_feature=False):
-        ops = [self._preds['MLM_preds'],
-               self._losses['MLM_losses']]
+        ops = [self._tensors['MLM_preds'],
+               self._tensors['MLM_losses']]
         if as_feature:
             ops.extend(
                 [self.placeholders['masked_lm_positions'],
@@ -309,7 +308,7 @@ class SPELM(BERTLM, LMModule):
         return info
 
     def _get_predict_ops(self):
-        return [self._preds['MLM_preds']]
+        return [self._tensors['MLM_preds']]
 
     def _get_predict_outputs(self, batch_outputs):
         n_inputs = len(list(self.data.values())[0])

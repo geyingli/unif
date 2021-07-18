@@ -149,8 +149,7 @@ class XLNetClassifier(BERTClassifier, ClassifierModule):
             sample_weight=split_placeholders.get('sample_weight'),
             scope='cls/seq_relationship',
             **kwargs)
-        (total_loss, losses, probs, preds) = decoder.get_forward_outputs()
-        return (total_loss, losses, probs, preds)
+        return decoder.get_forward_outputs()
 
 
 class XLNetBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
@@ -254,8 +253,7 @@ class XLNetBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
             label_weight=self.label_weight,
             scope='cls/seq_relationship',
             **kwargs)
-        (total_loss, losses, probs, preds) = decoder.get_forward_outputs()
-        return (total_loss, losses, probs, preds)
+        return decoder.get_forward_outputs()
 
 
 class XLNetSeqClassifier(BERTSeqClassifier, ClassifierModule):
@@ -358,8 +356,7 @@ class XLNetSeqClassifier(BERTSeqClassifier, ClassifierModule):
             sample_weight=split_placeholders.get('sample_weight'),
             scope='cls/sequence',
             **kwargs)
-        (total_loss, losses, probs, preds) = decoder.get_forward_outputs()
-        return (total_loss, losses, probs, preds)
+        return decoder.get_forward_outputs()
 
 
 class XLNetLM(BERTLM, LMModule):
@@ -557,12 +554,11 @@ class XLNetLM(BERTLM, LMModule):
             inp_q=input_q,
             sample_weight=split_placeholders.get('sample_weight'),
             **kwargs)
-        (total_loss, losses, probs, preds) = model.get_forward_outputs()
-        return (total_loss, losses, probs, preds)
+        return model.get_forward_outputs()
 
     def _get_fit_ops(self, as_feature=False):
-        ops = [self._preds['preds'], self._preds['mask'],
-               self._losses['losses']]
+        ops = [self._tensors['preds'], self._tensors['mask'],
+               self._tensors['losses']]
         if as_feature:
             ops.extend(
                 [self.placeholders['target']])
@@ -596,7 +592,7 @@ class XLNetLM(BERTLM, LMModule):
         return info
 
     def _get_predict_ops(self):
-        return [self._preds['preds']]
+        return [self._tensors['preds']]
 
     def _get_predict_outputs(self, batch_outputs):
         n_inputs = len(list(self.data.values())[0])

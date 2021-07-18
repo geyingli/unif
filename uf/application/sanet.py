@@ -317,8 +317,7 @@ class SANetMRC(BERTMRC, MRCModule):
             scope='sanet',
             trainable=True,
             **kwargs)
-        (total_loss, losses, probs, preds) = decoder.get_forward_outputs()
-        return (total_loss, losses, probs, preds)
+        return decoder.get_forward_outputs()
 
 
 def get_key_to_depths(num_hidden_layers):

@@ -88,8 +88,7 @@ class ELECTRAClassifier(BERTClassifier, ClassifierModule):
             sample_weight=split_placeholders.get('sample_weight'),
             scope='cls/seq_relationship',
             **kwargs)
-        (total_loss, losses, probs, preds) = decoder.get_forward_outputs()
-        return (total_loss, losses, probs, preds)
+        return decoder.get_forward_outputs()
 
 
 class ELECTRABinaryClassifier(BERTBinaryClassifier, ClassifierModule):
@@ -153,8 +152,7 @@ class ELECTRABinaryClassifier(BERTBinaryClassifier, ClassifierModule):
             label_weight=self.label_weight,
             scope='cls/seq_relationship',
             **kwargs)
-        (total_loss, losses, probs, preds) = decoder.get_forward_outputs()
-        return (total_loss, losses, probs, preds)
+        return decoder.get_forward_outputs()
 
 
 class ELECTRASeqClassifier(BERTSeqClassifier, ClassifierModule):
@@ -216,8 +214,7 @@ class ELECTRASeqClassifier(BERTSeqClassifier, ClassifierModule):
             sample_weight=split_placeholders.get('sample_weight'),
             scope='cls/sequence',
             **kwargs)
-        (total_loss, losses, probs, preds) = decoder.get_forward_outputs()
-        return (total_loss, losses, probs, preds)
+        return decoder.get_forward_outputs()
 
 
 class ELECTRAMRC(BERTMRC, MRCModule):
@@ -277,8 +274,7 @@ class ELECTRAMRC(BERTMRC, MRCModule):
             sample_weight=split_placeholders.get('sample_weight'),
             scope='mrc',
             **kwargs)
-        (total_loss, losses, probs, preds) = decoder.get_forward_outputs()
-        return (total_loss, losses, probs, preds)
+        return decoder.get_forward_outputs()
 
 
 class ELECTRALM(BERTLM, LMModule):
@@ -500,15 +496,14 @@ class ELECTRALM(BERTLM, LMModule):
             disc_weight=self.discriminator_weight,
             **kwargs)
 
-        (total_loss, losses, probs, preds) = model.get_forward_outputs()
-        return (total_loss, losses, probs, preds)
+        return model.get_forward_outputs()
 
     def _get_fit_ops(self, as_feature=False):
-        ops = [self._preds['MLM_preds'],
-               self._preds['RTD_preds'],
-               self._preds['RTD_labels'],
-               self._losses['MLM_losses'],
-               self._losses['RTD_losses']]
+        ops = [self._tensors['MLM_preds'],
+               self._tensors['RTD_preds'],
+               self._tensors['RTD_labels'],
+               self._tensors['MLM_losses'],
+               self._tensors['RTD_losses']]
         if as_feature:
             ops.extend(
                 [self.placeholders['input_mask'],
@@ -561,9 +556,9 @@ class ELECTRALM(BERTLM, LMModule):
         return info
 
     def _get_predict_ops(self):
-        return [self._preds['MLM_preds'],
-                self._preds['RTD_preds'],
-                self._probs['RTD_probs']]
+        return [self._tensors['MLM_preds'],
+                self._tensors['RTD_preds'],
+                self._tensors['RTD_probs']]
 
     def _get_predict_outputs(self, batch_outputs):
         n_inputs = len(list(self.data.values())[0])

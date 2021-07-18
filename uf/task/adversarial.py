@@ -58,14 +58,14 @@ class AdversarialTraining(Training):
         # must be smaller than one)
 
         # attack
-        (actual_grads, self.module._losses, self.module._probs, self.module._preds) = self.module._parallel_forward(**kwargs)
+        actual_grads, self.module._tensors = self.module._parallel_forward(**kwargs)
         grad, param = utils.get_grad_and_param(self.module.trainable_variables, actual_grads, 'word_embedding')
         r = tf.multiply(epsilon, grad / (tf.norm(grad) + 1e-9))
         attack_op = param.assign(param + r)
 
         # restore
         with tf.control_dependencies([attack_op]):
-            (attack_grads, _, _, _) = self.module._parallel_forward(**kwargs)
+            attack_grads, _ = self.module._parallel_forward(**kwargs)
             restore_op = param.assign(param - r)
 
         # sum up
@@ -94,10 +94,10 @@ class AdversarialTraining(Training):
         attack_op = tf.no_op()
         for k in range(n_loop):
             with tf.control_dependencies([attack_op]):
-                (d_grads, losses, probs, preds) = self.module._parallel_forward(**kwargs)
+                d_grads, tensors = self.module._parallel_forward(**kwargs)
                 if k == 0:
                     actual_grads = d_grads
-                    (self.module._losses, self.module._probs, self.module._preds) = losses, probs, preds
+                    self.module._tensors = tensors
                 grad, param = utils.get_grad_and_param(self.module.trainable_variables, d_grads, 'word_embedding')
                 tmp_r = tf.multiply(1 / n_loop, grad / (tf.norm(grad) + 1e-9))
 
@@ -115,7 +115,7 @@ class AdversarialTraining(Training):
 
         # restore
         with tf.control_dependencies([attack_op]):
-            (attack_grads, _, _, _) = self.module._parallel_forward(**kwargs)
+            attack_grads, _ = self.module._parallel_forward(**kwargs)
             restore_op = param.assign(param - acc_r)
 
         # sum up
@@ -142,7 +142,7 @@ class AdversarialTraining(Training):
         # norm of gradients)
 
         # initialize
-        (d_grads, self.module._losses, self.module._probs, self.module._preds) = self.module._parallel_forward(**kwargs)
+        d_grads, self.module._tensors = self.module._parallel_forward(**kwargs)
         grad, param = utils.get_grad_and_param(self.module.trainable_variables, d_grads, 'word_embedding')
         init_r = tf.get_variable(
             'init_r',
@@ -166,8 +166,7 @@ class AdversarialTraining(Training):
         all_grads = []
         for k in range(n_loop):
             with tf.control_dependencies([attack_op]):
-                (attack_grads, _, _, _) = \
-                    self.module._parallel_forward(**kwargs)
+                attack_grads, _ = self.module._parallel_forward(**kwargs)
                 all_grads.append(attack_grads)
                 grad, _ = utils.get_grad_and_param(
                     self.module.trainable_variables,
@@ -188,8 +187,7 @@ class AdversarialTraining(Training):
 
         # restore
         with tf.control_dependencies([attack_op]):
-            (attack_grads, _, _, _) = \
-                self.module._parallel_forward(**kwargs)
+            attack_grads, _ = self.module._parallel_forward(**kwargs)
             all_grads.append(attack_grads)
             restore_op = param.assign(param - acc_r)
 
@@ -215,11 +213,9 @@ class AdversarialTraining(Training):
 
             # update
             with tf.control_dependencies([attack_op]):
-                (grads, losses, probs, preds) = \
-                    self.module._parallel_forward(**kwargs)
+                grads, tensors = self.module._parallel_forward(**kwargs)
                 if k == 0:
-                    (self.module._losses, self.module._probs, self.module._preds) = \
-                        losses, probs, preds
+                    self.module._tensors = tensors
                 grad, param = utils.get_grad_and_param(
                     self.module.trainable_variables, grads, 'word_embedding')
                 update_params_op = utils.update_global_params(
@@ -229,8 +225,7 @@ class AdversarialTraining(Training):
             # attack
             with tf.control_dependencies([update_params_op]):
                 # any operator directly applied to `IndexedSlice` is dangerous
-                values = grad.values
-                sign = tf.cast(tf.greater(values, 0.0), tf.float32)
+                sign = tf.cast(tf.greater(grad.values, 0.0), tf.float32)
                 r = last_r + tf.multiply(epsilon, sign) if k > 0 else \
                     tf.multiply(epsilon, sign)
                 r = tf.cond(tf.norm(r) > epsilon,
@@ -261,9 +256,8 @@ class AdversarialTraining(Training):
         # the largest value of gradients)
 
         # initialize
-        (unused_grads, self.module._losses, self.module._probs, self.module._preds) = \
-            self.module._parallel_forward(**kwargs)
-        cls_loss = tf.reduce_mean(list(self.module._losses.values())[0])
+        unused_grads, self.module._tensors = self.module._parallel_forward(**kwargs)
+        cls_loss = tf.reduce_mean(self.module._tensors['losses'])
 
         # Bregman proximal point optimization
         param = utils.get_param(self.module.trainable_variables, 'word_embedding')
@@ -272,10 +266,9 @@ class AdversarialTraining(Training):
             name='tilda_embeddings',
             shape=embedding_shape,
             initializer=tf.zeros_initializer, trainable=False)
-        (_, _, breg_probs, _) = \
-            self.module._parallel_forward(use_tilda_embedding=True, **kwargs)
-        probs = list(self.module._probs.values())[0]
-        probs_breg = list(breg_probs.values())[0]
+        _, breg_tensors = self.module._parallel_forward(use_tilda_embedding=True, **kwargs)
+        probs = self.module._tensors['probs']
+        probs_breg = breg_tensors['probs']
         per_example_loss = tf.reduce_sum(
             probs_breg * (tf.log(probs_breg) - tf.log(probs)), axis=-1)
         per_example_loss_breg = tf.reduce_sum(
@@ -283,7 +276,7 @@ class AdversarialTraining(Training):
         breg_loss = breg_miu * (
             tf.reduce_mean(per_example_loss) +
             tf.reduce_mean(per_example_loss_breg))
-        self.module._losses['breg'] = breg_miu * (
+        self.module._tensors['breg'] = breg_miu * (
             per_example_loss +
             per_example_loss_breg)
 
@@ -311,11 +304,10 @@ class AdversarialTraining(Training):
         acc_r = r
         for k in range(n_loop):
             with tf.control_dependencies([attack_op]):
-                (_, _, prtb_probs, _) = \
-                    self.module._parallel_forward(**kwargs)
+                _, prtb_tensors = self.module._parallel_forward(**kwargs)
 
                 # smoothness-inducing adversarial regulization
-                probs_prtb = list(prtb_probs.values())[0]
+                probs_prtb = prtb_tensors['probs']
                 per_example_loss = tf.reduce_sum(
                     probs_prtb * (tf.log(probs_prtb) - tf.log(probs)), axis=-1)
                 per_example_loss_prtb = tf.reduce_sum(
@@ -323,7 +315,7 @@ class AdversarialTraining(Training):
                 prtb_loss = prtb_lambda * (
                     tf.reduce_mean(per_example_loss) +
                     tf.reduce_mean(per_example_loss_prtb))
-                self.module._losses['prtb'] = prtb_lambda * (
+                self.module._tensors['prtb'] = prtb_lambda * (
                     per_example_loss +
                     per_example_loss_prtb)
 

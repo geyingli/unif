@@ -110,7 +110,7 @@ class TinyBERTCLSDistillor(BaseDecoder):
             distill_loss = (embedding_loss + attention_loss +
                             hidden_loss + pred_loss)
             self.total_loss = distill_loss
-            self._losses['losses'] = tf.reshape(distill_loss, [1])
+            self._tensors['losses'] = tf.reshape(distill_loss, [1])
 
         else:
             self._infer(student_logits, label_ids, sample_weight, label_size)
@@ -208,8 +208,8 @@ class TinyBERTCLSDistillor(BaseDecoder):
 
     def _infer(self, student_logits, label_ids, sample_weight, label_size):
         probs = tf.nn.softmax(student_logits, axis=-1, name='probs')
-        self._probs['probs'] = probs
-        self._preds['preds'] = tf.argmax(probs, axis=-1, name='preds')
+        self._tensors['probs'] = probs
+        self._tensors['preds'] = tf.argmax(probs, axis=-1, name='preds')
 
         if label_ids is not None:
             log_probs = tf.nn.log_softmax(student_logits, axis=-1)
@@ -221,15 +221,15 @@ class TinyBERTCLSDistillor(BaseDecoder):
                 per_example_loss = tf.cast(
                     sample_weight, dtype=tf.float32) * per_example_loss
 
-            self._losses['losses'] = per_example_loss
+            self._tensors['losses'] = per_example_loss
 
 
 class TinyBERTBinaryCLSDistillor(TinyBERTCLSDistillor):
 
     def _infer(self, student_logits, label_ids, sample_weight, label_size):
         probs = tf.nn.sigmoid(student_logits, name='probs')
-        self._probs['probs'] = probs
-        self._preds['preds'] = tf.greater(probs, 0.5, name='preds')
+        self._tensors['probs'] = probs
+        self._tensors['preds'] = tf.greater(probs, 0.5, name='preds')
 
         if label_ids is not None:
             per_label_loss = tf.nn.sigmoid_cross_entropy_with_logits(
@@ -239,4 +239,4 @@ class TinyBERTBinaryCLSDistillor(TinyBERTCLSDistillor):
             if sample_weight is not None:
                 per_example_loss *= sample_weight
 
-            self._losses['losses'] = per_example_loss
+            self._tensors['losses'] = per_example_loss

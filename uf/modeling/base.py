@@ -37,17 +37,11 @@ class BaseDecoder:
         # scalar of total loss
         self.total_loss = None
 
-        # supervised loss of each example
-        self._losses = collections.OrderedDict()
-
-        # supervised probs of each example
-        self._probs = collections.OrderedDict()
-
-        # supervised preds of each example
-        self._preds = collections.OrderedDict()
+        # supervised tensors of each example
+        self._tensors = collections.OrderedDict()
 
     def get_forward_outputs(self):
-        return (self.total_loss, self._losses, self._probs, self._preds)
+        return (self.total_loss, self._tensors)
 
 
 class CLSDecoder(BaseDecoder):
@@ -82,8 +76,8 @@ class CLSDecoder(BaseDecoder):
             logits = tf.matmul(output_layer, output_weights, transpose_b=True)
             logits = tf.nn.bias_add(logits, output_bias)
 
-            self._preds['preds'] = tf.argmax(logits, axis=-1, name='preds')
-            self._probs['probs'] = tf.nn.softmax(logits, axis=-1, name='probs')
+            self._tensors['preds'] = tf.argmax(logits, axis=-1, name='preds')
+            self._tensors['probs'] = tf.nn.softmax(logits, axis=-1, name='probs')
 
             log_probs = tf.nn.log_softmax(logits, axis=-1)
             one_hot_labels = tf.one_hot(
@@ -102,7 +96,7 @@ class CLSDecoder(BaseDecoder):
                     tf.less(largest_prob, thresh), dtype=tf.float32) * \
                     per_example_loss
 
-            self._losses['losses'] = per_example_loss
+            self._tensors['losses'] = per_example_loss
             self.total_loss = tf.reduce_mean(per_example_loss)
 
 
@@ -140,8 +134,8 @@ class BinaryCLSDecoder(BaseDecoder):
             logits = tf.nn.bias_add(logits, output_bias)
             probs = tf.nn.sigmoid(logits, name='probs')
 
-            self._probs['probs'] = probs
-            self._preds['preds'] = tf.greater(probs, 0.5, name='preds')
+            self._tensors['probs'] = probs
+            self._tensors['preds'] = tf.greater(probs, 0.5, name='preds')
 
             per_label_loss = tf.nn.sigmoid_cross_entropy_with_logits(
                 logits=logits,
@@ -154,7 +148,7 @@ class BinaryCLSDecoder(BaseDecoder):
             if sample_weight is not None:
                 per_example_loss *= sample_weight
 
-            self._losses['losses'] = per_example_loss
+            self._tensors['losses'] = per_example_loss
             self.total_loss = tf.reduce_mean(per_example_loss)
 
 
@@ -196,8 +190,8 @@ class SeqCLSDecoder(BaseDecoder):
             logits = tf.nn.bias_add(logits, output_bias)
             logits = tf.reshape(logits, [-1, seq_length, label_size])
 
-            self._preds['preds'] = tf.argmax(logits, axis=-1, name='preds')
-            self._probs['probs'] = tf.nn.softmax(logits, axis=-1, name='probs')
+            self._tensors['preds'] = tf.argmax(logits, axis=-1, name='preds')
+            self._tensors['probs'] = tf.nn.softmax(logits, axis=-1, name='probs')
 
             log_probs = tf.nn.log_softmax(logits, axis=-1)
             one_hot_labels = tf.one_hot(
@@ -213,7 +207,7 @@ class SeqCLSDecoder(BaseDecoder):
                 per_example_loss *= tf.cast(
                     sample_weight, dtype=tf.float32)
 
-            self._losses['losses'] = per_example_loss
+            self._tensors['losses'] = per_example_loss
             self.total_loss = tf.reduce_mean(per_example_loss)
 
 
@@ -253,8 +247,8 @@ class MRCDecoder(BaseDecoder):
             logits = tf.reshape(logits, [-1, seq_length, 2])
             logits = tf.transpose(logits, [0, 2, 1])
             probs = tf.nn.softmax(logits, axis=-1, name='probs')
-            self._probs['probs'] = probs
-            self._preds['preds'] = tf.argmax(logits, axis=-1, name='preds')
+            self._tensors['probs'] = probs
+            self._tensors['preds'] = tf.argmax(logits, axis=-1, name='preds')
 
             start_one_hot_labels = tf.one_hot(
                 label_ids[:, 0], depth=seq_length, dtype=tf.float32)
@@ -271,4 +265,4 @@ class MRCDecoder(BaseDecoder):
                 per_example_loss *= sample_weight
 
             self.total_loss = tf.reduce_mean(per_example_loss)
-            self._losses['losses'] = per_example_loss
+            self._tensors['losses'] = per_example_loss

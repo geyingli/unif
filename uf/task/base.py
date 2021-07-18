@@ -126,14 +126,14 @@ class Training(Task):
         if self.grad_acc_steps > 1:
             self._accumulate_gradients(**kwargs)
         else:
-            (grads, self.module._losses, self.module._probs, self.module._preds) = self.module._parallel_forward(**kwargs)
+            grads, self.module._tensors = self.module._parallel_forward(**kwargs)
             update_params_op = utils.update_global_params(
                 self.module.trainable_variables, self.module._global_step, self.module._optimizer, grads)
             update_step_op = self.module._global_step.assign(self.module._global_step + 1)
             self.train_ops = [update_params_op, update_step_op]
 
     def _accumulate_gradients(self, **kwargs):
-        (grads, self.module._losses, self.module._probs, self.module._preds) = self.module._parallel_forward(**kwargs)
+        grads, self.module._tensors = self.module._parallel_forward(**kwargs)
 
         params = []
         new_grads = []
@@ -355,7 +355,7 @@ class Inference(Task):
     def decorate(self):
         self.module._set_placeholders('placeholder', is_training=False)
 
-        (_, self.module._losses, self.module._probs, self.module._preds) = self.module._parallel_forward(False)
+        _, self.module._tensors = self.module._parallel_forward(False)
 
     def run(self):
         n_inputs = len(list(self.module.data.values())[0])
@@ -410,7 +410,7 @@ class Scoring(Task):
     def decorate(self):
         self.module._set_placeholders('placeholder', is_training=False)
 
-        (_, self.module._losses, self.module._probs, self.module._preds) = self.module._parallel_forward(False)
+        _, self.module._tensors = self.module._parallel_forward(False)
 
     def run(self):
         n_inputs = len(list(self.module.data.values())[0])
@@ -463,7 +463,7 @@ class Initialization(Task):
     def decorate(self):
         self.module._set_placeholders('placeholder', is_training=False)
 
-        (_, self.module._losses, self.module._probs, self.module._preds) = self.module._parallel_forward(False)
+        _, self.module._tensors = self.module._parallel_forward(False)
 
     def run(self, reinit_all, ignore_checkpoint):
 
@@ -504,7 +504,7 @@ class Exportation(Task):
     def decorate(self):
         self.module._set_placeholders('placeholder', on_export=True, is_training=False)
 
-        (_, self.module._losses, self.module._probs, self.module._preds) = self.module._parallel_forward(False)
+        _, self.module._tensors = self.module._parallel_forward(False)
 
     def run(self, export_dir, rename_inputs=None, rename_outputs=None,
             ignore_inputs=None, ignore_outputs=None):
@@ -540,8 +540,7 @@ class Exportation(Task):
         outputs = {}
         if not ignore_outputs:
             ignore_outputs = []
-        for key, value in (list(self.module._preds.items()) +
-                           list(self.module._probs.items())):
+        for key, value in self.module._tensors.items():
             if key in ignore_outputs:
                 continue
             if rename_outputs and key in rename_outputs:

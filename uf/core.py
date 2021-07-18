@@ -739,9 +739,7 @@ class BaseModule:
         # We implement data parallelization instead of model
         # parallelization, for this design suits most real cases.
         all_grads = []
-        all_losses = []
-        all_probs = []
-        all_preds = []
+        all_tensors = []
         n_device = len(self._gpu_ids) if self._gpu_ids else 1
         split_placeholders = {key: {} for key in range(n_device)}
         for name, placeholder in self.placeholders.items():
@@ -756,7 +754,7 @@ class BaseModule:
         for idx in range(n_device):
             _gpu_id = self._gpu_ids[idx] if self._gpu_ids else ''
             with device('gpu:%s' % _gpu_id):
-                (total_loss, d_losses, d_probs, d_preds) = self._forward(
+                total_loss, d_tensors = self._forward(
                     is_training=is_training,
                     split_placeholders=split_placeholders[idx],
                     **kwargs)
@@ -767,23 +765,13 @@ class BaseModule:
                         total_loss, self.trainable_variables)
                     all_grads.append(d_grads)
 
-                all_losses.append(d_losses)
-                all_probs.append(d_probs)
-                all_preds.append(d_preds)
+                all_tensors.append(d_tensors)
 
         # reduce
-        losses = collections.OrderedDict()
-        probs = collections.OrderedDict()
-        preds = collections.OrderedDict()
-        for key in d_losses:
-            _losses = [d_losses[key] for d_losses in all_losses]
-            losses[key] = tf.concat(_losses, axis=0)
-        for key in d_probs:
-            _probs = [d_probs[key] for d_probs in all_probs]
-            probs[key] = tf.concat(_probs, axis=0)
-        for key in d_preds:
-            _preds = [d_preds[key] for d_preds in all_preds]
-            preds[key] = tf.concat(_preds, axis=0)
+        tensors = collections.OrderedDict()
+        for key in d_tensors:
+            _tensors = [d_tensors[key] for d_tensors in all_tensors]
+            tensors[key] = tf.concat(_tensors, axis=0)
 
         # average, clip, and apply gradients
         grads = None
@@ -807,7 +795,7 @@ class BaseModule:
             # clip gradients
             (grads, _) = tf.clip_by_global_norm(average_grads, clip_norm=1.0)
 
-        return (grads, losses, probs, preds)
+        return grads, tensors
 
     @abstractmethod
     def _forward(self, *args, **kwargs):

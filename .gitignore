@@ -1,4 +1,4 @@
-.gitignore
+.*
 UPDATION
 test.py
 *.sh

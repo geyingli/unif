@@ -51,7 +51,7 @@ class CLSDecoder(BaseDecoder):
                  label_ids,
                  label_size=2,
                  sample_weight=None,
-                 scope='cls/seq_relationship',
+                 scope='cls',
                  hidden_dropout_prob=0.1,
                  initializer_range=0.02,
                  trainable=True,
@@ -77,7 +77,8 @@ class CLSDecoder(BaseDecoder):
             logits = tf.nn.bias_add(logits, output_bias)
 
             self._tensors['preds'] = tf.argmax(logits, axis=-1, name='preds')
-            self._tensors['probs'] = tf.nn.softmax(logits, axis=-1, name='probs')
+            self._tensors['probs'] = tf.nn.softmax(
+                logits, axis=-1, name='probs')
 
             log_probs = tf.nn.log_softmax(logits, axis=-1)
             one_hot_labels = tf.one_hot(
@@ -95,6 +96,50 @@ class CLSDecoder(BaseDecoder):
                 per_example_loss = tf.cast(
                     tf.less(largest_prob, thresh), dtype=tf.float32) * \
                     per_example_loss
+
+            self._tensors['losses'] = per_example_loss
+            self.total_loss = tf.reduce_mean(per_example_loss)
+
+
+class RegDecoder(BaseDecoder):
+    def __init__(self,
+                 is_training,
+                 input_tensor,
+                 label_floats,
+                 label_size=2,
+                 sample_weight=None,
+                 scope='reg',
+                 hidden_dropout_prob=0.1,
+                 initializer_range=0.02,
+                 trainable=True,
+                 **kwargs):
+        super().__init__(**kwargs)
+
+        hidden_size = input_tensor.shape.as_list()[-1]
+        with tf.variable_scope(scope):
+            intermediate_output = tf.layers.dense(
+                input_tensor,
+                label_size * 4,
+                use_bias=False,
+                kernel_initializer=util.create_initializer(initializer_range),
+                trainable=trainable,
+            )
+            preds = tf.layers.dense(
+                intermediate_output,
+                label_size,
+                use_bias=False,
+                kernel_initializer=util.create_initializer(initializer_range),
+                trainable=trainable,
+                name='preds',
+            )
+
+            self._tensors['preds'] = preds
+
+            per_example_loss = tf.reduce_sum(
+                tf.square(label_floats - preds), axis=-1)
+            if sample_weight is not None:
+                per_example_loss = tf.cast(
+                    sample_weight, dtype=tf.float32) * per_example_loss
 
             self._tensors['losses'] = per_example_loss
             self.total_loss = tf.reduce_mean(per_example_loss)
@@ -191,7 +236,8 @@ class SeqCLSDecoder(BaseDecoder):
             logits = tf.reshape(logits, [-1, seq_length, label_size])
 
             self._tensors['preds'] = tf.argmax(logits, axis=-1, name='preds')
-            self._tensors['probs'] = tf.nn.softmax(logits, axis=-1, name='probs')
+            self._tensors['probs'] = tf.nn.softmax(
+                logits, axis=-1, name='probs')
 
             log_probs = tf.nn.log_softmax(logits, axis=-1)
             one_hot_labels = tf.one_hot(

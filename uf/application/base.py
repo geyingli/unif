@@ -25,6 +25,11 @@ class ClassifierModule(BaseModule):
     pass
 
 
+class RegressorModule(BaseModule):
+    ''' Application class of regression. '''
+    pass
+
+
 class NERModule(BaseModule):
     ''' Application class of name entity recognition (NER). '''
 

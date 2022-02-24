@@ -108,9 +108,9 @@ def transform(output_arrays, n_inputs=None):
     # consolidate different batches
     if isinstance(output_arrays[0], np.ndarray):
         if len(output_arrays[0].shape) == 1:    # 1D
-            out = np.vstack(output_arrays)
-        else:                                   # 2D/3D/...
             out = np.hstack(output_arrays)
+        else:                                   # 2D/3D/...
+            out = np.vstack(output_arrays)
         if n_inputs:
             out = out[:n_inputs]
         return out

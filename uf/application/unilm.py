@@ -1,18 +1,4 @@
-# coding:=utf-8
-# Copyright 2021 Tencent. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the 'License');
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an 'AS IS' BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-''' Applications based on UniLM. '''
+""" Applications based on UniLM. """
 
 import os
 import random
@@ -29,15 +15,15 @@ from .. import utils
 
 
 class UniLM(BERTLM, LMModule):
-    ''' Language modeling on UniLM. '''
+    """ Language modeling on UniLM. """
     _INFER_ATTRIBUTES = {
-        'max_seq_length': (
-            'An integer that defines max sequence length of input tokens, '
-            'which typically equals `len(tokenize(segments)) + '
-            'len(segments)` + 1'),
-        'init_checkpoint': (
-            'A string that directs to the checkpoint file used for '
-            'initialization')}
+        "max_seq_length": (
+            "An integer that defines max sequence length of input tokens, "
+            "which typically equals `len(tokenize(segments)) + "
+            "len(segments)` + 1"),
+        "init_checkpoint": (
+            "A string that directs to the checkpoint file used for "
+            "initialization")}
 
     def __init__(self,
                  config_file,
@@ -52,9 +38,9 @@ class UniLM(BERTLM, LMModule):
                  masked_lm_prob=0.15,
                  short_seq_prob=0.1,
                  do_whole_word_mask=False,
-                 mode='bi',
+                 mode="bi",
                  do_lower_case=True,
-                 truncate_method='LIFO'):
+                 truncate_method="LIFO"):
         super(LMModule, self).__init__(
             init_checkpoint, output_dir, gpu_ids)
 
@@ -72,44 +58,44 @@ class UniLM(BERTLM, LMModule):
         self._id_to_label = None
         self.__init_args__ = locals()
 
-        assert mode in ('bi', 'l2r', 'r2l', 's2s'), (
-            'Wrong value of `mode`: %s. Pick one from `bi` (bidirectional), '
-            '`l2r` (left-to-right), `r2l` (right-to-left) and '
-            '`s2s` (seq-to-seq).' % mode)
+        assert mode in ("bi", "l2r", "r2l", "s2s"), (
+            "Wrong value of `mode`: %s. Pick one from `bi` (bidirectional), "
+            "`l2r` (left-to-right), `r2l` (right-to-left) and "
+            "`s2s` (seq-to-seq)." % mode)
         tf.logging.info(
-            'LM Mode: `%s`. Use method `.to_mode()` to convert it into '
-            '`bi`, `l2r`, `r2l` or `s2s`.' % mode)
+            "LM Mode: `%s`. Use method `.to_mode()` to convert it into "
+            "`bi`, `l2r`, `r2l` or `s2s`." % mode)
         self.bert_config = get_bert_config(config_file)
         self.tokenizer = get_word_piece_tokenizer(vocab_file, do_lower_case)
         self._key_to_depths = get_key_to_depths(
             self.bert_config.num_hidden_layers)
 
-        if '[CLS]' not in self.tokenizer.vocab:
-            self.tokenizer.add('[CLS]')
+        if "[CLS]" not in self.tokenizer.vocab:
+            self.tokenizer.add("[CLS]")
             self.bert_config.vocab_size += 1
-            tf.logging.info('Add necessary token `[CLS]` into vocabulary.')
-        if '[SEP]' not in self.tokenizer.vocab:
-            self.tokenizer.add('[SEP]')
+            tf.logging.info("Add necessary token `[CLS]` into vocabulary.")
+        if "[SEP]" not in self.tokenizer.vocab:
+            self.tokenizer.add("[SEP]")
             self.bert_config.vocab_size += 1
-            tf.logging.info('Add necessary token `[SEP]` into vocabulary.')
-        if '[EOS]' not in self.tokenizer.vocab:
-            self.tokenizer.add('[EOS]')
+            tf.logging.info("Add necessary token `[SEP]` into vocabulary.")
+        if "[EOS]" not in self.tokenizer.vocab:
+            self.tokenizer.add("[EOS]")
             self.bert_config.vocab_size += 1
-            tf.logging.info('Add necessary token `[EOS]` into vocabulary.')
+            tf.logging.info("Add necessary token `[EOS]` into vocabulary.")
 
     def to_mode(self, mode):
-        ''' Switch the mode of UniLM.
+        """ Switch the mode of UniLM.
 
         Args:
             mode: string. One of `bi` (bidirectional), `l2r` (left-to-right),
               `r2l` (right-to-left) and `s2s` (seq-to-seq).
         Returns:
             None
-        '''
-        assert mode in ('bi', 'l2r', 'r2l', 's2s'), (
-            'Wrong value of `mode`: %s. Pick one from `bi` (bidirectional), '
-            '`l2r` (left-to-right), `r2l` (right-to-left) and '
-            '`s2s` (seq-to-seq).' % mode)
+        """
+        assert mode in ("bi", "l2r", "r2l", "s2s"), (
+            "Wrong value of `mode`: %s. Pick one from `bi` (bidirectional), "
+            "`l2r` (left-to-right), `r2l` (right-to-left) and "
+            "`s2s` (seq-to-seq)." % mode)
 
         if mode != self.mode:
             self._session_mode = None
@@ -120,19 +106,19 @@ class UniLM(BERTLM, LMModule):
         self._assert_legal(X, y, sample_weight, X_tokenized)
 
         if is_training:
-            if self.mode == 'bi':
+            if self.mode == "bi":
                 if y is not None:
                     assert not self.do_sample_next_sentence, (
-                        '`y` should be None when `do_sample_next_sentence` '
-                        'is True.')
+                        "`y` should be None when `do_sample_next_sentence` "
+                        "is True.")
                 else:
                     assert self.do_sample_next_sentence, (
-                        '`y` can\'t be None when `do_sample_next_sentence` '
-                        'is False.')
+                        "`y` can\"t be None when `do_sample_next_sentence` "
+                        "is False.")
             else:
                 assert y is None, (
-                    'Only training of bidirectional LM is supervised. '
-                    '`y` should be None.')
+                    "Only training of bidirectional LM is supervised. "
+                    "`y` should be None.")
 
         n_inputs = None
         data = {}
@@ -147,18 +133,18 @@ class UniLM(BERTLM, LMModule):
                  X_tokenized if tokenized else X,
                  is_training, tokenized=tokenized)
 
-            data['input_ids'] = np.array(input_ids, dtype=np.int32)
-            data['input_mask'] = np.array(input_mask, dtype=np.int32)
-            data['segment_ids'] = np.array(segment_ids, dtype=np.int32)
-            data['masked_lm_positions'] = \
+            data["input_ids"] = np.array(input_ids, dtype=np.int32)
+            data["input_mask"] = np.array(input_mask, dtype=np.int32)
+            data["segment_ids"] = np.array(segment_ids, dtype=np.int32)
+            data["masked_lm_positions"] = \
                 np.array(masked_lm_positions, dtype=np.int32)
 
             if is_training:
-                data['masked_lm_ids'] = \
+                data["masked_lm_ids"] = \
                     np.array(masked_lm_ids, dtype=np.int32)
-                data['masked_lm_weights'] = \
+                data["masked_lm_weights"] = \
                     np.array(masked_lm_weights, dtype=np.float32)
-                data['next_sentence_labels'] = \
+                data["next_sentence_labels"] = \
                     np.array(next_sentence_labels, dtype=np.int32)
 
             n_inputs = len(input_ids)
@@ -168,14 +154,14 @@ class UniLM(BERTLM, LMModule):
         # convert y
         if y:
             next_sentence_labels = self._convert_y(y)
-            data['next_sentence_labels'] = \
+            data["next_sentence_labels"] = \
                 np.array(next_sentence_labels, dtype=np.int32)
 
         # convert sample_weight
         if is_training or y:
             sample_weight = self._convert_sample_weight(
                 sample_weight, n_inputs)
-            data['sample_weight'] = np.array(sample_weight, dtype=np.float32)
+            data["sample_weight"] = np.array(sample_weight, dtype=np.float32)
 
         return data
 
@@ -184,21 +170,21 @@ class UniLM(BERTLM, LMModule):
         # tokenize input texts
         segment_input_tokens = []
         for ex_id, example in enumerate(X_target):
-            if self.mode in ('l2r', 'r2l'):
-                info = '`l2r` or `r2l` only supports single sentence inputs.'
+            if self.mode in ("l2r", "r2l"):
+                info = "`l2r` or `r2l` only supports single sentence inputs."
                 if not tokenized:
                     assert isinstance(example, str), info
                 else:
                     assert isinstance(example[0], str), info
-            elif self.mode == 's2s':
-                info = '`s2s` only supports 2-sentence inputs.'
+            elif self.mode == "s2s":
+                info = "`s2s` only supports 2-sentence inputs."
                 assert len(example) == 2, info
             try:
                 segment_input_tokens.append(
                     self._convert_x(example, tokenized))
             except Exception:
                 raise ValueError(
-                    'Wrong input format (line %d): \'%s\'. '
+                    "Wrong input format (line %d): \"%s\". "
                     % (ex_id, example))
 
         input_ids = []
@@ -210,7 +196,7 @@ class UniLM(BERTLM, LMModule):
         next_sentence_labels = []
 
         # random sampling of next sentence
-        if is_training and self.mode == 'bi' and self.do_sample_next_sentence:
+        if is_training and self.mode == "bi" and self.do_sample_next_sentence:
             new_segment_input_tokens = []
             for ex_id in range(len(segment_input_tokens)):
                 instances = create_instances_from_document(
@@ -229,7 +215,7 @@ class UniLM(BERTLM, LMModule):
             next_sentence_labels = [1] * len(segment_input_tokens)
 
         for ex_id, segments in enumerate(segment_input_tokens):
-            _input_tokens = ['[CLS]']
+            _input_tokens = ["[CLS]"]
             _input_ids = []
             _input_mask = [1]
             _segment_ids = [0]
@@ -243,14 +229,14 @@ class UniLM(BERTLM, LMModule):
 
             for s_id, segment in enumerate(segments):
                 _segment_id = min(s_id, 1)
-                _input_tokens.extend(segment + ['[SEP]'])
+                _input_tokens.extend(segment + ["[SEP]"])
                 _input_mask.extend([1] * (len(segment) + 1))
                 _segment_ids.extend([_segment_id] * (len(segment) + 1))
 
             # special values for `_input_tokens` and `input_mask`
-            if self.mode == 's2s':
+            if self.mode == "s2s":
                 _input_tokens.pop()
-                _input_tokens.append('[EOS]')
+                _input_tokens.append("[EOS]")
                 _input_mask = [len(_input_ids)] * (len(segments[0]) + 2)
                 for i in range(len(segments[1]) + 1):
                     _input_mask.append(_input_mask[0] + i + 1)
@@ -259,7 +245,7 @@ class UniLM(BERTLM, LMModule):
             if is_training:
                 if (ex_id + 1) % 10000 == 0:
                     tf.logging.info(
-                        'Sampling masks of input %d' % (ex_id + 1))
+                        "Sampling masks of input %d" % (ex_id + 1))
                 (_input_tokens, _masked_lm_positions, _masked_lm_labels) = \
                     create_masked_lm_predictions(
                         tokens=_input_tokens,
@@ -281,7 +267,7 @@ class UniLM(BERTLM, LMModule):
                 # `masked_lm_positions` is required for both training
                 # and inference of BERT language modeling.
                 for i in range(len(_input_tokens)):
-                    if _input_tokens[i] == '[MASK]':
+                    if _input_tokens[i] == "[MASK]":
                         _masked_lm_positions.append(i)
 
                 # padding
@@ -314,35 +300,35 @@ class UniLM(BERTLM, LMModule):
             mode=self.mode,
             bert_config=self.bert_config,
             is_training=is_training,
-            input_ids=split_placeholders['input_ids'],
-            input_mask=split_placeholders['input_mask'],
-            segment_ids=split_placeholders['segment_ids'],
-            scope='bert',
+            input_ids=split_placeholders["input_ids"],
+            input_mask=split_placeholders["input_mask"],
+            segment_ids=split_placeholders["segment_ids"],
+            scope="bert",
             drop_pooler=self._drop_pooler,
             **kwargs)
         decoder = BERTDecoder(
             bert_config=self.bert_config,
             is_training=is_training,
             encoder=encoder,
-            masked_lm_positions=split_placeholders['masked_lm_positions'],
-            masked_lm_ids=split_placeholders['masked_lm_ids'],
-            masked_lm_weights=split_placeholders['masked_lm_weights'],
-            next_sentence_labels=split_placeholders['next_sentence_labels'],
-            sample_weight=split_placeholders.get('sample_weight'),
-            scope_lm='cls/predictions',
-            scope_cls='cls/seq_relationship',
+            masked_lm_positions=split_placeholders["masked_lm_positions"],
+            masked_lm_ids=split_placeholders["masked_lm_ids"],
+            masked_lm_weights=split_placeholders["masked_lm_weights"],
+            next_sentence_labels=split_placeholders["next_sentence_labels"],
+            sample_weight=split_placeholders.get("sample_weight"),
+            scope_lm="cls/predictions",
+            scope_cls="cls/seq_relationship",
             **kwargs)
         return decoder.get_forward_outputs()
 
     def _get_fit_ops(self, as_feature=False):
-        ops = [self._tensors['MLM_preds'], self._tensors['MLM_losses']]
-        if self.mode == 'bi':
-            ops += [self._tensors['NSP_preds'], self._tensors['NSP_losses']]
+        ops = [self._tensors["MLM_preds"], self._tensors["MLM_losses"]]
+        if self.mode == "bi":
+            ops += [self._tensors["NSP_preds"], self._tensors["NSP_losses"]]
         if as_feature:
             ops.extend(
-                [self.placeholders['masked_lm_positions'],
-                 self.placeholders['masked_lm_ids'],
-                 self.placeholders['next_sentence_labels']])
+                [self.placeholders["masked_lm_positions"],
+                 self.placeholders["masked_lm_ids"],
+                 self.placeholders["next_sentence_labels"]])
         return ops
 
     def _get_fit_info(self, output_arrays, feed_dict, as_feature=False):
@@ -353,11 +339,11 @@ class UniLM(BERTLM, LMModule):
             batch_nsp_labels = output_arrays[-1]
         else:
             batch_mlm_positions = \
-                feed_dict[self.placeholders['masked_lm_positions']]
+                feed_dict[self.placeholders["masked_lm_positions"]]
             batch_mlm_labels = \
-                feed_dict[self.placeholders['masked_lm_ids']]
+                feed_dict[self.placeholders["masked_lm_ids"]]
             batch_nsp_labels = \
-                feed_dict[self.placeholders['next_sentence_labels']]
+                feed_dict[self.placeholders["next_sentence_labels"]]
 
         # MLM accuracy
         batch_mlm_preds = output_arrays[0]
@@ -370,11 +356,11 @@ class UniLM(BERTLM, LMModule):
         batch_mlm_losses = output_arrays[1]
         mlm_loss = np.mean(batch_mlm_losses)
 
-        info = ''
-        info += ', MLM accuracy %.4f' % mlm_accuracy
-        info += ', MLM loss %.6f' % mlm_loss
+        info = ""
+        info += ", MLM accuracy %.4f" % mlm_accuracy
+        info += ", MLM loss %.6f" % mlm_loss
 
-        if self.mode == 'bi':
+        if self.mode == "bi":
 
             # NSP accuracy
             batch_nsp_preds = output_arrays[2]
@@ -384,15 +370,15 @@ class UniLM(BERTLM, LMModule):
             batch_nsp_losses = output_arrays[3]
             nsp_loss = np.mean(batch_nsp_losses)
 
-            info += ', NSP accuracy %.4f' % nsp_accuracy
-            info += ', NSP loss %.6f' % nsp_loss
+            info += ", NSP accuracy %.4f" % nsp_accuracy
+            info += ", NSP loss %.6f" % nsp_loss
 
         return info
 
     def _get_predict_ops(self):
-        ops = [self._tensors['MLM_preds']]
-        if self.mode == 'bi':
-            ops += [self._tensors['NSP_preds'], self._tensors['NSP_probs']]
+        ops = [self._tensors["MLM_preds"]]
+        if self.mode == "bi":
+            ops += [self._tensors["NSP_preds"], self._tensors["NSP_probs"]]
         return ops
 
     def _get_predict_outputs(self, batch_outputs):
@@ -401,7 +387,7 @@ class UniLM(BERTLM, LMModule):
 
         # MLM preds
         mlm_preds = []
-        mlm_positions = self.data['masked_lm_positions']
+        mlm_positions = self.data["masked_lm_positions"]
         all_preds = utils.transform(output_arrays[0], n_inputs)
         for ex_id, _preds in enumerate(all_preds):
             _ids = []
@@ -412,9 +398,9 @@ class UniLM(BERTLM, LMModule):
             mlm_preds.append(self.tokenizer.convert_ids_to_tokens(_ids))
 
         outputs = {}
-        outputs['mlm_preds'] = mlm_preds
+        outputs["mlm_preds"] = mlm_preds
 
-        if self.mode == 'bi':
+        if self.mode == "bi":
 
             # NSP preds
             nsp_preds = utils.transform(output_arrays[1], n_inputs).tolist()
@@ -422,14 +408,14 @@ class UniLM(BERTLM, LMModule):
             # NSP probs
             nsp_probs = utils.transform(output_arrays[2], n_inputs)
 
-            outputs['nsp_preds'] = nsp_preds
-            outputs['nsp_probs'] = nsp_probs
+            outputs["nsp_preds"] = nsp_preds
+            outputs["nsp_probs"] = nsp_probs
 
         return outputs
 
 
-MaskedLmInstance = collections.namedtuple('MaskedLmInstance',
-                                          ['index', 'label'])
+MaskedLmInstance = collections.namedtuple("MaskedLmInstance",
+                                          ["index", "label"])
 
 
 def create_masked_lm_predictions(tokens,
@@ -453,7 +439,7 @@ def create_masked_lm_predictions(tokens,
         # at all -- we still predict each WordPiece independently, softmaxed
         # over the entire vocabulary.
         if (do_whole_word_mask and len(cand_indexes) >= 1 and
-                token.startswith('##')):
+                token.startswith("##")):
             cand_indexes[-1].append(i)
         else:
             cand_indexes.append([i])
@@ -555,18 +541,18 @@ def create_masked_lm_predictions(tokens,
 def get_bert_config(config_file=None):
     if not os.path.exists(config_file):
         raise ValueError(
-            'Can\'t find config_file \'%s\'. '
-            'Please pass the correct path of configuration file, '
-            'e.g.`bert_config.json`.' % config_file)
+            "Can\"t find config_file \"%s\". "
+            "Please pass the correct path of configuration file, "
+            "e.g.`bert_config.json`." % config_file)
     return BERTConfig.from_json_file(config_file)
 
 
 def get_key_to_depths(num_hidden_layers):
     key_to_depths = {
-        '/embeddings': num_hidden_layers + 2,
-        '/pooler/': 1,
-        'cls/': 0}
+        "/embeddings": num_hidden_layers + 2,
+        "/pooler/": 1,
+        "cls/": 0}
     for layer_idx in range(num_hidden_layers):
-        key_to_depths['/layer_%d/' % layer_idx] = \
+        key_to_depths["/layer_%d/" % layer_idx] = \
             num_hidden_layers - layer_idx + 1
     return key_to_depths

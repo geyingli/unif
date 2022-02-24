@@ -1,18 +1,4 @@
-# coding:=utf-8
-# Copyright 2021 Tencent. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-''' Commonly-used modeling methods. '''
+""" Commonly-used modeling methods. """
 
 import numpy as np
 
@@ -20,15 +6,15 @@ from ..tools import tf
 
 
 def gelu(num):
-    ''' Gaussian Error Linear Unit, a smoother version of the RELU.
-    paper: https://arxiv.org/abs/1606.08415 '''
+    """ Gaussian Error Linear Unit, a smoother version of the RELU.
+    paper: https://arxiv.org/abs/1606.08415 """
     cdf = 0.5 * (1.0 + tf.tanh((np.sqrt(2 / np.pi) *
                                 (num + 0.044715 * tf.pow(num, 3)))))
     return num * cdf
 
 
 def get_activation(activation_string):
-    ''' Returns activation function given string. '''
+    """ Returns activation function given string. """
     if not isinstance(activation_string, str):
         return activation_string
 
@@ -36,19 +22,19 @@ def get_activation(activation_string):
         return None
 
     act = activation_string.lower()
-    if act == 'linear':
+    if act == "linear":
         return None
-    if act == 'relu':
+    if act == "relu":
         return tf.nn.relu
-    if act == 'gelu':
+    if act == "gelu":
         return gelu
-    if act == 'tanh':
+    if act == "tanh":
         return tf.tanh
-    raise ValueError('Unsupported activation: %s' % act)
+    raise ValueError("Unsupported activation: %s" % act)
 
 
 def dropout(input_tensor, dropout_prob):
-    ''' A more intuitive dropout function. '''
+    """ A more intuitive dropout function. """
     if dropout_prob is None or dropout_prob == 0.0:
         return input_tensor
 
@@ -68,8 +54,8 @@ def layer_norm(input_tensor,
                begin_norm_axis=-1,
                begin_params_axis=-1,
                trainable=True,
-               name='LayerNorm'):
-    ''' Runs layer normalization on the last dimension of the tensor.
+               name="LayerNorm"):
+    """ Runs layer normalization on the last dimension of the tensor.
 
     Args:
       input_tensor: A tensor having rank `R`. The normalization is performed
@@ -102,38 +88,38 @@ def layer_norm(input_tensor,
       ValueError: If the rank of `input_tensor` is not known at graph build
         time, or if `input_tensor.shape[begin_params_axis:]` is not fully
         defined at graph build time.
-    '''
+    """
     with tf.variable_scope(name):
         inputs_shape = input_tensor.shape
         inputs_rank = inputs_shape.ndims
         if inputs_rank is None:
-            raise ValueError('Inputs %s has undefined rank.'
+            raise ValueError("Inputs %s has undefined rank."
                              % input_tensor.name)
         dtype = input_tensor.dtype.base_dtype
         if begin_norm_axis < 0:
             begin_norm_axis = inputs_rank + begin_norm_axis
         if begin_params_axis >= inputs_rank or begin_norm_axis >= inputs_rank:
             raise ValueError(
-                'begin_params_axis (%d) and begin_norm_axis (%d) '
-                'must be < rank(inputs) (%d)'
+                "begin_params_axis (%d) and begin_norm_axis (%d) "
+                "must be < rank(inputs) (%d)"
                 % (begin_params_axis, begin_norm_axis, inputs_rank))
         params_shape = inputs_shape[begin_params_axis:]
         if not params_shape.is_fully_defined():
             raise ValueError(
-                'Inputs %s: shape(inputs)[%s:] is not fully defined: %s' %
+                "Inputs %s: shape(inputs)[%s:] is not fully defined: %s" %
                 (input_tensor.name, begin_params_axis, inputs_shape))
 
         # Allocate parameters for the beta and gamma of the normalization.
         beta, gamma = None, None
         if center:
             beta = tf.get_variable(
-                'beta', shape=params_shape,
+                "beta", shape=params_shape,
                 dtype=dtype,
                 initializer=tf.zeros_initializer(),
                 trainable=trainable)
         if scale:
             gamma = tf.get_variable(
-                'gamma',
+                "gamma",
                 shape=params_shape,
                 dtype=dtype,
                 initializer=tf.ones_initializer(),
@@ -159,19 +145,19 @@ def layer_norm(input_tensor,
 
 
 def layer_norm_and_dropout(input_tensor, dropout_prob, trainable=True):
-    ''' Runs layer normalization followed by dropout. '''
+    """ Runs layer normalization followed by dropout. """
     output_tensor = layer_norm(input_tensor, trainable=trainable)
     output_tensor = dropout(output_tensor, dropout_prob)
     return output_tensor
 
 
 def create_initializer(initializer_range=0.02):
-    '''Creates a truncated_normal_initializer with the given range.'''
+    """Creates a truncated_normal_initializer with the given range."""
     return tf.truncated_normal_initializer(stddev=initializer_range)
 
 
 def get_shape_list(tensor, expected_rank=None, name=None):
-    '''Returns a list of the shape of tensor, preferring static dimensions.'''
+    """Returns a list of the shape of tensor, preferring static dimensions."""
     if name is None:
         name = tensor.name
 
@@ -195,11 +181,11 @@ def get_shape_list(tensor, expected_rank=None, name=None):
 
 
 def reshape_to_matrix(input_tensor):
-    '''Reshapes a >= rank 2 tensor to a rank 2 tensor (i.e., a matrix).'''
+    """Reshapes a >= rank 2 tensor to a rank 2 tensor (i.e., a matrix)."""
     ndims = input_tensor.shape.ndims
     if ndims < 2:
         raise ValueError(
-            'Input tensor must have at least rank 2. Shape = %s'
+            "Input tensor must have at least rank 2. Shape = %s"
             % (input_tensor.shape))
     if ndims == 2:
         return input_tensor
@@ -211,7 +197,7 @@ def reshape_to_matrix(input_tensor):
 
 def reshape_from_matrix(output_tensor, orig_shape_list,
                         original_shape=None):
-    '''Reshapes a rank 2 tensor back to its original rank >= 2 tensor.'''
+    """Reshapes a rank 2 tensor back to its original rank >= 2 tensor."""
     if len(orig_shape_list) == 2:
         return output_tensor
 
@@ -225,7 +211,7 @@ def reshape_from_matrix(output_tensor, orig_shape_list,
 
 
 def assert_rank(tensor, expected_rank, name=None):
-    '''Raises an exception if the tensor rank is not of the expected rank.'''
+    """Raises an exception if the tensor rank is not of the expected rank."""
     if name is None:
         name = tensor.name
 
@@ -240,8 +226,8 @@ def assert_rank(tensor, expected_rank, name=None):
     if actual_rank not in expected_rank_dict:
         scope_name = tf.get_variable_scope().name
         raise ValueError(
-            'For the tensor %s in scope %s, the actual rank '
-            '%d (shape = %s) is not equal to the expected rank %s'
+            "For the tensor %s in scope %s, the actual rank "
+            "%d (shape = %s) is not equal to the expected rank %s"
             % (name,
                scope_name,
                actual_rank,

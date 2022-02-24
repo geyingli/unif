@@ -1,21 +1,7 @@
-# coding:=utf-8
-# Copyright 2021 Tencent. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-''' ALBERT.
-  Code revised from Google's implementation.
+""" ALBERT.
+  Code revised from Google"s implementation.
   See `https://github.com/google-research/albert`.
-'''
+"""
 
 import math
 import copy
@@ -34,7 +20,7 @@ class ALBERTEncoder(BaseEncoder):
                input_ids,
                input_mask=None,
                segment_ids=None,
-               scope='bert',
+               scope="bert",
                drop_pooler=False,
                trainable=True,
                use_tilda_embedding=False,
@@ -60,8 +46,8 @@ class ALBERTEncoder(BaseEncoder):
     # Tilda embeddings for SMART algorithm
     tilda_embeddings = None
     if use_tilda_embedding:
-      with tf.variable_scope('', reuse=True):
-        tilda_embeddings = tf.get_variable('tilda_embeddings')
+      with tf.variable_scope("", reuse=True):
+        tilda_embeddings = tf.get_variable("tilda_embeddings")
 
     albert_config = copy.deepcopy(albert_config)
     if not is_training:
@@ -201,8 +187,8 @@ class ALBERTDecoder(BaseDecoder):
                  masked_lm_weights,
                  sentence_order_labels=None,
                  sample_weight=None,
-                 scope_lm='cls/predictions',
-                 scope_cls='cls/seq_relationship',
+                 scope_lm="cls/predictions",
+                 scope_cls="cls/seq_relationship",
                  trainable=True,
                  **kwargs):
         super(ALBERTDecoder, self).__init__(**kwargs)
@@ -227,7 +213,7 @@ class ALBERTDecoder(BaseDecoder):
         input_tensor = gather_indexes(
             encoder.get_sequence_output(), masked_lm_positions)
         with tf.variable_scope(scope_lm):
-            with tf.variable_scope('transform'):
+            with tf.variable_scope("transform"):
                 input_tensor = tf.layers.dense(
                     input_tensor,
                     units=albert_config.embedding_size,
@@ -237,14 +223,14 @@ class ALBERTDecoder(BaseDecoder):
                     trainable=trainable)
                 input_tensor = util.layer_norm(input_tensor)
             output_bias = tf.get_variable(
-                'output_bias', shape=[albert_config.vocab_size],
+                "output_bias", shape=[albert_config.vocab_size],
                 initializer=tf.zeros_initializer(),
                 trainable=trainable)
 
             logits = tf.matmul(
                 input_tensor, encoder.get_embedding_table(), transpose_b=True)
             logits = tf.nn.bias_add(logits, output_bias)
-            probs = tf.nn.softmax(logits, axis=-1, name='MLM_probs')
+            probs = tf.nn.softmax(logits, axis=-1, name="MLM_probs")
             probs = tf.reshape(probs, [-1, masked_lm_positions.shape[-1], albert_config.vocab_size])
             log_probs = tf.nn.log_softmax(logits, axis=-1)
 
@@ -265,27 +251,27 @@ class ALBERTDecoder(BaseDecoder):
             loss = numerator / denominator
 
             scalar_losses.append(loss)
-            self._tensors['MLM_losses'] = per_example_loss
-            self._tensors['MLM_preds'] = tf.argmax(probs, axis=-1)
+            self._tensors["MLM_losses"] = per_example_loss
+            self._tensors["MLM_preds"] = tf.argmax(probs, axis=-1)
 
         # next sentence prediction
         if sentence_order_labels is not None:
             with tf.variable_scope(scope_cls):
                 output_weights = tf.get_variable(
-                    'output_weights',
+                    "output_weights",
                     shape=[2, albert_config.hidden_size],
                     initializer=util.create_initializer(
                         albert_config.initializer_range),
                     trainable=trainable)
                 output_bias = tf.get_variable(
-                    'output_bias', shape=[2],
+                    "output_bias", shape=[2],
                     initializer=tf.zeros_initializer(),
                     trainable=trainable)
 
                 logits = tf.matmul(encoder.get_pooled_output(),
                                    output_weights, transpose_b=True)
                 logits = tf.nn.bias_add(logits, output_bias)
-                probs = tf.nn.softmax(logits, axis=-1, name='probs')
+                probs = tf.nn.softmax(logits, axis=-1, name="probs")
                 log_probs = tf.nn.log_softmax(logits, axis=-1)
 
                 labels = tf.reshape(sentence_order_labels, [-1])
@@ -299,9 +285,9 @@ class ALBERTDecoder(BaseDecoder):
                 loss = tf.reduce_mean(per_example_loss)
 
                 scalar_losses.append(loss)
-                self._tensors['SOP_losses'] = per_example_loss
-                self._tensors['SOP_probs'] = probs
-                self._tensors['SOP_preds'] = tf.argmax(probs, axis=-1)
+                self._tensors["SOP_losses"] = per_example_loss
+                self._tensors["SOP_probs"] = probs
+                self._tensors["SOP_preds"] = tf.argmax(probs, axis=-1)
 
         self.total_loss = tf.add_n(scalar_losses)
 
@@ -800,7 +786,7 @@ def attention_layer(from_tensor,
   if attention_mask is not None:
     attention_mask = tf.reshape(
         attention_mask, [batch_size, 1, to_seq_length, 1])
-    # 'new_embeddings = [B, N, F, H]'
+    # "new_embeddings = [B, N, F, H]"
   new_embeddings = dot_product_attention(q, k, v, attention_mask,
                                          attention_probs_dropout_prob)
 

@@ -1,21 +1,7 @@
-# coding:=utf-8
-# Copyright 2021 Tencent. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the 'License');
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an 'AS IS' BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-''' ELECTRA.
-  Code revised from Google's implementation.
+""" ELECTRA.
+  Code revised from Google"s implementation.
   See `https://github.com/google-research/electra`.
-'''
+"""
 
 import math
 import copy
@@ -28,8 +14,8 @@ from . import util
 
 
 Inputs = collections.namedtuple(
-    'Inputs', ['input_ids', 'input_mask', 'segment_ids', 'masked_lm_positions',
-               'masked_lm_ids', 'masked_lm_weights'])
+    "Inputs", ["input_ids", "input_mask", "segment_ids", "masked_lm_positions",
+               "masked_lm_ids", "masked_lm_weights"])
 
 
 
@@ -53,14 +39,14 @@ class ELECTRA(BaseDecoder):
         if is_training:
             if electra_objective:
                 tf.logging.info(
-                    'Training on Generator and Discriminator. '
-                    '(Pass `electra_objective=False` to exclude '
-                    'Discriminator)')
+                    "Training on Generator and Discriminator. "
+                    "(Pass `electra_objective=False` to exclude "
+                    "Discriminator)")
             else:
                 tf.logging.info(
-                    'Training on Generator, with Discriminator frozen. '
-                    '(Pass `electra_objective=True` to include '
-                    'Discriminator)')
+                    "Training on Generator, with Discriminator frozen. "
+                    "(Pass `electra_objective=True` to include "
+                    "Discriminator)")
 
         # Generator
         masked_inputs = features_to_inputs(placeholders)
@@ -72,12 +58,12 @@ class ELECTRA(BaseDecoder):
             bert_config=get_generator_config(self.config, self.bert_config),
             embedding_size=embedding_size,
             untied_embeddings=False,
-            name='generator')
+            name="generator")
         mlm_output = self._get_generator_output(
             masked_inputs, sample_weight, generator)
         self.total_loss = self.config.gen_weight * mlm_output.loss
-        self._tensors['MLM_losses'] = mlm_output.per_example_loss
-        self._tensors['MLM_preds'] = tf.reshape(
+        self._tensors["MLM_losses"] = mlm_output.per_example_loss
+        self._tensors["MLM_preds"] = tf.reshape(
             mlm_output.preds, [-1, max_predictions_per_seq])
 
         # Discriminator
@@ -91,19 +77,19 @@ class ELECTRA(BaseDecoder):
             bert_config=self.bert_config,
             reuse=False,
             embedding_size=embedding_size,
-            name='electra')
+            name="electra")
         disc_output = self._get_discriminator_output(
             disc_input, sample_weight, discriminator,
             fake_data.is_fake_tokens)
         if electra_objective:
             self.total_loss += self.config.disc_weight * disc_output.loss
-        self._tensors['RTD_losses'] = disc_output.per_example_loss
-        self._tensors['RTD_probs'] = disc_output.probs
-        self._tensors['RTD_preds'] = disc_output.preds
-        self._tensors['RTD_labels'] = disc_output.labels
+        self._tensors["RTD_losses"] = disc_output.per_example_loss
+        self._tensors["RTD_probs"] = disc_output.probs
+        self._tensors["RTD_preds"] = disc_output.preds
+        self._tensors["RTD_labels"] = disc_output.labels
 
     def _get_generator_output(self, inputs, sample_weight, generator):
-        '''Masked language modeling softmax layer.'''
+        """Masked language modeling softmax layer."""
 
         def gather_indexes(sequence_tensor, positions):
             sequence_shape = util.get_shape_list(sequence_tensor, 3)
@@ -121,7 +107,7 @@ class ELECTRA(BaseDecoder):
 
         input_tensor = gather_indexes(
             generator.get_sequence_output(), inputs.masked_lm_positions)
-        with tf.variable_scope('generator_predictions'):
+        with tf.variable_scope("generator_predictions"):
             input_tensor = tf.layers.dense(
                 input_tensor,
                 units=self.config.embedding_size,
@@ -130,14 +116,14 @@ class ELECTRA(BaseDecoder):
                     self.bert_config.initializer_range))
             input_tensor = util.layer_norm(input_tensor)
             output_bias = tf.get_variable(
-                'output_bias', shape=[self.bert_config.vocab_size],
+                "output_bias", shape=[self.bert_config.vocab_size],
                 initializer=tf.zeros_initializer())
 
             logits = tf.matmul(
                 input_tensor, generator.get_embedding_table(),
                 transpose_b=True)
             logits = tf.nn.bias_add(logits, output_bias)
-            probs = tf.nn.softmax(logits, axis=-1, name='MLM_probs')
+            probs = tf.nn.softmax(logits, axis=-1, name="MLM_probs")
             probs = tf.reshape(
                 probs, [-1, inputs.masked_lm_positions.shape[-1], self.bert_config.vocab_size])
             preds = tf.argmax(logits, axis=-1)
@@ -161,8 +147,8 @@ class ELECTRA(BaseDecoder):
             loss = numerator / denominator
 
             MLMOutput = collections.namedtuple(
-                'MLMOutput',
-                ['logits', 'probs', 'loss', 'per_example_loss', 'preds'])
+                "MLMOutput",
+                ["logits", "probs", "loss", "per_example_loss", "preds"])
             return MLMOutput(
                 logits=logits,
                 probs=probs,
@@ -172,8 +158,8 @@ class ELECTRA(BaseDecoder):
 
     def _get_discriminator_output(self, inputs, sample_weight, discriminator,
                                   labels):
-        '''Discriminator binary classifier.'''
-        with tf.variable_scope('discriminator_predictions'):
+        """Discriminator binary classifier."""
+        with tf.variable_scope("discriminator_predictions"):
             hidden = tf.layers.dense(
                 discriminator.get_sequence_output(),
                 units=self.bert_config.hidden_size,
@@ -194,14 +180,14 @@ class ELECTRA(BaseDecoder):
             probs = tf.nn.sigmoid(logits)
             preds = tf.cast(tf.greater(probs, 0.5), tf.int32)
             DiscOutput = collections.namedtuple(
-                'DiscOutput', ['loss', 'per_example_loss', 'probs', 'preds',
-                               'labels'])
+                "DiscOutput", ["loss", "per_example_loss", "probs", "preds",
+                               "labels"])
             return DiscOutput(
                 loss=loss, per_example_loss=per_example_loss, probs=probs,
                 preds=preds, labels=labels)
 
     def _get_fake_data(self, inputs, mlm_logits):
-        '''Sample from the generator to create corrupted input.'''
+        """Sample from the generator to create corrupted input."""
         inputs = unmask(inputs)
         disallow = tf.one_hot(
             inputs.masked_lm_ids, depth=self.bert_config.vocab_size,
@@ -215,14 +201,14 @@ class ELECTRA(BaseDecoder):
             tf.equal(updated_input_ids, inputs.input_ids), tf.int32))
         updated_inputs = get_updated_inputs(
             inputs, input_ids=updated_input_ids)
-        FakedData = collections.namedtuple('FakedData', [
-            'inputs', 'is_fake_tokens', 'sampled_tokens'])
+        FakedData = collections.namedtuple("FakedData", [
+            "inputs", "is_fake_tokens", "sampled_tokens"])
         return FakedData(inputs=updated_inputs, is_fake_tokens=labels,
                          sampled_tokens=sampled_tokens)
 
     def _build_transformer(self, inputs, is_training, bert_config,
-                           name='electra', reuse=False, **kwargs):
-        '''Build a transformer encoder network.'''
+                           name="electra", reuse=False, **kwargs):
+        """Build a transformer encoder network."""
         with tf.variable_scope(tf.get_variable_scope(), reuse=reuse):
             return BERTEncoder(
                 bert_config=bert_config,
@@ -236,8 +222,8 @@ class ELECTRA(BaseDecoder):
 
 
 class BERTEncoder:
-    '''BERT model. Although the training algorithm is different, the transformer
-    model for ELECTRA is the same as BERT's.
+    """BERT model. Although the training algorithm is different, the transformer
+    model for ELECTRA is the same as BERT"s.
 
     Example usage:
 
@@ -258,7 +244,7 @@ class BERTEncoder:
     logits = tf.matmul(pooled_output, label_embeddings)
     ...
     ```
-    '''
+    """
 
     def __init__(self,
                  bert_config,
@@ -273,7 +259,7 @@ class BERTEncoder:
                  input_reprs=None,
                  update_embeddings=True,
                  untied_embeddings=False):
-        '''Constructor for BertModel.
+        """Constructor for BertModel.
 
         Args:
           bert_config: `BertConfig` instance.
@@ -288,12 +274,12 @@ class BERTEncoder:
             embeddings or tf.embedding_lookup() for the word embeddings. On
             the TPU, it is much faster if this is True, on the CPU or GPU,
             it is faster if this is False.
-          scope: (optional) variable scope. Defaults to 'electra'.
+          scope: (optional) variable scope. Defaults to "electra".
 
         Raises:
           ValueError: The config is invalid or one of the input tensor shapes
             is invalid.
-        '''
+        """
         bert_config = copy.deepcopy(bert_config)
         if not is_training:
             bert_config.hidden_dropout_prob = 0.0
@@ -311,8 +297,8 @@ class BERTEncoder:
 
         if input_reprs is None:
             with tf.variable_scope(
-                    ((scope if untied_embeddings else 'electra') +
-                     '/embeddings'),
+                    ((scope if untied_embeddings else "electra") +
+                     "/embeddings"),
                     reuse=tf.AUTO_REUSE):
                 # Perform embedding lookup on the word ids
                 if embedding_size is None:
@@ -323,12 +309,12 @@ class BERTEncoder:
                         vocab_size=bert_config.vocab_size,
                         embedding_size=embedding_size,
                         initializer_range=bert_config.initializer_range,
-                        word_embedding_name='word_embeddings',
+                        word_embedding_name="word_embeddings",
                         use_one_hot_embeddings=use_one_hot_embeddings)
 
             with tf.variable_scope(
-                    ((scope if untied_embeddings else 'electra') +
-                     '/embeddings'), reuse=tf.AUTO_REUSE):
+                    ((scope if untied_embeddings else "electra") +
+                     "/embeddings"), reuse=tf.AUTO_REUSE):
                 # Add positional embeddings and token type embeddings, then
                 # layer normalize and perform dropout.
                 self.embedding_output = embedding_postprocessor(
@@ -336,9 +322,9 @@ class BERTEncoder:
                     use_token_type=True,
                     token_type_ids=token_type_ids,
                     token_type_vocab_size=bert_config.type_vocab_size,
-                    token_type_embedding_name='token_type_embeddings',
+                    token_type_embedding_name="token_type_embeddings",
                     use_position_embeddings=True,
-                    position_embedding_name='position_embeddings',
+                    position_embedding_name="position_embeddings",
                     initializer_range=bert_config.initializer_range,
                     max_position_embeddings=\
                         bert_config.max_position_embeddings,
@@ -348,13 +334,13 @@ class BERTEncoder:
         if not update_embeddings:
             self.embedding_output = tf.stop_gradient(self.embedding_output)
 
-        with tf.variable_scope(scope, default_name='electra'):
+        with tf.variable_scope(scope, default_name="electra"):
             if self.embedding_output.shape[-1] != bert_config.hidden_size:
                 self.embedding_output = tf.layers.dense(
                     self.embedding_output, bert_config.hidden_size,
-                    name='embeddings_project')
+                    name="embeddings_project")
 
-            with tf.variable_scope('encoder'):
+            with tf.variable_scope("encoder"):
                 # This converts a 2D mask of shape [batch_size, seq_length]
                 # to a 3D mask of shape [batch_size, seq_length, seq_length]
                 # which is used for the attention scores.
@@ -385,19 +371,19 @@ class BERTEncoder:
         return self.pooled_output
 
     def get_sequence_output(self):
-        '''Gets final hidden layer of encoder.
+        """Gets final hidden layer of encoder.
 
         Returns:
           float Tensor of shape [batch_size, seq_length, hidden_size]
           corresponding to the final hidden of the transformer encoder.
-        '''
+        """
         return self.sequence_output
 
     def get_all_encoder_layers(self):
         return self.all_layer_outputs
 
     def get_embedding_output(self):
-        '''Gets output of the embedding lookup (i.e., input to the
+        """Gets output of the embedding lookup (i.e., input to the
         transformer).
 
         Returns:
@@ -406,7 +392,7 @@ class BERTEncoder:
           the word embeddings with the positional embeddings and the token
           type embeddings, then performing layer normalization. This is the
           input to the transformer.
-        '''
+        """
         return self.embedding_output
 
     def get_embedding_table(self):
@@ -417,9 +403,9 @@ def embedding_lookup(input_ids,
                      vocab_size,
                      embedding_size=128,
                      initializer_range=0.02,
-                     word_embedding_name='word_embeddings',
+                     word_embedding_name="word_embeddings",
                      use_one_hot_embeddings=False):
-  '''Looks up words embeddings for id tensor.
+  """Looks up words embeddings for id tensor.
 
   Args:
     input_ids: int32 Tensor of shape [batch_size, seq_length] containing word
@@ -434,7 +420,7 @@ def embedding_lookup(input_ids,
 
   Returns:
     float Tensor of shape [batch_size, seq_length, embedding_size].
-  '''
+  """
   # This function assumes that the input is of shape [batch_size, seq_length,
   # num_inputs].
   #
@@ -474,13 +460,13 @@ def embedding_postprocessor(input_tensor,
                             use_token_type=False,
                             token_type_ids=None,
                             token_type_vocab_size=16,
-                            token_type_embedding_name='token_type_embeddings',
+                            token_type_embedding_name="token_type_embeddings",
                             use_position_embeddings=True,
-                            position_embedding_name='position_embeddings',
+                            position_embedding_name="position_embeddings",
                             initializer_range=0.02,
                             max_position_embeddings=512,
                             dropout_prob=0.1):
-  '''Performs various post-processing on a word embedding tensor.
+  """Performs various post-processing on a word embedding tensor.
 
   Args:
     input_tensor: float Tensor of shape [batch_size, seq_length,
@@ -507,7 +493,7 @@ def embedding_postprocessor(input_tensor,
 
   Raises:
     ValueError: One of the tensor shapes or input values is invalid.
-  '''
+  """
   input_shape = util.get_shape_list(input_tensor, expected_rank=3)
   batch_size = input_shape[0]
   seq_length = input_shape[1]
@@ -517,8 +503,8 @@ def embedding_postprocessor(input_tensor,
 
   if use_token_type:
     if token_type_ids is None:
-      raise ValueError('`token_type_ids` must be specified if'
-                       '`use_token_type` is True.')
+      raise ValueError("`token_type_ids` must be specified if"
+                       "`use_token_type` is True.")
     token_type_table = tf.get_variable(
         name=token_type_embedding_name,
         shape=[token_type_vocab_size, width],
@@ -568,7 +554,7 @@ def embedding_postprocessor(input_tensor,
 
 
 def create_attention_mask_from_input_mask(from_tensor, to_mask):
-  '''Create 3D attention mask from a 2D tensor mask.
+  """Create 3D attention mask from a 2D tensor mask.
 
   Args:
     from_tensor: 2D or 3D Tensor of shape [batch_size, from_seq_length, ...].
@@ -576,7 +562,7 @@ def create_attention_mask_from_input_mask(from_tensor, to_mask):
 
   Returns:
     float Tensor of shape [batch_size, from_seq_length, to_seq_length].
-  '''
+  """
   from_shape = util.get_shape_list(from_tensor, expected_rank=[2, 3])
   batch_size = from_shape[0]
   from_seq_length = from_shape[1]
@@ -587,8 +573,8 @@ def create_attention_mask_from_input_mask(from_tensor, to_mask):
   to_mask = tf.cast(
       tf.reshape(to_mask, [batch_size, 1, to_seq_length]), tf.float32)
 
-  # We don't assume that `from_tensor` is a mask (although it could be). We
-  # don't actually care if we attend *from* padding tokens (only *to* padding)
+  # We don"t assume that `from_tensor` is a mask (although it could be). We
+  # don"t actually care if we attend *from* padding tokens (only *to* padding)
   # tokens so we create a tensor of all ones.
   #
   # `broadcast_ones` = [batch_size, from_seq_length, 1]
@@ -615,15 +601,15 @@ def attention_layer(from_tensor,
                     batch_size=None,
                     from_seq_length=None,
                     to_seq_length=None):
-  '''Performs multi-headed attention from `from_tensor` to `to_tensor`.
+  """Performs multi-headed attention from `from_tensor` to `to_tensor`.
 
-  This is an implementation of multi-headed attention based on 'Attention
-  is all you Need'. If `from_tensor` and `to_tensor` are the same, then
+  This is an implementation of multi-headed attention based on "Attention
+  is all you Need". If `from_tensor` and `to_tensor` are the same, then
   this is self-attention. Each timestep in `from_tensor` attends to the
   corresponding sequence in `to_tensor`, and returns a fixed-with vector.
 
-  This function first projects `from_tensor` into a 'query' tensor and
-  `to_tensor` into 'key' and 'value' tensors. These are (effectively) a list
+  This function first projects `from_tensor` into a "query" tensor and
+  `to_tensor` into "key" and "value" tensors. These are (effectively) a list
   of tensors of length `num_attention_heads`, where each tensor is of shape
   [batch_size, seq_length, size_per_head].
 
@@ -670,7 +656,7 @@ def attention_layer(from_tensor,
 
   Raises:
     ValueError: Any of the arguments or tensor shapes are invalid.
-  '''
+  """
 
   def transpose_for_scores(input_tensor, batch_size, num_attention_heads,
                            seq_length, width):
@@ -685,7 +671,7 @@ def attention_layer(from_tensor,
 
   if len(from_shape) != len(to_shape):
     raise ValueError(
-        'The rank of `from_tensor` must match the rank of `to_tensor`.')
+        "The rank of `from_tensor` must match the rank of `to_tensor`.")
 
   if len(from_shape) == 3:
     batch_size = from_shape[0]
@@ -694,9 +680,9 @@ def attention_layer(from_tensor,
   elif len(from_shape) == 2:
     if batch_size is None or from_seq_length is None or to_seq_length is None:
       raise ValueError(
-          'When passing in rank 2 tensors to attention_layer, the values '
-          'for `batch_size`, `from_seq_length`, and `to_seq_length` '
-          'must all be specified.')
+          "When passing in rank 2 tensors to attention_layer, the values "
+          "for `batch_size`, `from_seq_length`, and `to_seq_length` "
+          "must all be specified.")
 
   # Scalar dimensions referenced here:
   #   B = batch size (number of sequences)
@@ -713,7 +699,7 @@ def attention_layer(from_tensor,
       from_tensor_2d,
       num_attention_heads * size_per_head,
       activation=query_act,
-      name='query',
+      name="query",
       kernel_initializer=util.create_initializer(initializer_range))
 
   # `key_layer` = [B*T, N*H]
@@ -721,7 +707,7 @@ def attention_layer(from_tensor,
       to_tensor_2d,
       num_attention_heads * size_per_head,
       activation=key_act,
-      name='key',
+      name="key",
       kernel_initializer=util.create_initializer(initializer_range))
 
   # `value_layer` = [B*T, N*H]
@@ -729,7 +715,7 @@ def attention_layer(from_tensor,
       to_tensor_2d,
       num_attention_heads * size_per_head,
       activation=value_act,
-      name='value',
+      name="value",
       kernel_initializer=util.create_initializer(initializer_range))
 
   # `query_layer` = [B, N, F, H]
@@ -741,7 +727,7 @@ def attention_layer(from_tensor,
   key_layer = transpose_for_scores(key_layer, batch_size, num_attention_heads,
                                    to_seq_length, size_per_head)
 
-  # Take the dot product between 'query' and 'key' to get the raw
+  # Take the dot product between "query" and "key" to get the raw
   # attention scores.
   # `attention_scores` = [B, N, F, T]
   attention_scores = tf.matmul(query_layer, key_layer, transpose_b=True)
@@ -808,7 +794,7 @@ def transformer_model(input_tensor,
                       attention_probs_dropout_prob=0.1,
                       initializer_range=0.02,
                       do_return_all_layers=False):
-  '''Multi-headed, multi-layer Transformer from 'Attention is All You Need'.
+  """Multi-headed, multi-layer Transformer from "Attention is All You Need".
 
   This is almost an exact implementation of the original Transformer encoder.
 
@@ -827,7 +813,7 @@ def transformer_model(input_tensor,
     hidden_size: int. Hidden size of the Transformer.
     num_hidden_layers: int. Number of layers (blocks) in the Transformer.
     num_attention_heads: int. Number of attention heads in the Transformer.
-    intermediate_size: int. The size of the 'intermediate' (a.k.a., feed
+    intermediate_size: int. The size of the "intermediate" (a.k.a., feed
       forward) layer.
     intermediate_act_fn: function. The non-linear activation function to apply
       to the output of the intermediate/feed-forward layer.
@@ -845,11 +831,11 @@ def transformer_model(input_tensor,
 
   Raises:
     ValueError: A Tensor shape or parameter is invalid.
-  '''
+  """
   if hidden_size % num_attention_heads != 0:
     raise ValueError(
-        'The hidden size (%d) is not a multiple of the number of attention '
-        'heads (%d)' % (hidden_size, num_attention_heads))
+        "The hidden size (%d) is not a multiple of the number of attention "
+        "heads (%d)" % (hidden_size, num_attention_heads))
 
   attention_head_size = int(hidden_size / num_attention_heads)
   input_shape = util.get_shape_list(input_tensor, expected_rank=3)
@@ -860,7 +846,7 @@ def transformer_model(input_tensor,
   # The Transformer performs sum residuals on all layers so the input needs
   # to be the same as the hidden size.
   if input_width != hidden_size:
-    raise ValueError('The width of the input tensor (%d) != hidden size (%d)'
+    raise ValueError("The width of the input tensor (%d) != hidden size (%d)"
                      % (input_width, hidden_size))
 
   # We keep the representation as a 2D tensor to avoid re-shaping it back and
@@ -872,10 +858,10 @@ def transformer_model(input_tensor,
   attn_maps = []
   all_layer_outputs = []
   for layer_idx in range(num_hidden_layers):
-    with tf.variable_scope('layer_%d' % layer_idx):
-      with tf.variable_scope('attention'):
+    with tf.variable_scope("layer_%d" % layer_idx):
+      with tf.variable_scope("attention"):
         attention_heads = []
-        with tf.variable_scope('self'):
+        with tf.variable_scope("self"):
           attention_head, probs = attention_layer(
               from_tensor=prev_output,
               to_tensor=prev_output,
@@ -901,7 +887,7 @@ def transformer_model(input_tensor,
 
         # Run a linear projection of `hidden_size` then add a residual
         # with `layer_input`.
-        with tf.variable_scope('output'):
+        with tf.variable_scope("output"):
           attention_output = tf.layers.dense(
               attention_output,
               hidden_size,
@@ -910,8 +896,8 @@ def transformer_model(input_tensor,
               attention_output, hidden_dropout_prob)
           attention_output = util.layer_norm(attention_output + prev_output)
 
-      # The activation is only applied to the 'intermediate' hidden layer.
-      with tf.variable_scope('intermediate'):
+      # The activation is only applied to the "intermediate" hidden layer.
+      with tf.variable_scope("intermediate"):
         intermediate_output = tf.layers.dense(
             attention_output,
             intermediate_size,
@@ -919,7 +905,7 @@ def transformer_model(input_tensor,
             kernel_initializer=util.create_initializer(initializer_range))
 
       # Down-project back to `hidden_size` then add the residual.
-      with tf.variable_scope('output'):
+      with tf.variable_scope("output"):
         prev_output = tf.layers.dense(
             intermediate_output,
             hidden_size,
@@ -937,7 +923,7 @@ def transformer_model(input_tensor,
 
 
 class PretrainingConfig:
-    '''Defines pre-training hyperparameters.'''
+    """Defines pre-training hyperparameters."""
 
     def __init__(self, **kwargs):
 
@@ -960,9 +946,9 @@ class PretrainingConfig:
         self.update(kwargs)
 
         # model settings
-        if self.model_size == 'small':
+        if self.model_size == "small":
             self.embedding_size = 128
-        elif self.model_size == 'base':
+        elif self.model_size == "base":
             self.embedding_size = 768
         else:
             self.embedding_size = 1024
@@ -974,12 +960,12 @@ class PretrainingConfig:
 
 def features_to_inputs(features):
   return Inputs(
-      input_ids=features['input_ids'],
-      input_mask=features['input_mask'],
-      segment_ids=features['segment_ids'],
-      masked_lm_positions=features.get('masked_lm_positions'),
-      masked_lm_ids=features.get('masked_lm_ids'),
-      masked_lm_weights=features.get('masked_lm_weights'))
+      input_ids=features["input_ids"],
+      input_mask=features["input_mask"],
+      segment_ids=features["segment_ids"],
+      masked_lm_positions=features.get("masked_lm_positions"),
+      masked_lm_ids=features.get("masked_lm_ids"),
+      masked_lm_weights=features.get("masked_lm_weights"))
 
 
 def unmask(inputs):
@@ -989,7 +975,7 @@ def unmask(inputs):
 
 
 def gather_positions(sequence, positions):
-    '''Gathers the vectors at the specific positions over a minibatch.
+    """Gathers the vectors at the specific positions over a minibatch.
 
     Args:
       sequence: A [batch_size, seq_length] or
@@ -998,7 +984,7 @@ def gather_positions(sequence, positions):
 
     Returns: A [batch_size, n_positions] or
       [batch_size, n_positions, depth] tensor of the values at the indices
-    '''
+    """
     shape = util.get_shape_list(sequence, expected_rank=[2, 3])
     depth_dimension = (len(shape) == 3)
     if depth_dimension:
@@ -1035,7 +1021,7 @@ def get_updated_inputs(inputs, **kwargs):
 
 
 def scatter_update(sequence, updates, positions):
-    '''Scatter-update a sequence.
+    """Scatter-update a sequence.
 
     Args:
       sequence: A [batch_size, seq_len] or [batch_size, seq_len, depth] tensor
@@ -1043,12 +1029,12 @@ def scatter_update(sequence, updates, positions):
       positions: A [batch_size, n_positions] tensor
 
     Returns: A tuple of two tensors. First is a [batch_size, seq_len] or
-      [batch_size, seq_len, depth] tensor of 'sequence' with elements at
-      'positions' replaced by the values at 'updates.' Updates to index 0 are
+      [batch_size, seq_len, depth] tensor of "sequence" with elements at
+      "positions" replaced by the values at "updates." Updates to index 0 are
       ignored. If there are duplicated positions the update is only applied
       once. Second is a [batch_size, seq_len] mask tensor of which inputs were
       updated.
-    '''
+    """
     shape = util.get_shape_list(sequence, expected_rank=[2, 3])
     depth_dimension = (len(shape) == 3)
     if depth_dimension:
@@ -1093,25 +1079,25 @@ def scatter_update(sequence, updates, positions):
 
 
 def get_bert_config(model_size, vocab_size):
-    if model_size == 'large':
-        args = {'hidden_size': 1024, 'num_hidden_layers': 24}
-    elif model_size == 'base':
-        args = {'hidden_size': 768, 'num_hidden_layers': 12}
-    elif model_size == 'small':
-        args = {'hidden_size': 256, 'num_hidden_layers': 12}
+    if model_size == "large":
+        args = {"hidden_size": 1024, "num_hidden_layers": 24}
+    elif model_size == "base":
+        args = {"hidden_size": 768, "num_hidden_layers": 12}
+    elif model_size == "small":
+        args = {"hidden_size": 256, "num_hidden_layers": 12}
     else:
         raise ValueError(
-            'Unknown `model_size` %s. Pick one from '
-            '(`small`, `base`, `large`).' % model_size)
-    args['vocab_size'] = vocab_size
-    args['num_attention_heads'] = max(1, args['hidden_size'] // 64)
-    args['intermediate_size'] = 4 * args['hidden_size']
+            "Unknown `model_size` %s. Pick one from "
+            "(`small`, `base`, `large`)." % model_size)
+    args["vocab_size"] = vocab_size
+    args["num_attention_heads"] = max(1, args["hidden_size"] // 64)
+    args["intermediate_size"] = 4 * args["hidden_size"]
     return BERTConfig.from_dict(args)
 
 
 def get_generator_config(config: PretrainingConfig,
                          bert_config: BERTConfig):
-    '''Get model config for the generator network.'''
+    """Get model config for the generator network."""
     gen_config = copy.deepcopy(bert_config)
     gen_config.hidden_size = int(round(
         bert_config.hidden_size * config.generator_hidden_size))

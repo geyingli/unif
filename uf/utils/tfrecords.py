@@ -1,23 +1,8 @@
-# coding:=utf-8
-# Copyright 2021 Tencent. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 import collections
 
 from ..tools import tf
 
-BACKUP_DATA = 'ex:'
+BACKUP_DATA = "ex:"
 
 
 def write_tfrecords(data, tfrecords_file):
@@ -38,12 +23,12 @@ def write_tfrecords(data, tfrecords_file):
                 features[keys[i]] = create_int_feature([value])
             elif isinstance(value, float):
                 features[keys[i]] = create_float_feature([value])
-            elif value.dtype.name.startswith('int'):
+            elif value.dtype.name.startswith("int"):
                 features[keys[i]] = create_int_feature(value.tolist())
-            elif value.dtype.name.startswith('float'):
+            elif value.dtype.name.startswith("float"):
                 features[keys[i]] = create_float_feature(value.tolist())
             else:
-                raise ValueError('Invalid data type: %s.' % type(value))
+                raise ValueError("Invalid data type: %s." % type(value))
         tf_example = tf.train.Example(
             features=tf.train.Features(feature=features))
         writer.write(tf_example.SerializeToString())
@@ -66,7 +51,7 @@ def get_tfrecords_length(tfrecords_files):
 
 
 def create_int_feature(values):
-    ''' Convert list of values into tf-serializable Int64. '''
+    """ Convert list of values into tf-serializable Int64. """
     if not isinstance(values, list):
         values = [values]
     feature = tf.train.Feature(
@@ -75,7 +60,7 @@ def create_int_feature(values):
 
 
 def create_float_feature(values):
-    ''' Convert list of values into tf-serializable Float. '''
+    """ Convert list of values into tf-serializable Float. """
     if not isinstance(values, list):
         values = [values]
     feature = tf.train.Feature(

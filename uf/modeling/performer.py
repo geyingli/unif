@@ -1,23 +1,9 @@
-# coding:=utf-8
-# Copyright 2021 Tencent. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the 'License');
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an 'AS IS' BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-''' Performer: BERT with Fast Attention Via positive Orthogonal Random
+""" Performer: BERT with Fast Attention Via positive Orthogonal Random
 features (FAVOR+).
-  Code revised from Google's implementation.
+  Code revised from Google"s implementation.
   See `https://github.com/google-research/google-research/tree/master/
     performer/fast_attention/tensorflow`.
-'''
+"""
 
 import math
 import copy
@@ -29,7 +15,7 @@ from . import util
 
 
 BIG_CONSTANT = 1e8
-_CHR_IDX = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm']
+_CHR_IDX = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m"]
 
 
 
@@ -40,8 +26,8 @@ class PerformerEncoder(BERTEncoder):
                  input_ids,
                  input_mask,
                  segment_ids,
-                 scope='performer',
-                 kernel_transformation='relu',
+                 scope="performer",
+                 kernel_transformation="relu",
                  nb_random_features=1,
                  drop_pooler=False,
                  trainable=True,
@@ -51,15 +37,15 @@ class PerformerEncoder(BERTEncoder):
         # Tilda embeddings for SMART algorithm
         tilda_embeddings = None
         if use_tilda_embedding:
-            with tf.variable_scope('', reuse=True):
-                tilda_embeddings = tf.get_variable('tilda_embeddings')
+            with tf.variable_scope("", reuse=True):
+                tilda_embeddings = tf.get_variable("tilda_embeddings")
 
         self.nb_random_features = nb_random_features
 
-        assert kernel_transformation in ('relu', 'softmax'), (
-            'Wrong value of `kernel_transformation`: %s. '
-            'Pick one from "relu" and "softmax".' % kernel_transformation)
-        if kernel_transformation == 'relu':
+        assert kernel_transformation in ("relu", "softmax"), (
+            "Wrong value of `kernel_transformation`: %s. "
+            "Pick one from \"relu\" and \"softmax\"." % kernel_transformation)
+        if kernel_transformation == "relu":
             self.kernel_transformation = relu_kernel_transformation
         else:
             self.kernel_transformation = softmax_kernel_transformation
@@ -74,7 +60,7 @@ class PerformerEncoder(BERTEncoder):
         max_seq_length = input_shape[1]
 
         with tf.variable_scope(scope):
-            with tf.variable_scope('embeddings'):
+            with tf.variable_scope("embeddings"):
 
                 (self.embedding_output, self.embedding_table) = \
                     self.embedding_lookup(
@@ -84,7 +70,7 @@ class PerformerEncoder(BERTEncoder):
                         max_seq_length=max_seq_length,
                         embedding_size=bert_config.hidden_size,
                         initializer_range=bert_config.initializer_range,
-                        word_embedding_name='word_embeddings',
+                        word_embedding_name="word_embeddings",
                         tilda_embeddings=tilda_embeddings,
                         trainable=trainable)
 
@@ -98,16 +84,16 @@ class PerformerEncoder(BERTEncoder):
                     use_token_type=True,
                     segment_ids=segment_ids,
                     token_type_vocab_size=bert_config.type_vocab_size,
-                    token_type_embedding_name='token_type_embeddings',
+                    token_type_embedding_name="token_type_embeddings",
                     use_position_embeddings=True,
-                    position_embedding_name='position_embeddings',
+                    position_embedding_name="position_embeddings",
                     initializer_range=bert_config.initializer_range,
                     max_position_embeddings=\
                         bert_config.max_position_embeddings,
                     dropout_prob=bert_config.hidden_dropout_prob,
                     trainable=trainable)
 
-            with tf.variable_scope('encoder'):
+            with tf.variable_scope("encoder"):
 
                 # stacked transformers
                 self.all_encoder_layers = self.transformer_model(
@@ -129,7 +115,7 @@ class PerformerEncoder(BERTEncoder):
                     trainable=trainable)
 
             self.sequence_output = self.all_encoder_layers[-1]
-            with tf.variable_scope('pooler'):
+            with tf.variable_scope("pooler"):
                 first_token_tensor = self.sequence_output[:, 0, :]
 
                 # trick: ignore the fully connected layer
@@ -162,8 +148,8 @@ class PerformerEncoder(BERTEncoder):
                           trainable=True):
         if hidden_size % num_attention_heads != 0:
             raise ValueError(
-                'The hidden size (%d) is not a multiple of the number '
-                'of attention heads (%d)'
+                "The hidden size (%d) is not a multiple of the number "
+                "of attention heads (%d)"
                 % (hidden_size, num_attention_heads))
 
         # prev_output = util.reshape_to_matrix(input_tensor)
@@ -172,12 +158,12 @@ class PerformerEncoder(BERTEncoder):
         self.attention_scores = []
         all_layer_outputs = []
         for layer_idx in range(num_hidden_layers):
-            with tf.variable_scope('layer_%d' % layer_idx):
+            with tf.variable_scope("layer_%d" % layer_idx):
                 layer_input = prev_output
 
                 def _build_forward(layer_input):
-                    with tf.variable_scope('attention'):
-                        with tf.variable_scope('self'):
+                    with tf.variable_scope("attention"):
+                        with tf.variable_scope("self"):
 
                             layer_input *= tf.cast(tf.expand_dims(
                                 input_mask, axis=-1), dtype=tf.float32)
@@ -201,7 +187,7 @@ class PerformerEncoder(BERTEncoder):
                                 cache=None,
                                 decode_loop_step=None)
 
-                        with tf.variable_scope('output'):
+                        with tf.variable_scope("output"):
                             attention_output = tf.layers.dense(
                                 attention_output,
                                 hidden_size,
@@ -216,7 +202,7 @@ class PerformerEncoder(BERTEncoder):
 
                     # The activation is only applied to the `intermediate`
                     # hidden layer.
-                    with tf.variable_scope('intermediate'):
+                    with tf.variable_scope("intermediate"):
                         intermediate_output = tf.layers.dense(
                             attention_output,
                             intermediate_size,
@@ -226,7 +212,7 @@ class PerformerEncoder(BERTEncoder):
                             trainable=trainable)
 
                     # Down-project back to hidden_size then add the residual.
-                    with tf.variable_scope('output'):
+                    with tf.variable_scope("output"):
                         layer_output = tf.layers.dense(
                             intermediate_output,
                             hidden_size,
@@ -258,7 +244,7 @@ class PerformerEncoder(BERTEncoder):
 
 
 def create_projection_matrix(m, d, seed=0, scaling=0, struct_mode=False):
-  r'''Constructs the matrix of random projections.
+  r"""Constructs the matrix of random projections.
   Constructs a matrix of random orthogonal projections. Each projection vector
   has direction chosen uniformly at random and either deterministic length
   \sqrt{d} or length taken from the \chi(d) distribution (in the latter case
@@ -276,7 +262,7 @@ def create_projection_matrix(m, d, seed=0, scaling=0, struct_mode=False):
       orthogonalization.
   Returns:
     The matrix of random projections of the shape [m, d].
-  '''
+  """
   nb_full_blocks = int(m / d)
   block_list = []
   current_seed = seed
@@ -306,13 +292,13 @@ def create_projection_matrix(m, d, seed=0, scaling=0, struct_mode=False):
   elif scaling == 1:
     multiplier = 1 / tf.math.rsqrt(float(d)) * tf.ones((m))
   else:
-    raise ValueError('Scaling must be one of {0, 1}. Was %s' % scaling)
+    raise ValueError("Scaling must be one of {0, 1}. Was %s" % scaling)
 
   return tf.matmul(tf.linalg.diag(multiplier), final_matrix)
 
 
 def create_products_of_givens_rotations(dim, seed):
-  r'''Constructs a 2D-tensor which is a product of Givens random rotations.
+  r"""Constructs a 2D-tensor which is a product of Givens random rotations.
   Constructs a 2D-tensor of the form G_1 * ... * G_k, where G_i is a Givens
   random rotation. The resulting tensor mimics a matrix taken uniformly at
   random form the orthogonal group.
@@ -321,7 +307,7 @@ def create_products_of_givens_rotations(dim, seed):
     seed: random seed.
   Returns:
     The product of Givens random rotations.
-  '''
+  """
   nb_givens_rotations = dim * int(math.ceil(math.log(float(dim))))
   q = np.eye(dim, dim)
   np.random.seed(seed)
@@ -345,7 +331,7 @@ def relu_kernel_transformation(data,
                                is_query,
                                projection_matrix=None,
                                numerical_stabilizer=0.001):
-  '''Computes features for the ReLU-kernel.
+  """Computes features for the ReLU-kernel.
   Computes random features for the ReLU kernel from
   https://arxiv.org/pdf/2009.14794.pdf.
   Args:
@@ -358,14 +344,14 @@ def relu_kernel_transformation(data,
     numerical_stabilizer: small positive constant for numerical stability.
   Returns:
     Corresponding kernel feature map.
-  '''
+  """
   del is_query
   if projection_matrix is None:
     return tf.nn.relu(data) + numerical_stabilizer
   else:
     ratio = tf.math.rsqrt(
         tf.cast(projection_matrix.shape[0], tf.float32))
-    data_dash = ratio * tf.einsum('blhd,md->blhm', data, projection_matrix)
+    data_dash = ratio * tf.einsum("blhd,md->blhm", data, projection_matrix)
     return tf.nn.relu(data_dash) + numerical_stabilizer
 
 
@@ -373,7 +359,7 @@ def softmax_kernel_transformation(data,
                                   is_query,
                                   projection_matrix=None,
                                   numerical_stabilizer=0.000001):
-  '''Computes random features for the softmax kernel using FAVOR+ mechanism.
+  """Computes random features for the softmax kernel using FAVOR+ mechanism.
   Computes random features for the softmax kernel using FAVOR+ mechanism from
   https://arxiv.org/pdf/2009.14794.pdf.
   Args:
@@ -386,14 +372,14 @@ def softmax_kernel_transformation(data,
     numerical_stabilizer: small positive constant for numerical stability.
   Returns:
     Corresponding kernel feature map.
-  '''
+  """
   data_normalizer = \
       tf.math.rsqrt(1 / tf.math.rsqrt(tf.cast(data.shape[-1], tf.float32)))
   ratio = tf.math.rsqrt(
       tf.cast(projection_matrix.shape[0]
               if projection_matrix is not None
               else 1.0, tf.float32))
-  data_dash = tf.einsum('blhd,md->blhm', data, projection_matrix)
+  data_dash = tf.einsum("blhd,md->blhm", data, projection_matrix)
   diag_data = tf.math.square(data)
   diag_data = tf.math.reduce_sum(
       diag_data, axis=tf.keras.backend.ndim(data) - 1)
@@ -413,54 +399,54 @@ def softmax_kernel_transformation(data,
 
 
 def noncausal_numerator(qs, ks, vs):
-  '''Computes not-normalized FAVOR noncausal attention AV.
+  """Computes not-normalized FAVOR noncausal attention AV.
   Args:
     qs: query_prime tensor of the shape [L,B,H,M].
     ks: key_prime tensor of the shape [L,B,H,M].
     vs: value tensor of the shape [L,B,H,D].
   Returns:
     Not-normalized FAVOR noncausal attention AV.
-  '''
-  kvs = tf.einsum('lbhm,lbhd->bhmd', ks, vs)
-  return tf.einsum('lbhm,bhmd->lbhd', qs, kvs)
+  """
+  kvs = tf.einsum("lbhm,lbhd->bhmd", ks, vs)
+  return tf.einsum("lbhm,bhmd->lbhd", qs, kvs)
 
 
 def noncausal_denominator(qs, ks):
-  '''Computes FAVOR normalizer in noncausal attention.
+  """Computes FAVOR normalizer in noncausal attention.
   Args:
     qs: query_prime tensor of the shape [L,B,H,M].
     ks: key_prime tensor of the shape [L,B,H,M].
   Returns:
     FAVOR normalizer in noncausal attention.
-  '''
+  """
   all_ones = tf.ones([ks.shape[0]])
-  ks_sum = tf.einsum('lbhm,l->bhm', ks, all_ones)
-  return tf.einsum('lbhm,bhm->lbh', qs, ks_sum)
+  ks_sum = tf.einsum("lbhm,l->bhm", ks, all_ones)
+  return tf.einsum("lbhm,bhm->lbh", qs, ks_sum)
 
 
 @tf.custom_gradient
 def causal_numerator(qs, ks, vs):
-  '''Computes not-normalized FAVOR causal attention A_{masked}V.
+  """Computes not-normalized FAVOR causal attention A_{masked}V.
   Args:
     qs: query_prime tensor of the shape [L,B,H,M].
     ks: key_prime tensor of the shape [L,B,H,M].
     vs: value tensor of the shape [L,B,H,D].
   Returns:
     Not-normalized FAVOR causal attention A_{masked}V.
-  '''
+  """
 
   result = []
-  sums = tf.zeros_like(tf.einsum('ijk,ijl->ijkl', ks[0], vs[0]))
+  sums = tf.zeros_like(tf.einsum("ijk,ijl->ijkl", ks[0], vs[0]))
 
   for index in range(qs.shape[0]):
-    sums = sums + tf.einsum('ijk,ijl->ijkl', ks[index], vs[index])
-    result.append(tf.einsum('ijkl,ijk->ijl', sums, qs[index])[None, Ellipsis])
+    sums = sums + tf.einsum("ijk,ijl->ijkl", ks[index], vs[index])
+    result.append(tf.einsum("ijkl,ijk->ijl", sums, qs[index])[None, Ellipsis])
 
   result = tf.concat(result, axis=0)
 
   def grad(res_grad):
 
-    grads = tf.zeros_like(tf.einsum('ijk,ijl->ijkl', ks[0], vs[0]))
+    grads = tf.zeros_like(tf.einsum("ijk,ijl->ijkl", ks[0], vs[0]))
 
     gr_sums = sums
 
@@ -471,11 +457,11 @@ def causal_numerator(qs, ks, vs):
     for index in range(qs.shape[0] - 1, -1, -1):
 
       q_grads.append(
-          tf.einsum('ijkl,ijl->ijk', gr_sums, res_grad[index])[None, Ellipsis])
-      grads = grads + tf.einsum('ijk,ijl->ijkl', qs[index], res_grad[index])
-      k_grads.append(tf.einsum('ijkl,ijl->ijk', grads, vs[index])[None, Ellipsis])
-      v_grads.append(tf.einsum('ijkl,ijk->ijl', grads, ks[index])[None, Ellipsis])
-      gr_sums = gr_sums - tf.einsum('ijk,ijl->ijkl', ks[index], vs[index])
+          tf.einsum("ijkl,ijl->ijk", gr_sums, res_grad[index])[None, Ellipsis])
+      grads = grads + tf.einsum("ijk,ijl->ijkl", qs[index], res_grad[index])
+      k_grads.append(tf.einsum("ijkl,ijl->ijk", grads, vs[index])[None, Ellipsis])
+      v_grads.append(tf.einsum("ijkl,ijk->ijl", grads, ks[index])[None, Ellipsis])
+      gr_sums = gr_sums - tf.einsum("ijk,ijl->ijkl", ks[index], vs[index])
 
     q_grads = tf.concat(q_grads[::-1], axis=0)
     k_grads = tf.concat(k_grads[::-1], axis=0)
@@ -488,13 +474,13 @@ def causal_numerator(qs, ks, vs):
 
 @tf.custom_gradient
 def causal_denominator(qs, ks):
-  '''Computes FAVOR normalizer in causal attention.
+  """Computes FAVOR normalizer in causal attention.
   Args:
     qs: query_prime tensor of the shape [L,B,H,M].
     ks: key_prime tensor of the shape [L,B,H,M].
   Returns:
     FAVOR normalizer in causal attention.
-  '''
+  """
 
   result = []
   sums = tf.zeros_like(ks[0])
@@ -517,8 +503,8 @@ def causal_denominator(qs, ks):
     for index in range(qs.shape[0] - 1, -1, -1):
 
       q_grads.append(
-          tf.einsum('ijk,ij->ijk', gr_sums, res_grad[index])[None, Ellipsis])
-      k_grad = k_grad + tf.einsum('ijk,ij->ijk', qs[index], res_grad[index])
+          tf.einsum("ijk,ij->ijk", gr_sums, res_grad[index])[None, Ellipsis])
+      k_grad = k_grad + tf.einsum("ijk,ij->ijk", qs[index], res_grad[index])
       k_grads.append(k_grad[None, Ellipsis])
       gr_sums = gr_sums - ks[index]
 
@@ -536,7 +522,7 @@ def favor_attention(query,
                     kernel_transformation,
                     causal,
                     projection_matrix=None):
-  '''Computes FAVOR normalized attention.
+  """Computes FAVOR normalized attention.
   Args:
     query: query tensor.
     key: key tensor.
@@ -546,7 +532,7 @@ def favor_attention(query,
     projection_matrix: projection matrix to be used.
   Returns:
     FAVOR normalized attention.
-  '''
+  """
   query_prime = kernel_transformation(query, True,
                                       projection_matrix)  # [B,L,H,M]
   key_prime = kernel_transformation(key, False, projection_matrix)  # [B,L,H,M]
@@ -570,7 +556,7 @@ def favor_attention(query,
 
 
 class Attention(tf.keras.layers.Layer):
-  '''Multi-headed attention layer.'''
+  """Multi-headed attention layer."""
 
   def __init__(self,
                hidden_size,
@@ -581,7 +567,7 @@ class Attention(tf.keras.layers.Layer):
                causal=False,
                projection_matrix_type=None,
                nb_random_features=0):
-    '''Initialize Attention.
+    """Initialize Attention.
     Args:
       hidden_size: int, output dim of hidden layer.
       num_heads: int, number of heads to repeat the same attention structure.
@@ -594,10 +580,10 @@ class Attention(tf.keras.layers.Layer):
         projection matrix will be applied.
       nb_random_features: number of random features to be used (relevant only if
         projection_matrix is not None).
-    '''
+    """
     if hidden_size % num_heads:
       raise ValueError(
-          'Hidden size ({}) must be divisible by the number of heads ({}).'
+          "Hidden size ({}) must be divisible by the number of heads ({})."
           .format(hidden_size, num_heads))
 
     super(Attention, self).__init__()
@@ -611,7 +597,7 @@ class Attention(tf.keras.layers.Layer):
     self.nb_random_features = nb_random_features
 
   def build(self, input_shape):
-    '''Builds the layer.'''
+    """Builds the layer."""
     # Layers for linearly projecting the queries, keys, and values.
     size_per_head = self.hidden_size // self.num_heads
 
@@ -625,17 +611,17 @@ class Attention(tf.keras.layers.Layer):
         output_shape=(self.num_heads, size_per_head),
         kernel_initializer=attention_initializer,
         use_bias=False,
-        name='query')
+        name="query")
     self.key_dense_layer = DenseEinsum(
         output_shape=(self.num_heads, size_per_head),
         kernel_initializer=attention_initializer,
         use_bias=False,
-        name='key')
+        name="key")
     self.value_dense_layer = DenseEinsum(
         output_shape=(self.num_heads, size_per_head),
         kernel_initializer=attention_initializer,
         use_bias=False,
-        name='value')
+        name="value")
 
     output_initializer = _glorot_initializer(self.hidden_size, self.hidden_size)
     self.output_dense_layer = DenseEinsum(
@@ -643,14 +629,14 @@ class Attention(tf.keras.layers.Layer):
         num_summed_dimensions=2,
         kernel_initializer=output_initializer,
         use_bias=False,
-        name='output_transform')
+        name="output_transform")
     super(Attention, self).build(input_shape)
 
   def get_config(self):
     return {
-        'hidden_size': self.hidden_size,
-        'num_heads': self.num_heads,
-        'attention_dropout': self.attention_dropout,
+        "hidden_size": self.hidden_size,
+        "num_heads": self.num_heads,
+        "attention_dropout": self.attention_dropout,
     }
 
   def call(self,
@@ -660,7 +646,7 @@ class Attention(tf.keras.layers.Layer):
            training,
            cache=None,
            decode_loop_step=None):
-    '''Apply attention mechanism to query_input and source_input.
+    """Apply attention mechanism to query_input and source_input.
     Args:
       query_input: A tensor with shape [batch_size, length_query, hidden_size].
       source_input: A tensor with shape [batch_size, length_source,
@@ -670,15 +656,15 @@ class Attention(tf.keras.layers.Layer):
       training: A bool, whether in training mode or not.
       cache: (Used during prediction) A dictionary with tensors containing
         results of previous attentions. The dictionary must have the items:
-            {'k': tensor with shape [batch_size, i, heads, dim_per_head],
-             'v': tensor with shape [batch_size, i, heads, dim_per_head]} where
+            {"k": tensor with shape [batch_size, i, heads, dim_per_head],
+             "v": tensor with shape [batch_size, i, heads, dim_per_head]} where
                i is the current decoded length for non-padded decode, or max
                sequence length for padded decode.
       decode_loop_step: An integer, step number of the decoding loop. Used only
         for autoregressive inference on TPU.
     Returns:
       Attention layer output with shape [batch_size, length_query, hidden_size]
-    '''
+    """
     # Linearly project the query, key and value using different learned
     # projections. Splitting heads is automatically done during the linear
     # projections --> [batch_size, length, num_heads, dim_per_head].
@@ -699,23 +685,23 @@ class Attention(tf.keras.layers.Layer):
     if cache is not None:
       # Combine cached keys and values with new keys and values.
       if decode_loop_step is not None:
-        cache_k_shape = cache['k'].shape.as_list()
+        cache_k_shape = cache["k"].shape.as_list()
         indices = tf.reshape(
             tf.one_hot(decode_loop_step, cache_k_shape[1], dtype=key.dtype),
             [1, cache_k_shape[1], 1, 1])
-        key = cache['k'] + key * indices
-        cache_v_shape = cache['v'].shape.as_list()
+        key = cache["k"] + key * indices
+        cache_v_shape = cache["v"].shape.as_list()
         indices = tf.reshape(
             tf.one_hot(decode_loop_step, cache_v_shape[1], dtype=value.dtype),
             [1, cache_v_shape[1], 1, 1])
-        value = cache['v'] + value * indices
+        value = cache["v"] + value * indices
       else:
-        key = tf.concat([tf.cast(cache['k'], key.dtype), key], axis=1)
-        value = tf.concat([tf.cast(cache['v'], value.dtype), value], axis=1)
+        key = tf.concat([tf.cast(cache["k"], key.dtype), key], axis=1)
+        value = tf.concat([tf.cast(cache["v"], value.dtype), value], axis=1)
 
       # Update cache
-      cache['k'] = key
-      cache['v'] = value
+      cache["k"] = key
+      cache["v"] = value
 
     attention_output = favor_attention(query, key, value,
                                        self.kernel_transformation, self.causal,
@@ -724,17 +710,17 @@ class Attention(tf.keras.layers.Layer):
     return attention_output
 
 
-#@tf.keras.utils.register_keras_serializable(package='Text')
+#@tf.keras.utils.register_keras_serializable(package="Text")
 class DenseEinsum(tf.keras.layers.Layer):
-  '''A densely connected layer that uses tf.einsum as the backing computation.
+  """A densely connected layer that uses tf.einsum as the backing computation.
   This layer can perform einsum calculations of arbitrary dimensionality.
   Arguments:
     output_shape: Positive integer or tuple, dimensionality of the output space.
     num_summed_dimensions: The number of dimensions to sum over. Standard 2D
       matmul should use 1, 3D matmul should use 2, and so forth.
-    activation: Activation function to use. If you don't specify anything, no
+    activation: Activation function to use. If you don"t specify anything, no
       activation is applied
-      (ie. 'linear' activation: `a(x) = x`).
+      (ie. "linear" activation: `a(x) = x`).
     use_bias: Boolean, whether the layer uses a bias vector.
     kernel_initializer: Initializer for the `kernel` weights matrix.
     bias_initializer: Initializer for the bias vector.
@@ -742,7 +728,7 @@ class DenseEinsum(tf.keras.layers.Layer):
       matrix.
     bias_regularizer: Regularizer function applied to the bias vector.
     activity_regularizer: Regularizer function applied to the output of the
-      layer (its 'activation')..
+      layer (its "activation")..
     kernel_constraint: Constraint function applied to the `kernel` weights
       matrix.
     bias_constraint: Constraint function applied to the bias vector.
@@ -753,15 +739,15 @@ class DenseEinsum(tf.keras.layers.Layer):
     N-D tensor with shape: `(batch_size, ..., units)`. For instance, for a 2D
       input with shape `(batch_size, input_dim)`, the output would have shape
       `(batch_size, units)`.
-  '''
+  """
 
   def __init__(self,
                output_shape,
                num_summed_dimensions=1,
                activation=None,
                use_bias=True,
-               kernel_initializer='glorot_uniform',
-               bias_initializer='zeros',
+               kernel_initializer="glorot_uniform",
+               bias_initializer="zeros",
                kernel_regularizer=None,
                bias_regularizer=None,
                activity_regularizer=None,
@@ -785,9 +771,9 @@ class DenseEinsum(tf.keras.layers.Layer):
     self._name = name
 
   def _build_einsum_string(self, free_input_dims, bound_dims, output_dims):
-    input_str = ''
-    kernel_str = ''
-    output_str = ''
+    input_str = ""
+    kernel_str = ""
+    output_str = ""
     letter_offset = 0
     for i in range(free_input_dims):
       char = _CHR_IDX[i + letter_offset]
@@ -806,7 +792,7 @@ class DenseEinsum(tf.keras.layers.Layer):
       kernel_str += char
       output_str += char
 
-    return input_str + ',' + kernel_str + '->' + output_str
+    return input_str + "," + kernel_str + "->" + output_str
 
   def build(self, input_shape):
     input_rank = len(input_shape)
@@ -824,7 +810,7 @@ class DenseEinsum(tf.keras.layers.Layer):
 
     with tf.variable_scope(self._name):
         self._kernel = tf.get_variable(
-            'kernel',
+            "kernel",
             shape=self._kernel_shape,
             initializer=self._kernel_initializer,
             regularizer=self._kernel_regularizer,
@@ -833,7 +819,7 @@ class DenseEinsum(tf.keras.layers.Layer):
             trainable=True)
         if self._use_bias:
           self._bias = tf.get_variable(
-              'bias',
+              "bias",
               shape=self._output_shape,
               initializer=self._bias_initializer,
               regularizer=self._bias_regularizer,
@@ -846,27 +832,27 @@ class DenseEinsum(tf.keras.layers.Layer):
 
   def get_config(self):
     config = {
-        'output_shape':
+        "output_shape":
             self._output_shape,
-        'num_summed_dimensions':
+        "num_summed_dimensions":
             self._num_summed_dimensions,
-        'activation':
+        "activation":
             tf.keras.activations.serialize(self._activation),
-        'use_bias':
+        "use_bias":
             self._use_bias,
-        'kernel_initializer':
+        "kernel_initializer":
             tf.keras.initializers.serialize(self._kernel_initializer),
-        'bias_initializer':
+        "bias_initializer":
             tf.keras.initializers.serialize(self._bias_initializer),
-        'kernel_regularizer':
+        "kernel_regularizer":
             tf.keras.regularizers.serialize(self._kernel_regularizer),
-        'bias_regularizer':
+        "bias_regularizer":
             tf.keras.regularizers.serialize(self._bias_regularizer),
-        'activity_regularizer':
+        "activity_regularizer":
             tf.keras.regularizers.serialize(self._activity_regularizer),
-        'kernel_constraint':
+        "kernel_constraint":
             tf.keras.constraints.serialize(self._kernel_constraint),
-        'bias_constraint':
+        "bias_constraint":
             tf.keras.constraints.serialize(self._bias_constraint)
     }
     base_config = super(DenseEinsum, self).get_config()

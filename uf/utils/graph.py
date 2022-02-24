@@ -1,18 +1,3 @@
-# coding:=utf-8
-# Copyright 2021 Tencent. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 import re
 import numpy as np
 
@@ -34,7 +19,7 @@ def get_param(variables, param_name):
 
 
 def get_param_name(param):
-    res = re.match('^(.*):\\d+$', param.name)
+    res = re.match("^(.*):\\d+$", param.name)
     if res is not None:
         param_name = res.group(1)
     return param_name
@@ -52,17 +37,17 @@ def count_params(global_variables, trainable_variables):
     n_trainable = 0
     for variable in trainable_variables:
         n_trainable += get_params(variable)
-    tf.logging.info('Build graph with %s parameters '
-                    '(among which %s are trainable)'
-                    % (format(int(n_global), ','),
-                       format(int(n_trainable), ',')))
+    tf.logging.info("Build graph with %s parameters "
+                    "(among which %s are trainable)"
+                    % (format(int(n_global), ","),
+                       format(int(n_trainable), ",")))
 
 
 def scale_grad(grad, scalar):
     if grad is None:
         return None
 
-    if grad.__str__().startswith('IndexedSlices'):
+    if grad.__str__().startswith("IndexedSlices"):
         return tf.IndexedSlices(
             values=grad.values * scalar,
             indices=grad.indices,
@@ -80,7 +65,7 @@ def add_n_grads(split_grads):
     # matrix. The gradient of an embedding matrix is not a tensor,
     # but a tuple-like object named `IndexedSlices`, for this one,
     # we need to take special processings.
-    if split_grads[0].__str__().startswith('IndexedSlices'):
+    if split_grads[0].__str__().startswith("IndexedSlices"):
 
         values = tf.concat([grad.values for grad in split_grads], axis=0)
         indices = tf.concat([grad.indices for grad in split_grads], axis=0)
@@ -103,7 +88,7 @@ def average_n_grads(split_grads):
     # matrix. The gradient of an embedding matrix is not a tensor,
     # but a tuple-like object named `IndexedSlices`, for this one,
     # we need to take special processings.
-    if split_grads[0].__str__().startswith('IndexedSlices'):
+    if split_grads[0].__str__().startswith("IndexedSlices"):
 
         values = tf.divide(tf.concat([grad.values for grad in split_grads], axis=0), len(split_grads))
         indices = tf.concat([grad.indices for grad in split_grads], axis=0)

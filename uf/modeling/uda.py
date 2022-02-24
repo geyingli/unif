@@ -1,21 +1,7 @@
-# coding:=utf-8
-# Copyright 2021 Tencent. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the 'License');
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an 'AS IS' BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-''' Unsupervised Data Augmentation for Consistency Training (UDA).
-  Code revised from Google's implementation.
+""" Unsupervised Data Augmentation for Consistency Training (UDA).
+  Code revised from Google"s implementation.
   See `https://github.com/google-research/uda`.
-'''
+"""
 
 from ..tools import tf
 from .base import BaseDecoder
@@ -31,7 +17,7 @@ class UDADecoder(BaseDecoder):
                  label_ids,
                  label_size=2,
                  sample_weight=None,
-                 scope='cls/seq_relationship',
+                 scope="cls/seq_relationship",
                  hidden_dropout_prob=0.1,
                  initializer_range=0.02,
                  trainable=True,
@@ -39,7 +25,7 @@ class UDADecoder(BaseDecoder):
                  num_train_steps=None,
                  uda_softmax_temp=-1,
                  uda_confidence_thresh=-1,
-                 tsa_schedule='linear',
+                 tsa_schedule="linear",
                  **kwargs):
         super().__init__(**kwargs)
 
@@ -49,12 +35,12 @@ class UDADecoder(BaseDecoder):
         hidden_size = input_tensor.shape.as_list()[-1]
         with tf.variable_scope(scope):
             output_weights = tf.get_variable(
-                'output_weights',
+                "output_weights",
                 shape=[label_size, hidden_size],
                 initializer=util.create_initializer(initializer_range),
                 trainable=trainable)
             output_bias = tf.get_variable(
-                'output_bias',
+                "output_bias",
                 shape=[label_size],
                 initializer=tf.zeros_initializer(),
                 trainable=trainable)
@@ -65,7 +51,7 @@ class UDADecoder(BaseDecoder):
             logits = tf.nn.bias_add(logits, output_bias)
             log_probs = tf.nn.log_softmax(logits, axis=-1)
 
-            with tf.variable_scope('sup_loss'):
+            with tf.variable_scope("sup_loss"):
 
                 # reshape
                 sup_ori_log_probs = tf.boolean_mask(
@@ -75,7 +61,7 @@ class UDADecoder(BaseDecoder):
                 sup_label_ids = tf.boolean_mask(
                     label_ids, mask=is_supervised, axis=0)
 
-                self._tensors['preds'] = tf.argmax(sup_ori_log_probs, axis=-1)
+                self._tensors["preds"] = tf.argmax(sup_ori_log_probs, axis=-1)
 
                 one_hot_labels = tf.one_hot(
                     sup_label_ids, depth=label_size, dtype=tf.float32)
@@ -107,9 +93,9 @@ class UDADecoder(BaseDecoder):
                 sup_loss = (tf.reduce_sum(per_example_loss) /
                             tf.maximum(tf.reduce_sum(loss_mask), 1))
 
-                self._tensors['supervised'] = per_example_loss
+                self._tensors["supervised"] = per_example_loss
 
-            with tf.variable_scope('unsup_loss'):
+            with tf.variable_scope("unsup_loss"):
 
                 # reshape
                 ori_log_probs = tf.boolean_mask(
@@ -144,27 +130,27 @@ class UDADecoder(BaseDecoder):
                         unsup_sample_weight, dtype=tf.float32)
                 unsup_loss = tf.reduce_mean(per_example_loss)
 
-                self._tensors['unsupervised'] = per_example_loss
+                self._tensors["unsupervised"] = per_example_loss
 
             self.total_loss = sup_loss + unsup_loss
 
 
 def get_tsa_threshold(tsa_schedule, global_step, num_train_steps, start, end):
     training_progress = tf.to_float(global_step) / tf.to_float(num_train_steps)
-    if tsa_schedule == 'linear':
+    if tsa_schedule == "linear":
         threshold = training_progress
-    elif tsa_schedule == 'exp':
+    elif tsa_schedule == "exp":
         scale = 5
         threshold = tf.exp((training_progress - 1) * scale)
         # [exp(-5), exp(0)] = [1e-2, 1]
-    elif tsa_schedule == 'log':
+    elif tsa_schedule == "log":
         scale = 5
         # [1 - exp(0), 1 - exp(-5)] = [0, 0.99]
         threshold = 1 - tf.exp((-training_progress) * scale)
     else:
         raise ValueError(
-            'Invalid value for `tsa_schedule`: %s. Pick one from `linear`, '
-            '`exp` or `log`.' % (tsa_schedule))
+            "Invalid value for `tsa_schedule`: %s. Pick one from `linear`, "
+            "`exp` or `log`." % (tsa_schedule))
     return threshold * (end - start) + start
 
 

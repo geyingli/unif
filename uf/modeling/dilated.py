@@ -1,18 +1,4 @@
-# coding:=utf-8
-# Copyright 2021 Tencent. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-''' Dilated language modeling. '''
+""" Dilated language modeling. """
 
 from ..tools import tf
 from .base import BaseDecoder
@@ -30,7 +16,7 @@ class DLM(BaseDecoder, BERTEncoder):
                  spad_id=1,
                  loop=3,
                  sample_weight=None,
-                 scope='dilated',
+                 scope="dilated",
                  use_tilda_embedding=False,
                  **kwargs):
         super().__init__()
@@ -38,8 +24,8 @@ class DLM(BaseDecoder, BERTEncoder):
         # Tilda embeddings for SMART algorithm
         tilda_embeddings = None
         if use_tilda_embedding:
-            with tf.variable_scope('', reuse=True):
-                tilda_embeddings = tf.get_variable('tilda_embeddings')
+            with tf.variable_scope("", reuse=True):
+                tilda_embeddings = tf.get_variable("tilda_embeddings")
 
         dilated_mask = tf.cast(
             tf.not_equal(dilated_ids, 0), tf.float32)
@@ -60,7 +46,7 @@ class DLM(BaseDecoder, BERTEncoder):
                     dilated_seq_length,
                     tilda_embeddings=tilda_embeddings)
 
-                self._tensors['LM'] = tf.argmax(logits, axis=-1)
+                self._tensors["LM"] = tf.argmax(logits, axis=-1)
 
                 # LM loss
                 log_probs = tf.nn.log_softmax(logits, axis=-1)
@@ -80,7 +66,7 @@ class DLM(BaseDecoder, BERTEncoder):
                     per_example_loss *= tf.expand_dims(sample_weight, axis=-1)
 
                 self.total_loss = tf.reduce_mean(per_example_loss)
-                self._tensors['LM'] = per_example_loss
+                self._tensors["LM"] = per_example_loss
 
             # forward loop
             else:
@@ -143,7 +129,7 @@ class DLM(BaseDecoder, BERTEncoder):
                     dilated_ids, dilated_mask = _forward(
                         dilated_ids, dilated_mask)
 
-                self._tensors['LM'] = dilated_ids
+                self._tensors["LM"] = dilated_ids
 
     def _bert_forward(self,
                      bert_config,
@@ -155,7 +141,7 @@ class DLM(BaseDecoder, BERTEncoder):
                      trainable=True,
                      tilda_embeddings=None):
 
-        with tf.variable_scope('embeddings'):
+        with tf.variable_scope("embeddings"):
 
             (embedding_output, embedding_table) = self.embedding_lookup(
                 input_ids=input_ids,
@@ -164,7 +150,7 @@ class DLM(BaseDecoder, BERTEncoder):
                 max_seq_length=dilated_seq_length,
                 embedding_size=bert_config.hidden_size,
                 initializer_range=bert_config.initializer_range,
-                word_embedding_name='word_embeddings',
+                word_embedding_name="word_embeddings",
                 dtype=dtype,
                 trainable=trainable,
                 tilda_embeddings=tilda_embeddings)
@@ -178,7 +164,7 @@ class DLM(BaseDecoder, BERTEncoder):
                 hidden_size=bert_config.hidden_size,
                 use_token_type=False,
                 use_position_embeddings=True,
-                position_embedding_name='position_embeddings',
+                position_embedding_name="position_embeddings",
                 initializer_range=bert_config.initializer_range,
                 max_position_embeddings=\
                     bert_config.max_position_embeddings,
@@ -186,7 +172,7 @@ class DLM(BaseDecoder, BERTEncoder):
                 dtype=dtype,
                 trainable=trainable)
 
-        with tf.variable_scope('encoder'):
+        with tf.variable_scope("encoder"):
             attention_mask = self.create_attention_mask_from_input_mask(
                 input_mask, batch_size, dilated_seq_length, dtype=dtype)
 

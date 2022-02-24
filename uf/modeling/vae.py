@@ -1,19 +1,5 @@
-# coding:=utf-8
-# Copyright 2021 Tencent. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-''' The text generation model VAE we utilize in clustering, feature extraction
-and negative sample generation. '''
+""" The text generation model VAE we utilize in clustering, feature extraction
+and negative sample generation. """
 
 from ..tools import tf
 from .base import BaseDecoder
@@ -35,7 +21,7 @@ class VAE(BaseDecoder, BERTEncoder):
                  num_hidden_layers=12,
                  num_attention_heads=12,
                  bias=0,
-                 scope='vae',
+                 scope="vae",
                  trainable=True,
                  use_tilda_embedding=False,
                  **kwargs):
@@ -44,8 +30,8 @@ class VAE(BaseDecoder, BERTEncoder):
         # Tilda embeddings for SMART algorithm
         tilda_embeddings = None
         if use_tilda_embedding:
-            with tf.variable_scope('', reuse=True):
-                tilda_embeddings = tf.get_variable('tilda_embeddings')
+            with tf.variable_scope("", reuse=True):
+                tilda_embeddings = tf.get_variable("tilda_embeddings")
 
         # freeze parameters
         config = Config(
@@ -62,7 +48,7 @@ class VAE(BaseDecoder, BERTEncoder):
         seq_length = input_shape[1]
 
         with tf.variable_scope(scope):
-            with tf.variable_scope('embeddings'):
+            with tf.variable_scope("embeddings"):
 
                 (self.embedding_output, self.embedding_table) = \
                     self.embedding_lookup(
@@ -72,7 +58,7 @@ class VAE(BaseDecoder, BERTEncoder):
                         max_seq_length=seq_length,
                         embedding_size=config.hidden_size,
                         initializer_range=config.initializer_range,
-                        word_embedding_name='word_embeddings',
+                        word_embedding_name="word_embeddings",
                         tilda_embeddings=tilda_embeddings,
                         trainable=trainable)
                 self.embedding_output = self.embedding_postprocessor(
@@ -83,15 +69,15 @@ class VAE(BaseDecoder, BERTEncoder):
                     use_token_type=True,
                     segment_ids=segment_ids,
                     token_type_vocab_size=config.type_vocab_size,
-                    token_type_embedding_name='token_type_embeddings',
+                    token_type_embedding_name="token_type_embeddings",
                     use_position_embeddings=True,
-                    position_embedding_name='position_embeddings',
+                    position_embedding_name="position_embeddings",
                     initializer_range=config.initializer_range,
                     max_position_embeddings=config.max_position_embeddings,
                     dropout_prob=config.hidden_dropout_prob,
                     trainable=trainable)
 
-            with tf.variable_scope('encoder'):
+            with tf.variable_scope("encoder"):
 
                 # stacked transformer
                 attention_mask = self.create_attention_mask_from_input_mask(
@@ -113,7 +99,7 @@ class VAE(BaseDecoder, BERTEncoder):
                     trainable=trainable)
 
                 # projection
-                with tf.variable_scope('projection'):
+                with tf.variable_scope("projection"):
                     transformer_output = tf.layers.dense(
                         self.all_encoder_layers[-1],
                         reduced_size,
@@ -140,23 +126,23 @@ class VAE(BaseDecoder, BERTEncoder):
                     miu = tf.layers.dense(
                         transformer_output,
                         topic_size,
-                        activation='tanh',
+                        activation="tanh",
                         kernel_initializer=tf.truncated_normal_initializer(
                             stddev=config.initializer_range),
-                        name='miu',
+                        name="miu",
                         trainable=trainable)
                     sigma = tf.layers.dense(
                         transformer_output,
                         topic_size,
                         kernel_initializer=tf.truncated_normal_initializer(
                             stddev=config.initializer_range),
-                        name='sigma',
+                        name="sigma",
                         trainable=trainable)
-                    self._tensors['miu'] = miu
-                    self._tensors['sigma'] = sigma
+                    self._tensors["miu"] = miu
+                    self._tensors["sigma"] = sigma
 
-            with tf.variable_scope('decoder'):
-                with tf.variable_scope('projection'):
+            with tf.variable_scope("decoder"):
+                with tf.variable_scope("projection"):
 
                     # reparametarization
                     if is_training:
@@ -183,7 +169,7 @@ class VAE(BaseDecoder, BERTEncoder):
                         intermediate_input, config.hidden_dropout_prob)
 
                 # MLP
-                with tf.variable_scope('intermediate'):
+                with tf.variable_scope("intermediate"):
                     intermediate_output = tf.layers.dense(
                         intermediate_input,
                         4 * reduced_size,
@@ -191,7 +177,7 @@ class VAE(BaseDecoder, BERTEncoder):
                         kernel_initializer=util.create_initializer(
                             config.initializer_range),
                         trainable=trainable)
-                with tf.variable_scope('output'):
+                with tf.variable_scope("output"):
                     decoder_output = tf.layers.dense(
                         intermediate_output,
                         config.hidden_size,
@@ -206,8 +192,8 @@ class VAE(BaseDecoder, BERTEncoder):
                 self.all_decoder_layers = [decoder_output]
 
         # reconstruction
-        with tf.variable_scope('cls/predictions'):
-            with tf.variable_scope('transform'):
+        with tf.variable_scope("cls/predictions"):
+            with tf.variable_scope("transform"):
                 input_tensor = tf.layers.dense(
                     decoder_output,
                     units=config.hidden_size,
@@ -219,7 +205,7 @@ class VAE(BaseDecoder, BERTEncoder):
                     input_tensor, trainable=trainable)
             output_weights = self.embedding_table
             output_bias = tf.get_variable(
-                'output_bias',
+                "output_bias",
                 shape=[config.vocab_size],
                 initializer=tf.zeros_initializer(),
                 trainable=trainable)
@@ -232,10 +218,10 @@ class VAE(BaseDecoder, BERTEncoder):
 
             logits = tf.reshape(
                 logits, [batch_size, seq_length, config.vocab_size])
-            probs = tf.nn.softmax(logits, axis=-1, name='probs')
+            probs = tf.nn.softmax(logits, axis=-1, name="probs")
             lm_log_probs = tf.nn.log_softmax(logits, axis=-1)
 
-            self._tensors['preds'] = tf.argmax(probs, axis=-1)
+            self._tensors["preds"] = tf.argmax(probs, axis=-1)
             one_hot_labels = tf.one_hot(
                 input_ids, depth=config.vocab_size, dtype=tf.float32)
             per_example_loss = -tf.reduce_sum(
@@ -247,7 +233,7 @@ class VAE(BaseDecoder, BERTEncoder):
                 tf.reduce_mean(per_example_loss) +
                 tf.reduce_mean(tf.square(miu)) +
                 tf.reduce_mean(tf.exp(sigma) - sigma - 1))
-            self._tensors['losses'] = per_example_loss
+            self._tensors["losses"] = per_example_loss
 
 
 class Config:
@@ -257,7 +243,7 @@ class Config:
                  num_hidden_layers=12,
                  num_attention_heads=12,
                  intermediate_size=3072,
-                 hidden_act='gelu',
+                 hidden_act="gelu",
                  hidden_dropout_prob=0.1,
                  attention_probs_dropout_prob=0.1,
                  max_position_embeddings=512,

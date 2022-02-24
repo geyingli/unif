@@ -1,18 +1,4 @@
-# coding:=utf-8
-# Copyright 2021 Tencent. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the 'License');
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an 'AS IS' BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-''' Applications based on Wide & Deep model. '''
+""" Applications based on Wide & Deep model. """
 
 import numpy as np
 
@@ -28,18 +14,18 @@ from .. import utils
 
 
 class WideAndDeepClassifier(BERTClassifier, ClassifierModule):
-    ''' Single-label classifier on Wide & Deep model with BERT. '''
+    """ Single-label classifier on Wide & Deep model with BERT. """
     _INFER_ATTRIBUTES = {
-        'max_seq_length': (
-            'An integer that defines max sequence length of input tokens, '
-            'which typically equals `len(tokenize(segments)) + '
-            'len(segments)` + 1'),
-        'label_size': (
-            'An integer that defines number of possible labels of outputs'),
-        'init_checkpoint': (
-            'A string that directs to the checkpoint file used for '
-            'initialization'),
-        'wide_features': 'A list of possible values for `Wide` features (integer or string)'}
+        "max_seq_length": (
+            "An integer that defines max sequence length of input tokens, "
+            "which typically equals `len(tokenize(segments)) + "
+            "len(segments)` + 1"),
+        "label_size": (
+            "An integer that defines number of possible labels of outputs"),
+        "init_checkpoint": (
+            "A string that directs to the checkpoint file used for "
+            "initialization"),
+        "wide_features": "A list of possible values for `Wide` features (integer or string)"}
 
     def __init__(self,
                  config_file,
@@ -50,9 +36,9 @@ class WideAndDeepClassifier(BERTClassifier, ClassifierModule):
                  output_dir=None,
                  gpu_ids=None,
                  wide_features=None,
-                 deep_module='bert',
+                 deep_module="bert",
                  do_lower_case=True,
-                 truncate_method='LIFO'):
+                 truncate_method="LIFO"):
         super(ClassifierModule, self).__init__(
             init_checkpoint, output_dir, gpu_ids)
 
@@ -65,37 +51,37 @@ class WideAndDeepClassifier(BERTClassifier, ClassifierModule):
         self._id_to_label = None
         self.__init_args__ = locals()
 
-        if deep_module == 'albert':
+        if deep_module == "albert":
             self.bert_config = get_albert_config(config_file)
         else:
             self.bert_config = get_bert_config(config_file)
 
-        assert deep_module in ('bert', 'roberta', 'albert', 'electra'), (
-            'Invalid value of `deep_module`: %s. Pick one from '
-            '`bert`, `roberta`, `albert` and `electra`.')
+        assert deep_module in ("bert", "roberta", "albert", "electra"), (
+            "Invalid value of `deep_module`: %s. Pick one from "
+            "`bert`, `roberta`, `albert` and `electra`.")
         self.tokenizer = get_word_piece_tokenizer(vocab_file, do_lower_case)
         self._key_to_depths = get_key_to_depths(
             self.bert_config.num_hidden_layers)
 
-        if '[CLS]' not in self.tokenizer.vocab:
-            self.tokenizer.add('[CLS]')
+        if "[CLS]" not in self.tokenizer.vocab:
+            self.tokenizer.add("[CLS]")
             self.bert_config.vocab_size += 1
-            tf.logging.info('Add necessary token `[CLS]` into vocabulary.')
-        if '[SEP]' not in self.tokenizer.vocab:
-            self.tokenizer.add('[SEP]')
+            tf.logging.info("Add necessary token `[CLS]` into vocabulary.")
+        if "[SEP]" not in self.tokenizer.vocab:
+            self.tokenizer.add("[SEP]")
             self.bert_config.vocab_size += 1
-            tf.logging.info('Add necessary token `[SEP]` into vocabulary.')
+            tf.logging.info("Add necessary token `[SEP]` into vocabulary.")
 
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
                 is_training=False, is_parallel=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
 
         if is_training:
-            assert y is not None, '`y` can\'t be None.'
+            assert y is not None, "`y` can\"t be None."
         if is_parallel:
             assert self.label_size, (
-                'Can\'t parse data on multi-processing '
-                'when `label_size` is None.')
+                "Can\"t parse data on multi-processing "
+                "when `label_size` is None.")
 
         n_inputs = None
         data = {}
@@ -106,11 +92,11 @@ class WideAndDeepClassifier(BERTClassifier, ClassifierModule):
             (input_ids, input_mask, segment_ids,
              n_wide_features, wide_features) = self._convert_X(
                  X_tokenized if tokenized else X, tokenized=tokenized)
-            data['input_ids'] = np.array(input_ids, dtype=np.int32)
-            data['input_mask'] = np.array(input_mask, dtype=np.int32)
-            data['segment_ids'] = np.array(segment_ids, dtype=np.int32)
-            data['n_wide_features'] = np.array(n_wide_features, dtype=np.int32)
-            data['wide_features'] = np.array(wide_features, dtype=np.int32)
+            data["input_ids"] = np.array(input_ids, dtype=np.int32)
+            data["input_mask"] = np.array(input_mask, dtype=np.int32)
+            data["segment_ids"] = np.array(segment_ids, dtype=np.int32)
+            data["n_wide_features"] = np.array(n_wide_features, dtype=np.int32)
+            data["wide_features"] = np.array(wide_features, dtype=np.int32)
             n_inputs = len(input_ids)
 
             if n_inputs < self.batch_size:
@@ -119,13 +105,13 @@ class WideAndDeepClassifier(BERTClassifier, ClassifierModule):
         # convert y
         if y:
             label_ids = self._convert_y(y)
-            data['label_ids'] = np.array(label_ids, dtype=np.int32)
+            data["label_ids"] = np.array(label_ids, dtype=np.int32)
 
         # convert sample_weight
         if is_training or y:
             sample_weight = self._convert_sample_weight(
                 sample_weight, n_inputs)
-            data['sample_weight'] = np.array(sample_weight, dtype=np.float32)
+            data["sample_weight"] = np.array(sample_weight, dtype=np.float32)
 
         return data
 
@@ -136,26 +122,26 @@ class WideAndDeepClassifier(BERTClassifier, ClassifierModule):
         for ex_id, example in enumerate(X_target):
             try:
                 segment_inputs.append(
-                    {'Wide': example['Wide'],
-                     'Deep': self._convert_x(example['Deep'], tokenized)})
+                    {"Wide": example["Wide"],
+                     "Deep": self._convert_x(example["Deep"], tokenized)})
             except Exception:
                 raise ValueError(
-                    'Wrong input format (line %d): \'%s\'. An untokenized '
-                    'example: X = [{\'Wide\': [1, 5, \'positive\'], '
-                    '\'Deep\': \'I bet she will win.\'}, ...]'
+                    "Wrong input format (line %d): \"%s\". An untokenized "
+                    "example: X = [{\"Wide\": [1, 5, \"positive\"], "
+                    "\"Deep\": \"I bet she will win.\"}, ...]"
                     % (ex_id, example))
 
         if self.wide_features is None:
             self.wide_features = set()
             for segments in segment_inputs:
-                for feature in segments['Wide']:
+                for feature in segments["Wide"]:
                     self.wide_features.add(feature)
             self.wide_features = list(self.wide_features)
         elif not isinstance(self.wide_features, list):
             raise ValueError(
-                '`wide_features` should be a list of possible values '
-                '(integer or string). '
-                'E.g. [1, \'Positive\', \'Subjective\'].')
+                "`wide_features` should be a list of possible values "
+                "(integer or string). "
+                "E.g. [1, \"Positive\", \"Subjective\"].")
         wide_features_map = {
             self.wide_features[i]: i + 1
             for i in range(len(self.wide_features))}
@@ -166,27 +152,27 @@ class WideAndDeepClassifier(BERTClassifier, ClassifierModule):
         n_wide_features = []
         wide_features = []
         for ex_id, segments in enumerate(segment_inputs):
-            _input_tokens = ['[CLS]']
+            _input_tokens = ["[CLS]"]
             _input_ids = []
             _input_mask = [1]
             _segment_ids = [0]
             _wide_features = []
-            for feature in segments['Wide']:
+            for feature in segments["Wide"]:
                 try:
                     _wide_features.append(wide_features_map[feature])
                 except Exception:
                     tf.logging.warning(
-                        'Unregistered wide feature: %s. Ignored.' % feature)
+                        "Unregistered wide feature: %s. Ignored." % feature)
                     continue
             _n_wide_features = len(_wide_features)
 
-            segments = segments['Deep']
+            segments = segments["Deep"]
             utils.truncate_segments(
                 segments, self.max_seq_length - len(segments) - 1,
                 truncate_method=self.truncate_method)
             for s_id, segment in enumerate(segments):
                 _segment_id = min(s_id, 1)
-                _input_tokens.extend(segment + ['[SEP]'])
+                _input_tokens.extend(segment + ["[SEP]"])
                 _input_mask.extend([1] * (len(segment) + 1))
                 _segment_ids.extend([_segment_id] * (len(segment) + 1))
 
@@ -211,59 +197,59 @@ class WideAndDeepClassifier(BERTClassifier, ClassifierModule):
 
     def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
-            'input_ids': utils.get_placeholder(
-                target, 'input_ids',
+            "input_ids": utils.get_placeholder(
+                target, "input_ids",
                 [None, self.max_seq_length], tf.int32),
-            'input_mask': utils.get_placeholder(
-                target, 'input_mask',
+            "input_mask": utils.get_placeholder(
+                target, "input_mask",
                 [None, self.max_seq_length], tf.int32),
-            'segment_ids': utils.get_placeholder(
-                target, 'segment_ids',
+            "segment_ids": utils.get_placeholder(
+                target, "segment_ids",
                 [None, self.max_seq_length], tf.int32),
-            'n_wide_features': utils.get_placeholder(
-                target, 'n_wide_features',
+            "n_wide_features": utils.get_placeholder(
+                target, "n_wide_features",
                 [None], tf.int32),
-            'wide_features': utils.get_placeholder(
-                target, 'wide_features',
+            "wide_features": utils.get_placeholder(
+                target, "wide_features",
                 [None, len(self.wide_features)], tf.int32),
-            'label_ids': utils.get_placeholder(
-                target, 'label_ids', [None], tf.int32),
+            "label_ids": utils.get_placeholder(
+                target, "label_ids", [None], tf.int32),
         }
         if not on_export:
-            self.placeholders['sample_weight'] = \
+            self.placeholders["sample_weight"] = \
                 utils.get_placeholder(
-                    target, 'sample_weight',
+                    target, "sample_weight",
                     [None], tf.float32)
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
         def _get_encoder(model_name):
-            if model_name == 'bert' or model_name == 'roberta':
+            if model_name == "bert" or model_name == "roberta":
                 encoder = BERTEncoder(
                     bert_config=self.bert_config,
                     is_training=is_training,
-                    input_ids=split_placeholders['input_ids'],
-                    input_mask=split_placeholders['input_mask'],
-                    segment_ids=split_placeholders['segment_ids'],
-                    scope='bert',
+                    input_ids=split_placeholders["input_ids"],
+                    input_mask=split_placeholders["input_mask"],
+                    segment_ids=split_placeholders["segment_ids"],
+                    scope="bert",
                     **kwargs)
-            elif model_name == 'albert':
+            elif model_name == "albert":
                 encoder = ALBERTEncoder(
                     albert_config=self.bert_config,
                     is_training=is_training,
-                    input_ids=split_placeholders['input_ids'],
-                    input_mask=split_placeholders['input_mask'],
-                    segment_ids=split_placeholders['segment_ids'],
-                    scope='bert',
+                    input_ids=split_placeholders["input_ids"],
+                    input_mask=split_placeholders["input_mask"],
+                    segment_ids=split_placeholders["segment_ids"],
+                    scope="bert",
                     **kwargs)
-            elif model_name == 'electra':
+            elif model_name == "electra":
                 encoder = BERTEncoder(
                     bert_config=self.bert_config,
                     is_training=is_training,
-                    input_ids=split_placeholders['input_ids'],
-                    input_mask=split_placeholders['input_mask'],
-                    segment_ids=split_placeholders['segment_ids'],
-                    scope='electra',
+                    input_ids=split_placeholders["input_ids"],
+                    input_mask=split_placeholders["input_mask"],
+                    segment_ids=split_placeholders["segment_ids"],
+                    scope="electra",
                     **kwargs)
             return encoder
 
@@ -272,27 +258,27 @@ class WideAndDeepClassifier(BERTClassifier, ClassifierModule):
         decoder = WideAndDeepCLSDecoder(
             is_training=is_training,
             input_tensor=encoder_output,
-            n_wide_features=split_placeholders['n_wide_features'],
-            wide_features=split_placeholders['wide_features'],
-            label_ids=split_placeholders['label_ids'],
+            n_wide_features=split_placeholders["n_wide_features"],
+            wide_features=split_placeholders["wide_features"],
+            label_ids=split_placeholders["label_ids"],
             label_size=self.label_size,
-            sample_weight=split_placeholders.get('sample_weight'),
-            scope='cls/seq_relationship',
+            sample_weight=split_placeholders.get("sample_weight"),
+            scope="cls/seq_relationship",
             **kwargs)
         return decoder.get_forward_outputs()
 
 
 class WideAndDeepRegressor(WideAndDeepClassifier, RegressorModule):
-    ''' Single-label classifier on Wide & Deep model with BERT. '''
+    """ Single-label classifier on Wide & Deep model with BERT. """
     _INFER_ATTRIBUTES = {
-        'max_seq_length': (
-            'An integer that defines max sequence length of input tokens, '
-            'which typically equals `len(tokenize(segments)) + '
-            'len(segments)` + 1'),
-        'init_checkpoint': (
-            'A string that directs to the checkpoint file used for '
-            'initialization'),
-        'wide_features': 'A list of possible values for `Wide` features (integer or string)'}
+        "max_seq_length": (
+            "An integer that defines max sequence length of input tokens, "
+            "which typically equals `len(tokenize(segments)) + "
+            "len(segments)` + 1"),
+        "init_checkpoint": (
+            "A string that directs to the checkpoint file used for "
+            "initialization"),
+        "wide_features": "A list of possible values for `Wide` features (integer or string)"}
 
     def __init__(self,
                  config_file,
@@ -303,9 +289,9 @@ class WideAndDeepRegressor(WideAndDeepClassifier, RegressorModule):
                  output_dir=None,
                  gpu_ids=None,
                  wide_features=None,
-                 deep_module='bert',
+                 deep_module="bert",
                  do_lower_case=True,
-                 truncate_method='LIFO'):
+                 truncate_method="LIFO"):
         super(RegressorModule, self).__init__(
             init_checkpoint, output_dir, gpu_ids)
 
@@ -317,37 +303,37 @@ class WideAndDeepRegressor(WideAndDeepClassifier, RegressorModule):
         self._deep_module = deep_module
         self.__init_args__ = locals()
 
-        if deep_module == 'albert':
+        if deep_module == "albert":
             self.bert_config = get_albert_config(config_file)
         else:
             self.bert_config = get_bert_config(config_file)
 
-        assert deep_module in ('bert', 'roberta', 'albert', 'electra'), (
-            'Invalid value of `deep_module`: %s. Pick one from '
-            '`bert`, `roberta`, `albert` and `electra`.')
+        assert deep_module in ("bert", "roberta", "albert", "electra"), (
+            "Invalid value of `deep_module`: %s. Pick one from "
+            "`bert`, `roberta`, `albert` and `electra`.")
         self.tokenizer = get_word_piece_tokenizer(vocab_file, do_lower_case)
         self._key_to_depths = get_key_to_depths(
             self.bert_config.num_hidden_layers)
 
-        if '[CLS]' not in self.tokenizer.vocab:
-            self.tokenizer.add('[CLS]')
+        if "[CLS]" not in self.tokenizer.vocab:
+            self.tokenizer.add("[CLS]")
             self.bert_config.vocab_size += 1
-            tf.logging.info('Add necessary token `[CLS]` into vocabulary.')
-        if '[SEP]' not in self.tokenizer.vocab:
-            self.tokenizer.add('[SEP]')
+            tf.logging.info("Add necessary token `[CLS]` into vocabulary.")
+        if "[SEP]" not in self.tokenizer.vocab:
+            self.tokenizer.add("[SEP]")
             self.bert_config.vocab_size += 1
-            tf.logging.info('Add necessary token `[SEP]` into vocabulary.')
+            tf.logging.info("Add necessary token `[SEP]` into vocabulary.")
 
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
                 is_training=False, is_parallel=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
 
         if is_training:
-            assert y is not None, '`y` can\'t be None.'
+            assert y is not None, "`y` can\"t be None."
         if is_parallel:
             assert self.label_size, (
-                'Can\'t parse data on multi-processing '
-                'when `label_size` is None.')
+                "Can\"t parse data on multi-processing "
+                "when `label_size` is None.")
 
         n_inputs = None
         data = {}
@@ -358,11 +344,11 @@ class WideAndDeepRegressor(WideAndDeepClassifier, RegressorModule):
             (input_ids, input_mask, segment_ids,
              n_wide_features, wide_features) = self._convert_X(
                  X_tokenized if tokenized else X, tokenized=tokenized)
-            data['input_ids'] = np.array(input_ids, dtype=np.int32)
-            data['input_mask'] = np.array(input_mask, dtype=np.int32)
-            data['segment_ids'] = np.array(segment_ids, dtype=np.int32)
-            data['n_wide_features'] = np.array(n_wide_features, dtype=np.int32)
-            data['wide_features'] = np.array(wide_features, dtype=np.int32)
+            data["input_ids"] = np.array(input_ids, dtype=np.int32)
+            data["input_mask"] = np.array(input_mask, dtype=np.int32)
+            data["segment_ids"] = np.array(segment_ids, dtype=np.int32)
+            data["n_wide_features"] = np.array(n_wide_features, dtype=np.int32)
+            data["wide_features"] = np.array(wide_features, dtype=np.int32)
             n_inputs = len(input_ids)
 
             if n_inputs < self.batch_size:
@@ -371,13 +357,13 @@ class WideAndDeepRegressor(WideAndDeepClassifier, RegressorModule):
         # convert y
         if y:
             label_floats = self._convert_y(y)
-            data['label_floats'] = np.array(label_floats, dtype=np.float32)
+            data["label_floats"] = np.array(label_floats, dtype=np.float32)
 
         # convert sample_weight
         if is_training or y:
             sample_weight = self._convert_sample_weight(
                 sample_weight, n_inputs)
-            data['sample_weight'] = np.array(sample_weight, dtype=np.float32)
+            data["sample_weight"] = np.array(sample_weight, dtype=np.float32)
 
         return data
 
@@ -388,26 +374,26 @@ class WideAndDeepRegressor(WideAndDeepClassifier, RegressorModule):
         for ex_id, example in enumerate(X_target):
             try:
                 segment_inputs.append(
-                    {'Wide': example['Wide'],
-                     'Deep': self._convert_x(example['Deep'], tokenized)})
+                    {"Wide": example["Wide"],
+                     "Deep": self._convert_x(example["Deep"], tokenized)})
             except Exception:
                 raise ValueError(
-                    'Wrong input format (line %d): \'%s\'. An untokenized '
-                    'example: X = [{\'Wide\': [1, 5, \'positive\'], '
-                    '\'Deep\': \'I bet she will win.\'}, ...]'
+                    "Wrong input format (line %d): \"%s\". An untokenized "
+                    "example: X = [{\"Wide\": [1, 5, \"positive\"], "
+                    "\"Deep\": \"I bet she will win.\"}, ...]"
                     % (ex_id, example))
 
         if self.wide_features is None:
             self.wide_features = set()
             for segments in segment_inputs:
-                for feature in segments['Wide']:
+                for feature in segments["Wide"]:
                     self.wide_features.add(feature)
             self.wide_features = list(self.wide_features)
         elif not isinstance(self.wide_features, list):
             raise ValueError(
-                '`wide_features` should be a list of possible values '
-                '(integer or string). '
-                'E.g. [1, \'Positive\', \'Subjective\'].')
+                "`wide_features` should be a list of possible values "
+                "(integer or string). "
+                "E.g. [1, \"Positive\", \"Subjective\"].")
         wide_features_map = {
             self.wide_features[i]: i + 1
             for i in range(len(self.wide_features))}
@@ -418,27 +404,27 @@ class WideAndDeepRegressor(WideAndDeepClassifier, RegressorModule):
         n_wide_features = []
         wide_features = []
         for ex_id, segments in enumerate(segment_inputs):
-            _input_tokens = ['[CLS]']
+            _input_tokens = ["[CLS]"]
             _input_ids = []
             _input_mask = [1]
             _segment_ids = [0]
             _wide_features = []
-            for feature in segments['Wide']:
+            for feature in segments["Wide"]:
                 try:
                     _wide_features.append(wide_features_map[feature])
                 except Exception:
                     tf.logging.warning(
-                        'Unregistered wide feature: %s. Ignored.' % feature)
+                        "Unregistered wide feature: %s. Ignored." % feature)
                     continue
             _n_wide_features = len(_wide_features)
 
-            segments = segments['Deep']
+            segments = segments["Deep"]
             utils.truncate_segments(
                 segments, self.max_seq_length - len(segments) - 1,
                 truncate_method=self.truncate_method)
             for s_id, segment in enumerate(segments):
                 _segment_id = min(s_id, 1)
-                _input_tokens.extend(segment + ['[SEP]'])
+                _input_tokens.extend(segment + ["[SEP]"])
                 _input_mask.extend([1] * (len(segment) + 1))
                 _segment_ids.extend([_segment_id] * (len(segment) + 1))
 
@@ -478,67 +464,67 @@ class WideAndDeepRegressor(WideAndDeepClassifier, RegressorModule):
                     _label_floats = [float(example)]
             except Exception:
                 raise ValueError(
-                    'Wrong output format (line %d): \'%s\'. An example: '
-                    'y = [[0.12, 0.09], [-0.53, 0.98], ...]' % (ex_id, example))
+                    "Wrong output format (line %d): \"%s\". An example: "
+                    "y = [[0.12, 0.09], [-0.53, 0.98], ...]" % (ex_id, example))
             label_floats.append(_label_floats)
 
         return label_floats
 
     def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
-            'input_ids': utils.get_placeholder(
-                target, 'input_ids',
+            "input_ids": utils.get_placeholder(
+                target, "input_ids",
                 [None, self.max_seq_length], tf.int32),
-            'input_mask': utils.get_placeholder(
-                target, 'input_mask',
+            "input_mask": utils.get_placeholder(
+                target, "input_mask",
                 [None, self.max_seq_length], tf.int32),
-            'segment_ids': utils.get_placeholder(
-                target, 'segment_ids',
+            "segment_ids": utils.get_placeholder(
+                target, "segment_ids",
                 [None, self.max_seq_length], tf.int32),
-            'n_wide_features': utils.get_placeholder(
-                target, 'n_wide_features',
+            "n_wide_features": utils.get_placeholder(
+                target, "n_wide_features",
                 [None], tf.int32),
-            'wide_features': utils.get_placeholder(
-                target, 'wide_features',
+            "wide_features": utils.get_placeholder(
+                target, "wide_features",
                 [None, len(self.wide_features)], tf.int32),
-            'label_floats': utils.get_placeholder(
-                target, 'label_floats', [None, self.label_size], tf.float32),
+            "label_floats": utils.get_placeholder(
+                target, "label_floats", [None, self.label_size], tf.float32),
         }
         if not on_export:
-            self.placeholders['sample_weight'] = \
+            self.placeholders["sample_weight"] = \
                 utils.get_placeholder(
-                    target, 'sample_weight',
+                    target, "sample_weight",
                     [None], tf.float32)
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
         def _get_encoder(model_name):
-            if model_name == 'bert' or model_name == 'roberta':
+            if model_name == "bert" or model_name == "roberta":
                 encoder = BERTEncoder(
                     bert_config=self.bert_config,
                     is_training=is_training,
-                    input_ids=split_placeholders['input_ids'],
-                    input_mask=split_placeholders['input_mask'],
-                    segment_ids=split_placeholders['segment_ids'],
-                    scope='bert',
+                    input_ids=split_placeholders["input_ids"],
+                    input_mask=split_placeholders["input_mask"],
+                    segment_ids=split_placeholders["segment_ids"],
+                    scope="bert",
                     **kwargs)
-            elif model_name == 'albert':
+            elif model_name == "albert":
                 encoder = ALBERTEncoder(
                     albert_config=self.bert_config,
                     is_training=is_training,
-                    input_ids=split_placeholders['input_ids'],
-                    input_mask=split_placeholders['input_mask'],
-                    segment_ids=split_placeholders['segment_ids'],
-                    scope='bert',
+                    input_ids=split_placeholders["input_ids"],
+                    input_mask=split_placeholders["input_mask"],
+                    segment_ids=split_placeholders["segment_ids"],
+                    scope="bert",
                     **kwargs)
-            elif model_name == 'electra':
+            elif model_name == "electra":
                 encoder = BERTEncoder(
                     bert_config=self.bert_config,
                     is_training=is_training,
-                    input_ids=split_placeholders['input_ids'],
-                    input_mask=split_placeholders['input_mask'],
-                    segment_ids=split_placeholders['segment_ids'],
-                    scope='electra',
+                    input_ids=split_placeholders["input_ids"],
+                    input_mask=split_placeholders["input_mask"],
+                    segment_ids=split_placeholders["segment_ids"],
+                    scope="electra",
                     **kwargs)
             return encoder
 
@@ -547,19 +533,19 @@ class WideAndDeepRegressor(WideAndDeepClassifier, RegressorModule):
         decoder = WideAndDeepRegDecoder(
             is_training=is_training,
             input_tensor=encoder_output,
-            n_wide_features=split_placeholders['n_wide_features'],
-            wide_features=split_placeholders['wide_features'],
-            label_floats=split_placeholders['label_floats'],
+            n_wide_features=split_placeholders["n_wide_features"],
+            wide_features=split_placeholders["wide_features"],
+            label_floats=split_placeholders["label_floats"],
             label_size=self.label_size,
-            sample_weight=split_placeholders.get('sample_weight'),
-            scope='reg',
+            sample_weight=split_placeholders.get("sample_weight"),
+            scope="reg",
             **kwargs)
         return decoder.get_forward_outputs()
 
     def _get_fit_ops(self, as_feature=False):
-        ops = [self._tensors['preds']]
+        ops = [self._tensors["preds"]]
         if as_feature:
-            ops.extend([self.placeholders['label_floats']])
+            ops.extend([self.placeholders["label_floats"]])
         return ops
 
     def _get_fit_info(self, output_arrays, feed_dict, as_feature=False):
@@ -567,19 +553,19 @@ class WideAndDeepRegressor(WideAndDeepClassifier, RegressorModule):
         if as_feature:
             batch_labels = output_arrays[-1]
         else:
-            batch_labels = feed_dict[self.placeholders['label_floats']]
+            batch_labels = feed_dict[self.placeholders["label_floats"]]
 
         # mse
         batch_preds = output_arrays[0]
         mse = np.mean(np.square(batch_preds - batch_labels))
 
-        info = ''
-        info += ', mse %.6f' % mse
+        info = ""
+        info += ", mse %.6f" % mse
 
         return info
 
     def _get_predict_ops(self):
-        return [self._tensors['preds']]
+        return [self._tensors["preds"]]
 
     def _get_predict_outputs(self, batch_outputs):
         n_inputs = len(list(self.data.values())[0])
@@ -589,12 +575,12 @@ class WideAndDeepRegressor(WideAndDeepClassifier, RegressorModule):
         preds = utils.transform(output_arrays[0], n_inputs)
 
         outputs = {}
-        outputs['preds'] = preds
+        outputs["preds"] = preds
 
         return outputs
 
     def _get_score_ops(self):
-        return [self._tensors['preds'], self._tensors['losses']]
+        return [self._tensors["preds"], self._tensors["losses"]]
 
     def _get_score_outputs(self, batch_outputs):
         n_inputs = len(list(self.data.values())[0])
@@ -606,20 +592,20 @@ class WideAndDeepRegressor(WideAndDeepClassifier, RegressorModule):
         mse = np.mean(np.square(preds - labels))
 
         outputs = {}
-        outputs['mse'] = mse
+        outputs["mse"] = mse
 
         return outputs
 
 
 def get_key_to_depths(num_hidden_layers):
     key_to_depths = {
-        '/embeddings': num_hidden_layers + 2,
-        'wide/': 2,
-        'wide_and_deep/': 1,
-        '/pooler/': 1,
-        'cls/': 0,
-        'reg': 0}
+        "/embeddings": num_hidden_layers + 2,
+        "wide/": 2,
+        "wide_and_deep/": 1,
+        "/pooler/": 1,
+        "cls/": 0,
+        "reg": 0}
     for layer_idx in range(num_hidden_layers):
-        key_to_depths['/layer_%d/' % layer_idx] = \
+        key_to_depths["/layer_%d/" % layer_idx] = \
             num_hidden_layers - layer_idx + 1
     return key_to_depths

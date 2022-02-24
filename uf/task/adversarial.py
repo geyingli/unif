@@ -1,18 +1,3 @@
-# coding:=utf-8
-# Copyright 2021 Tencent. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 import numpy as np
 
 from ..tools import tf
@@ -27,26 +12,26 @@ class AdversarialTraining(Training):
 
         try:
             ok = True
-            if self.adversarial == 'fgm':
+            if self.adversarial == "fgm":
                 self._fgm(**kwargs)
-            elif self.adversarial == 'pgd':
+            elif self.adversarial == "pgd":
                 self._pgd(**kwargs)
-            elif self.adversarial == 'freelb':
+            elif self.adversarial == "freelb":
                 self._freelb(**kwargs)
-            elif self.adversarial == 'freeat':
+            elif self.adversarial == "freeat":
                 self._freeat(**kwargs)
-            elif self.adversarial == 'smart':
+            elif self.adversarial == "smart":
                 self._smart(**kwargs)
             else:
                 ok = False
         except Exception:
-            raise ValueError('`%s` does not support adversarial training.'
+            raise ValueError("`%s` does not support adversarial training."
                              % self.module.__class__.__name__)
         if not ok:
             raise ValueError(
-                'Wrong adversarial algorithm `%s`. '
-                'Pick one in the following list: '
-                'FGM, PGD, FreeLB, FreeAT, SMART.' % self.adversarial)
+                "Wrong adversarial algorithm `%s`. "
+                "Pick one in the following list: "
+                "FGM, PGD, FreeLB, FreeAT, SMART." % self.adversarial)
 
     def _fgm(self, epsilon=0.5, **kwargs):
         # FGM takes average on actual gradient and virtual
@@ -59,7 +44,7 @@ class AdversarialTraining(Training):
 
         # attack
         actual_grads, self.module._tensors = self.module._parallel_forward(**kwargs)
-        grad, param = utils.get_grad_and_param(self.module.trainable_variables, actual_grads, 'word_embedding')
+        grad, param = utils.get_grad_and_param(self.module.trainable_variables, actual_grads, "word_embedding")
         r = tf.multiply(epsilon, grad / (tf.norm(grad) + 1e-9))
         attack_op = param.assign(param + r)
 
@@ -98,7 +83,7 @@ class AdversarialTraining(Training):
                 if k == 0:
                     actual_grads = d_grads
                     self.module._tensors = tensors
-                grad, param = utils.get_grad_and_param(self.module.trainable_variables, d_grads, 'word_embedding')
+                grad, param = utils.get_grad_and_param(self.module.trainable_variables, d_grads, "word_embedding")
                 tmp_r = tf.multiply(1 / n_loop, grad / (tf.norm(grad) + 1e-9))
 
                 # In order not to shuffle the distribution of gradient-
@@ -143,9 +128,9 @@ class AdversarialTraining(Training):
 
         # initialize
         d_grads, self.module._tensors = self.module._parallel_forward(**kwargs)
-        grad, param = utils.get_grad_and_param(self.module.trainable_variables, d_grads, 'word_embedding')
+        grad, param = utils.get_grad_and_param(self.module.trainable_variables, d_grads, "word_embedding")
         init_r = tf.get_variable(
-            'init_r',
+            "init_r",
             shape=[self.module.batch_size * self.module.max_seq_length,
                    param.shape.as_list()[-1]],
             initializer=tf.random_uniform_initializer(
@@ -170,7 +155,7 @@ class AdversarialTraining(Training):
                 all_grads.append(attack_grads)
                 grad, _ = utils.get_grad_and_param(
                     self.module.trainable_variables,
-                    attack_grads, 'word_embedding')
+                    attack_grads, "word_embedding")
                 tmp_r = tf.multiply(1 / n_loop, grad / (tf.norm(grad) + 1e-9))
 
                 # In order not to shuffle the distribution of gradient-
@@ -217,7 +202,7 @@ class AdversarialTraining(Training):
                 if k == 0:
                     self.module._tensors = tensors
                 grad, param = utils.get_grad_and_param(
-                    self.module.trainable_variables, grads, 'word_embedding')
+                    self.module.trainable_variables, grads, "word_embedding")
                 update_params_op = utils.update_global_params(
                     self.module.trainable_variables, self.module._global_step,
                     self.module._optimizer, grads)
@@ -257,18 +242,18 @@ class AdversarialTraining(Training):
 
         # initialize
         unused_grads, self.module._tensors = self.module._parallel_forward(**kwargs)
-        cls_loss = tf.reduce_mean(self.module._tensors['losses'])
+        cls_loss = tf.reduce_mean(self.module._tensors["losses"])
 
         # Bregman proximal point optimization
-        param = utils.get_param(self.module.trainable_variables, 'word_embedding')
+        param = utils.get_param(self.module.trainable_variables, "word_embedding")
         embedding_shape = param.shape.as_list()
         tilda = tf.get_variable(
-            name='tilda_embeddings',
+            name="tilda_embeddings",
             shape=embedding_shape,
             initializer=tf.zeros_initializer, trainable=False)
         _, breg_tensors = self.module._parallel_forward(use_tilda_embedding=True, **kwargs)
-        probs = self.module._tensors['probs']
-        probs_breg = breg_tensors['probs']
+        probs = self.module._tensors["probs"]
+        probs_breg = breg_tensors["probs"]
         per_example_loss = tf.reduce_sum(
             probs_breg * (tf.log(probs_breg) - tf.log(probs)), axis=-1)
         per_example_loss_breg = tf.reduce_sum(
@@ -276,15 +261,15 @@ class AdversarialTraining(Training):
         breg_loss = breg_miu * (
             tf.reduce_mean(per_example_loss) +
             tf.reduce_mean(per_example_loss_breg))
-        self.module._tensors['breg'] = breg_miu * (
+        self.module._tensors["breg"] = breg_miu * (
             per_example_loss +
             per_example_loss_breg)
 
         # perturbation
         grad, param = utils.get_grad_and_param(
-            self.module.trainable_variables, unused_grads, 'word_embedding')
+            self.module.trainable_variables, unused_grads, "word_embedding")
         init_r = tf.get_variable(
-            'init_r',
+            "init_r",
             shape=[self.module.batch_size * self.module.max_seq_length,
                    embedding_shape[-1]],
             initializer=tf.random_normal_initializer(stddev=epsilon),
@@ -307,7 +292,7 @@ class AdversarialTraining(Training):
                 _, prtb_tensors = self.module._parallel_forward(**kwargs)
 
                 # smoothness-inducing adversarial regulization
-                probs_prtb = prtb_tensors['probs']
+                probs_prtb = prtb_tensors["probs"]
                 per_example_loss = tf.reduce_sum(
                     probs_prtb * (tf.log(probs_prtb) - tf.log(probs)), axis=-1)
                 per_example_loss_prtb = tf.reduce_sum(
@@ -315,7 +300,7 @@ class AdversarialTraining(Training):
                 prtb_loss = prtb_lambda * (
                     tf.reduce_mean(per_example_loss) +
                     tf.reduce_mean(per_example_loss_prtb))
-                self.module._tensors['prtb'] = prtb_lambda * (
+                self.module._tensors["prtb"] = prtb_lambda * (
                     per_example_loss +
                     per_example_loss_prtb)
 
@@ -323,7 +308,7 @@ class AdversarialTraining(Training):
                 total_loss = cls_loss + breg_loss + prtb_loss
                 grads = tf.gradients(total_loss, self.module.trainable_variables)
                 grad, _ = utils.get_grad_and_param(
-                    self.module.trainable_variables, grads, 'word_embedding')
+                    self.module.trainable_variables, grads, "word_embedding")
 
                 tmp_r = tf.multiply(1 / n_loop, grad / (
                     tf.norm(grad, np.inf) + 1e-9))
@@ -344,9 +329,9 @@ class AdversarialTraining(Training):
         update_step_op = self.module._global_step.assign(self.module._global_step + 1)
         self.train_ops = [update_params_op, update_step_op]
 
-        # runs at the start of each epoch
+        # runs at the start of traning
         self.init_tilda_op = tilda.assign(param)
 
-        # runs at the end of each epoch
+        # runs at the end of each training epoch
         self.update_tilda_op = tilda.assign(
             (1 - tilda_beta) * param + tilda_beta * tilda)

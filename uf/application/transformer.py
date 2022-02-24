@@ -1,18 +1,4 @@
-# coding:=utf-8
-# Copyright 2021 Tencent. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the 'License');
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an 'AS IS' BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-''' Applications based on BERT. '''
+""" Applications based on BERT. """
 
 import numpy as np
 
@@ -24,19 +10,19 @@ from .. import utils
 
 
 class TransformerMT(MTModule):
-    ''' Machine translation on Transformer. '''
+    """ Machine translation on Transformer. """
     _INFER_ATTRIBUTES = {
-        'source_max_seq_length': (
-            'An integer that defines max sequence length of source language '
-            'tokens, which typically equals `len(tokenize(segments)) + '
-            'len(segments)` + 1'),
-        'target_max_seq_length': (
-            'An integer that defines max sequence length of target language '
-            'tokens, which typically equals `len(tokenize(segments)) + '
-            'len(segments)` + 1'),
-        'init_checkpoint': (
-            'A string that directs to the checkpoint file used for '
-            'initialization')}
+        "source_max_seq_length": (
+            "An integer that defines max sequence length of source language "
+            "tokens, which typically equals `len(tokenize(segments)) + "
+            "len(segments)` + 1"),
+        "target_max_seq_length": (
+            "An integer that defines max sequence length of target language "
+            "tokens, which typically equals `len(tokenize(segments)) + "
+            "len(segments)` + 1"),
+        "init_checkpoint": (
+            "A string that directs to the checkpoint file used for "
+            "initialization")}
 
     def __init__(self,
                  vocab_file,
@@ -49,7 +35,7 @@ class TransformerMT(MTModule):
                  num_hidden_layers=12,
                  num_attention_heads=12,
                  do_lower_case=True,
-                 truncate_method='LIFO'):
+                 truncate_method="LIFO"):
         super(MTModule, self).__init__(
             init_checkpoint, output_dir, gpu_ids)
 
@@ -65,19 +51,19 @@ class TransformerMT(MTModule):
         self.tokenizer = get_word_piece_tokenizer(vocab_file, do_lower_case)
         self._key_to_depths = get_key_to_depths(num_hidden_layers)
 
-        if '<s>' not in self.tokenizer.vocab:
-            self.tokenizer.add('<s>')
-            tf.logging.info('Add necessary token `<s>` into vocabulary.')
-        if '</s>' not in self.tokenizer.vocab:
-            self.tokenizer.add('</s>')
-            tf.logging.info('Add necessary token `</s>` into vocabulary.')
+        if "<s>" not in self.tokenizer.vocab:
+            self.tokenizer.add("<s>")
+            tf.logging.info("Add necessary token `<s>` into vocabulary.")
+        if "</s>" not in self.tokenizer.vocab:
+            self.tokenizer.add("</s>")
+            tf.logging.info("Add necessary token `</s>` into vocabulary.")
 
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
                 is_training=False, is_parallel=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
 
         if is_training:
-            assert y is not None, '`y` can\'t be None.'
+            assert y is not None, "`y` can\"t be None."
 
         n_inputs = None
         data = {}
@@ -87,7 +73,7 @@ class TransformerMT(MTModule):
             tokenized = False if X else X_tokenized
             source_ids = self._convert_X(
                 X_tokenized if tokenized else X, tokenized=tokenized)
-            data['source_ids'] = np.array(source_ids, dtype=np.int32)
+            data["source_ids"] = np.array(source_ids, dtype=np.int32)
             n_inputs = len(source_ids)
 
             if n_inputs < self.batch_size:
@@ -96,13 +82,13 @@ class TransformerMT(MTModule):
         # convert y
         if y:
             target_ids = self._convert_y(y)
-            data['target_ids'] = np.array(target_ids, dtype=np.int32)
+            data["target_ids"] = np.array(target_ids, dtype=np.int32)
 
         # convert sample_weight
         if is_training or y:
             sample_weight = self._convert_sample_weight(
                 sample_weight, n_inputs)
-            data['sample_weight'] = np.array(sample_weight, dtype=np.float32)
+            data["sample_weight"] = np.array(sample_weight, dtype=np.float32)
 
         return data
 
@@ -114,7 +100,7 @@ class TransformerMT(MTModule):
                 _source_tokens = self._convert_x(example, tokenized)
             except Exception:
                 raise ValueError(
-                    'Wrong input format (line %d): \'%s\'. '
+                    "Wrong input format (line %d): \"%s\". "
                     % (ex_id, example))
             _source_ids = self.tokenizer.convert_tokens_to_ids(_source_tokens)
 
@@ -141,12 +127,12 @@ class TransformerMT(MTModule):
 
         # deal with tokenized and multiple inputs
         raise ValueError(
-            'Machine translation module only supports single sentence inputs.')
+            "Machine translation module only supports single sentence inputs.")
 
     def _convert_y(self, y):
         target_ids = []
-        sos_id = self.tokenizer.convert_tokens_to_ids(['<s>'])[0]
-        eos_id = self.tokenizer.convert_tokens_to_ids(['</s>'])[0]
+        sos_id = self.tokenizer.convert_tokens_to_ids(["<s>"])[0]
+        eos_id = self.tokenizer.convert_tokens_to_ids(["</s>"])[0]
 
         for _y in y:
             if isinstance(_y, str):
@@ -154,8 +140,8 @@ class TransformerMT(MTModule):
                     self.tokenizer.tokenize(_y))
             elif isinstance(_y, list):
                 assert isinstance(_y[0], str), (
-                    'Machine translation module only supports '
-                    'single sentence inputs.')
+                    "Machine translation module only supports "
+                    "single sentence inputs.")
                 _target_ids = self.tokenizer.convert_tokens_to_ids(_y)
 
             utils.truncate_segments(
@@ -172,17 +158,17 @@ class TransformerMT(MTModule):
 
     def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
-            'source_ids': utils.get_placeholder(
-                target, 'source_ids',
+            "source_ids": utils.get_placeholder(
+                target, "source_ids",
                 [None, self.source_max_seq_length], tf.int32),
-            'target_ids': utils.get_placeholder(
-                target, 'target_ids',
+            "target_ids": utils.get_placeholder(
+                target, "target_ids",
                 [None, self.target_max_seq_length], tf.int32),
         }
         if not on_export:
-            self.placeholders['sample_weight'] = \
+            self.placeholders["sample_weight"] = \
                 utils.get_placeholder(
-                    target, 'sample_weight',
+                    target, "sample_weight",
                     [None], tf.float32)
 
     def _forward(self, is_training, split_placeholders, **kwargs):
@@ -190,21 +176,21 @@ class TransformerMT(MTModule):
         model = Transformer(
             vocab_size=len(self.tokenizer.vocab),
             is_training=is_training,
-            source_ids=split_placeholders['source_ids'],
-            target_ids=split_placeholders['target_ids'],
-            sos_id=self.tokenizer.convert_tokens_to_ids(['<s>'])[0],
-            sample_weight=split_placeholders.get('sample_weight'),
+            source_ids=split_placeholders["source_ids"],
+            target_ids=split_placeholders["target_ids"],
+            sos_id=self.tokenizer.convert_tokens_to_ids(["<s>"])[0],
+            sample_weight=split_placeholders.get("sample_weight"),
             hidden_size=self._hidden_size,
             num_blocks=self._num_hidden_layers,
             num_attention_heads=self._num_attention_heads,
-            scope='transformer',
+            scope="transformer",
             **kwargs)
         return model.get_forward_outputs()
 
     def _get_fit_ops(self, as_feature=False):
-        ops = [self._tensors['preds'], self._tensors['losses']]
+        ops = [self._tensors["preds"], self._tensors["losses"]]
         if as_feature:
-            ops.extend([self.placeholders['target_ids']])
+            ops.extend([self.placeholders["target_ids"]])
         return ops
 
     def _get_fit_info(self, output_arrays, feed_dict, as_feature=False):
@@ -212,7 +198,7 @@ class TransformerMT(MTModule):
         if as_feature:
             batch_target = output_arrays[-1]
         else:
-            batch_target = feed_dict[self.placeholders['target_ids']]
+            batch_target = feed_dict[self.placeholders["target_ids"]]
 
         # accuracy
         batch_preds = output_arrays[0]
@@ -226,14 +212,14 @@ class TransformerMT(MTModule):
         batch_losses = output_arrays[1]
         loss = np.mean(batch_losses)
 
-        info = ''
-        info += ', accuracy %.4f' % accuracy
-        info += ', loss %.6f' % loss
+        info = ""
+        info += ", accuracy %.4f" % accuracy
+        info += ", loss %.6f" % loss
 
         return info
 
     def _get_predict_ops(self):
-        return [self._tensors['preds']]
+        return [self._tensors["preds"]]
 
     def _get_predict_outputs(self, batch_outputs):
         n_inputs = len(list(self.data.values())[0])
@@ -245,19 +231,19 @@ class TransformerMT(MTModule):
         for _pred_ids in all_preds:
             _pred_tokens = self.tokenizer.convert_ids_to_tokens(_pred_ids)
             for i in range(self.target_max_seq_length):
-                if _pred_tokens[i] == '</s>':
+                if _pred_tokens[i] == "</s>":
                     _pred_tokens = _pred_tokens[:i]
                     break
             _pred_text = utils.convert_tokens_to_text(_pred_tokens)
             preds.append(_pred_text)
 
         outputs = {}
-        outputs['preds'] = preds
+        outputs["preds"] = preds
 
         return outputs
 
     def _get_score_ops(self):
-        return [self._tensors['preds'], self._tensors['losses']]
+        return [self._tensors["preds"], self._tensors["losses"]]
 
     def _get_score_outputs(self, batch_outputs):
         n_inputs = len(list(self.data.values())[0])
@@ -265,7 +251,7 @@ class TransformerMT(MTModule):
 
         # accuracy
         preds = utils.transform(output_arrays[0], n_inputs)
-        target = self.data['target_ids']
+        target = self.data["target_ids"]
         labels = np.hstack(
             (target[:, 1:], np.zeros((n_inputs, 1))))
         mask = (labels > 0)
@@ -283,19 +269,19 @@ class TransformerMT(MTModule):
         loss = np.mean(losses)
 
         outputs = {}
-        outputs['accuracy'] = accuracy
-        outputs['bleu'] = bleu
-        outputs['rouge'] = rouge
-        outputs['loss'] = loss
+        outputs["accuracy"] = accuracy
+        outputs["bleu"] = bleu
+        outputs["rouge"] = rouge
+        outputs["loss"] = loss
 
         return outputs
 
 
 def get_key_to_depths(num_hidden_layers):
     key_to_depths = {
-        '/embeddings': num_hidden_layers + 1,
-        'cls': 0,
+        "/embeddings": num_hidden_layers + 1,
+        "cls": 0,
     }
     for layer_idx in range(num_hidden_layers):
-        key_to_depths['/block_%d/' % layer_idx] = num_hidden_layers - layer_idx
+        key_to_depths["/block_%d/" % layer_idx] = num_hidden_layers - layer_idx
     return key_to_depths

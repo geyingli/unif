@@ -1,18 +1,4 @@
-# coding:=utf-8
-# Copyright 2021 Tencent. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-''' Applications based on ALBERT. '''
+""" Applications based on ALBERT. """
 
 import os
 import random
@@ -30,7 +16,7 @@ from .. import utils
 
 
 class ALBERTClassifier(BERTClassifier, ClassifierModule):
-    ''' Single-label classifier on ALBERT. '''
+    """ Single-label classifier on ALBERT. """
     _INFER_ATTRIBUTES = BERTClassifier._INFER_ATTRIBUTES
 
     def __init__(self,
@@ -43,7 +29,7 @@ class ALBERTClassifier(BERTClassifier, ClassifierModule):
                  gpu_ids=None,
                  drop_pooler=False,
                  do_lower_case=True,
-                 truncate_method='LIFO'):
+                 truncate_method="LIFO"):
         super(ClassifierModule, self).__init__(
             init_checkpoint, output_dir, gpu_ids)
 
@@ -60,40 +46,40 @@ class ALBERTClassifier(BERTClassifier, ClassifierModule):
         self._key_to_depths = get_key_to_depths(
             self.albert_config.num_hidden_layers)
 
-        if '[CLS]' not in self.tokenizer.vocab:
-            self.tokenizer.add('[CLS]')
+        if "[CLS]" not in self.tokenizer.vocab:
+            self.tokenizer.add("[CLS]")
             self.albert_config.vocab_size += 1
-            tf.logging.info('Add necessary token `[CLS]` into vocabulary.')
-        if '[SEP]' not in self.tokenizer.vocab:
-            self.tokenizer.add('[SEP]')
+            tf.logging.info("Add necessary token `[CLS]` into vocabulary.")
+        if "[SEP]" not in self.tokenizer.vocab:
+            self.tokenizer.add("[SEP]")
             self.albert_config.vocab_size += 1
-            tf.logging.info('Add necessary token `[SEP]` into vocabulary.')
+            tf.logging.info("Add necessary token `[SEP]` into vocabulary.")
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
         encoder = ALBERTEncoder(
             albert_config=self.albert_config,
             is_training=is_training,
-            input_ids=split_placeholders['input_ids'],
-            input_mask=split_placeholders['input_mask'],
-            segment_ids=split_placeholders['segment_ids'],
-            scope='bert',
+            input_ids=split_placeholders["input_ids"],
+            input_mask=split_placeholders["input_mask"],
+            segment_ids=split_placeholders["segment_ids"],
+            scope="bert",
             drop_pooler=self._drop_pooler,
             **kwargs)
         encoder_output = encoder.get_pooled_output()
         decoder = CLSDecoder(
             is_training=is_training,
             input_tensor=encoder_output,
-            label_ids=split_placeholders['label_ids'],
+            label_ids=split_placeholders["label_ids"],
             label_size=self.label_size,
-            sample_weight=split_placeholders.get('sample_weight'),
-            scope='cls/seq_relationship',
+            sample_weight=split_placeholders.get("sample_weight"),
+            scope="cls/seq_relationship",
             **kwargs)
         return decoder.get_forward_outputs()
 
 
 class ALBERTBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
-    ''' Multi-label classifier on ALBERT. '''
+    """ Multi-label classifier on ALBERT. """
     _INFER_ATTRIBUTES = BERTBinaryClassifier._INFER_ATTRIBUTES
 
     def __init__(self,
@@ -107,7 +93,7 @@ class ALBERTBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
                  gpu_ids=None,
                  drop_pooler=False,
                  do_lower_case=True,
-                 truncate_method='LIFO'):
+                 truncate_method="LIFO"):
         super(ClassifierModule, self).__init__(
             init_checkpoint, output_dir, gpu_ids)
 
@@ -125,41 +111,41 @@ class ALBERTBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
         self._key_to_depths = get_key_to_depths(
             self.albert_config.num_hidden_layers)
 
-        if '[CLS]' not in self.tokenizer.vocab:
-            self.tokenizer.add('[CLS]')
+        if "[CLS]" not in self.tokenizer.vocab:
+            self.tokenizer.add("[CLS]")
             self.albert_config.vocab_size += 1
-            tf.logging.info('Add necessary token `[CLS]` into vocabulary.')
-        if '[SEP]' not in self.tokenizer.vocab:
-            self.tokenizer.add('[SEP]')
+            tf.logging.info("Add necessary token `[CLS]` into vocabulary.")
+        if "[SEP]" not in self.tokenizer.vocab:
+            self.tokenizer.add("[SEP]")
             self.albert_config.vocab_size += 1
-            tf.logging.info('Add necessary token `[SEP]` into vocabulary.')
+            tf.logging.info("Add necessary token `[SEP]` into vocabulary.")
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
         encoder = ALBERTEncoder(
             albert_config=self.albert_config,
             is_training=is_training,
-            input_ids=split_placeholders['input_ids'],
-            input_mask=split_placeholders['input_mask'],
-            segment_ids=split_placeholders['segment_ids'],
-            scope='bert',
+            input_ids=split_placeholders["input_ids"],
+            input_mask=split_placeholders["input_mask"],
+            segment_ids=split_placeholders["segment_ids"],
+            scope="bert",
             drop_pooler=self._drop_pooler,
             **kwargs)
         encoder_output = encoder.get_pooled_output()
         decoder = BinaryCLSDecoder(
             is_training=is_training,
             input_tensor=encoder_output,
-            label_ids=split_placeholders['label_ids'],
+            label_ids=split_placeholders["label_ids"],
             label_size=self.label_size,
-            sample_weight=split_placeholders.get('sample_weight'),
+            sample_weight=split_placeholders.get("sample_weight"),
             label_weight=self.label_weight,
-            scope='cls/seq_relationship',
+            scope="cls/seq_relationship",
             **kwargs)
         return decoder.get_forward_outputs()
 
 
 class ALBERTSeqClassifier(BERTSeqClassifier, ClassifierModule):
-    ''' Sequence labeling classifier on ALBERT. '''
+    """ Sequence labeling classifier on ALBERT. """
     _INFER_ATTRIBUTES = BERTSeqClassifier._INFER_ATTRIBUTES
 
     def __init__(self,
@@ -171,7 +157,7 @@ class ALBERTSeqClassifier(BERTSeqClassifier, ClassifierModule):
                  output_dir=None,
                  gpu_ids=None,
                  do_lower_case=True,
-                 truncate_method='LIFO'):
+                 truncate_method="LIFO"):
         super(ClassifierModule, self).__init__(
             init_checkpoint, output_dir, gpu_ids)
 
@@ -187,40 +173,40 @@ class ALBERTSeqClassifier(BERTSeqClassifier, ClassifierModule):
         self._key_to_depths = get_key_to_depths(
             self.albert_config.num_hidden_layers)
 
-        if '[CLS]' not in self.tokenizer.vocab:
-            self.tokenizer.add('[CLS]')
+        if "[CLS]" not in self.tokenizer.vocab:
+            self.tokenizer.add("[CLS]")
             self.albert_config.vocab_size += 1
-            tf.logging.info('Add necessary token `[CLS]` into vocabulary.')
-        if '[SEP]' not in self.tokenizer.vocab:
-            self.tokenizer.add('[SEP]')
+            tf.logging.info("Add necessary token `[CLS]` into vocabulary.")
+        if "[SEP]" not in self.tokenizer.vocab:
+            self.tokenizer.add("[SEP]")
             self.albert_config.vocab_size += 1
-            tf.logging.info('Add necessary token `[SEP]` into vocabulary.')
+            tf.logging.info("Add necessary token `[SEP]` into vocabulary.")
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
         encoder = ALBERTEncoder(
             albert_config=self.albert_config,
             is_training=is_training,
-            input_ids=split_placeholders['input_ids'],
-            input_mask=split_placeholders['input_mask'],
-            segment_ids=split_placeholders['segment_ids'],
-            scope='bert',
+            input_ids=split_placeholders["input_ids"],
+            input_mask=split_placeholders["input_mask"],
+            segment_ids=split_placeholders["segment_ids"],
+            scope="bert",
             **kwargs)
         encoder_output = encoder.get_sequence_output()
         decoder = SeqCLSDecoder(
             is_training=is_training,
             input_tensor=encoder_output,
-            input_mask=split_placeholders['input_mask'],
-            label_ids=split_placeholders['label_ids'],
+            input_mask=split_placeholders["input_mask"],
+            label_ids=split_placeholders["label_ids"],
             label_size=self.label_size,
-            sample_weight=split_placeholders.get('sample_weight'),
-            scope='cls/sequence',
+            sample_weight=split_placeholders.get("sample_weight"),
+            scope="cls/sequence",
             **kwargs)
         return decoder.get_forward_outputs()
 
 
 class ALBERTMRC(BERTMRC, MRCModule):
-    ''' Machine reading comprehension on ALBERT. '''
+    """ Machine reading comprehension on ALBERT. """
     _INFER_ATTRIBUTES = BERTMRC._INFER_ATTRIBUTES
 
     def __init__(self,
@@ -231,7 +217,7 @@ class ALBERTMRC(BERTMRC, MRCModule):
                  output_dir=None,
                  gpu_ids=None,
                  do_lower_case=True,
-                 truncate_method='longer-FO'):
+                 truncate_method="longer-FO"):
         super(MRCModule, self).__init__(
             init_checkpoint, output_dir, gpu_ids)
 
@@ -248,38 +234,38 @@ class ALBERTMRC(BERTMRC, MRCModule):
         self._key_to_depths = get_key_to_depths(
             self.albert_config.num_hidden_layers)
 
-        if '[CLS]' not in self.tokenizer.vocab:
-            self.tokenizer.add('[CLS]')
+        if "[CLS]" not in self.tokenizer.vocab:
+            self.tokenizer.add("[CLS]")
             self.albert_config.vocab_size += 1
-            tf.logging.info('Add necessary token `[CLS]` into vocabulary.')
-        if '[SEP]' not in self.tokenizer.vocab:
-            self.tokenizer.add('[SEP]')
+            tf.logging.info("Add necessary token `[CLS]` into vocabulary.")
+        if "[SEP]" not in self.tokenizer.vocab:
+            self.tokenizer.add("[SEP]")
             self.albert_config.vocab_size += 1
-            tf.logging.info('Add necessary token `[SEP]` into vocabulary.')
+            tf.logging.info("Add necessary token `[SEP]` into vocabulary.")
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
         encoder = ALBERTEncoder(
             albert_config=self.albert_config,
             is_training=is_training,
-            input_ids=split_placeholders['input_ids'],
-            input_mask=split_placeholders['input_mask'],
-            segment_ids=split_placeholders['segment_ids'],
-            scope='bert',
+            input_ids=split_placeholders["input_ids"],
+            input_mask=split_placeholders["input_mask"],
+            segment_ids=split_placeholders["segment_ids"],
+            scope="bert",
             **kwargs)
         encoder_output = encoder.get_sequence_output()
         decoder = MRCDecoder(
             is_training=is_training,
             input_tensor=encoder_output,
-            label_ids=split_placeholders['label_ids'],
-            sample_weight=split_placeholders.get('sample_weight'),
-            scope='mrc',
+            label_ids=split_placeholders["label_ids"],
+            sample_weight=split_placeholders.get("sample_weight"),
+            scope="mrc",
             **kwargs)
         return decoder.get_forward_outputs()
 
 
 class ALBERTLM(BERTLM, LMModule):
-    ''' Language modeling on ALBERT. '''
+    """ Language modeling on ALBERT. """
     _INFER_ATTRIBUTES = BERTLM._INFER_ATTRIBUTES
 
     def __init__(self,
@@ -299,7 +285,7 @@ class ALBERTLM(BERTLM, LMModule):
                  do_permutation=False,
                  do_whole_word_mask=True,
                  do_lower_case=True,
-                 truncate_method='LIFO'):
+                 truncate_method="LIFO"):
         super(LMModule, self).__init__(
             init_checkpoint, output_dir, gpu_ids)
 
@@ -324,14 +310,14 @@ class ALBERTLM(BERTLM, LMModule):
         self._key_to_depths = get_key_to_depths(
             self.albert_config.num_hidden_layers)
 
-        if '[CLS]' not in self.tokenizer.vocab:
-            self.tokenizer.add('[CLS]')
+        if "[CLS]" not in self.tokenizer.vocab:
+            self.tokenizer.add("[CLS]")
             self.albert_config.vocab_size += 1
-            tf.logging.info('Add necessary token `[CLS]` into vocabulary.')
-        if '[SEP]' not in self.tokenizer.vocab:
-            self.tokenizer.add('[SEP]')
+            tf.logging.info("Add necessary token `[CLS]` into vocabulary.")
+        if "[SEP]" not in self.tokenizer.vocab:
+            self.tokenizer.add("[SEP]")
             self.albert_config.vocab_size += 1
-            tf.logging.info('Add necessary token `[SEP]` into vocabulary.')
+            tf.logging.info("Add necessary token `[SEP]` into vocabulary.")
 
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
                 is_training=False, is_parallel=False):
@@ -340,10 +326,10 @@ class ALBERTLM(BERTLM, LMModule):
         if is_training:
             if y is not None:
                 assert not self.do_sample_sentence, (
-                    '`y` should be None when `do_sample_sentence` is True.')
+                    "`y` should be None when `do_sample_sentence` is True.")
             else:
                 assert self.do_sample_sentence, (
-                    '`y` can\'t be None when `do_sample_sentence` is False.')
+                    "`y` can\"t be None when `do_sample_sentence` is False.")
 
         n_inputs = None
         data = {}
@@ -358,20 +344,20 @@ class ALBERTLM(BERTLM, LMModule):
                  X_tokenized if tokenized else X,
                  is_training, tokenized=tokenized)
 
-            data['input_ids'] = np.array(input_ids, dtype=np.int32)
-            data['input_mask'] = np.array(input_mask, dtype=np.int32)
-            data['segment_ids'] = np.array(segment_ids, dtype=np.int32)
-            data['masked_lm_positions'] = \
+            data["input_ids"] = np.array(input_ids, dtype=np.int32)
+            data["input_mask"] = np.array(input_mask, dtype=np.int32)
+            data["segment_ids"] = np.array(segment_ids, dtype=np.int32)
+            data["masked_lm_positions"] = \
                 np.array(masked_lm_positions, dtype=np.int32)
 
             if is_training:
-                data['masked_lm_ids'] = \
+                data["masked_lm_ids"] = \
                     np.array(masked_lm_ids, dtype=np.int32)
-                data['masked_lm_weights'] = \
+                data["masked_lm_weights"] = \
                     np.array(masked_lm_weights, dtype=np.float32)
 
             if is_training and self.do_sample_sentence:
-                data['sentence_order_labels'] = \
+                data["sentence_order_labels"] = \
                     np.array(sentence_order_labels, dtype=np.int32)
 
             n_inputs = len(input_ids)
@@ -381,14 +367,14 @@ class ALBERTLM(BERTLM, LMModule):
         # convert y
         if y:
             sentence_order_labels = self._convert_y(y)
-            data['sentence_order_labels'] = \
+            data["sentence_order_labels"] = \
                 np.array(sentence_order_labels, dtype=np.int32)
 
         # convert sample_weight
         if is_training or y:
             sample_weight = self._convert_sample_weight(
                 sample_weight, n_inputs)
-            data['sample_weight'] = np.array(sample_weight, dtype=np.float32)
+            data["sample_weight"] = np.array(sample_weight, dtype=np.float32)
 
         return data
 
@@ -402,7 +388,7 @@ class ALBERTLM(BERTLM, LMModule):
                     self._convert_x(example, tokenized))
             except Exception:
                 raise ValueError(
-                    'Wrong input format (line %d): \'%s\'. '
+                    "Wrong input format (line %d): \"%s\". "
                     % (ex_id, example))
 
         input_ids = []
@@ -431,7 +417,7 @@ class ALBERTLM(BERTLM, LMModule):
             segment_input_tokens = new_segment_input_tokens
 
         for ex_id, segments in enumerate(segment_input_tokens):
-            _input_tokens = ['[CLS]']
+            _input_tokens = ["[CLS]"]
             _input_ids = []
             _input_mask = [1]
             _segment_ids = [0]
@@ -445,7 +431,7 @@ class ALBERTLM(BERTLM, LMModule):
 
             for s_id, segment in enumerate(segments):
                 _segment_id = min(s_id, 1)
-                _input_tokens.extend(segment + ['[SEP]'])
+                _input_tokens.extend(segment + ["[SEP]"])
                 _input_mask.extend([1] * (len(segment) + 1))
                 _segment_ids.extend([_segment_id] * (len(segment) + 1))
 
@@ -453,7 +439,7 @@ class ALBERTLM(BERTLM, LMModule):
             if is_training:
                 if (ex_id + 1) % 10000 == 0:
                     tf.logging.info(
-                        'Sampling masks of input %d' % (ex_id + 1))
+                        "Sampling masks of input %d" % (ex_id + 1))
                 (_input_tokens, _masked_lm_positions, _masked_lm_labels) = \
                     create_masked_lm_predictions(
                         tokens=_input_tokens,
@@ -479,7 +465,7 @@ class ALBERTLM(BERTLM, LMModule):
                 # `masked_lm_positions` is required for both training
                 # and inference of BERT language modeling.
                 for i in range(len(_input_tokens)):
-                    if _input_tokens[i] == '[MASK]':
+                    if _input_tokens[i] == "[MASK]":
                         _masked_lm_positions.append(i)
 
                 # padding
@@ -509,35 +495,35 @@ class ALBERTLM(BERTLM, LMModule):
 
     def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
-            'input_ids': utils.get_placeholder(
-                target, 'input_ids',
+            "input_ids": utils.get_placeholder(
+                target, "input_ids",
                 [None, self.max_seq_length], tf.int32),
-            'input_mask': utils.get_placeholder(
-                target, 'input_mask',
+            "input_mask": utils.get_placeholder(
+                target, "input_mask",
                 [None, self.max_seq_length], tf.int32),
-            'segment_ids': utils.get_placeholder(
-                target, 'segment_ids',
+            "segment_ids": utils.get_placeholder(
+                target, "segment_ids",
                 [None, self.max_seq_length], tf.int32),
-            'masked_lm_positions': utils.get_placeholder(
-                target, 'masked_lm_positions',
+            "masked_lm_positions": utils.get_placeholder(
+                target, "masked_lm_positions",
                 [None, self._max_predictions_per_seq * (
                     1 + self._do_permutation)], tf.int32),
-            'masked_lm_ids': utils.get_placeholder(
-                target, 'masked_lm_ids',
+            "masked_lm_ids": utils.get_placeholder(
+                target, "masked_lm_ids",
                 [None, self._max_predictions_per_seq * (
                     1 + self._do_permutation)], tf.int32),
-            'masked_lm_weights': utils.get_placeholder(
-                target, 'masked_lm_weights',
+            "masked_lm_weights": utils.get_placeholder(
+                target, "masked_lm_weights",
                 [None, self._max_predictions_per_seq * (
                     1 + self._do_permutation)], tf.float32),
-            'sentence_order_labels': utils.get_placeholder(
-                target, 'sentence_order_labels',
+            "sentence_order_labels": utils.get_placeholder(
+                target, "sentence_order_labels",
                 [None], tf.int32),
         }
         if not on_export:
-            self.placeholders['sample_weight'] = \
+            self.placeholders["sample_weight"] = \
                 utils.get_placeholder(
-                    target, 'sample_weight',
+                    target, "sample_weight",
                     [None], tf.float32)
 
     def _forward(self, is_training, split_placeholders, **kwargs):
@@ -545,36 +531,36 @@ class ALBERTLM(BERTLM, LMModule):
         encoder = ALBERTEncoder(
             albert_config=self.albert_config,
             is_training=is_training,
-            input_ids=split_placeholders['input_ids'],
-            input_mask=split_placeholders['input_mask'],
-            segment_ids=split_placeholders['segment_ids'],
-            scope='bert',
+            input_ids=split_placeholders["input_ids"],
+            input_mask=split_placeholders["input_mask"],
+            segment_ids=split_placeholders["segment_ids"],
+            scope="bert",
             drop_pooler=self._drop_pooler,
             **kwargs)
         decoder = ALBERTDecoder(
             albert_config=self.albert_config,
             is_training=is_training,
             encoder=encoder,
-            masked_lm_positions=split_placeholders['masked_lm_positions'],
-            masked_lm_ids=split_placeholders['masked_lm_ids'],
-            masked_lm_weights=split_placeholders['masked_lm_weights'],
-            sentence_order_labels=split_placeholders.get('sentence_order_labels'),
-            sample_weight=split_placeholders.get('sample_weight'),
-            scope_lm='cls/predictions',
-            scope_cls='cls/seq_relationship',
+            masked_lm_positions=split_placeholders["masked_lm_positions"],
+            masked_lm_ids=split_placeholders["masked_lm_ids"],
+            masked_lm_weights=split_placeholders["masked_lm_weights"],
+            sentence_order_labels=split_placeholders.get("sentence_order_labels"),
+            sample_weight=split_placeholders.get("sample_weight"),
+            scope_lm="cls/predictions",
+            scope_cls="cls/seq_relationship",
             **kwargs)
         return decoder.get_forward_outputs()
 
     def _get_fit_ops(self, as_feature=False):
-        ops = [self._tensors['MLM_preds'],
-               self._tensors['SOP_preds'],
-               self._tensors['MLM_losses'],
-               self._tensors['SOP_losses']]
+        ops = [self._tensors["MLM_preds"],
+               self._tensors["SOP_preds"],
+               self._tensors["MLM_losses"],
+               self._tensors["SOP_losses"]]
         if as_feature:
             ops.extend(
-                [self.placeholders['masked_lm_positions'],
-                 self.placeholders['masked_lm_ids'],
-                 self.placeholders['sentence_order_labels']])
+                [self.placeholders["masked_lm_positions"],
+                 self.placeholders["masked_lm_ids"],
+                 self.placeholders["sentence_order_labels"]])
         return ops
 
     def _get_fit_info(self, output_arrays, feed_dict, as_feature=False):
@@ -585,11 +571,11 @@ class ALBERTLM(BERTLM, LMModule):
             batch_sop_labels = output_arrays[-1]
         else:
             batch_mlm_positions = \
-                feed_dict[self.placeholders['masked_lm_positions']]
+                feed_dict[self.placeholders["masked_lm_positions"]]
             batch_mlm_labels = \
-                feed_dict[self.placeholders['masked_lm_ids']]
+                feed_dict[self.placeholders["masked_lm_ids"]]
             batch_sop_labels = \
-                feed_dict[self.placeholders['sentence_order_labels']]
+                feed_dict[self.placeholders["sentence_order_labels"]]
 
         # MLM accuracy
         batch_mlm_preds = output_arrays[0]
@@ -610,18 +596,18 @@ class ALBERTLM(BERTLM, LMModule):
         batch_SOP_losses = output_arrays[3]
         SOP_loss = np.mean(batch_SOP_losses)
 
-        info = ''
-        info += ', MLM accuracy %.4f' % mlm_accuracy
-        info += ', SOP accuracy %.4f' % SOP_accuracy
-        info += ', MLM loss %.6f' % mlm_loss
-        info += ', SOP loss %.6f' % SOP_loss
+        info = ""
+        info += ", MLM accuracy %.4f" % mlm_accuracy
+        info += ", SOP accuracy %.4f" % SOP_accuracy
+        info += ", MLM loss %.6f" % mlm_loss
+        info += ", SOP loss %.6f" % SOP_loss
 
         return info
 
     def _get_predict_ops(self):
-        return [self._tensors['MLM_preds'],
-                self._tensors['SOP_preds'],
-                self._tensors['SOP_probs']]
+        return [self._tensors["MLM_preds"],
+                self._tensors["SOP_preds"],
+                self._tensors["SOP_probs"]]
 
     def _get_predict_outputs(self, batch_outputs):
         n_inputs = len(list(self.data.values())[0])
@@ -629,7 +615,7 @@ class ALBERTLM(BERTLM, LMModule):
 
         # MLM preds
         mlm_preds = []
-        mlm_positions = self.data['masked_lm_positions']
+        mlm_positions = self.data["masked_lm_positions"]
         all_preds = utils.transform(output_arrays[0], n_inputs)
         for ex_id, _preds in enumerate(all_preds):
             _ids = []
@@ -646,9 +632,9 @@ class ALBERTLM(BERTLM, LMModule):
         SOP_probs = utils.transform(output_arrays[2], n_inputs)
 
         outputs = {}
-        outputs['mlm_preds'] = mlm_preds
-        outputs['sop_preds'] = SOP_preds
-        outputs['sop_probs'] = SOP_probs
+        outputs["mlm_preds"] = mlm_preds
+        outputs["sop_preds"] = SOP_preds
+        outputs["sop_probs"] = SOP_probs
 
         return outputs
 
@@ -671,7 +657,7 @@ def create_instances_from_document(all_documents, document_index,
     if random.random() < short_seq_prob:
         target_seq_length = random.randint(2, max_seq_length)
 
-    # We DON'T just concatenate all of the tokens from a document into a long
+    # We DON"T just concatenate all of the tokens from a document into a long
     # sequence and choose an arbitrary split point because this would make the
     # next sentence prediction task too easy. Instead, we split the input into
     # segments "A" and "B" based on the actual "sentences" provided by the user
@@ -707,7 +693,7 @@ def create_instances_from_document(all_documents, document_index,
                     # This should rarely go for more than one iteration for
                     # large corpora. However, just to be careful, we try to
                     # make sure that the random document is not the same as
-                    # the document we're processing.
+                    # the document we"re processing.
                     for _ in range(10):
                         random_document_index = random.randint(
                             0, len(all_documents) - 1)
@@ -720,8 +706,8 @@ def create_instances_from_document(all_documents, document_index,
                         tokens_b.extend(random_document[j])
                         if len(tokens_b) >= target_b_length:
                             break
-                    # We didn't actually use these segments so we "put them
-                    # back" so they don't go to waste.
+                    # We didn"t actually use these segments so we "put them
+                    # back" so they don"t go to waste.
                     num_unused_segments = len(current_chunk) - a_end
                     i -= num_unused_segments
                 elif not random_next_sentence and random.random() < 0.5:
@@ -773,7 +759,7 @@ def create_masked_lm_predictions(tokens,
         # at all -- we still predict each WordPiece independently, softmaxed
         # over the entire vocabulary.
         if (do_whole_word_mask and len(cand_indexes) >= 1 and
-                token.startswith('##')):
+                token.startswith("##")):
             cand_indexes[-1].append(i)
         else:
             cand_indexes.append([i])
@@ -934,18 +920,18 @@ def create_masked_lm_predictions(tokens,
 def get_albert_config(config_file=None):
     if not os.path.exists(config_file):
         raise ValueError(
-            'Can\'t find config_file \'%s\'. '
-            'Please pass the correct path of configuration file, '
-            'e.g.`albert_config.json`. An example can be downloaded from '
-            'https://github.com/google-research/albert.' % config_file)
+            "Can\"t find config_file \"%s\". "
+            "Please pass the correct path of configuration file, "
+            "e.g.`albert_config.json`. An example can be downloaded from "
+            "https://github.com/google-research/albert." % config_file)
     return ALBERTConfig.from_json_file(config_file)
 
 
 def get_key_to_depths(num_hidden_layers):
     key_to_depths = {
-        '/embeddings': 4,
-        '/embedding_hidden_mapping_in': 3,
-        '/group_0': 2,
-        '/pooler/': 1,
-        'cls/': 0}
+        "/embeddings": 4,
+        "/embedding_hidden_mapping_in": 3,
+        "/group_0": 2,
+        "/pooler/": 1,
+        "cls/": 0}
     return key_to_depths

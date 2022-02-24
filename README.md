@@ -1,5 +1,3 @@
-中文 | [English](./README_EN.md)
-
 <p align="center">
     <br>
     	<img src="./docs/logo.png" style="zoom:74%"/>

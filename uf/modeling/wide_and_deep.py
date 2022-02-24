@@ -1,18 +1,4 @@
-# coding:=utf-8
-# Copyright 2021 Tencent. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-''' Wide & Deep structure. '''
+""" Wide & Deep structure. """
 
 import math
 
@@ -30,7 +16,7 @@ class WideAndDeepCLSDecoder(BaseDecoder):
                  label_ids,
                  label_size=2,
                  sample_weight=None,
-                 scope='cls/seq_relationship',
+                 scope="cls/seq_relationship",
                  hidden_dropout_prob=0.1,
                  initializer_range=0.02,
                  trainable=True,
@@ -39,16 +25,16 @@ class WideAndDeepCLSDecoder(BaseDecoder):
 
         hidden_size = input_tensor.shape.as_list()[-1]
         feature_size = wide_features.shape.as_list()[-1]
-        with tf.variable_scope('wide'):
+        with tf.variable_scope("wide"):
             feature_embeddings = tf.get_variable(
-                name='feature_embeddings',
+                name="feature_embeddings",
                 shape=[feature_size + 1, hidden_size],
                 initializer=util.create_initializer(initializer_range),
                 trainable=trainable)
             wide_output = tf.gather(
                 feature_embeddings, wide_features)  # [B, N, H]
 
-        with tf.variable_scope('wide_and_deep'):
+        with tf.variable_scope("wide_and_deep"):
             deep_output = tf.expand_dims(input_tensor, -1)  # [B, H, 1]
             attention_scores = tf.matmul(wide_output, deep_output)  # [B, N, 1]
             attention_scores = tf.transpose(
@@ -71,12 +57,12 @@ class WideAndDeepCLSDecoder(BaseDecoder):
 
         with tf.variable_scope(scope):
             output_weights = tf.get_variable(
-                'output_weights',
+                "output_weights",
                 shape=[label_size, hidden_size],
                 initializer=util.create_initializer(initializer_range),
                 trainable=trainable)
             output_bias = tf.get_variable(
-                'output_bias',
+                "output_bias",
                 shape=[label_size],
                 initializer=tf.zeros_initializer(),
                 trainable=trainable)
@@ -86,9 +72,9 @@ class WideAndDeepCLSDecoder(BaseDecoder):
             logits = tf.matmul(output_layer, output_weights, transpose_b=True)
             logits = tf.nn.bias_add(logits, output_bias)
 
-            self._tensors['preds'] = tf.argmax(logits, axis=-1)
-            self._tensors['probs'] = tf.nn.softmax(
-                logits, axis=-1, name='probs')
+            self._tensors["preds"] = tf.argmax(logits, axis=-1)
+            self._tensors["probs"] = tf.nn.softmax(
+                logits, axis=-1, name="probs")
 
             log_probs = tf.nn.log_softmax(logits, axis=-1)
             one_hot_labels = tf.one_hot(
@@ -98,18 +84,18 @@ class WideAndDeepCLSDecoder(BaseDecoder):
             if sample_weight is not None:
                 per_example_loss = tf.cast(
                     sample_weight, dtype=tf.float32) * per_example_loss
-            thresh = kwargs.get('tsa_thresh')
+            thresh = kwargs.get("tsa_thresh")
             if thresh is not None:
                 assert isinstance(thresh, float), (
-                    '`tsa_thresh` must be a float between 0 and 1.')
-                uncertainty = tf.reduce_sum(self._tensors['probs'] * tf.log(
-                    self._tensors['probs']), axis=-1)
+                    "`tsa_thresh` must be a float between 0 and 1.")
+                uncertainty = tf.reduce_sum(self._tensors["probs"] * tf.log(
+                    self._tensors["probs"]), axis=-1)
                 uncertainty /= tf.log(1 / label_size)
                 per_example_loss = tf.cast(
                     tf.greater(uncertainty, thresh), dtype=tf.float32) * \
                     per_example_loss
 
-            self._tensors['losses'] = per_example_loss
+            self._tensors["losses"] = per_example_loss
             self.total_loss = tf.reduce_mean(per_example_loss)
 
 
@@ -122,7 +108,7 @@ class WideAndDeepRegDecoder(BaseDecoder):
                  label_floats,
                  label_size=1,
                  sample_weight=None,
-                 scope='reg',
+                 scope="reg",
                  hidden_dropout_prob=0.1,
                  initializer_range=0.02,
                  trainable=True,
@@ -131,16 +117,16 @@ class WideAndDeepRegDecoder(BaseDecoder):
 
         hidden_size = input_tensor.shape.as_list()[-1]
         feature_size = wide_features.shape.as_list()[-1]
-        with tf.variable_scope('wide'):
+        with tf.variable_scope("wide"):
             feature_embeddings = tf.get_variable(
-                name='feature_embeddings',
+                name="feature_embeddings",
                 shape=[feature_size + 1, hidden_size],
                 initializer=util.create_initializer(initializer_range),
                 trainable=trainable)
             wide_output = tf.gather(
                 feature_embeddings, wide_features)  # [B, N, H]
 
-        with tf.variable_scope('wide_and_deep'):
+        with tf.variable_scope("wide_and_deep"):
             deep_output = tf.expand_dims(input_tensor, -1)  # [B, H, 1]
             attention_scores = tf.matmul(wide_output, deep_output)  # [B, N, 1]
             attention_scores = tf.transpose(
@@ -175,10 +161,10 @@ class WideAndDeepRegDecoder(BaseDecoder):
                 use_bias=False,
                 kernel_initializer=util.create_initializer(initializer_range),
                 trainable=trainable,
-                name='preds',
+                name="preds",
             )
 
-            self._tensors['preds'] = preds
+            self._tensors["preds"] = preds
 
             per_example_loss = tf.reduce_sum(
                 tf.square(label_floats - preds), axis=-1)
@@ -186,5 +172,5 @@ class WideAndDeepRegDecoder(BaseDecoder):
                 per_example_loss = tf.cast(
                     sample_weight, dtype=tf.float32) * per_example_loss
 
-            self._tensors['losses'] = per_example_loss
+            self._tensors["losses"] = per_example_loss
             self.total_loss = tf.reduce_mean(per_example_loss)

@@ -1,18 +1,4 @@
-# coding:=utf-8
-# Copyright 2021 Tencent. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the 'License');
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an 'AS IS' BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-''' Base class for APIs with general methods, typically evaluation metrics. '''
+""" Base class for APIs with general methods, typically evaluation metrics. """
 
 import numpy as np
 
@@ -21,17 +7,17 @@ from .. import utils
 
 
 class ClassifierModule(BaseModule):
-    ''' Application class of classification. '''
+    """ Application class of classification. """
     pass
 
 
 class RegressorModule(BaseModule):
-    ''' Application class of regression. '''
+    """ Application class of regression. """
     pass
 
 
 class NERModule(BaseModule):
-    ''' Application class of name entity recognition (NER). '''
+    """ Application class of name entity recognition (NER). """
 
     O_ID = 0
     B_ID = 1
@@ -49,22 +35,22 @@ class NERModule(BaseModule):
             B_ids.append(B_id)
             f1_token, f1_entity = self._get_f1(
                 preds, labels, mask, B_id=B_id)
-            metrics['f1/%s-token' % entity_type] = f1_token
-            metrics['f1/%s-entity' % entity_type] = f1_entity
+            metrics["f1/%s-token" % entity_type] = f1_token
+            metrics["f1/%s-entity" % entity_type] = f1_entity
 
         # macro f1
         f1_macro_token = np.mean(
-            [metrics[key] for key in metrics if '-token' in key])
+            [metrics[key] for key in metrics if "-token" in key])
         f1_macro_entity = np.mean(
-            [metrics[key] for key in metrics if '-entity' in key])
-        metrics['macro f1/token'] = f1_macro_token
-        metrics['macro f1/entity'] = f1_macro_entity
+            [metrics[key] for key in metrics if "-entity" in key])
+        metrics["macro f1/token"] = f1_macro_token
+        metrics["macro f1/entity"] = f1_macro_entity
 
         # micro f1
         f1_micro_token, f1_micro_entity = self._get_f1(
             preds, labels, mask, B_id=B_ids)
-        metrics['micro f1/token'] = f1_micro_token
-        metrics['micro f1/entity'] = f1_micro_entity
+        metrics["micro f1/token"] = f1_micro_token
+        metrics["micro f1/entity"] = f1_micro_entity
 
         return metrics
 
@@ -162,7 +148,7 @@ class NERModule(BaseModule):
 
 
 class MRCModule(BaseModule):
-    ''' Application class of machine reading comprehension (MRC). '''
+    """ Application class of machine reading comprehension (MRC). """
 
     def _get_em_and_f1(self, preds, labels):
         em, f1 = 0, 0
@@ -198,10 +184,10 @@ class MRCModule(BaseModule):
 
 
 class MTModule(BaseModule):
-    ''' Application class of machine translation (MT). '''
+    """ Application class of machine translation (MT). """
 
     def _get_bleu(self, preds, labels, mask, max_gram=4):
-        eos_id = self.tokenizer.convert_tokens_to_ids(['</s>'])[0]
+        eos_id = self.tokenizer.convert_tokens_to_ids(["</s>"])[0]
 
         bleus = []
         for _preds, _labels, _mask in zip(preds, labels, mask):
@@ -240,7 +226,7 @@ class MTModule(BaseModule):
         return np.mean(bleus)
 
     def _get_rouge(self, preds, labels, mask, max_gram=4):
-        eos_id = self.tokenizer.convert_tokens_to_ids(['</s>'])[0]
+        eos_id = self.tokenizer.convert_tokens_to_ids(["</s>"])[0]
 
         rouges = []
         for _preds, _labels, _mask in zip(preds, labels, mask):
@@ -273,7 +259,7 @@ class MTModule(BaseModule):
 
 
 class LMModule(BaseModule):
-    ''' Application class of language modeling (LM). '''
+    """ Application class of language modeling (LM). """
 
     def fit_from_tfrecords(
             self, batch_size=32,
@@ -286,7 +272,7 @@ class LMModule(BaseModule):
             tfrecords_files=None,
             n_jobs=3,
             **kwargs):
-        ''' Training the model using TFRecords.
+        """ Training the model using TFRecords.
 
         Args:
             batch_size: int. The size of batch in each step.
@@ -317,7 +303,7 @@ class LMModule(BaseModule):
               to obtain more
         Returns:
             None
-        '''
+        """
         super().fit_from_tfrecords(
             batch_size,
             learning_rate,
@@ -339,7 +325,7 @@ class LMModule(BaseModule):
             print_per_secs=0.1,
             save_per_steps=10000,
             **kwargs):
-        ''' Training the model.
+        """ Training the model.
 
         Args:
             X: list. A list object consisting untokenized inputs.
@@ -372,7 +358,7 @@ class LMModule(BaseModule):
               to obtain more
         Returns:
             None
-        '''
+        """
         super().fit(
             X, y, sample_weight, X_tokenized,
             batch_size,
@@ -386,5 +372,5 @@ class LMModule(BaseModule):
 
     def score(self, *args, **kwargs):
         raise AttributeError(
-            '`score` method is not supported for unsupervised '
-            'language modeling (LM) modules.')
+            "`score` method is not supported for unsupervised "
+            "language modeling (LM) modules.")

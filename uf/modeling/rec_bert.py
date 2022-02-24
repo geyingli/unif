@@ -1,18 +1,4 @@
-# coding:=utf-8
-# Copyright 2021 Tencent. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-''' Recorrection language modeling. '''
+""" Recorrection language modeling. """
 
 from ..tools import tf
 from .base import BaseDecoder
@@ -30,7 +16,7 @@ class RecBERT(BaseDecoder, BERTEncoder):
                  sample_weight=None,
                  add_prob=0,
                  del_prob=0,
-                 scope='bert',
+                 scope="bert",
                  use_tilda_embedding=False,
                  **kwargs):
         super().__init__()
@@ -38,8 +24,8 @@ class RecBERT(BaseDecoder, BERTEncoder):
         # Tilda embeddings for SMART algorithm
         tilda_embeddings = None
         if use_tilda_embedding:
-            with tf.variable_scope('', reuse=True):
-                tilda_embeddings = tf.get_variable('tilda_embeddings')
+            with tf.variable_scope("", reuse=True):
+                tilda_embeddings = tf.get_variable("tilda_embeddings")
 
         input_mask = tf.cast(
             tf.not_equal(input_ids, 0), tf.float32)
@@ -64,7 +50,7 @@ class RecBERT(BaseDecoder, BERTEncoder):
                 tilda_embeddings=tilda_embeddings)
 
             # additional_position_embeddings = tf.get_variable(
-            #     name='position_embeddings',
+            #     name="position_embeddings",
             #     shape=[bert_config.max_position_embeddings,
             #             bert_config.hidden_size],
             #     initializer=util.create_initializer(
@@ -85,8 +71,8 @@ class RecBERT(BaseDecoder, BERTEncoder):
                 batch_size=batch_size,
                 max_seq_length=max_seq_length,
                 prob=add_prob,
-                scope='cls/add',
-                name='add',
+                scope="cls/add",
+                name="add",
                 sample_weight=sample_weight)
             self._cls_forward(
                 is_training,
@@ -97,8 +83,8 @@ class RecBERT(BaseDecoder, BERTEncoder):
                 batch_size=batch_size,
                 max_seq_length=max_seq_length,
                 prob=del_prob,
-                scope='cls/del',
-                name='del',
+                scope="cls/del",
+                name="del",
                 sample_weight=sample_weight)
 
     def _bert_forward(self,
@@ -111,7 +97,7 @@ class RecBERT(BaseDecoder, BERTEncoder):
                      trainable=True,
                      tilda_embeddings=None):
 
-        with tf.variable_scope('embeddings'):
+        with tf.variable_scope("embeddings"):
 
             (embedding_output, self.embedding_table) = self.embedding_lookup(
                 input_ids=input_ids,
@@ -120,7 +106,7 @@ class RecBERT(BaseDecoder, BERTEncoder):
                 max_seq_length=max_seq_length,
                 embedding_size=bert_config.hidden_size,
                 initializer_range=bert_config.initializer_range,
-                word_embedding_name='word_embeddings',
+                word_embedding_name="word_embeddings",
                 dtype=dtype,
                 trainable=trainable,
                 tilda_embeddings=tilda_embeddings)
@@ -134,7 +120,7 @@ class RecBERT(BaseDecoder, BERTEncoder):
                 hidden_size=bert_config.hidden_size,
                 use_token_type=False,
                 use_position_embeddings=True,
-                position_embedding_name='position_embeddings',
+                position_embedding_name="position_embeddings",
                 initializer_range=bert_config.initializer_range,
                 max_position_embeddings=\
                     bert_config.max_position_embeddings,
@@ -142,7 +128,7 @@ class RecBERT(BaseDecoder, BERTEncoder):
                 dtype=dtype,
                 trainable=trainable)
 
-        with tf.variable_scope('encoder'):
+        with tf.variable_scope("encoder"):
             attention_mask = self.create_attention_mask_from_input_mask(
                 input_mask, batch_size, max_seq_length, dtype=dtype)
 
@@ -184,7 +170,7 @@ class RecBERT(BaseDecoder, BERTEncoder):
 
         with tf.variable_scope(scope):
 
-            with tf.variable_scope('verifier'):
+            with tf.variable_scope("verifier"):
                 logits = tf.layers.dense(
                     input_tensor, 2,
                     kernel_initializer=util.create_initializer(
@@ -212,16 +198,16 @@ class RecBERT(BaseDecoder, BERTEncoder):
                 verifier_loss = per_example_loss
                 verifier_preds = tf.argmax(logits, axis=-1)
 
-            with tf.variable_scope('prediction'):
+            with tf.variable_scope("prediction"):
 
-                with tf.variable_scope('intermediate'):
+                with tf.variable_scope("intermediate"):
                     logits = tf.layers.dense(
                         input_tensor, bert_config.hidden_size * 4,
                         kernel_initializer=util.create_initializer(
                             bert_config.initializer_range),
                         activation=util.gelu,
                         trainable=True)
-                with tf.variable_scope('output'):
+                with tf.variable_scope("output"):
                     logits = tf.layers.dense(
                         logits, bert_config.hidden_size,
                         kernel_initializer=util.create_initializer(
@@ -252,8 +238,8 @@ class RecBERT(BaseDecoder, BERTEncoder):
 
                 if prob != 0:
                     self.total_loss += tf.reduce_mean(per_example_loss)
-                self._tensors[name + '_loss'] = verifier_loss
-                self._tensors[name + '_preds'] = \
+                self._tensors[name + "_loss"] = verifier_loss
+                self._tensors[name + "_preds"] = \
                     tf.argmax(logits, axis=-1) * verifier_preds
 
     def _cls_forward(self,
@@ -294,5 +280,5 @@ class RecBERT(BaseDecoder, BERTEncoder):
 
             if prob != 0:
                 self.total_loss += tf.reduce_mean(per_example_loss)
-            self._tensors[name + '_loss'] = per_example_loss
-            self._tensors[name + '_preds'] = tf.argmax(logits, axis=-1)
+            self._tensors[name + "_loss"] = per_example_loss
+            self._tensors[name + "_preds"] = tf.argmax(logits, axis=-1)

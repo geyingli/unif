@@ -1,18 +1,4 @@
-# coding:=utf-8
-# Copyright 2021 Tencent. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the 'License');
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an 'AS IS' BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-''' Applications based on SANet. '''
+""" Applications based on SANet. """
 
 import numpy as np
 
@@ -28,7 +14,7 @@ from .. import utils
 
 
 class SANetMRC(BERTMRC, MRCModule):
-    ''' Machine reading comprehension on SANet. '''
+    """ Machine reading comprehension on SANet. """
     _INFER_ATTRIBUTES = BERTMRC._INFER_ATTRIBUTES
 
     def __init__(self,
@@ -39,10 +25,10 @@ class SANetMRC(BERTMRC, MRCModule):
                  output_dir=None,
                  gpu_ids=None,
                  do_lower_case=True,
-                 reading_module='bert',
-                 split_signs=',，。?？!！;；',
+                 reading_module="bert",
+                 split_signs=",，。?？!！;；",
                  alpha=0.5,
-                 truncate_method='longer-FO'):
+                 truncate_method="longer-FO"):
         super(MRCModule, self).__init__(
             init_checkpoint, output_dir, gpu_ids)
 
@@ -56,33 +42,33 @@ class SANetMRC(BERTMRC, MRCModule):
         self._alpha = alpha
         self.__init_args__ = locals()
 
-        if reading_module == 'albert':
+        if reading_module == "albert":
             self.bert_config = get_albert_config(config_file)
         else:
             self.bert_config = get_bert_config(config_file)
 
-        assert reading_module in ('bert', 'albert', 'electra'), (
-            'Invalid value of `reading_module`: %s. Pick one from '
-            '`bert`, `albert` and `electra`.')
+        assert reading_module in ("bert", "albert", "electra"), (
+            "Invalid value of `reading_module`: %s. Pick one from "
+            "`bert`, `albert` and `electra`.")
         self.tokenizer = get_word_piece_tokenizer(vocab_file, do_lower_case)
         self._key_to_depths = get_key_to_depths(
             self.bert_config.num_hidden_layers)
 
-        if '[CLS]' not in self.tokenizer.vocab:
-            self.tokenizer.add('[CLS]')
+        if "[CLS]" not in self.tokenizer.vocab:
+            self.tokenizer.add("[CLS]")
             self.bert_config.vocab_size += 1
-            tf.logging.info('Add necessary token `[CLS]` into vocabulary.')
-        if '[SEP]' not in self.tokenizer.vocab:
-            self.tokenizer.add('[SEP]')
+            tf.logging.info("Add necessary token `[CLS]` into vocabulary.")
+        if "[SEP]" not in self.tokenizer.vocab:
+            self.tokenizer.add("[SEP]")
             self.bert_config.vocab_size += 1
-            tf.logging.info('Add necessary token `[SEP]` into vocabulary.')
+            tf.logging.info("Add necessary token `[SEP]` into vocabulary.")
 
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
                 is_training=False, is_parallel=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
 
         if is_training:
-            assert y is not None, '`y` can\'t be None.'
+            assert y is not None, "`y` can\"t be None."
 
         n_inputs = None
         data = {}
@@ -94,16 +80,16 @@ class SANetMRC(BERTMRC, MRCModule):
             (input_tokens, input_ids, input_mask, sa_mask, segment_ids,
              doc_ids, doc_text, doc_start) = self._convert_X(
                 X_target, tokenized=tokenized)
-            data['input_ids'] = np.array(input_ids, dtype=np.int32)
-            data['input_mask'] = np.array(input_mask, dtype=np.int32)
-            data['sa_mask'] = np.array(sa_mask, dtype=np.int32)
-            data['segment_ids'] = np.array(segment_ids, dtype=np.int32)
+            data["input_ids"] = np.array(input_ids, dtype=np.int32)
+            data["input_mask"] = np.array(input_mask, dtype=np.int32)
+            data["sa_mask"] = np.array(sa_mask, dtype=np.int32)
+            data["segment_ids"] = np.array(segment_ids, dtype=np.int32)
             n_inputs = len(input_ids)
 
             # backup for answer mapping
-            data[utils.BACKUP_DATA + 'input_tokens'] = input_tokens
-            data[utils.BACKUP_DATA + 'tokenized'] = [tokenized]
-            data[utils.BACKUP_DATA + 'X_target'] = X_target
+            data[utils.BACKUP_DATA + "input_tokens"] = input_tokens
+            data[utils.BACKUP_DATA + "tokenized"] = [tokenized]
+            data[utils.BACKUP_DATA + "X_target"] = X_target
 
             if n_inputs < self.batch_size:
                 self.batch_size = max(n_inputs, len(self._gpu_ids))
@@ -112,13 +98,13 @@ class SANetMRC(BERTMRC, MRCModule):
         if y:
             label_ids = self._convert_y(
                 y, doc_ids, doc_text, doc_start, tokenized)
-            data['label_ids'] = np.array(label_ids, dtype=np.int32)
+            data["label_ids"] = np.array(label_ids, dtype=np.int32)
 
         # convert sample_weight
         if is_training or y:
             sample_weight = self._convert_sample_weight(
                 sample_weight, n_inputs)
-            data['sample_weight'] = np.array(sample_weight, dtype=np.float32)
+            data["sample_weight"] = np.array(sample_weight, dtype=np.float32)
 
         return data
 
@@ -132,10 +118,10 @@ class SANetMRC(BERTMRC, MRCModule):
                     self._convert_x(example, tokenized))
             except Exception:
                 raise ValueError(
-                    'Wrong input format (line %d): \'%s\'. '
-                    'An untokenized example: '
-                    '`X = [{\'doc\': \'...\', \'question\': \'...\', ...}, '
-                    '...]`' % (ex_id, example))
+                    "Wrong input format (line %d): \"%s\". "
+                    "An untokenized example: "
+                    "`X = [{\"doc\": \"...\", \"question\": \"...\", ...}, "
+                    "...]`" % (ex_id, example))
 
         input_tokens = []
         input_ids = []
@@ -146,7 +132,7 @@ class SANetMRC(BERTMRC, MRCModule):
         doc_text = []
         doc_start = []
         for ex_id, segments in enumerate(segment_input_tokens):
-            _input_tokens = ['[CLS]']
+            _input_tokens = ["[CLS]"]
             _input_ids = []
             _input_mask = [1]
             _segment_ids = [0]
@@ -154,7 +140,7 @@ class SANetMRC(BERTMRC, MRCModule):
                 (self.max_seq_length, self.max_seq_length), dtype=np.int32)
             _sa_mask[0, 0] = 1
 
-            _doc_sent_tokens = segments.pop('doc')
+            _doc_sent_tokens = segments.pop("doc")
             _doc_sent_num = len(_doc_sent_tokens)
             segments = list(segments.values()) + _doc_sent_tokens
             utils.truncate_segments(
@@ -173,7 +159,7 @@ class SANetMRC(BERTMRC, MRCModule):
                 _end_pos = _start_pos + len(segment)
                 _sa_mask[_start_pos: _end_pos, _start_pos: _end_pos] = 1
                 _sa_mask[_end_pos, _end_pos] = 1    # [SEP] pay attention to itself
-                _input_tokens.extend(segment + ['[SEP]'])
+                _input_tokens.extend(segment + ["[SEP]"])
                 _input_mask.extend([1] * _segment_len)
                 _segment_ids.extend([min(s_id, 1)] * _segment_len)
 
@@ -187,7 +173,7 @@ class SANetMRC(BERTMRC, MRCModule):
                 _input_tokens.extend(segment)
                 _input_mask.extend([1] * _segment_len)
                 _segment_ids.extend([1] * _segment_len)
-            _input_tokens.append('[SEP]')
+            _input_tokens.append("[SEP]")
             _input_mask.append(1)
             _segment_ids.append(1)
 
@@ -206,7 +192,7 @@ class SANetMRC(BERTMRC, MRCModule):
             sa_mask.append(np.reshape(_sa_mask, [-1]).tolist())
             segment_ids.append(_segment_ids)
             doc_ids.append(_doc_ids)
-            doc_text.append(X_target[ex_id]['doc'])
+            doc_text.append(X_target[ex_id]["doc"])
             doc_start.append(_doc_start)
 
         return (input_tokens, input_ids, input_mask, sa_mask, segment_ids,
@@ -215,18 +201,18 @@ class SANetMRC(BERTMRC, MRCModule):
     def _convert_x(self, x, tokenized):
         output = {}
 
-        if not isinstance(x, dict) or 'doc' not in x:
+        if not isinstance(x, dict) or "doc" not in x:
             raise ValueError(
-                'Wrong input format of `y`. An untokenized example: '
-                '`y = [{\'doc\': \'...\', \'question\': \'...\', ...}, '
-                'None, ...]`')
+                "Wrong input format of `y`. An untokenized example: "
+                "`y = [{\"doc\": \"...\", \"question\": \"...\", ...}, "
+                "None, ...]`")
 
         for key in x:
             if not tokenized:
                 chars = self.tokenizer.tokenize(x[key])
 
                 # deal with general inputs
-                if key == 'doc':
+                if key == "doc":
                     sents = []
                     last = []
                     for char in chars:
@@ -248,60 +234,60 @@ class SANetMRC(BERTMRC, MRCModule):
 
     def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
-            'input_ids': utils.get_placeholder(
-                target, 'input_ids',
+            "input_ids": utils.get_placeholder(
+                target, "input_ids",
                 [None, self.max_seq_length], tf.int32),
-            'input_mask': utils.get_placeholder(
-                target, 'input_mask',
+            "input_mask": utils.get_placeholder(
+                target, "input_mask",
                 [None, self.max_seq_length], tf.int32),
-            'sa_mask': utils.get_placeholder(
-                target, 'sa_mask',
+            "sa_mask": utils.get_placeholder(
+                target, "sa_mask",
                 [None, self.max_seq_length ** 2], tf.int32),
-            'segment_ids': utils.get_placeholder(
-                target, 'segment_ids',
+            "segment_ids": utils.get_placeholder(
+                target, "segment_ids",
                 [None, self.max_seq_length], tf.int32),
-            'label_ids': utils.get_placeholder(
-                target, 'label_ids',
+            "label_ids": utils.get_placeholder(
+                target, "label_ids",
                 [None, 2], tf.int32),
-            'has_answer': utils.get_placeholder(
-                target, 'has_answer',
+            "has_answer": utils.get_placeholder(
+                target, "has_answer",
                 [None], tf.int32),
         }
         if not on_export:
-            self.placeholders['sample_weight'] = utils.get_placeholder(
-                target, 'sample_weight',
+            self.placeholders["sample_weight"] = utils.get_placeholder(
+                target, "sample_weight",
                 [None], tf.float32)
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
         def _get_encoder(model_name):
-            if model_name == 'bert':
+            if model_name == "bert":
                 encoder = BERTEncoder(
                     bert_config=self.bert_config,
                     is_training=is_training,
-                    input_ids=split_placeholders['input_ids'],
-                    input_mask=split_placeholders['input_mask'],
-                    segment_ids=split_placeholders['segment_ids'],
-                    scope='bert',
+                    input_ids=split_placeholders["input_ids"],
+                    input_mask=split_placeholders["input_mask"],
+                    segment_ids=split_placeholders["segment_ids"],
+                    scope="bert",
                     **kwargs)
-            elif model_name == 'albert':
+            elif model_name == "albert":
                 encoder = ALBERTEncoder(
                     albert_config=self.bert_config,
                     is_training=is_training,
-                    input_ids=split_placeholders['input_ids'],
-                    input_mask=split_placeholders['input_mask'],
-                    segment_ids=split_placeholders['segment_ids'],
-                    scope='bert',
+                    input_ids=split_placeholders["input_ids"],
+                    input_mask=split_placeholders["input_mask"],
+                    segment_ids=split_placeholders["segment_ids"],
+                    scope="bert",
                     drop_pooler=self._drop_pooler,
                     **kwargs)
-            elif model_name == 'electra':
+            elif model_name == "electra":
                 encoder = BERTEncoder(
                     bert_config=self.bert_config,
                     is_training=is_training,
-                    input_ids=split_placeholders['input_ids'],
-                    input_mask=split_placeholders['input_mask'],
-                    segment_ids=split_placeholders['segment_ids'],
-                    scope='electra',
+                    input_ids=split_placeholders["input_ids"],
+                    input_mask=split_placeholders["input_mask"],
+                    segment_ids=split_placeholders["segment_ids"],
+                    scope="electra",
                     **kwargs)
             return encoder
 
@@ -310,11 +296,11 @@ class SANetMRC(BERTMRC, MRCModule):
             bert_config=self.bert_config,
             is_training=is_training,
             input_tensor=encoder.get_sequence_output(),
-            sa_mask=split_placeholders['sa_mask'],
-            label_ids=split_placeholders['label_ids'],
-            sample_weight=split_placeholders.get('sample_weight'),
+            sa_mask=split_placeholders["sa_mask"],
+            label_ids=split_placeholders["label_ids"],
+            sample_weight=split_placeholders.get("sample_weight"),
             alpha=self._alpha,
-            scope='sanet',
+            scope="sanet",
             trainable=True,
             **kwargs)
         return decoder.get_forward_outputs()
@@ -322,10 +308,10 @@ class SANetMRC(BERTMRC, MRCModule):
 
 def get_key_to_depths(num_hidden_layers):
     key_to_depths = {
-        '/embeddings': num_hidden_layers + 2,
-        '/sentence_attention/': 1,
-        '/cls/mrc/': 0}
+        "/embeddings": num_hidden_layers + 2,
+        "/sentence_attention/": 1,
+        "/cls/mrc/": 0}
     for layer_idx in range(num_hidden_layers):
-        key_to_depths['/layer_%d/' % layer_idx] = \
+        key_to_depths["/layer_%d/" % layer_idx] = \
             num_hidden_layers - layer_idx + 1
     return key_to_depths

@@ -1,21 +1,7 @@
-# coding:=utf-8
-# Copyright 2021 Tencent. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-''' FastBERT, self-distilled BERT with dynamic inference.
-  Code revised from Google's implementation of BERT.
+""" FastBERT, self-distilled BERT with dynamic inference.
+  Code revised from Google"s implementation of BERT.
   See `https://github.com/google-research/bert`.
-'''
+"""
 
 import copy
 import collections
@@ -34,10 +20,10 @@ class FastBERTCLSDistillor(BaseDecoder, BERTEncoder):
                  input_mask,
                  segment_ids,
                  sample_weight=None,
-                 scope='bert',
+                 scope="bert",
                  dtype=tf.float32,
                  drop_pooler=False,
-                 cls_model='self-attention',
+                 cls_model="self-attention",
                  label_size=2,
                  speed=0.1,
                  ignore_cls=[0],
@@ -46,7 +32,7 @@ class FastBERTCLSDistillor(BaseDecoder, BERTEncoder):
 
         if not speed:
             raise ValueError(
-                '`speed` should be a float number between `0` and `1`.')
+                "`speed` should be a float number between `0` and `1`.")
 
         bert_config = copy.deepcopy(bert_config)
         bert_config.hidden_dropout_prob = 0.0
@@ -57,7 +43,7 @@ class FastBERTCLSDistillor(BaseDecoder, BERTEncoder):
         max_seq_length = input_shape[1]
 
         with tf.variable_scope(scope):
-            with tf.variable_scope('embeddings'):
+            with tf.variable_scope("embeddings"):
 
                 (self.embedding_output, self.embedding_table) = \
                     self.embedding_lookup(
@@ -67,7 +53,7 @@ class FastBERTCLSDistillor(BaseDecoder, BERTEncoder):
                         max_seq_length=max_seq_length,
                         embedding_size=bert_config.hidden_size,
                         initializer_range=bert_config.initializer_range,
-                        word_embedding_name='word_embeddings',
+                        word_embedding_name="word_embeddings",
                         dtype=dtype,
                         trainable=False,
                         tilda_embeddings=None)
@@ -82,9 +68,9 @@ class FastBERTCLSDistillor(BaseDecoder, BERTEncoder):
                     use_token_type=True,
                     segment_ids=segment_ids,
                     token_type_vocab_size=bert_config.type_vocab_size,
-                    token_type_embedding_name='token_type_embeddings',
+                    token_type_embedding_name="token_type_embeddings",
                     use_position_embeddings=True,
-                    position_embedding_name='position_embeddings',
+                    position_embedding_name="position_embeddings",
                     initializer_range=bert_config.initializer_range,
                     max_position_embeddings=\
                         bert_config.max_position_embeddings,
@@ -92,7 +78,7 @@ class FastBERTCLSDistillor(BaseDecoder, BERTEncoder):
                     dtype=dtype,
                     trainable=False)
 
-            with tf.variable_scope('encoder'):
+            with tf.variable_scope("encoder"):
                 attention_mask = self.create_attention_mask_from_input_mask(
                     input_mask, batch_size, max_seq_length, dtype=dtype)
 
@@ -122,7 +108,7 @@ class FastBERTCLSDistillor(BaseDecoder, BERTEncoder):
                         ignore_cls=ignore_cls)
 
             self.sequence_output = self.all_encoder_layers[-1]
-            with tf.variable_scope('pooler'):
+            with tf.variable_scope("pooler"):
                 first_token_tensor = self.sequence_output[:, 0, :]
 
                 # trick: ignore the fully connected layer
@@ -139,15 +125,15 @@ class FastBERTCLSDistillor(BaseDecoder, BERTEncoder):
 
         # teacher classifier
         if bert_config.num_hidden_layers not in ignore_cls:
-            with tf.variable_scope('cls/seq_relationship'):
+            with tf.variable_scope("cls/seq_relationship"):
                 output_weights = tf.get_variable(
-                    'output_weights',
+                    "output_weights",
                     shape=[label_size, bert_config.hidden_size],
                     initializer=util.create_initializer(
                         bert_config.initializer_range),
                     trainable=False)
                 output_bias = tf.get_variable(
-                    'output_bias',
+                    "output_bias",
                     shape=[label_size],
                     initializer=tf.zeros_initializer(),
                     trainable=False)
@@ -174,13 +160,13 @@ class FastBERTCLSDistillor(BaseDecoder, BERTEncoder):
 
             distill_loss = tf.add_n(losses)
             self.total_loss = distill_loss
-            self._tensors['losses'] = distill_loss
+            self._tensors["losses"] = distill_loss
 
         else:
             if bert_config.num_hidden_layers not in ignore_cls:
                 self.all_cls_layers[bert_config.num_hidden_layers] = probs
-            self._tensors['probs'] = tf.concat(
-                list(self.all_cls_layers.values()), axis=0, name='probs')
+            self._tensors["probs"] = tf.concat(
+                list(self.all_cls_layers.values()), axis=0, name="probs")
 
     def dynamic_transformer_model(self,
                                   is_training,
@@ -199,15 +185,15 @@ class FastBERTCLSDistillor(BaseDecoder, BERTEncoder):
                                   attention_probs_dropout_prob=0.1,
                                   initializer_range=0.02,
                                   dtype=tf.float32,
-                                  cls_model='self-attention',
+                                  cls_model="self-attention",
                                   cls_hidden_size=128,
                                   cls_num_attention_heads=2,
                                   speed=0.1,
                                   ignore_cls=None):
         if hidden_size % num_attention_heads != 0:
             raise ValueError(
-                'The hidden size (%d) is not a multiple of the number of '
-                'attention heads (%d)'
+                "The hidden size (%d) is not a multiple of the number of "
+                "attention heads (%d)"
                 % (hidden_size, num_attention_heads))
         attention_head_size = int(hidden_size / num_attention_heads)
 
@@ -220,14 +206,14 @@ class FastBERTCLSDistillor(BaseDecoder, BERTEncoder):
         prev_output = input_tensor
         prev_mask = input_mask
         for layer_idx in range(num_hidden_layers):
-            with tf.variable_scope('layer_%d' % layer_idx):
+            with tf.variable_scope("layer_%d" % layer_idx):
 
                 # build child classifier
                 if is_training or layer_idx not in ignore_cls:
-                    with tf.variable_scope('distill'):
+                    with tf.variable_scope("distill"):
 
                         # FCN + Self_Attention + FCN + FCN
-                        if cls_model == 'self-attention-paper':
+                        if cls_model == "self-attention-paper":
                             cls_output = self._cls_self_attention_paper(
                                 prev_output,
                                 batch_size,
@@ -244,7 +230,7 @@ class FastBERTCLSDistillor(BaseDecoder, BERTEncoder):
                                 trainable=True)
 
                         # Self_Attention + FCN
-                        elif cls_model == 'self-attention':
+                        elif cls_model == "self-attention":
                             cls_output = self._cls_self_attention(
                                 prev_output,
                                 batch_size,
@@ -261,7 +247,7 @@ class FastBERTCLSDistillor(BaseDecoder, BERTEncoder):
                                 trainable=True)
 
                         # FCN
-                        elif cls_model == 'fcn':
+                        elif cls_model == "fcn":
                             cls_output = self._cls_fcn(
                                 prev_output,
                                 label_size,
@@ -272,13 +258,13 @@ class FastBERTCLSDistillor(BaseDecoder, BERTEncoder):
 
                         else:
                             raise ValueError(
-                                'Invalid `cls_model = %s`. Pick one from '
-                                '`self-attention-paper`, `self-attention` '
-                                'and `fcn`' % cls_model)
+                                "Invalid `cls_model = %s`. Pick one from "
+                                "`self-attention-paper`, `self-attention` "
+                                "and `fcn`" % cls_model)
 
                         # distill core
                         layer_cls_output = tf.nn.softmax(
-                            cls_output, axis=-1, name='cls_%d' % layer_idx)
+                            cls_output, axis=-1, name="cls_%d" % layer_idx)
                         uncertainty = tf.reduce_sum(layer_cls_output * tf.log(
                             layer_cls_output), axis=-1)
                         uncertainty /= tf.log(1 / label_size)
@@ -311,9 +297,9 @@ class FastBERTCLSDistillor(BaseDecoder, BERTEncoder):
                             prev_mask, batch_size, max_seq_length, dtype=dtype)
 
                 # originial stream
-                with tf.variable_scope('attention'):
+                with tf.variable_scope("attention"):
                     attention_heads = []
-                    with tf.variable_scope('self'):
+                    with tf.variable_scope("self"):
                         (attention_head, _) = self.attention_layer(
                             from_tensor=prev_output,
                             to_tensor=prev_output,
@@ -337,7 +323,7 @@ class FastBERTCLSDistillor(BaseDecoder, BERTEncoder):
                     else:
                         attention_output = tf.concat(attention_heads, axis=-1)
 
-                    with tf.variable_scope('output'):
+                    with tf.variable_scope("output"):
                         attention_output = tf.layers.dense(
                             attention_output,
                             hidden_size,
@@ -351,7 +337,7 @@ class FastBERTCLSDistillor(BaseDecoder, BERTEncoder):
 
                 # The activation is only applied to the `intermediate`
                 # hidden layer.
-                with tf.variable_scope('intermediate'):
+                with tf.variable_scope("intermediate"):
                     intermediate_output = tf.layers.dense(
                         attention_output,
                         intermediate_size,
@@ -361,7 +347,7 @@ class FastBERTCLSDistillor(BaseDecoder, BERTEncoder):
                         trainable=False)
 
                 # Down-project back to hidden_size then add the residual.
-                with tf.variable_scope('output'):
+                with tf.variable_scope("output"):
                     layer_output = tf.layers.dense(
                         intermediate_output,
                         hidden_size,
@@ -392,24 +378,24 @@ class FastBERTCLSDistillor(BaseDecoder, BERTEncoder):
                                   trainable=True):
         if cls_hidden_size % cls_num_attention_heads != 0:
             raise ValueError(
-                '`cls_hidden_size` (%d) is not a multiple of the number of '
-                '`cls_num_attention_heads` (%d)'
+                "`cls_hidden_size` (%d) is not a multiple of the number of "
+                "`cls_num_attention_heads` (%d)"
                 % (cls_hidden_size, cls_num_attention_heads))
         cls_attention_head_size = int(
             cls_hidden_size / cls_num_attention_heads)
 
-        with tf.variable_scope('project'):
+        with tf.variable_scope("project"):
             attention_input = tf.layers.dense(
                 prev_output,
                 cls_hidden_size,
-                activation='tanh',
+                activation="tanh",
                 kernel_initializer=util.create_initializer(
                     initializer_range),
                 trainable=trainable)
 
-        with tf.variable_scope('attention'):
+        with tf.variable_scope("attention"):
             attention_heads = []
-            with tf.variable_scope('self'):
+            with tf.variable_scope("self"):
                 (attention_head, _) = self.attention_layer(
                     from_tensor=attention_input,
                     to_tensor=attention_input,
@@ -432,15 +418,15 @@ class FastBERTCLSDistillor(BaseDecoder, BERTEncoder):
             else:
                 attention_output = tf.concat(attention_heads, axis=-1)
 
-        with tf.variable_scope('intermediate'):
+        with tf.variable_scope("intermediate"):
             intermediate_output = tf.layers.dense(
                 attention_output[:, 0, :],
                 cls_hidden_size,
-                activation='tanh',
+                activation="tanh",
                 kernel_initializer=util.create_initializer(initializer_range),
                 trainable=trainable)
 
-        with tf.variable_scope('output'):
+        with tf.variable_scope("output"):
             cls_output = tf.layers.dense(
                 intermediate_output,
                 label_size,
@@ -463,15 +449,15 @@ class FastBERTCLSDistillor(BaseDecoder, BERTEncoder):
                             trainable=True):
         if cls_hidden_size % cls_num_attention_heads != 0:
             raise ValueError(
-                '`cls_hidden_size` (%d) is not a multiple of the number of '
-                '`cls_num_attention_heads` (%d)'
+                "`cls_hidden_size` (%d) is not a multiple of the number of "
+                "`cls_num_attention_heads` (%d)"
                 % (cls_hidden_size, cls_num_attention_heads))
         cls_attention_head_size = int(
             cls_hidden_size / cls_num_attention_heads)
 
-        with tf.variable_scope('attention'):
+        with tf.variable_scope("attention"):
             attention_heads = []
-            with tf.variable_scope('self'):
+            with tf.variable_scope("self"):
                 attention_head, _ = self.attention_layer(
                     from_tensor=prev_output,
                     to_tensor=prev_output,
@@ -496,7 +482,7 @@ class FastBERTCLSDistillor(BaseDecoder, BERTEncoder):
             attention_output = util.layer_norm(
                 attention_output[:, 0, :], trainable=trainable)
 
-        with tf.variable_scope('output'):
+        with tf.variable_scope("output"):
             cls_output = tf.layers.dense(
                 attention_output,
                 label_size,
@@ -513,15 +499,15 @@ class FastBERTCLSDistillor(BaseDecoder, BERTEncoder):
                  dtype=tf.float32,
                  trainable=True):
 
-        with tf.variable_scope('output'):
+        with tf.variable_scope("output"):
             cls_output_weights = tf.get_variable(
-                'output_weights', [hidden_size, label_size],
+                "output_weights", [hidden_size, label_size],
                 initializer=tf.truncated_normal_initializer(
                     stddev=initializer_range),
                 dtype=dtype,
                 trainable=trainable)
             cls_output_bias = tf.get_variable(
-                'output_bias', [label_size],
+                "output_bias", [label_size],
                 initializer=tf.zeros_initializer(),
                 dtype=dtype,
                 trainable=trainable)
@@ -535,12 +521,12 @@ def convert_ignore_cls(ignore_cls):
     if not ignore_cls:
         ignore_cls = []
     if isinstance(ignore_cls, str):
-        ignore_cls = ignore_cls.replace(' ','').split(',')
+        ignore_cls = ignore_cls.replace(" ","").split(",")
         ignore_cls = list(map(int, ignore_cls))
     elif isinstance(ignore_cls, list):
         ignore_cls = list(map(int, ignore_cls))
     else:
         raise ValueError(
-            '`ignore_cls` should be a list of child-classifier ids or '
-            'a string seperated with commas.')
+            "`ignore_cls` should be a list of child-classifier ids or "
+            "a string seperated with commas.")
     return ignore_cls

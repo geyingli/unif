@@ -1,18 +1,4 @@
-# coding:=utf-8
-# Copyright 2018 Tencent. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-''' Applications based on ELECTRA. '''
+""" Applications based on ELECTRA. """
 
 import os
 import numpy as np
@@ -31,7 +17,7 @@ from .. import utils
 
 
 class ELECTRAClassifier(BERTClassifier, ClassifierModule):
-    ''' Single-label classifier on ELECTRA. '''
+    """ Single-label classifier on ELECTRA. """
     _INFER_ATTRIBUTES = BERTClassifier._INFER_ATTRIBUTES
 
     def __init__(self,
@@ -43,7 +29,7 @@ class ELECTRAClassifier(BERTClassifier, ClassifierModule):
                  output_dir=None,
                  gpu_ids=None,
                  do_lower_case=True,
-                 truncate_method='LIFO'):
+                 truncate_method="LIFO"):
         super(ClassifierModule, self).__init__(
             init_checkpoint, output_dir, gpu_ids)
 
@@ -59,40 +45,40 @@ class ELECTRAClassifier(BERTClassifier, ClassifierModule):
         self._key_to_depths = get_key_to_depths(
             self.bert_config.num_hidden_layers)
 
-        if '[CLS]' not in self.tokenizer.vocab:
-            self.tokenizer.add('[CLS]')
+        if "[CLS]" not in self.tokenizer.vocab:
+            self.tokenizer.add("[CLS]")
             self.bert_config.vocab_size += 1
-            tf.logging.info('Add necessary token `[CLS]` into vocabulary.')
-        if '[SEP]' not in self.tokenizer.vocab:
-            self.tokenizer.add('[SEP]')
+            tf.logging.info("Add necessary token `[CLS]` into vocabulary.")
+        if "[SEP]" not in self.tokenizer.vocab:
+            self.tokenizer.add("[SEP]")
             self.bert_config.vocab_size += 1
-            tf.logging.info('Add necessary token `[SEP]` into vocabulary.')
+            tf.logging.info("Add necessary token `[SEP]` into vocabulary.")
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
         encoder = BERTEncoder(
             bert_config=self.bert_config,
             is_training=is_training,
-            input_ids=split_placeholders['input_ids'],
-            input_mask=split_placeholders['input_mask'],
-            segment_ids=split_placeholders['segment_ids'],
-            scope='electra',
+            input_ids=split_placeholders["input_ids"],
+            input_mask=split_placeholders["input_mask"],
+            segment_ids=split_placeholders["segment_ids"],
+            scope="electra",
             drop_pooler=True,
             **kwargs)
         encoder_output = encoder.get_pooled_output()
         decoder = CLSDecoder(
             is_training=is_training,
             input_tensor=encoder_output,
-            label_ids=split_placeholders['label_ids'],
+            label_ids=split_placeholders["label_ids"],
             label_size=self.label_size,
-            sample_weight=split_placeholders.get('sample_weight'),
-            scope='cls/seq_relationship',
+            sample_weight=split_placeholders.get("sample_weight"),
+            scope="cls/seq_relationship",
             **kwargs)
         return decoder.get_forward_outputs()
 
 
 class ELECTRABinaryClassifier(BERTBinaryClassifier, ClassifierModule):
-    ''' Multi-label classifier on ELECTRA. '''
+    """ Multi-label classifier on ELECTRA. """
     _INFER_ATTRIBUTES = BERTBinaryClassifier._INFER_ATTRIBUTES
 
     def __init__(self,
@@ -105,7 +91,7 @@ class ELECTRABinaryClassifier(BERTBinaryClassifier, ClassifierModule):
                  output_dir=None,
                  gpu_ids=None,
                  do_lower_case=True,
-                 truncate_method='LIFO'):
+                 truncate_method="LIFO"):
         super(ClassifierModule, self).__init__(
             init_checkpoint, output_dir, gpu_ids)
 
@@ -122,41 +108,41 @@ class ELECTRABinaryClassifier(BERTBinaryClassifier, ClassifierModule):
         self._key_to_depths = get_key_to_depths(
             self.bert_config.num_hidden_layers)
 
-        if '[CLS]' not in self.tokenizer.vocab:
-            self.tokenizer.add('[CLS]')
+        if "[CLS]" not in self.tokenizer.vocab:
+            self.tokenizer.add("[CLS]")
             self.bert_config.vocab_size += 1
-            tf.logging.info('Add necessary token `[CLS]` into vocabulary.')
-        if '[SEP]' not in self.tokenizer.vocab:
-            self.tokenizer.add('[SEP]')
+            tf.logging.info("Add necessary token `[CLS]` into vocabulary.")
+        if "[SEP]" not in self.tokenizer.vocab:
+            self.tokenizer.add("[SEP]")
             self.bert_config.vocab_size += 1
-            tf.logging.info('Add necessary token `[SEP]` into vocabulary.')
+            tf.logging.info("Add necessary token `[SEP]` into vocabulary.")
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
         encoder = BERTEncoder(
             bert_config=self.bert_config,
             is_training=is_training,
-            input_ids=split_placeholders['input_ids'],
-            input_mask=split_placeholders['input_mask'],
-            segment_ids=split_placeholders['segment_ids'],
-            scope='electra',
+            input_ids=split_placeholders["input_ids"],
+            input_mask=split_placeholders["input_mask"],
+            segment_ids=split_placeholders["segment_ids"],
+            scope="electra",
             drop_pooler=True,
             **kwargs)
         encoder_output = encoder.get_pooled_output()
         decoder = BinaryCLSDecoder(
             is_training=is_training,
             input_tensor=encoder_output,
-            label_ids=split_placeholders['label_ids'],
+            label_ids=split_placeholders["label_ids"],
             label_size=self.label_size,
-            sample_weight=split_placeholders.get('sample_weight'),
+            sample_weight=split_placeholders.get("sample_weight"),
             label_weight=self.label_weight,
-            scope='cls/seq_relationship',
+            scope="cls/seq_relationship",
             **kwargs)
         return decoder.get_forward_outputs()
 
 
 class ELECTRASeqClassifier(BERTSeqClassifier, ClassifierModule):
-    ''' Sequence labeling classifier on ELECTRA. '''
+    """ Sequence labeling classifier on ELECTRA. """
     _INFER_ATTRIBUTES = BERTSeqClassifier._INFER_ATTRIBUTES
 
     def __init__(self,
@@ -168,7 +154,7 @@ class ELECTRASeqClassifier(BERTSeqClassifier, ClassifierModule):
                  output_dir=None,
                  gpu_ids=None,
                  do_lower_case=True,
-                 truncate_method='LIFO'):
+                 truncate_method="LIFO"):
         super(ClassifierModule, self).__init__(
             init_checkpoint, output_dir, gpu_ids)
 
@@ -184,41 +170,41 @@ class ELECTRASeqClassifier(BERTSeqClassifier, ClassifierModule):
         self._key_to_depths = get_key_to_depths(
             self.bert_config.num_hidden_layers)
 
-        if '[CLS]' not in self.tokenizer.vocab:
-            self.tokenizer.add('[CLS]')
+        if "[CLS]" not in self.tokenizer.vocab:
+            self.tokenizer.add("[CLS]")
             self.bert_config.vocab_size += 1
-            tf.logging.info('Add necessary token `[CLS]` into vocabulary.')
-        if '[SEP]' not in self.tokenizer.vocab:
-            self.tokenizer.add('[SEP]')
+            tf.logging.info("Add necessary token `[CLS]` into vocabulary.")
+        if "[SEP]" not in self.tokenizer.vocab:
+            self.tokenizer.add("[SEP]")
             self.bert_config.vocab_size += 1
-            tf.logging.info('Add necessary token `[SEP]` into vocabulary.')
+            tf.logging.info("Add necessary token `[SEP]` into vocabulary.")
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
         encoder = BERTEncoder(
             bert_config=self.bert_config,
             is_training=is_training,
-            input_ids=split_placeholders['input_ids'],
-            input_mask=split_placeholders['input_mask'],
-            segment_ids=split_placeholders['segment_ids'],
-            scope='electra',
+            input_ids=split_placeholders["input_ids"],
+            input_mask=split_placeholders["input_mask"],
+            segment_ids=split_placeholders["segment_ids"],
+            scope="electra",
             drop_pooler=True,
             **kwargs)
         encoder_output = encoder.get_sequence_output()
         decoder = SeqCLSDecoder(
             is_training=is_training,
             input_tensor=encoder_output,
-            input_mask=split_placeholders['input_mask'],
-            label_ids=split_placeholders['label_ids'],
+            input_mask=split_placeholders["input_mask"],
+            label_ids=split_placeholders["label_ids"],
             label_size=self.label_size,
-            sample_weight=split_placeholders.get('sample_weight'),
-            scope='cls/sequence',
+            sample_weight=split_placeholders.get("sample_weight"),
+            scope="cls/sequence",
             **kwargs)
         return decoder.get_forward_outputs()
 
 
 class ELECTRAMRC(BERTMRC, MRCModule):
-    ''' Machine reading comprehension on ELECTRA. '''
+    """ Machine reading comprehension on ELECTRA. """
     _INFER_ATTRIBUTES = BERTMRC._INFER_ATTRIBUTES
 
     def __init__(self,
@@ -229,7 +215,7 @@ class ELECTRAMRC(BERTMRC, MRCModule):
                  output_dir=None,
                  gpu_ids=None,
                  do_lower_case=True,
-                 truncate_method='longer-FO'):
+                 truncate_method="longer-FO"):
         super(MRCModule, self).__init__(
             init_checkpoint, output_dir, gpu_ids)
 
@@ -246,44 +232,44 @@ class ELECTRAMRC(BERTMRC, MRCModule):
         self._key_to_depths = get_key_to_depths(
             self.bert_config.num_hidden_layers)
 
-        if '[CLS]' not in self.tokenizer.vocab:
-            self.tokenizer.add('[CLS]')
+        if "[CLS]" not in self.tokenizer.vocab:
+            self.tokenizer.add("[CLS]")
             self.bert_config.vocab_size += 1
-            tf.logging.info('Add necessary token `[CLS]` into vocabulary.')
-        if '[SEP]' not in self.tokenizer.vocab:
-            self.tokenizer.add('[SEP]')
+            tf.logging.info("Add necessary token `[CLS]` into vocabulary.")
+        if "[SEP]" not in self.tokenizer.vocab:
+            self.tokenizer.add("[SEP]")
             self.bert_config.vocab_size += 1
-            tf.logging.info('Add necessary token `[SEP]` into vocabulary.')
+            tf.logging.info("Add necessary token `[SEP]` into vocabulary.")
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
         encoder = BERTEncoder(
             bert_config=self.bert_config,
             is_training=is_training,
-            input_ids=split_placeholders['input_ids'],
-            input_mask=split_placeholders['input_mask'],
-            segment_ids=split_placeholders['segment_ids'],
-            scope='electra',
+            input_ids=split_placeholders["input_ids"],
+            input_mask=split_placeholders["input_mask"],
+            segment_ids=split_placeholders["segment_ids"],
+            scope="electra",
             drop_pooler=True,
             **kwargs)
         encoder_output = encoder.get_sequence_output()
         decoder = MRCDecoder(
             is_training=is_training,
             input_tensor=encoder_output,
-            label_ids=split_placeholders['label_ids'],
-            sample_weight=split_placeholders.get('sample_weight'),
-            scope='mrc',
+            label_ids=split_placeholders["label_ids"],
+            sample_weight=split_placeholders.get("sample_weight"),
+            scope="mrc",
             **kwargs)
         return decoder.get_forward_outputs()
 
 
 class ELECTRALM(BERTLM, LMModule):
-    ''' Language modeling on ELECTRA. '''
+    """ Language modeling on ELECTRA. """
     _INFER_ATTRIBUTES = BERTLM._INFER_ATTRIBUTES
 
     def __init__(self,
                  vocab_file,
-                 model_size='base',
+                 model_size="base",
                  max_seq_length=128,
                  init_checkpoint=None,
                  output_dir=None,
@@ -294,7 +280,7 @@ class ELECTRALM(BERTLM, LMModule):
                  masked_lm_prob=0.15,
                  do_whole_word_mask=False,
                  do_lower_case=True,
-                 truncate_method='LIFO'):
+                 truncate_method="LIFO"):
         super(LMModule, self).__init__(
             init_checkpoint, output_dir, gpu_ids)
 
@@ -311,21 +297,21 @@ class ELECTRALM(BERTLM, LMModule):
         self.__init_args__ = locals()
 
         self.tokenizer = get_word_piece_tokenizer(vocab_file, do_lower_case)
-        self._key_to_depths = 'unsupported'
+        self._key_to_depths = "unsupported"
 
-        if '[CLS]' not in self.tokenizer.vocab:
-            self.tokenizer.add('[CLS]')
-            tf.logging.info('Add necessary token `[CLS]` into vocabulary.')
-        if '[SEP]' not in self.tokenizer.vocab:
-            self.tokenizer.add('[SEP]')
-            tf.logging.info('Add necessary token `[SEP]` into vocabulary.')
+        if "[CLS]" not in self.tokenizer.vocab:
+            self.tokenizer.add("[CLS]")
+            tf.logging.info("Add necessary token `[CLS]` into vocabulary.")
+        if "[SEP]" not in self.tokenizer.vocab:
+            self.tokenizer.add("[SEP]")
+            tf.logging.info("Add necessary token `[SEP]` into vocabulary.")
 
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
                 is_training=False, is_parallel=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
 
         assert y is None, (
-            'Training of %s is unsupervised. `y` should be None.'
+            "Training of %s is unsupervised. `y` should be None."
             % self.__class__.__name__)
 
         n_inputs = None
@@ -339,16 +325,16 @@ class ELECTRALM(BERTLM, LMModule):
              masked_lm_positions, masked_lm_ids, masked_lm_weights) = \
                 self._convert_X(X_tokenized if tokenized else X, is_training, tokenized=tokenized)
 
-            data['input_ids'] = np.array(input_ids, dtype=np.int32)
-            data['input_mask'] = np.array(input_mask, dtype=np.int32)
-            data['segment_ids'] = np.array(segment_ids, dtype=np.int32)
-            data['masked_lm_positions'] = \
+            data["input_ids"] = np.array(input_ids, dtype=np.int32)
+            data["input_mask"] = np.array(input_mask, dtype=np.int32)
+            data["segment_ids"] = np.array(segment_ids, dtype=np.int32)
+            data["masked_lm_positions"] = \
                 np.array(masked_lm_positions, dtype=np.int32)
-            data['masked_lm_ids'] = \
+            data["masked_lm_ids"] = \
                 np.array(masked_lm_ids, dtype=np.int32)
 
             if is_training:
-                data['masked_lm_weights'] = \
+                data["masked_lm_weights"] = \
                     np.array(masked_lm_weights, dtype=np.float32)
 
             n_inputs = len(input_ids)
@@ -359,7 +345,7 @@ class ELECTRALM(BERTLM, LMModule):
         if is_training or y:
             sample_weight = self._convert_sample_weight(
                 sample_weight, n_inputs)
-            data['sample_weight'] = np.array(sample_weight, dtype=np.float32)
+            data["sample_weight"] = np.array(sample_weight, dtype=np.float32)
 
         return data
 
@@ -373,7 +359,7 @@ class ELECTRALM(BERTLM, LMModule):
                     self._convert_x(example, tokenized))
             except Exception:
                 raise ValueError(
-                    'Wrong input format (line %d): \'%s\'. '
+                    "Wrong input format (line %d): \"%s\". "
                     % (ex_id, example))
 
         input_ids = []
@@ -384,7 +370,7 @@ class ELECTRALM(BERTLM, LMModule):
         masked_lm_weights = []
 
         for ex_id, segments in enumerate(segment_input_tokens):
-            _input_tokens = ['[CLS]']
+            _input_tokens = ["[CLS]"]
             _input_ids = []
             _input_mask = [1]
             _segment_ids = [0]
@@ -398,7 +384,7 @@ class ELECTRALM(BERTLM, LMModule):
 
             for s_id, segment in enumerate(segments):
                 _segment_id = min(s_id, 1)
-                _input_tokens.extend(segment + ['[SEP]'])
+                _input_tokens.extend(segment + ["[SEP]"])
                 _input_mask.extend([1] * (len(segment) + 1))
                 _segment_ids.extend([_segment_id] * (len(segment) + 1))
 
@@ -406,7 +392,7 @@ class ELECTRALM(BERTLM, LMModule):
             if is_training:
                 if (ex_id + 1) % 10000 == 0:
                     tf.logging.info(
-                        'Sampling masks of input %d' % (ex_id + 1))
+                        "Sampling masks of input %d" % (ex_id + 1))
                 (_input_tokens, _masked_lm_positions, _masked_lm_labels) = \
                     create_masked_lm_predictions(
                         tokens=_input_tokens,
@@ -428,7 +414,7 @@ class ELECTRALM(BERTLM, LMModule):
                 # `masked_lm_positions` is required for both training
                 # and inference of BERT language modeling.
                 for i in range(len(_input_tokens)):
-                    if _input_tokens[i] == '[MASK]':
+                    if _input_tokens[i] == "[MASK]":
                         _masked_lm_positions.append(i)
 
                 # padding
@@ -458,29 +444,29 @@ class ELECTRALM(BERTLM, LMModule):
 
     def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
-            'input_ids': utils.get_placeholder(
-                target, 'input_ids',
+            "input_ids": utils.get_placeholder(
+                target, "input_ids",
                 [None, self.max_seq_length], tf.int32),
-            'input_mask': utils.get_placeholder(
-                target, 'input_mask',
+            "input_mask": utils.get_placeholder(
+                target, "input_mask",
                 [None, self.max_seq_length], tf.int32),
-            'segment_ids': utils.get_placeholder(
-                target, 'segment_ids',
+            "segment_ids": utils.get_placeholder(
+                target, "segment_ids",
                 [None, self.max_seq_length], tf.int32),
-            'masked_lm_positions': utils.get_placeholder(
-                target, 'masked_lm_positions',
+            "masked_lm_positions": utils.get_placeholder(
+                target, "masked_lm_positions",
                 [None, self._max_predictions_per_seq], tf.int32),
-            'masked_lm_ids': utils.get_placeholder(
-                target, 'masked_lm_ids',
+            "masked_lm_ids": utils.get_placeholder(
+                target, "masked_lm_ids",
                 [None, self._max_predictions_per_seq], tf.int32),
-            'masked_lm_weights': utils.get_placeholder(
-                target, 'masked_lm_weights',
+            "masked_lm_weights": utils.get_placeholder(
+                target, "masked_lm_weights",
                 [None, self._max_predictions_per_seq], tf.float32),
         }
         if not on_export:
-            self.placeholders['sample_weight'] = \
+            self.placeholders["sample_weight"] = \
                 utils.get_placeholder(
-                    target, 'sample_weight',
+                    target, "sample_weight",
                     [None], tf.float32)
 
     def _forward(self, is_training, split_placeholders, **kwargs):
@@ -490,7 +476,7 @@ class ELECTRALM(BERTLM, LMModule):
             model_size=self._model_size,
             is_training=is_training,
             placeholders=split_placeholders,
-            sample_weight=split_placeholders.get('sample_weight'),
+            sample_weight=split_placeholders.get("sample_weight"),
             max_predictions_per_seq=self._max_predictions_per_seq,
             gen_weight=self.generator_weight,
             disc_weight=self.discriminator_weight,
@@ -499,16 +485,16 @@ class ELECTRALM(BERTLM, LMModule):
         return model.get_forward_outputs()
 
     def _get_fit_ops(self, as_feature=False):
-        ops = [self._tensors['MLM_preds'],
-               self._tensors['RTD_preds'],
-               self._tensors['RTD_labels'],
-               self._tensors['MLM_losses'],
-               self._tensors['RTD_losses']]
+        ops = [self._tensors["MLM_preds"],
+               self._tensors["RTD_preds"],
+               self._tensors["RTD_labels"],
+               self._tensors["MLM_losses"],
+               self._tensors["RTD_losses"]]
         if as_feature:
             ops.extend(
-                [self.placeholders['input_mask'],
-                 self.placeholders['masked_lm_positions'],
-                 self.placeholders['masked_lm_ids']])
+                [self.placeholders["input_mask"],
+                 self.placeholders["masked_lm_positions"],
+                 self.placeholders["masked_lm_ids"]])
         return ops
 
     def _get_fit_info(self, output_arrays, feed_dict, as_feature=False):
@@ -519,11 +505,11 @@ class ELECTRALM(BERTLM, LMModule):
             batch_mlm_labels = output_arrays[-1]
         else:
             batch_input_mask = \
-                feed_dict[self.placeholders['input_mask']]
+                feed_dict[self.placeholders["input_mask"]]
             batch_mlm_positions = \
-                feed_dict[self.placeholders['masked_lm_positions']]
+                feed_dict[self.placeholders["masked_lm_positions"]]
             batch_mlm_labels = \
-                feed_dict[self.placeholders['masked_lm_ids']]
+                feed_dict[self.placeholders["masked_lm_ids"]]
 
         # MLM accuracy
         batch_mlm_preds = output_arrays[0]
@@ -547,18 +533,18 @@ class ELECTRALM(BERTLM, LMModule):
         batch_rtd_losses = output_arrays[4]
         rtd_loss = np.mean(batch_rtd_losses)
 
-        info = ''
-        info += ', MLM accuracy %.4f' % mlm_accuracy
-        info += ', RTD accuracy %.4f' % rtd_accuracy
-        info += ', MLM loss %.6f' % mlm_loss
-        info += ', RTD loss %.6f' % rtd_loss
+        info = ""
+        info += ", MLM accuracy %.4f" % mlm_accuracy
+        info += ", RTD accuracy %.4f" % rtd_accuracy
+        info += ", MLM loss %.6f" % mlm_loss
+        info += ", RTD loss %.6f" % rtd_loss
 
         return info
 
     def _get_predict_ops(self):
-        return [self._tensors['MLM_preds'],
-                self._tensors['RTD_preds'],
-                self._tensors['RTD_probs']]
+        return [self._tensors["MLM_preds"],
+                self._tensors["RTD_preds"],
+                self._tensors["RTD_probs"]]
 
     def _get_predict_outputs(self, batch_outputs):
         n_inputs = len(list(self.data.values())[0])
@@ -566,7 +552,7 @@ class ELECTRALM(BERTLM, LMModule):
 
         # MLM preds
         mlm_preds = []
-        mlm_positions = self.data['masked_lm_positions']
+        mlm_positions = self.data["masked_lm_positions"]
         all_preds = utils.transform(output_arrays[0], n_inputs)
         tf.logging.info(output_arrays[0])
         tf.logging.info(all_preds)
@@ -580,8 +566,8 @@ class ELECTRALM(BERTLM, LMModule):
 
         # RTD preds
         rtd_preds = []
-        input_ids = self.data['input_ids']
-        input_mask = self.data['input_mask']
+        input_ids = self.data["input_ids"]
+        input_mask = self.data["input_mask"]
         all_preds = utils.transform(output_arrays[1], n_inputs).tolist()
         for ex_id, _preds in enumerate(all_preds):
             _tokens = []
@@ -592,16 +578,16 @@ class ELECTRALM(BERTLM, LMModule):
                         self.tokenizer.convert_ids_to_tokens(
                             [input_ids[ex_id][p_id]])[0])
                 else:
-                    _tokens.append('[REPLACED]')
+                    _tokens.append("[REPLACED]")
             rtd_preds.append(_tokens)
 
         # RTD probs
         rtd_probs = utils.transform(output_arrays[2], n_inputs)
 
         outputs = {}
-        outputs['mlm_preds'] = mlm_preds
-        outputs['rtd_preds'] = rtd_preds
-        outputs['rtd_probs'] = rtd_probs
+        outputs["mlm_preds"] = mlm_preds
+        outputs["rtd_preds"] = rtd_preds
+        outputs["rtd_probs"] = rtd_probs
 
         return outputs
 
@@ -609,8 +595,8 @@ class ELECTRALM(BERTLM, LMModule):
 def get_bert_config(config_file):
     if not os.path.exists(config_file):
         raise ValueError(
-            'Can\'t find config_file \'%s\'. '
-            'Please pass the correct path of configuration file, '
-            'e.g.`bert_config.json`. An example can be downloaded from '
-            'https://github.com/google-research/electra.' % config_file)
+            "Can\"t find config_file \"%s\". "
+            "Please pass the correct path of configuration file, "
+            "e.g.`bert_config.json`. An example can be downloaded from "
+            "https://github.com/google-research/electra." % config_file)
     return BERTConfig.from_json_file(config_file)

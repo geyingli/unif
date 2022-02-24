@@ -1,30 +1,15 @@
-# coding:=utf-8
-# Copyright 2021 Tencent. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 import re
 import unicodedata
 
 
 def convert_tokens_to_text(tokens):
-    words = ['']
+    words = [""]
     for _token in tokens:
-        if _token.startswith('##'):
+        if _token.startswith("##"):
             words[-1] += _token[2:]
         else:
             words.append(_token)
-    text = ' '.join(words)
+    text = " ".join(words)
 
     # remove spaces
     if len(text) >= 3:
@@ -37,8 +22,8 @@ def convert_tokens_to_text(tokens):
                 # remove space between chars and punctuations
                 if not is_english_char(_last) or not is_english_char(_next):
                     text = text.replace(
-                        '%s%s%s' % (_last, text[i], _next),
-                        '%s%s' % (_last, _next))
+                        "%s%s%s" % (_last, text[i], _next),
+                        "%s%s" % (_last, _next))
             i += 1
 
     return text.strip()
@@ -55,7 +40,7 @@ def align_tokens_with_text(tokens, text, lower_case):
     mapping_end = []
     while i < len(tokens):
         token = tokens[i]
-        token = token.replace('##', '')
+        token = token.replace("##", "")
         if text[j:].startswith(token):
             mapping_start.append(j)
             mapping_end.append(j + len(token))
@@ -63,7 +48,7 @@ def align_tokens_with_text(tokens, text, lower_case):
             j += len(token)
         elif token not in text[j:]:  # [CLS], [SEP], some Japanese signs
             mapping_start.append(j)
-            if token in ('[CLS]', '[SEP]'):
+            if token in ("[CLS]", "[SEP]"):
                 mapping_end.append(j)
             else:
                 mapping_end.append(j + len(token))
@@ -81,7 +66,7 @@ def align_tokens_with_text(tokens, text, lower_case):
 
 
 def find_boyer_moore(T, P, start=0):
-    ''' BM algorithm for string match. '''
+    """ BM algorithm for string match. """
 
     n, m = len(T), len(P)
     last = {}
@@ -118,49 +103,49 @@ def find_all_boyer_moore(T, P):
 
 
 def is_english_char(char):
-    if re.findall('[a-zA-Z]', char):
+    if re.findall("[a-zA-Z]", char):
         return True
     return False
 
 
 def is_numeric_char(char):
-    if re.findall(r'[\d]', char):
+    if re.findall(r"[\d]", char):
         return True
     return False
 
 
 def is_whitespace(char):
-    '''Checks whether `chars` is a whitespace character.'''
+    """Checks whether `chars` is a whitespace character."""
 
     # \t, \n, and \r are technically contorl characters but we treat them
     # as whitespace since they are generally considered as such.
-    if char in (' ', '\t', '\n', '\r'):
+    if char in (" ", "\t", "\n", "\r"):
         return True
     cat = unicodedata.category(char)
-    if cat == 'Zs':
+    if cat == "Zs":
         return True
     return False
 
 
 def is_control(char):
-    '''Checks whether `chars` is a control character.'''
+    """Checks whether `chars` is a control character."""
 
     # These are technically control characters but we count them as whitespace
     # characters.
-    if char in ('\t', '\n', '\r'):
+    if char in ("\t", "\n", "\r"):
         return False
     cat = unicodedata.category(char)
-    if cat in ('Cc', 'Cf'):
+    if cat in ("Cc", "Cf"):
         return True
     return False
 
 
 def is_punctuation(char):
-    '''Checks whether `chars` is a punctuation character.'''
+    """Checks whether `chars` is a punctuation character."""
     ord_id = ord(char)
 
     # We treat all non-letter/number ASCII as punctuation.
-    # Characters such as '^', '$', and '`' are not in the Unicode
+    # Characters such as "^", "$", and "`" are not in the Unicode
     # Punctuation class but we treat them as punctuation anyways, for
     # consistency.
     if (ord_id >= 33 and ord_id <= 47) or \
@@ -169,13 +154,13 @@ def is_punctuation(char):
             (ord_id >= 123 and ord_id <= 126):
         return True
     cat = unicodedata.category(char)
-    if cat.startswith('P'):
+    if cat.startswith("P"):
         return True
     return False
 
 
 def is_chinese_char(ord_id):
-    '''Checks whether ord_id is the codepoint of a CJK character.'''
+    """Checks whether ord_id is the codepoint of a CJK character."""
     # This defines a `Chinese character` as anything in the CJK
     # Unicode block:
     # https://en.wikipedia.org/wiki/CJK_Unified_Ideographs_(Unicode_block)

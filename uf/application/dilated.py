@@ -1,18 +1,4 @@
-# coding:=utf-8
-# Copyright 2021 Tencent. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the 'License');
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an 'AS IS' BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-''' Applications based on DilatedBERT. '''
+""" Applications based on DilatedBERT. """
 
 import random
 import numpy as np
@@ -25,14 +11,14 @@ from .. import utils
 
 
 class DilatedLM(LMModule):
-    ''' Language modeling on DilatedBERT. '''
+    """ Language modeling on DilatedBERT. """
     _INFER_ATTRIBUTES = {
-        'max_seq_length': (
-            'An integer that defines max sequence length of input tokens, '
-            'which typically equals `len(tokenize(segments)) + 1'),
-        'init_checkpoint': (
-            'A string that directs to the checkpoint file used for '
-            'initialization')}
+        "max_seq_length": (
+            "An integer that defines max sequence length of input tokens, "
+            "which typically equals `len(tokenize(segments)) + 1"),
+        "init_checkpoint": (
+            "A string that directs to the checkpoint file used for "
+            "initialization")}
 
     def __init__(self,
                  config_file,
@@ -45,7 +31,7 @@ class DilatedLM(LMModule):
                  add_prob=0.05,
                  subtract_prob=0.05,
                  do_lower_case=True,
-                 truncate_method='LIFO'):
+                 truncate_method="LIFO"):
         super(LMModule, self).__init__(
             init_checkpoint, output_dir, gpu_ids)
 
@@ -63,22 +49,22 @@ class DilatedLM(LMModule):
         self._key_to_depths = get_key_to_depths(
             self.bert_config.num_hidden_layers)
 
-        if '[CLS]' not in self.tokenizer.vocab:
-            self.tokenizer.add('[CLS]')
+        if "[CLS]" not in self.tokenizer.vocab:
+            self.tokenizer.add("[CLS]")
             self.bert_config.vocab_size += 1
-            tf.logging.info('Add necessary token `[CLS]` into vocabulary.')
-        if '[SEP]' not in self.tokenizer.vocab:
-            self.tokenizer.add('[SEP]')
+            tf.logging.info("Add necessary token `[CLS]` into vocabulary.")
+        if "[SEP]" not in self.tokenizer.vocab:
+            self.tokenizer.add("[SEP]")
             self.bert_config.vocab_size += 1
-            tf.logging.info('Add necessary token `[SEP]` into vocabulary.')
-        if '[SPAD]' not in self.tokenizer.vocab:
-            self.tokenizer.add('[SPAD]')
+            tf.logging.info("Add necessary token `[SEP]` into vocabulary.")
+        if "[SPAD]" not in self.tokenizer.vocab:
+            self.tokenizer.add("[SPAD]")
             self.bert_config.vocab_size += 1
-            tf.logging.info('Add necessary token `[SPAD]` into vocabulary.')
+            tf.logging.info("Add necessary token `[SPAD]` into vocabulary.")
 
     def predict(self, X=None, X_tokenized=None,
                 batch_size=8, loop=1):
-        ''' Inference on the model.
+        """ Inference on the model.
         Args:
             X: list. A list object consisting untokenized inputs.
             X_tokenized: list. A list object consisting tokenized inputs.
@@ -87,7 +73,7 @@ class DilatedLM(LMModule):
             loop: int. Number of inference loop to rewrite the input.
         Returns:
             A dict object of model outputs.
-        '''
+        """
 
         if loop != self._loop:
             self._loop = loop
@@ -97,13 +83,13 @@ class DilatedLM(LMModule):
             X, X_tokenized, batch_size)
 
     def export(self, export_dir, loop=1):
-        ''' Export model into SavedModel files.
+        """ Export model into SavedModel files.
         Args:
             export_dir: str. Directory to which the model is saved.
             loop: int. Number of inference loop to rewrite the input.
         Returns:
             None
-        '''
+        """
 
         if loop != self._loop:
             self._loop = loop
@@ -115,7 +101,7 @@ class DilatedLM(LMModule):
                 is_training=False, is_parallel=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
 
-        assert y is None, ('%s is unsupervised. `y` should be None.'
+        assert y is None, ("%s is unsupervised. `y` should be None."
                            % self.__class__.__name__)
 
         n_inputs = None
@@ -127,10 +113,10 @@ class DilatedLM(LMModule):
             (dilated_ids, label_ids) = self._convert_X(
                 X_tokenized if tokenized else X, tokenized=tokenized,
                 is_training=is_training)
-            data['dilated_ids'] = np.array(dilated_ids, dtype=np.int32)
+            data["dilated_ids"] = np.array(dilated_ids, dtype=np.int32)
 
             if is_training:
-                data['label_ids'] = np.array(label_ids, dtype=np.int32)
+                data["label_ids"] = np.array(label_ids, dtype=np.int32)
 
             n_inputs = len(dilated_ids)
             if n_inputs < self.batch_size:
@@ -140,7 +126,7 @@ class DilatedLM(LMModule):
         if is_training or y:
             sample_weight = self._convert_sample_weight(
                 sample_weight, n_inputs)
-            data['sample_weight'] = np.array(sample_weight, dtype=np.float32)
+            data["sample_weight"] = np.array(sample_weight, dtype=np.float32)
 
         return data
 
@@ -153,10 +139,10 @@ class DilatedLM(LMModule):
                 _input_tokens = self._convert_x(example, tokenized)
             except Exception:
                 raise ValueError(
-                    'Wrong input format (line %d): \'%s\'. '
+                    "Wrong input format (line %d): \"%s\". "
                     % (ex_id, example))
 
-            _input_tokens = ['[CLS]'] + _input_tokens
+            _input_tokens = ["[CLS]"] + _input_tokens
             _input_ids = self.tokenizer.convert_tokens_to_ids(
                 _input_tokens)
 
@@ -207,22 +193,22 @@ class DilatedLM(LMModule):
 
         # deal with tokenized and multiple inputs
         raise ValueError(
-            '%s only supports single sentence inputs.'
+            "%s only supports single sentence inputs."
             % self.__class__.__name__)
 
     def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
-            'dilated_ids': utils.get_placeholder(
-                target, 'dilated_ids',
+            "dilated_ids": utils.get_placeholder(
+                target, "dilated_ids",
                 [None, self.max_seq_length * 2], tf.int32),
-            'label_ids': utils.get_placeholder(
-                target, 'label_ids',
+            "label_ids": utils.get_placeholder(
+                target, "label_ids",
                 [None, self.max_seq_length * 2], tf.int32),
         }
         if not on_export:
-            self.placeholders['sample_weight'] = \
+            self.placeholders["sample_weight"] = \
                 utils.get_placeholder(
-                    target, 'sample_weight',
+                    target, "sample_weight",
                     [None], tf.float32)
 
     def _forward(self, is_training, split_placeholders, **kwargs):
@@ -230,21 +216,21 @@ class DilatedLM(LMModule):
         model = DLM(
             bert_config=self.bert_config,
             is_training=is_training,
-            dilated_ids=split_placeholders['dilated_ids'],
-            label_ids=split_placeholders['label_ids'],
+            dilated_ids=split_placeholders["dilated_ids"],
+            label_ids=split_placeholders["label_ids"],
             max_seq_length=self.max_seq_length,
-            spad_id=self.tokenizer.convert_tokens_to_ids(['[SPAD]'])[0],
+            spad_id=self.tokenizer.convert_tokens_to_ids(["[SPAD]"])[0],
             loop=self._loop,
-            sample_weight=split_placeholders.get('sample_weight'),
-            scope='dilated',
+            sample_weight=split_placeholders.get("sample_weight"),
+            scope="dilated",
             **kwargs)
         return model.get_forward_outputs()
 
     def _get_fit_ops(self, as_feature=False):
-        ops = [self._tensors['LM'], self._tensors['LM']]
+        ops = [self._tensors["LM"], self._tensors["LM"]]
         if as_feature:
-            ops.extend([self.placeholders['dilated_ids'],
-                        self.placeholders['label_ids']])
+            ops.extend([self.placeholders["dilated_ids"],
+                        self.placeholders["label_ids"]])
         return ops
 
     def _get_fit_info(self, output_arrays, feed_dict, as_feature=False):
@@ -253,8 +239,8 @@ class DilatedLM(LMModule):
             batch_inputs = output_arrays[-2]
             batch_labels = output_arrays[-1]
         else:
-            batch_inputs = feed_dict[self.placeholders['dilated_ids']]
-            batch_labels = feed_dict[self.placeholders['label_ids']]
+            batch_inputs = feed_dict[self.placeholders["dilated_ids"]]
+            batch_labels = feed_dict[self.placeholders["label_ids"]]
 
         # accuracy
         batch_preds = output_arrays[0]
@@ -266,14 +252,14 @@ class DilatedLM(LMModule):
         batch_losses = output_arrays[1]
         loss = np.mean(batch_losses)
 
-        info = ''
-        info += ', accuracy %.4f' % accuracy
-        info += ', loss %.6f' % loss
+        info = ""
+        info += ", accuracy %.4f" % accuracy
+        info += ", loss %.6f" % loss
 
         return info
 
     def _get_predict_ops(self):
-        return [self._tensors['LM']]
+        return [self._tensors["LM"]]
 
     def _get_predict_outputs(self, batch_outputs):
         n_inputs = len(list(self.data.values())[0])
@@ -290,7 +276,7 @@ class DilatedLM(LMModule):
             preds.append(_pred_text)
 
         outputs = {}
-        outputs['preds'] = preds
+        outputs["preds"] = preds
 
         return outputs
 

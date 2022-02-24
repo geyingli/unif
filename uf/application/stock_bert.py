@@ -1,18 +1,4 @@
-# coding:=utf-8
-# Copyright 2021 Tencent. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the 'License');
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an 'AS IS' BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-''' Applications based on Stock-BERT. '''
+""" Applications based on Stock-BERT. """
 
 import numpy as np
 
@@ -25,15 +11,15 @@ from .. import utils
 
 
 class StockBERTClassifier(BERTClassifier, ClassifierModule):
-    ''' Single-label classifier on Stock-BERT. '''
+    """ Single-label classifier on Stock-BERT. """
     _INFER_ATTRIBUTES = {
-        'max_seq_length': (
-            'An integer that defines max length of input time spots'),
-        'max_unit_length': (
-            'An integer that defines max length of input sub-prices'),
-        'init_checkpoint': (
-            'A string that directs to the checkpoint file used for '
-            'initialization')}
+        "max_seq_length": (
+            "An integer that defines max length of input time spots"),
+        "max_unit_length": (
+            "An integer that defines max length of input sub-prices"),
+        "init_checkpoint": (
+            "A string that directs to the checkpoint file used for "
+            "initialization")}
 
     def __init__(self,
                  config_file,
@@ -45,7 +31,7 @@ class StockBERTClassifier(BERTClassifier, ClassifierModule):
                  gpu_ids=None,
                  drop_pooler=False,
                  do_lower_case=True,
-                 truncate_method='LIFO'):
+                 truncate_method="LIFO"):
         super(ClassifierModule, self).__init__(
             init_checkpoint, output_dir, gpu_ids)
 
@@ -66,15 +52,15 @@ class StockBERTClassifier(BERTClassifier, ClassifierModule):
                 is_training=False, is_parallel=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
 
-        assert X is None, ('`%s` is a model with continuous input. '
-                           '`X` should be None. Use `X_tokenized` instead.'
+        assert X is None, ("`%s` is a model with continuous input. "
+                           "`X` should be None. Use `X_tokenized` instead."
                            % (self.__class__.__name__))
         if is_training:
-            assert y is not None, '`y` can\'t be None.'
+            assert y is not None, "`y` can\"t be None."
         if is_parallel:
             assert self.label_size, (
-                'Can\'t parse data on multi-processing '
-                'when `label_size` is None.')
+                "Can\"t parse data on multi-processing "
+                "when `label_size` is None.")
 
         n_inputs = None
         data = {}
@@ -84,8 +70,8 @@ class StockBERTClassifier(BERTClassifier, ClassifierModule):
             tokenized = False if X else X_tokenized
             input_values, input_mask = self._convert_X(
                 X_tokenized if tokenized else X, tokenized=tokenized)
-            data['input_values'] = np.array(input_values, dtype=np.float32)
-            data['input_mask'] = np.array(input_mask, dtype=np.int32)
+            data["input_values"] = np.array(input_values, dtype=np.float32)
+            data["input_mask"] = np.array(input_mask, dtype=np.int32)
             n_inputs = len(input_values)
 
             if n_inputs < self.batch_size:
@@ -94,13 +80,13 @@ class StockBERTClassifier(BERTClassifier, ClassifierModule):
         # convert y
         if y:
             label_ids = self._convert_y(y)
-            data['label_ids'] = np.array(label_ids, dtype=np.int32)
+            data["label_ids"] = np.array(label_ids, dtype=np.int32)
 
         # convert sample_weight
         if is_training or y:
             sample_weight = self._convert_sample_weight(
                 sample_weight, n_inputs)
-            data['sample_weight'] = np.array(sample_weight, dtype=np.float32)
+            data["sample_weight"] = np.array(sample_weight, dtype=np.float32)
 
         return data
 
@@ -114,9 +100,9 @@ class StockBERTClassifier(BERTClassifier, ClassifierModule):
                     self._convert_x(example))
             except Exception:
                 raise ValueError(
-                    'Wrong input format (line %d): \'%s\'. An example: '
-                    '`X_tokenized = [[[0.0023, -0.0001, 0.0015, ...], ...], '
-                    '...]`' % (ex_id, example))
+                    "Wrong input format (line %d): \"%s\". An example: "
+                    "`X_tokenized = [[[0.0023, -0.0001, 0.0015, ...], ...], "
+                    "...]`" % (ex_id, example))
 
         input_values = []
         input_mask = []
@@ -129,8 +115,8 @@ class StockBERTClassifier(BERTClassifier, ClassifierModule):
                 truncate_method=self.truncate_method)
             for s_id, segment in enumerate(segments):
                 assert len(segment) == self.max_unit_length, (
-                    '`max_unit_length` must be equal to the input length of '
-                    'each time spot.')
+                    "`max_unit_length` must be equal to the input length of "
+                    "each time spot.")
                 _input_values.append(segment)
                 _input_mask.append(1)
 
@@ -155,7 +141,7 @@ class StockBERTClassifier(BERTClassifier, ClassifierModule):
         # automatically set `label_size`
         if self.label_size:
             assert len(label_set) <= self.label_size, (
-                'Number of unique `y`s exceeds `label_size`.')
+                "Number of unique `y`s exceeds `label_size`.")
         else:
             self.label_size = len(label_set)
 
@@ -180,19 +166,19 @@ class StockBERTClassifier(BERTClassifier, ClassifierModule):
 
     def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
-            'input_values': utils.get_placeholder(
-                target, 'input_values',
+            "input_values": utils.get_placeholder(
+                target, "input_values",
                 [None, self.max_seq_length - 1, self.max_unit_length], tf.float32),
-            'input_mask': utils.get_placeholder(
-                target, 'input_mask',
+            "input_mask": utils.get_placeholder(
+                target, "input_mask",
                 [None, self.max_seq_length], tf.int32),
-            'label_ids': utils.get_placeholder(
-                target, 'label_ids', [None], tf.int32),
+            "label_ids": utils.get_placeholder(
+                target, "label_ids", [None], tf.int32),
         }
         if not on_export:
-            self.placeholders['sample_weight'] = \
+            self.placeholders["sample_weight"] = \
                 utils.get_placeholder(
-                    target, 'sample_weight',
+                    target, "sample_weight",
                     [None], tf.float32)
 
     def _forward(self, is_training, split_placeholders, **kwargs):
@@ -200,18 +186,18 @@ class StockBERTClassifier(BERTClassifier, ClassifierModule):
         encoder = StockBERTEncoder(
             bert_config=self.bert_config,
             is_training=is_training,
-            input_values=split_placeholders['input_values'],
-            input_mask=split_placeholders['input_mask'],
-            scope='stock_bert',
+            input_values=split_placeholders["input_values"],
+            input_mask=split_placeholders["input_mask"],
+            scope="stock_bert",
             drop_pooler=self._drop_pooler,
             **kwargs)
         encoder_output = encoder.get_pooled_output()
         decoder = CLSDecoder(
             is_training=is_training,
             input_tensor=encoder_output,
-            label_ids=split_placeholders['label_ids'],
+            label_ids=split_placeholders["label_ids"],
             label_size=self.label_size,
-            sample_weight=split_placeholders.get('sample_weight'),
-            scope='cls/seq_relationship',
+            sample_weight=split_placeholders.get("sample_weight"),
+            scope="cls/seq_relationship",
             **kwargs)
         return decoder.get_forward_outputs()

@@ -1,18 +1,3 @@
-# coding:=utf-8
-# Copyright 2021 Tencent. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 import os
 import time
 import random
@@ -25,10 +10,10 @@ from .. import utils
 
 
 class Task:
-    ''' Parent class of all tasks.
+    """ Parent class of all tasks.
 
     This is an internal class that does not provide interface
-    for outside requests.'''
+    for outside requests."""
 
     @abstractmethod
     def __init__(self, *args, **kwargs):
@@ -39,7 +24,7 @@ class Task:
         raise NotImplementedError()
 
     def _init_session(self):
-        os.environ['CUDA_VISIBLE_DEVICES'] = ','.join(self.module._gpu_ids)
+        os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(self.module._gpu_ids)
         config = tf.ConfigProto(allow_soft_placement=True)
         self.module.sess = tf.Session(graph=self.module.graph, config=config)
         self._init_variables(self.module.global_variables)
@@ -47,18 +32,18 @@ class Task:
 
     def _init_variables(self, variables, ignore_checkpoint=False):
 
-        tf.logging.info('Running local_init_op')
+        tf.logging.info("Running local_init_op")
         local_init_op = tf.variables_initializer(variables)
         self.module.sess.run(local_init_op)
         self.module._inited_vars |= set(variables)
-        tf.logging.info('Done running local_init_op')
+        tf.logging.info("Done running local_init_op")
 
         if not ignore_checkpoint and self.module.init_checkpoint:
             checkpoint_path = utils.get_checkpoint_path(self.module.init_checkpoint)
             if not checkpoint_path:
-                raise ValueError('Checkpoint file \'%s\' does not exist. '
-                                 'Make sure you pass correct value to '
-                                 '`init_checkpoint`.'
+                raise ValueError("Checkpoint file \"%s\" does not exist. "
+                                 "Make sure you pass correct value to "
+                                 "`init_checkpoint`."
                                  % self.module.init_checkpoint)
             self.module.init_checkpoint = checkpoint_path
 
@@ -66,7 +51,7 @@ class Task:
             # and momentums variables in optimization
             continual = os.path.dirname(checkpoint_path) == self.module.output_dir
             if continual:
-                self.module.step = int(checkpoint_path.split('-')[-1])
+                self.module.step = int(checkpoint_path.split("-")[-1])
 
             (assignment_map, uninited_vars) = utils.get_assignment_map(
                 checkpoint_path, variables, continual=continual)
@@ -75,16 +60,16 @@ class Task:
 
             if uninited_vars:
                 tf.logging.info(
-                    '%d local variables failed to match up with the '
-                    'checkpoint file. Check more details through '
-                    '`.uninited_vars`.' % len(uninited_vars))
+                    "%d local variables failed to match up with the "
+                    "checkpoint file. Check more details through "
+                    "`.uninited_vars`." % len(uninited_vars))
 
             if not self.module.assignment_map:    # no variables to restore
                 return
             loader = tf.train.Saver(self.module.assignment_map)
             loader.restore(self.module.sess, checkpoint_path)
 
-            if '_global_step' in self.module.__dict__:
+            if "_global_step" in self.module.__dict__:
                 self.module.sess.run(tf.assign(self.module._global_step, self.module.step))
 
     def _build_feed_dict(self):
@@ -109,13 +94,13 @@ class Training(Task):
 
     def __init__(self, module, **kwargs):
         self.module = module
-        self.grad_acc_steps = float(kwargs.get('grad_acc_steps', '1'))    # gradient accumulation
-        self.shuffle = kwargs.get('shuffle', True)    # if to shuffle the training data
-        self.adversarial = kwargs.get('adversarial', '').lower()    # adversarial training algorithm
-        self.from_tfrecords = bool(kwargs.get('tfrecords_files'))    # if to reader data from tfrecords
-        self.tfrecords_files = kwargs.get('tfrecords_files', [])    # paths of tfrecords
-        self.n_jobs = kwargs.get('n_jobs', max(multiprocessing.cpu_count() - 1, 1))    # number of threads loading tfrecords
-        self.max_to_keep = kwargs.get('max_to_keep', 1000000)
+        self.grad_acc_steps = float(kwargs.get("grad_acc_steps", "1"))    # gradient accumulation
+        self.shuffle = kwargs.get("shuffle", True)    # if to shuffle the training data
+        self.adversarial = kwargs.get("adversarial", "").lower()    # adversarial training algorithm
+        self.from_tfrecords = bool(kwargs.get("tfrecords_files"))    # if to reader data from tfrecords
+        self.tfrecords_files = kwargs.get("tfrecords_files", [])    # paths of tfrecords
+        self.n_jobs = kwargs.get("n_jobs", max(multiprocessing.cpu_count() - 1, 1))    # number of threads loading tfrecords
+        self.max_to_keep = kwargs.get("max_to_keep", 1000000)
 
         self.decorate(**kwargs)
 
@@ -145,7 +130,7 @@ class Training(Task):
             param = self.module.trainable_variables[i]
             param_name = utils.get_param_name(param)
 
-            if grad.__str__().startswith('IndexedSlices'):
+            if grad.__str__().startswith("IndexedSlices"):
                 dense_shape = grad.dense_shape
                 n_elements = self.module.batch_size * self.module.max_seq_length
 
@@ -153,7 +138,7 @@ class Training(Task):
                 values_shape = grad.values.shape.as_list()    # [None, max_seq_length]
                 values_shape[0] = int(n_elements * self.grad_acc_steps)
                 values_variable = tf.get_variable(
-                    name=param_name + '/grad_values',
+                    name=param_name + "/grad_values",
                     shape=values_shape,
                     dtype=tf.float32,
                     trainable=False,
@@ -163,7 +148,7 @@ class Training(Task):
                 indices_shape = grad.indices.shape.as_list()    # [None]
                 indices_shape[0] = int(n_elements * self.grad_acc_steps)
                 indices_variable = tf.get_variable(
-                    name=param_name + '/grad_indices',
+                    name=param_name + "/grad_indices",
                     shape=indices_shape,
                     dtype=tf.int32,
                     trainable=False,
@@ -188,7 +173,7 @@ class Training(Task):
             else:
                 grad_shape = grad.shape.as_list()
                 grad_variable = tf.get_variable(
-                    name=param_name + '/grad',
+                    name=param_name + "/grad",
                     shape=grad_shape,
                     dtype=tf.float32,
                     trainable=False,
@@ -224,22 +209,22 @@ class Training(Task):
                     variables.append(var)
             if variables:
                 self._init_variables(variables)
-        self.module._session_mode = 'train'
+        self.module._session_mode = "train"
 
         # print
         if self.adversarial:
             tf.logging.info(
-                'Running adversarial training `%s` on %d samples (step %d -> %d)',
+                "Running adversarial training `%s` on %d samples (step %d -> %d)",
                 self.adversarial, self.n_inputs, self.module.step, target_steps)
         else:
             tf.logging.info(
-                'Running training on %d samples (step %d -> %d)',
+                "Running training on %d samples (step %d -> %d)",
                 self.n_inputs, self.module.step, target_steps)
         if self.grad_acc_steps > 1:
-            tf.logging.info('Accumulate gradients every %d steps' % self.grad_acc_steps)
+            tf.logging.info("Accumulate gradients every %d steps" % self.grad_acc_steps)
 
         # SMART: initialize tilda_embedding
-        if self.adversarial == 'smart':
+        if self.adversarial == "smart":
             self.module.sess.run(self.init_tilda_op)
 
         self._ptr = 0
@@ -261,7 +246,7 @@ class Training(Task):
         if self.from_tfrecords:
             self.n_inputs = utils.get_tfrecords_length(self.tfrecords_files)
 
-            self.module._set_placeholders('feature', is_training=True)
+            self.module._set_placeholders("feature", is_training=True)
             features = {key: self.module.placeholders[key]
                         for key in utils.get_tfrecords_keys(
                             self.tfrecords_files[0])}
@@ -278,9 +263,9 @@ class Training(Task):
 
             dataset = tf.data.TFRecordDataset(self.tfrecords_files)
             dataset = dataset.repeat()
-            if tf.__version__.startswith('1'):
+            if tf.__version__.startswith("1"):
                 map_and_batch = tf.contrib.data.map_and_batch
-            elif tf.__version__.startswith('2'):
+            elif tf.__version__.startswith("2"):
                 map_and_batch = tf.data.experimental.map_and_batch
             dataset = dataset.apply(map_and_batch(
                 decode_record,
@@ -292,10 +277,10 @@ class Training(Task):
             self.module.placeholders = iterator.get_next()
         else:
             self.n_inputs = len(list(self.module.data.values())[0])
-            self.module._set_placeholders('placeholder', is_training=True)
+            self.module._set_placeholders("placeholder", is_training=True)
 
         if not self.n_inputs:
-            raise ValueError('0 input samples recognized.')
+            raise ValueError("0 input samples recognized.")
 
     def _shuffle(self):
         index_list = list(range(len(list(self.module.data.values())[0])))
@@ -319,28 +304,28 @@ class Training(Task):
 
         # print
         if time.time() - last_tic > print_per_secs or step == target_steps:
-            info = 'step %d' % step
+            info = "step %d" % step
 
             # print processor-specific information
             info += self.module._get_fit_info(output_arrays, feed_dict, as_feature)
 
             # print training efficiency
             if time.time() - last_tic > print_per_secs or step == target_steps:
-                info += ', %.2f steps/sec' % ((step - last_step) / (time.time() - last_tic))
-                info += ', %.2f examples/sec' % ((step - last_step) / (time.time() - last_tic) * self.module.batch_size)
+                info += ", %.2f steps/sec" % ((step - last_step) / (time.time() - last_tic))
+                info += ", %.2f examples/sec" % ((step - last_step) / (time.time() - last_tic) * self.module.batch_size)
 
             tf.logging.info(info)
             last_tic = time.time()
             last_step = step
 
         # SMART: update tilda_embedding
-        if step % self.module.steps_per_epoch == 0 and adversarial == 'smart':
+        if step % self.module.steps_per_epoch == 0 and adversarial == "smart":
             self.module.sess.run(self.update_tilda_op)
 
         # save
         if self.module.output_dir and step % save_per_steps == 0:
-            tf.logging.info('Saving checkpoint for %d into %s/model.ckpt' % (step, self.module.output_dir))
-            self.module.init_checkpoint = (self.module.output_dir + '/model.ckpt-%d' % step)
+            tf.logging.info("Saving checkpoint for %d into %s/model.ckpt" % (step, self.module.output_dir))
+            self.module.init_checkpoint = (self.module.output_dir + "/model.ckpt-%d" % step)
             saver.save(self.module.sess, self.module.init_checkpoint)
 
         return last_tic, last_step
@@ -352,24 +337,24 @@ class Inference(Task):
         self.module = module
 
         # ignore redundant building of the work flow
-        if self.module._session_mode != 'infer':
+        if self.module._session_mode != "infer":
             self.decorate()
 
     def decorate(self):
-        self.module._set_placeholders('placeholder', is_training=False)
+        self.module._set_placeholders("placeholder", is_training=False)
 
         _, self.module._tensors = self.module._parallel_forward(False)
 
     def run(self):
         n_inputs = len(list(self.module.data.values())[0])
         if not n_inputs:
-            raise ValueError('0 input samples recognized.')
+            raise ValueError("0 input samples recognized.")
 
         # init session
         if not self.module._session_built:
             utils.count_params(self.module.global_variables, self.module.trainable_variables)
             self._init_session()
-        self.module._session_mode = 'infer'
+        self.module._session_mode = "infer"
 
         self._ptr = 0
         last_tic = time.time()
@@ -394,9 +379,9 @@ class Inference(Task):
 
             # print inference efficiency
             diff_tic = time.time() - last_tic
-            info = 'Time usage %dm-%.2fs' % (diff_tic // 60, diff_tic % 60)
-            info += ', %.2f steps/sec' % (total_steps / diff_tic)
-            info += ', %.2f examples/sec' % (total_steps / diff_tic * self.module.batch_size)
+            info = "Time usage %dm-%.2fs" % (diff_tic // 60, diff_tic % 60)
+            info += ", %.2f steps/sec" % (total_steps / diff_tic)
+            info += ", %.2f examples/sec" % (total_steps / diff_tic * self.module.batch_size)
 
             tf.logging.info(info)
 
@@ -407,24 +392,24 @@ class Scoring(Task):
         self.module = module
 
         # ignore redundant building of the work flow
-        if self.module._session_mode != 'infer':
+        if self.module._session_mode != "infer":
             self.decorate()
 
     def decorate(self):
-        self.module._set_placeholders('placeholder', is_training=False)
+        self.module._set_placeholders("placeholder", is_training=False)
 
         _, self.module._tensors = self.module._parallel_forward(False)
 
     def run(self):
         n_inputs = len(list(self.module.data.values())[0])
         if not n_inputs:
-            raise ValueError('0 input samples recognized.')
+            raise ValueError("0 input samples recognized.")
 
         # init session
         if not self.module._session_built:
             utils.count_params(self.module.global_variables, self.module.trainable_variables)
             self._init_session()
-        self.module._session_mode = 'infer'
+        self.module._session_mode = "infer"
 
         self._ptr = 0
         last_tic = time.time()
@@ -449,9 +434,9 @@ class Scoring(Task):
 
             # print inference efficiency
             diff_tic = time.time() - last_tic
-            info = 'Time usage %dm-%.2fs' % (diff_tic // 60, diff_tic % 60)
-            info += ', %.2f steps/sec' % (total_steps / diff_tic)
-            info += ', %.2f examples/sec' % (total_steps / diff_tic * self.module.batch_size)
+            info = "Time usage %dm-%.2fs" % (diff_tic // 60, diff_tic % 60)
+            info += ", %.2f steps/sec" % (total_steps / diff_tic)
+            info += ", %.2f examples/sec" % (total_steps / diff_tic * self.module.batch_size)
 
             tf.logging.info(info)
 
@@ -464,7 +449,7 @@ class Initialization(Task):
         self.decorate()
 
     def decorate(self):
-        self.module._set_placeholders('placeholder', is_training=False)
+        self.module._set_placeholders("placeholder", is_training=False)
 
         _, self.module._tensors = self.module._parallel_forward(False)
 
@@ -485,12 +470,12 @@ class Initialization(Task):
                 self._init_variables(variables, ignore_checkpoint)
             else:
                 tf.logging.info(
-                    'Global variables already initialized. '
-                    'To re-initialize all, pass `reinit_all` to True.')
-        self.module._session_mode = 'infer'
+                    "Global variables already initialized. "
+                    "To re-initialize all, pass `reinit_all` to True.")
+        self.module._session_mode = "infer"
 
     def _init_session(self, ignore_checkpoint):
-        os.environ['CUDA_VISIBLE_DEVICES'] = ','.join(self.module._gpu_ids)
+        os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(self.module._gpu_ids)
         config = tf.ConfigProto(allow_soft_placement=True)
         self.module.sess = tf.Session(graph=self.module.graph, config=config)
         self._init_variables(self.module.global_variables, ignore_checkpoint)
@@ -505,7 +490,7 @@ class Exportation(Task):
         self.decorate()
 
     def decorate(self):
-        self.module._set_placeholders('placeholder', on_export=True, is_training=False)
+        self.module._set_placeholders("placeholder", on_export=True, is_training=False)
 
         _, self.module._tensors = self.module._parallel_forward(False)
 
@@ -516,11 +501,11 @@ class Exportation(Task):
         if not self.module._session_built:
             utils.count_params(self.module.global_variables, self.module.trainable_variables)
             self._init_session()
-        self.module._session_mode = 'infer'
+        self.module._session_mode = "infer"
 
         def set_input(key, value):
             inputs[key] = tf.saved_model.utils.build_tensor_info(value)
-            tf.logging.info('Register Input: %s, %s, %s' % (
+            tf.logging.info("Register Input: %s, %s, %s" % (
                 key, value.shape.as_list(), value.dtype.name))
 
         # define inputs
@@ -528,7 +513,7 @@ class Exportation(Task):
         if not ignore_inputs:
             ignore_inputs = []
         for key, value in list(self.module.placeholders.items()):
-            if key == 'sample_weight' or key in ignore_inputs:
+            if key == "sample_weight" or key in ignore_inputs:
                 continue
             if rename_inputs and key in rename_inputs:
                 key = rename_inputs[key]
@@ -536,7 +521,7 @@ class Exportation(Task):
 
         def set_output(key, value):
             outputs[key] = tf.saved_model.utils.build_tensor_info(value)
-            tf.logging.info('Register Output: %s, %s, %s' % (
+            tf.logging.info("Register Output: %s, %s, %s" % (
                 key, value.shape.as_list(), value.dtype.name))
 
         # define outputs
@@ -554,13 +539,13 @@ class Exportation(Task):
         signature = tf.saved_model.signature_def_utils.build_signature_def(
             inputs, outputs,
             tf.saved_model.signature_constants.PREDICT_METHOD_NAME)
-        signature_def_map = {'predict': signature}
-        tf.logging.info('Register Signature: predict')
+        signature_def_map = {"predict": signature}
+        tf.logging.info("Register Signature: predict")
 
         legacy_init_op = tf.group(
-            tf.tables_initializer(), name='legacy_init_op')
+            tf.tables_initializer(), name="legacy_init_op")
         builder = tf.saved_model.builder.SavedModelBuilder(
-            os.path.join(export_dir, time.strftime('%Y%m%d.%H%M%S')))
+            os.path.join(export_dir, time.strftime("%Y%m%d.%H%M%S")))
         try:
             builder.add_meta_graph_and_variables(
                 self.module.sess, [tf.saved_model.tag_constants.SERVING],
@@ -568,7 +553,7 @@ class Exportation(Task):
                 legacy_init_op=legacy_init_op)
         except Exception:
             raise ValueError(
-                'Twice exportation is not allowed. Try `.save()` and '
-                '`.reset()` method to save and reset the graph before '
-                'next exportation.')
+                "Twice exportation is not allowed. Try `.save()` and "
+                "`.reset()` method to save and reset the graph before "
+                "next exportation.")
         builder.save()

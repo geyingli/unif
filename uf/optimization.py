@@ -1,21 +1,7 @@
-# coding:=utf-8
-# Copyright 2021 Tencent. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-''' Optimization methods.
-  Code revised from Google's implementation of BERT.
+""" Optimization methods.
+  Code revised from Google"s implementation of BERT.
   See `https://github.com/google-research/bert`.
-'''
+"""
 
 import re
 
@@ -24,14 +10,14 @@ from . import utils
 
 
 class UnifiedOptimizer:
-    ''' A unified optimizer for GD, Adam, AdamW and LAMB optimizers. '''
+    """ A unified optimizer for GD, Adam, AdamW and LAMB optimizers. """
     def __init__(self,
                  learning_rate,
                  weight_decay_rate=0.01,
                  beta_1=0.9,
                  beta_2=0.98,
                  exclude_from_weight_decay=None,
-                 optimizer='adamw',
+                 optimizer="adamw",
                  **kwargs):
         self.learning_rate = learning_rate
         self.weight_decay_rate = weight_decay_rate
@@ -41,21 +27,21 @@ class UnifiedOptimizer:
         self.optimizer = optimizer.lower()
         self.kwargs = kwargs
 
-        if self.optimizer in ('adam', 'adamw'):
-            self.prefix = 'adam'
-        elif self.optimizer == 'lamb':
-            self.prefix = 'lamb'
+        if self.optimizer in ("adam", "adamw"):
+            self.prefix = "adam"
+        elif self.optimizer == "lamb":
+            self.prefix = "lamb"
 
     def get_mv(self, param):
         param_name = utils.get_param_name(param)
         m = tf.get_variable(
-            name=param_name + '/%s_m' % self.prefix,
+            name=param_name + "/%s_m" % self.prefix,
             shape=param.shape.as_list(),
             dtype=tf.float32,
             trainable=False,
             initializer=tf.zeros_initializer())
         v = tf.get_variable(
-            name=param_name + '/%s_v' % self.prefix,
+            name=param_name + "/%s_v" % self.prefix,
             shape=param.shape.as_list(),
             dtype=tf.float32,
             trainable=False,
@@ -68,7 +54,7 @@ class UnifiedOptimizer:
             if grad is None or param is None:
                 continue
 
-            if self.optimizer == 'gd':
+            if self.optimizer == "gd":
                 update = grad
 
             else:
@@ -82,11 +68,11 @@ class UnifiedOptimizer:
                 update = next_m / (tf.sqrt(next_v) + 1e-6)
 
                 # weight decay regularization
-                if self.optimizer in ('adamw', 'lamb') and self._do_use_weight_decay(param):
+                if self.optimizer in ("adamw", "lamb") and self._do_use_weight_decay(param):
                     update += self.weight_decay_rate * param
 
                 # implemente lamb
-                if self.optimizer == 'lamb':
+                if self.optimizer == "lamb":
                     # Note: Here are two choices for scaling function \phi(z)
                     # minmax:   \phi(z) = min(max(z, \gamma_l), \gamma_u)
                     # identity: \phi(z) = z
@@ -111,7 +97,7 @@ class UnifiedOptimizer:
         return assignments
 
     def apply_gradients(self, grads_and_vars, global_step, name=None):
-        ''' Apply computed gradients to parameters. '''
+        """ Apply computed gradients to parameters. """
 
         # layer-wise learning rate decay
         if isinstance(self.learning_rate, dict):
@@ -130,7 +116,7 @@ class UnifiedOptimizer:
 
                 if not update_for_var:
                     raise ValueError(
-                        'No learning rate specified for variable', var)
+                        "No learning rate specified for variable", var)
 
             assignments = []
             for key, key_grads_and_vars in key_to_grads_and_vars.items():
@@ -155,7 +141,7 @@ class UnifiedOptimizer:
 
 def get_global_step():
     return tf.get_variable(
-        'global_step', shape=(),
+        "global_step", shape=(),
         initializer=tf.zeros_initializer,
         dtype=tf.int32,
         trainable=False)
@@ -189,12 +175,12 @@ def get_optimizer(init_lr, global_step, num_train_steps,
                          is_warmup * warmup_learning_rate)
 
     # layer-wise learning rate decay
-    layerwise_lr_decay_ratio = kwargs.get('layerwise_lr_decay_ratio')
+    layerwise_lr_decay_ratio = kwargs.get("layerwise_lr_decay_ratio")
     if layerwise_lr_decay_ratio:
-        if key_to_depths == 'unsupported':
+        if key_to_depths == "unsupported":
             tf.logging.warning(
-                'Layer-wise learning rate decay is not supported '
-                'in the current module. Ignored.')
+                "Layer-wise learning rate decay is not supported "
+                "in the current module. Ignored.")
         else:
             learning_rate = {
                 key: learning_rate * layerwise_lr_decay_ratio ** depth
@@ -203,7 +189,7 @@ def get_optimizer(init_lr, global_step, num_train_steps,
     # optimier
     optimizer = UnifiedOptimizer(
         learning_rate=learning_rate,
-        exclude_from_weight_decay=['LayerNorm', 'layer_norm', 'bias'],
+        exclude_from_weight_decay=["LayerNorm", "layer_norm", "bias"],
         **kwargs)
 
     return optimizer

@@ -1,18 +1,4 @@
-# coding:=utf-8
-# Copyright 2021 Tencent. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the 'License');
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an 'AS IS' BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-''' Applications based on UDA. '''
+""" Applications based on UDA. """
 
 import numpy as np
 
@@ -27,7 +13,7 @@ from ..modeling import util
 
 
 class UDAClassifier(BERTClassifier, ClassifierModule):
-    ''' Single-label classifier on UDA. '''
+    """ Single-label classifier on UDA. """
     _INFER_ATTRIBUTES = BERTClassifier._INFER_ATTRIBUTES
 
     def __init__(self,
@@ -41,9 +27,9 @@ class UDAClassifier(BERTClassifier, ClassifierModule):
                  drop_pooler=False,
                  uda_softmax_temp=-1,
                  uda_confidence_thresh=-1,
-                 tsa_schedule='linear',
+                 tsa_schedule="linear",
                  do_lower_case=True,
-                 truncate_method='LIFO'):
+                 truncate_method="LIFO"):
         super(ClassifierModule, self).__init__(
             init_checkpoint, output_dir, gpu_ids)
 
@@ -63,14 +49,14 @@ class UDAClassifier(BERTClassifier, ClassifierModule):
         self._key_to_depths = get_key_to_depths(
             self.bert_config.num_hidden_layers)
 
-        if '[CLS]' not in self.tokenizer.vocab:
-            self.tokenizer.add('[CLS]')
+        if "[CLS]" not in self.tokenizer.vocab:
+            self.tokenizer.add("[CLS]")
             self.bert_config.vocab_size += 1
-            tf.logging.info('Add necessary token `[CLS]` into vocabulary.')
-        if '[SEP]' not in self.tokenizer.vocab:
-            self.tokenizer.add('[SEP]')
+            tf.logging.info("Add necessary token `[CLS]` into vocabulary.")
+        if "[SEP]" not in self.tokenizer.vocab:
+            self.tokenizer.add("[SEP]")
             self.bert_config.vocab_size += 1
-            tf.logging.info('Add necessary token `[SEP]` into vocabulary.')
+            tf.logging.info("Add necessary token `[SEP]` into vocabulary.")
 
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
                 is_training=False, is_parallel=False):
@@ -82,11 +68,11 @@ class UDAClassifier(BERTClassifier, ClassifierModule):
                 X, y, sample_weight, X_tokenized, is_training)
 
         if is_training:
-            assert y is not None, '`y` can\'t be None.'
+            assert y is not None, "`y` can\"t be None."
         if is_parallel:
             assert self.label_size, (
-                'Can\'t parse data on multi-processing '
-                'when `label_size` is None.')
+                "Can\"t parse data on multi-processing "
+                "when `label_size` is None.")
 
         n_inputs = None
         data = {}
@@ -98,13 +84,13 @@ class UDAClassifier(BERTClassifier, ClassifierModule):
              aug_input_ids, aug_input_mask, aug_segment_ids,
              is_supervised) = self._convert_X_reimp(
                 X_tokenized if tokenized else X, y, tokenized=tokenized)
-            data['input_ids'] = np.array(input_ids, dtype=np.int32)
-            data['input_mask'] = np.array(input_mask, dtype=np.int32)
-            data['segment_ids'] = np.array(segment_ids, dtype=np.int32)
-            data['aug_input_ids'] = np.array(aug_input_ids, dtype=np.int32)
-            data['aug_input_mask'] = np.array(aug_input_mask, dtype=np.int32)
-            data['aug_segment_ids'] = np.array(aug_segment_ids, dtype=np.int32)
-            data['is_supervised'] = np.array(is_supervised, dtype=np.int32)
+            data["input_ids"] = np.array(input_ids, dtype=np.int32)
+            data["input_mask"] = np.array(input_mask, dtype=np.int32)
+            data["segment_ids"] = np.array(segment_ids, dtype=np.int32)
+            data["aug_input_ids"] = np.array(aug_input_ids, dtype=np.int32)
+            data["aug_input_mask"] = np.array(aug_input_mask, dtype=np.int32)
+            data["aug_segment_ids"] = np.array(aug_segment_ids, dtype=np.int32)
+            data["is_supervised"] = np.array(is_supervised, dtype=np.int32)
             n_inputs = len(input_ids)
 
             if n_inputs < self.batch_size:
@@ -113,13 +99,13 @@ class UDAClassifier(BERTClassifier, ClassifierModule):
         # convert y
         if y:
             label_ids = self._convert_y(y)
-            data['label_ids'] = np.array(label_ids, dtype=np.int32)
+            data["label_ids"] = np.array(label_ids, dtype=np.int32)
 
         # convert sample_weight
         if is_training or y:
             sample_weight = self._convert_sample_weight(
                 sample_weight, n_inputs)
-            data['sample_weight'] = np.array(sample_weight, dtype=np.float32)
+            data["sample_weight"] = np.array(sample_weight, dtype=np.float32)
 
         return data
 
@@ -147,19 +133,19 @@ class UDAClassifier(BERTClassifier, ClassifierModule):
                     is_supervised.append(1)
             except AssertionError:
                 assert False, (
-                    'Must have exactly two sentence input for an '
-                    'unsupervised example, respectively original '
-                    'and augmented.')
+                    "Must have exactly two sentence input for an "
+                    "unsupervised example, respectively original "
+                    "and augmented.")
             except Exception:
                 raise ValueError(
-                    'Wrong input format (line %d): \'%s\'. '
+                    "Wrong input format (line %d): \"%s\". "
                     % (ex_id, example))
 
         input_ids = []
         input_mask = []
         segment_ids = []
         for ex_id, segments in enumerate(sup_ori_input_tokens):
-            _input_tokens = ['[CLS]']
+            _input_tokens = ["[CLS]"]
             _input_ids = []
             _input_mask = [1]
             _segment_ids = [0]
@@ -169,7 +155,7 @@ class UDAClassifier(BERTClassifier, ClassifierModule):
                 truncate_method=self.truncate_method)
             for s_id, segment in enumerate(segments):
                 _segment_id = min(s_id, 1)
-                _input_tokens.extend(segment + ['[SEP]'])
+                _input_tokens.extend(segment + ["[SEP]"])
                 _input_mask.extend([1] * (len(segment) + 1))
                 _segment_ids.extend([_segment_id] * (len(segment) + 1))
 
@@ -189,7 +175,7 @@ class UDAClassifier(BERTClassifier, ClassifierModule):
         aug_input_mask = []
         aug_segment_ids = []
         for ex_id, segments in enumerate(aug_input_tokens):
-            _input_tokens = ['[CLS]']
+            _input_tokens = ["[CLS]"]
             _input_ids = []
             _input_mask = [1]
             _segment_ids = [0]
@@ -199,7 +185,7 @@ class UDAClassifier(BERTClassifier, ClassifierModule):
                 truncate_method=self.truncate_method)
             for s_id, segment in enumerate(segments):
                 _segment_id = min(s_id, 1)
-                _input_tokens.extend(segment + ['[SEP]'])
+                _input_tokens.extend(segment + ["[SEP]"])
                 _input_mask.extend([1] * (len(segment) + 1))
                 _segment_ids.extend([_segment_id] * (len(segment) + 1))
 
@@ -227,7 +213,7 @@ class UDAClassifier(BERTClassifier, ClassifierModule):
         # automatically set `label_size`
         if self.label_size:
             assert len(label_set) <= self.label_size, (
-                'Number of unique `y`s exceeds `label_size`.')
+                "Number of unique `y`s exceeds `label_size`.")
         else:
             self.label_size = len(label_set)
 
@@ -253,35 +239,35 @@ class UDAClassifier(BERTClassifier, ClassifierModule):
 
     def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
-            'input_ids': utils.get_placeholder(
-                target, 'input_ids',
+            "input_ids": utils.get_placeholder(
+                target, "input_ids",
                 [None, self.max_seq_length], tf.int32),
-            'input_mask': utils.get_placeholder(
-                target, 'input_mask',
+            "input_mask": utils.get_placeholder(
+                target, "input_mask",
                 [None, self.max_seq_length], tf.int32),
-            'segment_ids': utils.get_placeholder(
-                target, 'segment_ids',
+            "segment_ids": utils.get_placeholder(
+                target, "segment_ids",
                 [None, self.max_seq_length], tf.int32),
-            'label_ids': utils.get_placeholder(
-                target, 'label_ids', [None], tf.int32),
+            "label_ids": utils.get_placeholder(
+                target, "label_ids", [None], tf.int32),
         }
-        if kwargs.get('is_training'):
-            self.placeholders['aug_input_ids'] = utils.get_placeholder(
-                target, 'aug_input_ids',
+        if kwargs.get("is_training"):
+            self.placeholders["aug_input_ids"] = utils.get_placeholder(
+                target, "aug_input_ids",
                 [None, self.max_seq_length], tf.int32)
-            self.placeholders['aug_input_mask'] = utils.get_placeholder(
-                target, 'aug_input_mask',
+            self.placeholders["aug_input_mask"] = utils.get_placeholder(
+                target, "aug_input_mask",
                 [None, self.max_seq_length], tf.int32)
-            self.placeholders['aug_segment_ids'] = utils.get_placeholder(
-                target, 'aug_segment_ids',
+            self.placeholders["aug_segment_ids"] = utils.get_placeholder(
+                target, "aug_segment_ids",
                 [None, self.max_seq_length], tf.int32)
-            self.placeholders['is_supervised'] = utils.get_placeholder(
-                target, 'is_supervised',
+            self.placeholders["is_supervised"] = utils.get_placeholder(
+                target, "is_supervised",
                 [None], tf.float32)
         if not on_export:
-            self.placeholders['sample_weight'] = \
+            self.placeholders["sample_weight"] = \
                 utils.get_placeholder(
-                    target, 'sample_weight',
+                    target, "sample_weight",
                     [None], tf.float32)
 
     def _forward(self, is_training, split_placeholders, **kwargs):
@@ -290,25 +276,25 @@ class UDAClassifier(BERTClassifier, ClassifierModule):
             return super()._forward(is_training, split_placeholders, **kwargs)
 
         aug_input_ids = tf.boolean_mask(
-            split_placeholders['aug_input_ids'],
-            mask=(1.0 - split_placeholders['is_supervised']),
+            split_placeholders["aug_input_ids"],
+            mask=(1.0 - split_placeholders["is_supervised"]),
             axis=0)
         aug_input_mask = tf.boolean_mask(
-            split_placeholders['aug_input_mask'],
-            mask=(1.0 - split_placeholders['is_supervised']),
+            split_placeholders["aug_input_mask"],
+            mask=(1.0 - split_placeholders["is_supervised"]),
             axis=0)
         aug_segment_ids = tf.boolean_mask(
-            split_placeholders['aug_segment_ids'],
-            mask=(1.0 - split_placeholders['is_supervised']),
+            split_placeholders["aug_segment_ids"],
+            mask=(1.0 - split_placeholders["is_supervised"]),
             axis=0)
         input_ids = tf.concat(
-            [split_placeholders['input_ids'],
+            [split_placeholders["input_ids"],
              aug_input_ids], axis=0)
         input_mask = tf.concat(
-            [split_placeholders['input_mask'],
+            [split_placeholders["input_mask"],
              aug_input_mask], axis=0)
         segment_ids = tf.concat(
-            [split_placeholders['segment_ids'],
+            [split_placeholders["segment_ids"],
              aug_segment_ids], axis=0)
         encoder = BERTEncoder(
             bert_config=self.bert_config,
@@ -316,12 +302,12 @@ class UDAClassifier(BERTClassifier, ClassifierModule):
             input_ids=input_ids,
             input_mask=input_mask,
             segment_ids=segment_ids,
-            scope='bert',
+            scope="bert",
             drop_pooler=self._drop_pooler,
             **kwargs)
         encoder_output = encoder.get_pooled_output()
 
-        label_ids = split_placeholders['label_ids']
+        label_ids = split_placeholders["label_ids"]
         is_expanded = tf.zeros_like(label_ids, dtype=tf.float32)
         batch_size = util.get_shape_list(aug_input_ids)[0]
         aug_is_expanded = tf.ones((batch_size), dtype=tf.float32)
@@ -329,12 +315,12 @@ class UDAClassifier(BERTClassifier, ClassifierModule):
         decoder = UDADecoder(
             is_training=is_training,
             input_tensor=encoder_output,
-            is_supervised=split_placeholders['is_supervised'],
+            is_supervised=split_placeholders["is_supervised"],
             is_expanded=is_expanded,
             label_ids=label_ids,
             label_size=self.label_size,
-            sample_weight=split_placeholders.get('sample_weight'),
-            scope='cls/seq_relationship',
+            sample_weight=split_placeholders.get("sample_weight"),
+            scope="cls/seq_relationship",
             global_step=self._global_step,
             num_train_steps=self.total_steps,
             uda_softmax_temp=self._uda_softmax_temp,
@@ -344,12 +330,12 @@ class UDAClassifier(BERTClassifier, ClassifierModule):
         return decoder.get_forward_outputs()
 
     def _get_fit_ops(self, as_feature=False):
-        ops = [self._tensors['preds'],
-               self._tensors['supervised'],
-               self._tensors['unsupervised']]
+        ops = [self._tensors["preds"],
+               self._tensors["supervised"],
+               self._tensors["unsupervised"]]
         if as_feature:
-            ops.extend([self.placeholders['is_supervised'],
-                        self.placeholders['label_ids']])
+            ops.extend([self.placeholders["is_supervised"],
+                        self.placeholders["label_ids"]])
         return ops
 
     def _get_fit_info(self, output_arrays, feed_dict, as_feature=False):
@@ -358,8 +344,8 @@ class UDAClassifier(BERTClassifier, ClassifierModule):
             batch_is_sup = output_arrays[-2]
             batch_labels = output_arrays[-1]
         else:
-            batch_is_sup = feed_dict[self.placeholders['is_supervised']]
-            batch_labels = feed_dict[self.placeholders['label_ids']]
+            batch_is_sup = feed_dict[self.placeholders["is_supervised"]]
+            batch_labels = feed_dict[self.placeholders["label_ids"]]
 
         # accuracy
         batch_preds = output_arrays[0]
@@ -374,9 +360,9 @@ class UDAClassifier(BERTClassifier, ClassifierModule):
         batch_unsup_losses = output_arrays[2]
         unsup_loss = np.mean(batch_unsup_losses)
 
-        info = ''
-        info += ', accuracy %.4f' % accuracy
-        info += ', supervised loss %.6f' % sup_loss
-        info += ', unsupervised loss %.6f' % unsup_loss
+        info = ""
+        info += ", accuracy %.4f" % accuracy
+        info += ", supervised loss %.6f" % sup_loss
+        info += ", unsupervised loss %.6f" % unsup_loss
 
         return info

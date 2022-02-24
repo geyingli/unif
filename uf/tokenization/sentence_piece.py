@@ -1,21 +1,7 @@
-# coding:=utf-8
-# Copyright 2021 Tencent. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-''' SentencePiece tokenizer class.
-  Code revised from XLNet team's implementation of XLNet.
+""" SentencePiece tokenizer class.
+  Code revised from XLNet team"s implementation of XLNet.
   See `https://github.com/zihangdai/xlnet`.
-'''
+"""
 
 import os
 import unicodedata
@@ -26,9 +12,9 @@ from sentencepiece import SentencePieceProcessor
 def get_sentence_piece_tokenizer(spm_file, do_lower_case=True):
     if not os.path.exists(spm_file):
         raise ValueError(
-            'Can\'t find spm_file \'%s\'. '
-            'Please pass the correct path of sentence-piece model file, '
-            'e.g.`spiece.model`.' % spm_file)
+            "Can\"t find spm_file \"%s\". "
+            "Please pass the correct path of sentence-piece model file, "
+            "e.g.`spiece.model`." % spm_file)
     return SentencePieceTokenizer(spm_file, do_lower_case=do_lower_case)
 
 
@@ -54,14 +40,14 @@ class SentencePieceTokenizer:
 def preprocess_text(inputs, lower=False, remove_space=True,
                     keep_accents=False):
     if remove_space:
-        outputs = ' '.join(inputs.strip().split())
+        outputs = " ".join(inputs.strip().split())
     else:
         outputs = inputs
-    outputs = outputs.replace('``', '"').replace("''", '"')
+    outputs = outputs.replace("``", """).replace("""", """)
 
     if not keep_accents:
-        outputs = unicodedata.normalize('NFKD', outputs)
-        outputs = ''.join([c for c in outputs if not unicodedata.combining(c)])
+        outputs = unicodedata.normalize("NFKD", outputs)
+        outputs = "".join([c for c in outputs if not unicodedata.combining(c)])
     if lower:
         outputs = outputs.lower()
 
@@ -76,9 +62,9 @@ def encode_pieces(sp_model, text, sample=False):
         pieces = sp_model.SampleEncodeAsPieces(text, 64, 0.1)
     new_pieces = []
     for piece in pieces:
-        if len(piece) > 1 and piece[-1] == ',' and piece[-2].isdigit():
-            cur_pieces = sp_model.EncodeAsPieces(piece[:-1].replace('▁', ''))
-            if piece[0] != '▁' and cur_pieces[0][0] == '▁':
+        if len(piece) > 1 and piece[-1] == "," and piece[-2].isdigit():
+            cur_pieces = sp_model.EncodeAsPieces(piece[:-1].replace("▁", ""))
+            if piece[0] != "▁" and cur_pieces[0][0] == "▁":
                 if len(cur_pieces[0]) == 1:
                     cur_pieces = cur_pieces[1:]
                 else:

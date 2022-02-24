@@ -1,18 +1,4 @@
-# coding:=utf-8
-# Copyright 2021 Tencent. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the 'License');
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an 'AS IS' BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-''' Applications based on GPT-2. '''
+""" Applications based on GPT-2. """
 
 import numpy as np
 
@@ -24,14 +10,14 @@ from .. import utils
 
 
 class GPT2LM(LMModule):
-    ''' Language modeling on GPT-2. '''
+    """ Language modeling on GPT-2. """
     _INFER_ATTRIBUTES = {
-        'max_seq_length': (
-            'An integer that defines max sequence length of input tokens, '
-            'which typically equals `len(tokenize(segments)) + 1'),
-        'init_checkpoint': (
-            'A string that directs to the checkpoint file used for '
-            'initialization')}
+        "max_seq_length": (
+            "An integer that defines max sequence length of input tokens, "
+            "which typically equals `len(tokenize(segments)) + 1"),
+        "init_checkpoint": (
+            "A string that directs to the checkpoint file used for "
+            "initialization")}
 
     def __init__(self,
                  vocab_file,
@@ -44,7 +30,7 @@ class GPT2LM(LMModule):
                  num_attention_heads=12,
                  max_position_embeddings=1024,
                  do_lower_case=True,
-                 truncate_method='LIFO'):
+                 truncate_method="LIFO"):
         super(LMModule, self).__init__(
             init_checkpoint, output_dir, gpu_ids)
 
@@ -64,15 +50,15 @@ class GPT2LM(LMModule):
             n_layer=num_hidden_layers)
         self._key_to_depths = get_key_to_depths(num_hidden_layers)
 
-        if '<eos>' not in self.tokenizer.vocab:
-            self.tokenizer.add('<eos>')
+        if "<eos>" not in self.tokenizer.vocab:
+            self.tokenizer.add("<eos>")
             self.gpt2_config.n_vocab += 1
-            tf.logging.info('Add necessary token `<eos>` into vocabulary.')
-        self._eos_id = self.tokenizer.convert_tokens_to_ids(['<eos>'])[0]
+            tf.logging.info("Add necessary token `<eos>` into vocabulary.")
+        self._eos_id = self.tokenizer.convert_tokens_to_ids(["<eos>"])[0]
 
     def predict(self, X=None, X_tokenized=None,
                 batch_size=8, given=1):
-        ''' Inference on the model.
+        """ Inference on the model.
 
         Args:
             X: list. A list object consisting untokenized inputs.
@@ -82,7 +68,7 @@ class GPT2LM(LMModule):
             given: int. The number of already known tokens.
         Returns:
             A dict object of model outputs.
-        '''
+        """
 
         if given != self._given:
             self._given = given
@@ -93,7 +79,7 @@ class GPT2LM(LMModule):
 
     def export(self, export_dir, given=1,
                rename_inputs=None, rename_outputs=None, ignore_outputs=None):
-        ''' Export model into SavedModel files.
+        """ Export model into SavedModel files.
 
         Args:
             export_dir: str. Directory to which the model is saved.
@@ -103,7 +89,7 @@ class GPT2LM(LMModule):
             ignore_outputs: list. Name of outputs to ignore.
         Returns:
             None
-        '''
+        """
 
         if given != self._given:
             self._given = given
@@ -117,7 +103,7 @@ class GPT2LM(LMModule):
         self._assert_legal(X, y, sample_weight, X_tokenized)
 
         assert y is None, (
-            'Training of %s is unsupervised. `y` should be None.'
+            "Training of %s is unsupervised. `y` should be None."
             % self.__class__.__name__)
 
         n_inputs = None
@@ -128,7 +114,7 @@ class GPT2LM(LMModule):
             tokenized = False if X else X_tokenized
             input_ids = self._convert_X(
                 X_tokenized if tokenized else X, tokenized=tokenized)
-            data['input_ids'] = np.array(input_ids, dtype=np.int32)
+            data["input_ids"] = np.array(input_ids, dtype=np.int32)
             n_inputs = len(input_ids)
 
             if n_inputs < self.batch_size:
@@ -138,7 +124,7 @@ class GPT2LM(LMModule):
         if is_training or y:
             sample_weight = self._convert_sample_weight(
                 sample_weight, n_inputs)
-            data['sample_weight'] = np.array(sample_weight, dtype=np.float32)
+            data["sample_weight"] = np.array(sample_weight, dtype=np.float32)
 
         return data
 
@@ -150,7 +136,7 @@ class GPT2LM(LMModule):
                 _input_tokens = self._convert_x(example, tokenized)
             except Exception:
                 raise ValueError(
-                    'Wrong input format (line %d): \'%s\'. '
+                    "Wrong input format (line %d): \"%s\". "
                     % (ex_id, example))
                 continue
             _input_ids = self.tokenizer.convert_tokens_to_ids(_input_tokens)
@@ -179,18 +165,18 @@ class GPT2LM(LMModule):
 
         # deal with tokenized and multiple inputs
         raise ValueError(
-            'GPT2 only supports single sentence inputs.')
+            "GPT2 only supports single sentence inputs.")
 
     def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
-            'input_ids': utils.get_placeholder(
-                target, 'input_ids',
+            "input_ids": utils.get_placeholder(
+                target, "input_ids",
                 [None, self.max_seq_length], tf.int32),
         }
         if not on_export:
-            self.placeholders['sample_weight'] = \
+            self.placeholders["sample_weight"] = \
                 utils.get_placeholder(
-                    target, 'sample_weight',
+                    target, "sample_weight",
                     [None], tf.float32)
 
     def _forward(self, is_training, split_placeholders, **kwargs):
@@ -199,17 +185,17 @@ class GPT2LM(LMModule):
             hparams=self.gpt2_config,
             vocab_size=len(self.tokenizer.vocab),
             is_training=is_training,
-            input_ids=split_placeholders['input_ids'],
-            sample_weight=split_placeholders.get('sample_weight'),
-            scope='model',
+            input_ids=split_placeholders["input_ids"],
+            sample_weight=split_placeholders.get("sample_weight"),
+            scope="model",
             given=self._given,
             **kwargs)
         return model.get_forward_outputs()
 
     def _get_fit_ops(self, as_feature=False):
-        ops = [self._tensors['preds'], self._tensors['losses']]
+        ops = [self._tensors["preds"], self._tensors["losses"]]
         if as_feature:
-            ops.extend([self.placeholders['input_ids']])
+            ops.extend([self.placeholders["input_ids"]])
         return ops
 
     def _get_fit_info(self, output_arrays, feed_dict, as_feature=False):
@@ -217,7 +203,7 @@ class GPT2LM(LMModule):
         if as_feature:
             batch_target = output_arrays[-1]
         else:
-            batch_target = feed_dict[self.placeholders['input_ids']]
+            batch_target = feed_dict[self.placeholders["input_ids"]]
 
         # accuracy
         batch_preds = output_arrays[0]
@@ -231,14 +217,14 @@ class GPT2LM(LMModule):
         batch_losses = output_arrays[1]
         loss = np.mean(batch_losses)
 
-        info = ''
-        info += ', accuracy %.4f' % accuracy
-        info += ', loss %.6f' % loss
+        info = ""
+        info += ", accuracy %.4f" % accuracy
+        info += ", loss %.6f" % loss
 
         return info
 
     def _get_predict_ops(self):
-        return [self._tensors['preds']]
+        return [self._tensors["preds"]]
 
     def _get_predict_outputs(self, batch_outputs):
         n_inputs = len(list(self.data.values())[0])
@@ -250,14 +236,14 @@ class GPT2LM(LMModule):
         for _pred_ids in all_preds:
             _pred_tokens = self.tokenizer.convert_ids_to_tokens(_pred_ids)
             for i in range(self.max_seq_length):
-                if _pred_tokens[i] == '<eos>':
+                if _pred_tokens[i] == "<eos>":
                     _pred_tokens = _pred_tokens[:i]
                     break
             _pred_text = utils.convert_tokens_to_text(_pred_tokens)
             preds.append(_pred_text)
 
         outputs = {}
-        outputs['preds'] = preds
+        outputs["preds"] = preds
 
         return outputs
 
@@ -274,10 +260,10 @@ def get_gpt2_config(**kwargs):
 
 def get_key_to_depths(num_hidden_layers):
     key_to_depths = {
-        '/word_embeddings': num_hidden_layers + 2,
-        '/wpe': num_hidden_layers + 2,
-        'ln_f/': 0}
+        "/word_embeddings": num_hidden_layers + 2,
+        "/wpe": num_hidden_layers + 2,
+        "ln_f/": 0}
     for layer_idx in range(num_hidden_layers):
-        key_to_depths['/h%d/' % layer_idx] = \
+        key_to_depths["/h%d/" % layer_idx] = \
             num_hidden_layers - layer_idx + 1
     return key_to_depths

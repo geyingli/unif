@@ -1,21 +1,7 @@
-# coding:=utf-8
-# Copyright 2021 Tencent. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-''' Bidirectional Encoder Representations from Transformers (BERT).
-  Code revised from Google's implementation.
+""" Bidirectional Encoder Representations from Transformers (BERT).
+  Code revised from Google"s implementation.
   See `https://github.com/google-research/bert`.
-'''
+"""
 
 import math
 import copy
@@ -33,7 +19,7 @@ class BERTEncoder(BaseEncoder):
                  input_ids,
                  input_mask,
                  segment_ids,
-                 scope='bert',
+                 scope="bert",
                  drop_pooler=False,
                  trainable=True,
                  use_tilda_embedding=False,
@@ -42,8 +28,8 @@ class BERTEncoder(BaseEncoder):
         # Tilda embeddings for SMART algorithm
         tilda_embeddings = None
         if use_tilda_embedding:
-            with tf.variable_scope('', reuse=True):
-                tilda_embeddings = tf.get_variable('tilda_embeddings')
+            with tf.variable_scope("", reuse=True):
+                tilda_embeddings = tf.get_variable("tilda_embeddings")
 
         bert_config = copy.deepcopy(bert_config)
         if not is_training:
@@ -55,7 +41,7 @@ class BERTEncoder(BaseEncoder):
         max_seq_length = input_shape[1]
 
         with tf.variable_scope(scope):
-            with tf.variable_scope('embeddings'):
+            with tf.variable_scope("embeddings"):
 
                 (self.embedding_output, self.embedding_table) = \
                     self.embedding_lookup(
@@ -65,7 +51,7 @@ class BERTEncoder(BaseEncoder):
                         max_seq_length=max_seq_length,
                         embedding_size=bert_config.hidden_size,
                         initializer_range=bert_config.initializer_range,
-                        word_embedding_name='word_embeddings',
+                        word_embedding_name="word_embeddings",
                         tilda_embeddings=tilda_embeddings,
                         trainable=trainable)
 
@@ -79,16 +65,16 @@ class BERTEncoder(BaseEncoder):
                     use_token_type=True,
                     segment_ids=segment_ids,
                     token_type_vocab_size=bert_config.type_vocab_size,
-                    token_type_embedding_name='token_type_embeddings',
+                    token_type_embedding_name="token_type_embeddings",
                     use_position_embeddings=True,
-                    position_embedding_name='position_embeddings',
+                    position_embedding_name="position_embeddings",
                     initializer_range=bert_config.initializer_range,
                     max_position_embeddings=\
                         bert_config.max_position_embeddings,
                     dropout_prob=bert_config.hidden_dropout_prob,
                     trainable=trainable)
 
-            with tf.variable_scope('encoder'):
+            with tf.variable_scope("encoder"):
                 attention_mask = self.create_attention_mask_from_input_mask(
                     input_mask, batch_size, max_seq_length)
 
@@ -111,7 +97,7 @@ class BERTEncoder(BaseEncoder):
                     trainable=trainable)
 
             self.sequence_output = self.all_encoder_layers[-1]
-            with tf.variable_scope('pooler'):
+            with tf.variable_scope("pooler"):
                 first_token_tensor = self.sequence_output[:, 0, :]
 
                 # trick: ignore the fully connected layer
@@ -127,12 +113,12 @@ class BERTEncoder(BaseEncoder):
                         trainable=trainable)
 
     def get_pooled_output(self):
-        ''' Returns a tensor with shape [batch_size, hidden_size]. '''
+        """ Returns a tensor with shape [batch_size, hidden_size]. """
         return self.pooled_output
 
     def get_sequence_output(self):
-        ''' Returns a tensor with shape
-        [batch_size, max_seq_length, hidden_size]. '''
+        """ Returns a tensor with shape
+        [batch_size, max_seq_length, hidden_size]. """
         return self.sequence_output
 
     def get_embedding_table(self):
@@ -151,7 +137,7 @@ class BERTEncoder(BaseEncoder):
                          max_seq_length,
                          embedding_size=128,
                          initializer_range=0.02,
-                         word_embedding_name='word_embeddings',
+                         word_embedding_name="word_embeddings",
                          dtype=tf.float32,
                          trainable=True,
                          tilda_embeddings=None):
@@ -170,7 +156,7 @@ class BERTEncoder(BaseEncoder):
 
         flat_input_ids = tf.reshape(input_ids, [-1])
         output = tf.gather(
-            embedding_table, flat_input_ids, name='embedding_look_up')
+            embedding_table, flat_input_ids, name="embedding_look_up")
         output = tf.reshape(
             output, [batch_size, max_seq_length, embedding_size])
 
@@ -185,9 +171,9 @@ class BERTEncoder(BaseEncoder):
                                 segment_ids=None,
                                 token_type_vocab_size=16,
                                 token_type_embedding_name=\
-                                    'token_type_embeddings',
+                                    "token_type_embeddings",
                                 use_position_embeddings=True,
-                                position_embedding_name='position_embeddings',
+                                position_embedding_name="position_embeddings",
                                 initializer_range=0.02,
                                 max_position_embeddings=512,
                                 dropout_prob=0.1,
@@ -198,7 +184,7 @@ class BERTEncoder(BaseEncoder):
         if use_token_type:
             if segment_ids is None:
                 raise ValueError(
-                    'segment_ids must be specified if use_token_type is True.')
+                    "segment_ids must be specified if use_token_type is True.")
             token_type_table = tf.get_variable(
                 name=token_type_embedding_name,
                 shape=[token_type_vocab_size, hidden_size],
@@ -297,7 +283,7 @@ class BERTEncoder(BaseEncoder):
             from_tensor_2d,
             num_attention_heads * size_per_head,
             activation=query_act,
-            name='query',
+            name="query",
             kernel_initializer=util.create_initializer(initializer_range),
             trainable=trainable)
 
@@ -306,7 +292,7 @@ class BERTEncoder(BaseEncoder):
             to_tensor_2d,
             num_attention_heads * size_per_head,
             activation=key_act,
-            name='key',
+            name="key",
             kernel_initializer=util.create_initializer(initializer_range),
             trainable=trainable)
 
@@ -315,7 +301,7 @@ class BERTEncoder(BaseEncoder):
             to_tensor_2d,
             num_attention_heads * size_per_head,
             activation=value_act,
-            name='value',
+            name="value",
             kernel_initializer=util.create_initializer(initializer_range),
             trainable=trainable)
 
@@ -329,7 +315,7 @@ class BERTEncoder(BaseEncoder):
             key_layer, batch_size, num_attention_heads,
             to_max_seq_length, size_per_head)
 
-        # Take the dot product between 'query' and 'key' to get the raw
+        # Take the dot product between "query" and "key" to get the raw
         # attention scores.
         # attention_scores = [B, N, F, T]
         attention_scores = tf.matmul(query_layer, key_layer, transpose_b=True)
@@ -397,8 +383,8 @@ class BERTEncoder(BaseEncoder):
                           trainable=True):
         if hidden_size % num_attention_heads != 0:
             raise ValueError(
-                'The hidden size (%d) is not a multiple of the number '
-                'of attention heads (%d)'
+                "The hidden size (%d) is not a multiple of the number "
+                "of attention heads (%d)"
                 % (hidden_size, num_attention_heads))
 
         attention_head_size = int(hidden_size / num_attention_heads)
@@ -407,13 +393,13 @@ class BERTEncoder(BaseEncoder):
         self.attention_scores = []
         all_layer_outputs = []
         for layer_idx in range(num_hidden_layers):
-            with tf.variable_scope('layer_%d' % layer_idx):
+            with tf.variable_scope("layer_%d" % layer_idx):
                 layer_input = prev_output
 
                 def _build_forward(layer_input):
-                    with tf.variable_scope('attention'):
+                    with tf.variable_scope("attention"):
                         attention_heads = []
-                        with tf.variable_scope('self'):
+                        with tf.variable_scope("self"):
                             (attention_head, attention_scores) = \
                                 self.attention_layer(
                                     from_tensor=layer_input,
@@ -440,7 +426,7 @@ class BERTEncoder(BaseEncoder):
                             attention_output = tf.concat(
                                 attention_heads, axis=-1)
 
-                        with tf.variable_scope('output'):
+                        with tf.variable_scope("output"):
                             attention_output = tf.layers.dense(
                                 attention_output,
                                 hidden_size,
@@ -455,7 +441,7 @@ class BERTEncoder(BaseEncoder):
 
                     # The activation is only applied to the `intermediate`
                     # hidden layer.
-                    with tf.variable_scope('intermediate'):
+                    with tf.variable_scope("intermediate"):
                         intermediate_output = tf.layers.dense(
                             attention_output,
                             intermediate_size,
@@ -465,7 +451,7 @@ class BERTEncoder(BaseEncoder):
                             trainable=trainable)
 
                     # Down-project back to hidden_size then add the residual.
-                    with tf.variable_scope('output'):
+                    with tf.variable_scope("output"):
                         layer_output = tf.layers.dense(
                             intermediate_output,
                             hidden_size,
@@ -506,8 +492,8 @@ class BERTDecoder(BaseDecoder):
                  masked_lm_weights,
                  next_sentence_labels=None,
                  sample_weight=None,
-                 scope_lm='cls/predictions',
-                 scope_cls='cls/seq_relationship',
+                 scope_lm="cls/predictions",
+                 scope_cls="cls/seq_relationship",
                  trainable=True,
                  use_nsp_loss=True,
                  **kwargs):
@@ -532,7 +518,7 @@ class BERTDecoder(BaseDecoder):
         # masked language modeling
         input_tensor = gather_indexes(encoder.get_sequence_output(), masked_lm_positions)
         with tf.variable_scope(scope_lm):
-            with tf.variable_scope('transform'):
+            with tf.variable_scope("transform"):
                 input_tensor = tf.layers.dense(
                     input_tensor,
                     units=bert_config.hidden_size,
@@ -541,14 +527,14 @@ class BERTDecoder(BaseDecoder):
                         bert_config.initializer_range))
                 input_tensor = util.layer_norm(input_tensor)
             output_bias = tf.get_variable(
-                'output_bias', shape=[bert_config.vocab_size],
+                "output_bias", shape=[bert_config.vocab_size],
                 initializer=tf.zeros_initializer(),
                 trainable=trainable)
 
             logits = tf.matmul(
                 input_tensor, encoder.get_embedding_table(), transpose_b=True)
             logits = tf.nn.bias_add(logits, output_bias)
-            probs = tf.nn.softmax(logits, axis=-1, name='MLM_probs')
+            probs = tf.nn.softmax(logits, axis=-1, name="MLM_probs")
             probs = tf.reshape(
                 probs, [-1, masked_lm_positions.shape[-1], bert_config.vocab_size])
             log_probs = tf.nn.log_softmax(logits, axis=-1)
@@ -570,27 +556,27 @@ class BERTDecoder(BaseDecoder):
             loss = numerator / denominator
 
             scalar_losses.append(loss)
-            self._tensors['MLM_losses'] = per_example_loss
-            self._tensors['MLM_preds'] = tf.argmax(probs, axis=-1)
+            self._tensors["MLM_losses"] = per_example_loss
+            self._tensors["MLM_preds"] = tf.argmax(probs, axis=-1)
 
         # next sentence prediction
         if next_sentence_labels is not None:
             with tf.variable_scope(scope_cls):
                 output_weights = tf.get_variable(
-                    'output_weights',
+                    "output_weights",
                     shape=[2, bert_config.hidden_size],
                     initializer=util.create_initializer(
                         bert_config.initializer_range),
                     trainable=trainable)
                 output_bias = tf.get_variable(
-                    'output_bias', shape=[2],
+                    "output_bias", shape=[2],
                     initializer=tf.zeros_initializer(),
                     trainable=trainable)
 
                 logits = tf.matmul(encoder.get_pooled_output(),
                                    output_weights, transpose_b=True)
                 logits = tf.nn.bias_add(logits, output_bias)
-                probs = tf.nn.softmax(logits, axis=-1, name='probs')
+                probs = tf.nn.softmax(logits, axis=-1, name="probs")
                 log_probs = tf.nn.log_softmax(logits, axis=-1)
 
                 labels = tf.reshape(next_sentence_labels, [-1])
@@ -605,9 +591,9 @@ class BERTDecoder(BaseDecoder):
 
                 if use_nsp_loss:
                     scalar_losses.append(loss)
-                self._tensors['NSP_losses'] = per_example_loss
-                self._tensors['NSP_probs'] = probs
-                self._tensors['NSP_preds'] = tf.argmax(probs, axis=-1)
+                self._tensors["NSP_losses"] = per_example_loss
+                self._tensors["NSP_probs"] = probs
+                self._tensors["NSP_preds"] = tf.argmax(probs, axis=-1)
 
         self.total_loss = tf.add_n(scalar_losses)
 
@@ -619,7 +605,7 @@ class BERTConfig:
                  num_hidden_layers=12,
                  num_attention_heads=12,
                  intermediate_size=3072,
-                 hidden_act='gelu',
+                 hidden_act="gelu",
                  hidden_dropout_prob=0.1,
                  attention_probs_dropout_prob=0.1,
                  max_position_embeddings=512,
@@ -646,11 +632,11 @@ class BERTConfig:
 
     @classmethod
     def from_json_file(cls, json_file):
-        ''' Load from json file. '''
+        """ Load from json file. """
         with open(json_file) as json_fp:
             return cls.from_dict(json.load(json_fp))
 
     def to_json_file(self, json_file):
-        ''' Write into json file. '''
-        with open(json_file, 'w') as json_fp:
+        """ Write into json file. """
+        with open(json_file, "w") as json_fp:
             return json.dump(self.__dict__, json_fp, indent=2)

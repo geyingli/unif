@@ -1,18 +1,4 @@
-# coding:=utf-8
-# Copyright 2021 Tencent. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-''' Applications based on FastBERT. '''
+""" Applications based on FastBERT. """
 
 import numpy as np
 
@@ -25,7 +11,7 @@ from .. import utils
 
 
 class FastBERTClassifier(BERTClassifier, ClassifierModule):
-    ''' Single-label classifier on FastBERT, a distillation model. '''
+    """ Single-label classifier on FastBERT, a distillation model. """
     _INFER_ATTRIBUTES = BERTClassifier._INFER_ATTRIBUTES
 
     def __init__(self,
@@ -37,9 +23,9 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
                  output_dir=None,
                  gpu_ids=None,
                  drop_pooler=False,
-                 cls_model='self-attention',
+                 cls_model="self-attention",
                  do_lower_case=True,
-                 truncate_method='LIFO'):
+                 truncate_method="LIFO"):
         super(ClassifierModule, self).__init__(
             init_checkpoint, output_dir, gpu_ids)
 
@@ -56,21 +42,21 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
 
         self.bert_config = get_bert_config(config_file)
         self.tokenizer = get_word_piece_tokenizer(vocab_file, do_lower_case)
-        self._key_to_depths = 'unsupported'
+        self._key_to_depths = "unsupported"
 
-        assert label_size, ('`label_size` can\'t be None.')
-        if '[CLS]' not in self.tokenizer.vocab:
-            self.tokenizer.add('[CLS]')
+        assert label_size, ("`label_size` can\"t be None.")
+        if "[CLS]" not in self.tokenizer.vocab:
+            self.tokenizer.add("[CLS]")
             self.bert_config.vocab_size += 1
-            tf.logging.info('Add necessary token `[CLS]` into vocabulary.')
-        if '[SEP]' not in self.tokenizer.vocab:
-            self.tokenizer.add('[SEP]')
+            tf.logging.info("Add necessary token `[CLS]` into vocabulary.")
+        if "[SEP]" not in self.tokenizer.vocab:
+            self.tokenizer.add("[SEP]")
             self.bert_config.vocab_size += 1
-            tf.logging.info('Add necessary token `[SEP]` into vocabulary.')
+            tf.logging.info("Add necessary token `[SEP]` into vocabulary.")
 
     def predict(self, X=None, X_tokenized=None,
-                batch_size=8, speed=0.1, ignore_cls='0'):
-        ''' Inference on the model.
+                batch_size=8, speed=0.1, ignore_cls="0"):
+        """ Inference on the model.
 
         Args:
             X: list. A list object consisting untokenized inputs.
@@ -84,7 +70,7 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
               faster inference is.
         Returns:
             A dict object of model outputs.
-        '''
+        """
         ignore_cls = convert_ignore_cls(ignore_cls)
 
         if ignore_cls != self._ignore_cls:
@@ -99,8 +85,8 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
             X, X_tokenized, batch_size)
 
     def score(self, X=None, y=None, sample_weight=None, X_tokenized=None,
-              batch_size=8, speed=0.1, ignore_cls='0'):
-        ''' Inference on the model with scoring.
+              batch_size=8, speed=0.1, ignore_cls="0"):
+        """ Inference on the model with scoring.
 
         Args:
             X: list. A list object consisting untokenized inputs.
@@ -116,7 +102,7 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
               faster inference is.
         Returns:
             A dict object of output metrics.
-        '''
+        """
         ignore_cls = convert_ignore_cls(ignore_cls)
 
         if ignore_cls != self._ignore_cls:
@@ -130,9 +116,9 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
         return super(ClassifierModule, self).score(
             X, y, sample_weight, X_tokenized, batch_size)
 
-    def export(self, export_dir, speed=0.1, ignore_cls='0',
+    def export(self, export_dir, speed=0.1, ignore_cls="0",
                rename_inputs=None, rename_outputs=None, ignore_outputs=None):
-        ''' Export model into SavedModel files.
+        """ Export model into SavedModel files.
 
         Args:
             export_dir: str. Directory to which the model is saved.
@@ -146,7 +132,7 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
             ignore_outputs: list. Name of outputs to ignore.
         Returns:
             None
-        '''
+        """
         ignore_cls = convert_ignore_cls(ignore_cls)
 
         if ignore_cls != self._ignore_cls:
@@ -166,7 +152,7 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
 
         if is_training:
             assert y is None, (
-                'Training of %s is unsupervised. `y` should be None.'
+                "Training of %s is unsupervised. `y` should be None."
                 % self.__class__.__name__)
 
         n_inputs = None
@@ -177,9 +163,9 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
             tokenized = False if X else X_tokenized
             input_ids, input_mask, segment_ids = self._convert_X(
                 X_tokenized if tokenized else X, tokenized=tokenized)
-            data['input_ids'] = np.array(input_ids, dtype=np.int32)
-            data['input_mask'] = np.array(input_mask, dtype=np.int32)
-            data['segment_ids'] = np.array(segment_ids, dtype=np.int32)
+            data["input_ids"] = np.array(input_ids, dtype=np.int32)
+            data["input_mask"] = np.array(input_mask, dtype=np.int32)
+            data["segment_ids"] = np.array(segment_ids, dtype=np.int32)
             n_inputs = len(input_ids)
 
             if n_inputs < self.batch_size:
@@ -188,13 +174,13 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
         if y:
             # convert y and sample_weight
             label_ids = self._convert_y(y)
-            data['label_ids'] = np.array(label_ids, dtype=np.int32)
+            data["label_ids"] = np.array(label_ids, dtype=np.int32)
 
         # convert sample_weight
         if is_training or y:
             sample_weight = self._convert_sample_weight(
                 sample_weight, n_inputs)
-            data['sample_weight'] = np.array(sample_weight, dtype=np.float32)
+            data["sample_weight"] = np.array(sample_weight, dtype=np.float32)
 
         return data
 
@@ -203,11 +189,11 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
         model = FastBERTCLSDistillor(
             bert_config=self.bert_config,
             is_training=is_training,
-            input_ids=split_placeholders['input_ids'],
-            input_mask=split_placeholders['input_mask'],
-            segment_ids=split_placeholders['segment_ids'],
-            sample_weight=split_placeholders.get('sample_weight'),
-            scope='bert',
+            input_ids=split_placeholders["input_ids"],
+            input_mask=split_placeholders["input_mask"],
+            segment_ids=split_placeholders["segment_ids"],
+            sample_weight=split_placeholders.get("sample_weight"),
+            scope="bert",
             drop_pooler=self._drop_pooler,
             speed=self._speed,
             ignore_cls=[] if is_training else self._ignore_cls,
@@ -217,7 +203,7 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
         return model.get_forward_outputs()
 
     def _get_fit_ops(self, as_feature=False):
-        return [self._tensors['losses']]
+        return [self._tensors["losses"]]
 
     def _get_fit_info(self, output_arrays, feed_dict, as_feature=False):
 
@@ -225,13 +211,13 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
         batch_losses = output_arrays[0]
         loss = np.mean(batch_losses)
 
-        info = ''
-        info += ', distill loss %.6f' % loss
+        info = ""
+        info += ", distill loss %.6f" % loss
 
         return info
 
     def _get_predict_ops(self):
-        return [self._tensors['probs']]
+        return [self._tensors["probs"]]
 
     def _get_predict_outputs(self, batch_outputs):
         n_inputs = len(list(self.data.values())[0])
@@ -291,14 +277,14 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
             preds = [self._id_to_label[idx] for idx in preds]
 
         outputs = {}
-        outputs['preds'] = preds
-        outputs['probs'] = probs
-        outputs['sources'] = sources
+        outputs["preds"] = preds
+        outputs["probs"] = probs
+        outputs["sources"] = sources
 
         return outputs
 
     def _get_score_ops(self):
-        return [self._tensors['probs']]
+        return [self._tensors["probs"]]
 
     def _get_score_outputs(self, batch_outputs):
         n_inputs = len(list(self.data.values())[0])
@@ -354,17 +340,17 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
             probs_arrays.append(probs_array)
         probs = _transform(probs_arrays)
         preds = np.argmax(probs, axis=-1)
-        labels = self.data['label_ids']
+        labels = self.data["label_ids"]
         accuracy = np.mean(preds == labels)
 
         # loss
         losses = [-np.log(probs[i][label]) for i, label in enumerate(labels)]
-        sample_weight = self.data['sample_weight']
+        sample_weight = self.data["sample_weight"]
         losses = np.array(losses) * sample_weight
         loss = np.mean(losses)
 
         outputs = {}
-        outputs['accuracy'] = accuracy
-        outputs['loss'] = loss
+        outputs["accuracy"] = accuracy
+        outputs["loss"] = loss
 
         return outputs

@@ -1,18 +1,4 @@
-# coding:=utf-8
-# Copyright 2021 Tencent. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-''' Retrospective Reader (Retro-Reader). '''
+""" Retrospective Reader (Retro-Reader). """
 
 import math
 import numpy as np
@@ -32,8 +18,8 @@ class RetroReaderDecoder(BaseDecoder):
                  label_ids,
                  has_answer,
                  sample_weight=None,
-                 scope='retro_reader',
-                 matching_mechanism='cross-attention',
+                 scope="retro_reader",
+                 matching_mechanism="cross-attention",
                  beta_1=0.5,
                  beta_2=0.5,
                  threshold=1.0,
@@ -45,18 +31,18 @@ class RetroReaderDecoder(BaseDecoder):
         with tf.variable_scope(scope):
 
             # sketchy reading module
-            with tf.variable_scope('sketchy/prediction'):
+            with tf.variable_scope("sketchy/prediction"):
                 sketchy_output = sketchy_encoder.get_pooled_output()
                 hidden_size = sketchy_output.shape.as_list()[-1]
 
                 output_weights = tf.get_variable(
-                    'output_weights',
+                    "output_weights",
                     shape=[2, hidden_size],
                     initializer=util.create_initializer(
                         bert_config.initializer_range),
                     trainable=trainable)
                 output_bias = tf.get_variable(
-                    'output_bias',
+                    "output_bias",
                     shape=[2],
                     initializer=tf.zeros_initializer(),
                     trainable=trainable)
@@ -77,13 +63,13 @@ class RetroReaderDecoder(BaseDecoder):
                     per_example_loss = tf.cast(
                         sample_weight, dtype=tf.float32) * per_example_loss
 
-                self._tensors['sketchy_losses'] = per_example_loss
+                self._tensors["sketchy_losses"] = per_example_loss
                 sketchy_loss = tf.reduce_mean(per_example_loss)
 
                 score_ext = logits[:, 1] - logits[:, 0]
 
             # intensive reading module
-            with tf.variable_scope('intensive'):
+            with tf.variable_scope("intensive"):
                 H = intensive_encoder.get_sequence_output()
                 H_Q = H * tf.cast(
                     tf.expand_dims(query_mask, axis=-1), tf.float32)
@@ -91,8 +77,8 @@ class RetroReaderDecoder(BaseDecoder):
                     util.get_shape_list(H)
 
                 # cross-attention
-                if matching_mechanism == 'cross-attention':
-                    with tf.variable_scope('cross_attention'):
+                if matching_mechanism == "cross-attention":
+                    with tf.variable_scope("cross_attention"):
                         attention_mask = \
                             self.create_attention_mask_from_input_mask(
                                 query_mask, batch_size, max_seq_length)
@@ -114,16 +100,16 @@ class RetroReaderDecoder(BaseDecoder):
                             trainable=trainable)
 
                 # matching-attention
-                elif matching_mechanism == 'matching-attention':
-                    with tf.variable_scope('matching_attention'):
+                elif matching_mechanism == "matching-attention":
+                    with tf.variable_scope("matching_attention"):
                         output_weights = tf.get_variable(
-                            'output_weights',
+                            "output_weights",
                             shape=[hidden_size, hidden_size],
                             initializer=util.create_initializer(
                                 bert_config.initializer_range),
                             trainable=trainable)
                         output_bias = tf.get_variable(
-                            'output_bias',
+                            "output_bias",
                             shape=[hidden_size],
                             initializer=tf.zeros_initializer(),
                             trainable=trainable)
@@ -137,15 +123,15 @@ class RetroReaderDecoder(BaseDecoder):
                             tf.matmul(H, trans, transpose_b=True), axis=-1)
                         H_prime = tf.matmul(M, H_Q)
 
-                with tf.variable_scope('prediction'):
+                with tf.variable_scope("prediction"):
                     output_weights = tf.get_variable(
-                        'output_weights',
+                        "output_weights",
                         shape=[2, hidden_size],
                         initializer=util.create_initializer(
                             bert_config.initializer_range),
                         trainable=trainable)
                     output_bias = tf.get_variable(
-                        'output_bias',
+                        "output_bias",
                         shape=[2],
                         initializer=tf.zeros_initializer(),
                         trainable=trainable)
@@ -161,10 +147,10 @@ class RetroReaderDecoder(BaseDecoder):
                     logits = tf.reshape(
                         logits, [batch_size, max_seq_length, 2])
                     logits = tf.transpose(logits, [0, 2, 1])
-                    probs = tf.nn.softmax(logits, axis=-1, name='probs')
+                    probs = tf.nn.softmax(logits, axis=-1, name="probs")
 
-                    self._tensors['mrc_probs'] = probs
-                    self._tensors['mrc_preds'] = tf.argmax(logits, axis=-1)
+                    self._tensors["mrc_probs"] = probs
+                    self._tensors["mrc_preds"] = tf.argmax(logits, axis=-1)
 
                     start_one_hot_labels = tf.one_hot(
                         label_ids[:, 0], depth=max_seq_length,
@@ -183,7 +169,7 @@ class RetroReaderDecoder(BaseDecoder):
                         per_example_loss *= sample_weight
 
                     intensive_loss = tf.reduce_mean(per_example_loss)
-                    self._tensors['intensive_losses'] = per_example_loss
+                    self._tensors["intensive_losses"] = per_example_loss
 
                     score_has = tf.norm(
                         probs[:, 0, 1:] + probs[:, 1, 1:], np.inf, axis=-1)
@@ -192,9 +178,9 @@ class RetroReaderDecoder(BaseDecoder):
 
             # rear verification
             v = beta_1 * score_diff + beta_2 * score_ext
-            self._tensors['verifier_preds'] = \
+            self._tensors["verifier_preds"] = \
                 tf.cast(tf.greater(v, threshold), tf.int32)
-            self._tensors['verifier_probs'] = v
+            self._tensors["verifier_probs"] = v
 
             self.total_loss = sketchy_loss + intensive_loss
 
@@ -251,7 +237,7 @@ class RetroReaderDecoder(BaseDecoder):
             from_tensor_2d,
             num_attention_heads * size_per_head,
             activation=query_act,
-            name='query',
+            name="query",
             kernel_initializer=util.create_initializer(initializer_range),
             trainable=trainable)
 
@@ -260,7 +246,7 @@ class RetroReaderDecoder(BaseDecoder):
             to_tensor_2d,
             num_attention_heads * size_per_head,
             activation=key_act,
-            name='key',
+            name="key",
             kernel_initializer=util.create_initializer(initializer_range),
             trainable=trainable)
 
@@ -269,7 +255,7 @@ class RetroReaderDecoder(BaseDecoder):
             to_tensor_2d,
             num_attention_heads * size_per_head,
             activation=value_act,
-            name='value',
+            name="value",
             kernel_initializer=util.create_initializer(initializer_range),
             trainable=trainable)
 
@@ -283,7 +269,7 @@ class RetroReaderDecoder(BaseDecoder):
             key_layer, batch_size, num_attention_heads,
             to_max_seq_length, size_per_head)
 
-        # Take the dot product between 'query' and 'key' to get the raw
+        # Take the dot product between "query" and "key" to get the raw
         # attention scores.
         # attention_scores = [B, N, F, T]
         attention_scores = tf.matmul(query_layer, key_layer, transpose_b=True)

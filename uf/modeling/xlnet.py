@@ -1,21 +1,7 @@
-# coding:=utf-8
-# Copyright 2021 Tencent. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the 'License');
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an 'AS IS' BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-''' XLNet, an autoregressive permutation model.
-  Code revised from XLNet team's implementation.
+""" XLNet, an autoregressive permutation model.
+  Code revised from XLNet team"s implementation.
   See `https://github.com/zihangdai/xlnet`.
-'''
+"""
 
 import os
 import json
@@ -26,8 +12,8 @@ from . import util
 
 
 class XLNetEncoder(BaseEncoder):
-    '''A wrapper of the XLNet model used during both pretraining and
-    finetuning.'''
+    """A wrapper of the XLNet model used during both pretraining and
+    finetuning."""
 
     def __init__(self,
                  xlnet_config,
@@ -41,7 +27,7 @@ class XLNetEncoder(BaseEncoder):
                  inp_q=None,
                  use_tilda_embedding=False,
                  **kwargs):
-        '''
+        """
         Args:
           xlnet_config: XLNetConfig.
           is_training: bool, whether is training or not.
@@ -65,13 +51,13 @@ class XLNetEncoder(BaseEncoder):
               1 for tokens with losses and 0 for tokens without losses.
               Only used during pretraining for two-stream attention.
               Set to None during finetuning.
-        '''
+        """
 
         # Tilda embeddings for SMART algorithm
         tilda_embeddings = None
         if use_tilda_embedding:
-            with tf.variable_scope('', reuse=True):
-                tilda_embeddings = tf.get_variable('tilda_embeddings')
+            with tf.variable_scope("", reuse=True):
+                tilda_embeddings = tf.get_variable("tilda_embeddings")
 
         run_config = XLNetRunConfig(
             is_training=is_training,
@@ -80,7 +66,7 @@ class XLNetEncoder(BaseEncoder):
             use_bfloat16=False,
             dropout=(0.1 if is_training else 0.0),
             dropatt=(0.1 if is_training else 0.0),
-            init='normal',
+            init="normal",
             init_range=0.1,
             init_std=0.02,
             clamp_len=-1)
@@ -89,7 +75,7 @@ class XLNetEncoder(BaseEncoder):
         tfm_args = dict(
             n_token=xlnet_config.n_token,
             initializer=initializer,
-            attn_type='bi',
+            attn_type="bi",
             n_layer=xlnet_config.n_layer,
             d_model=xlnet_config.d_model,
             n_head=xlnet_config.n_head,
@@ -121,7 +107,7 @@ class XLNetEncoder(BaseEncoder):
             tilda_embeddings=tilda_embeddings)
         tfm_args.update(input_args)
 
-        with tf.variable_scope('model', reuse=tf.AUTO_REUSE):
+        with tf.variable_scope("model", reuse=tf.AUTO_REUSE):
             (self.output, self.new_mems, self.lookup_table) = \
                 transformer_xl(**tfm_args)
 
@@ -131,47 +117,47 @@ class XLNetEncoder(BaseEncoder):
         self.run_config = run_config
 
     def get_pooled_output(self):
-        '''
+        """
         Returns:
           float32 Tensor in shape [len, bsz, d_model]. The last layer hidden
           representation of XLNet.
-        '''
+        """
         # use "last" token as cls representation of sequence
         return self.output[-1]
 
     def get_sequence_output(self):
-        '''
+        """
         Returns:
           float32 Tensor in shape [len, bsz, d_model]. The last layer hidden
           representation of XLNet.
-        '''
+        """
         seq_length, batch_size, hidden_size = self.output.shape.as_list()
         return tf.transpose(self.output, [1, 0, 2])
 
     def get_new_memory(self):
-        '''
+        """
         Returns:
           list of float32 Tensors in shape [mem_len, bsz, d_model], the new
           memory that concatenates the previous memory with the current input
           representations.
           The length of the list equals n_layer.
-        '''
+        """
         return self.new_mems
 
     def get_embedding_table(self):
-        '''
+        """
         Returns:
           float32 Tensor in shape [n_token, d_model]. The embedding lookup
           table. Used for tying embeddings between input and output layers.
-        '''
+        """
         return self.lookup_table
 
     def get_initializer(self):
-        '''
+        """
         Returns:
           A tf initializer. Used to initialize variables in layers on top
               of XLNet.
-        '''
+        """
         return self.initializer
 
 
@@ -199,7 +185,7 @@ class XLNet(BaseDecoder):
             use_bfloat16=False,
             dropout=(0.1 if is_training else 0.0),
             dropatt=(0.1 if is_training else 0.0),
-            init='normal',
+            init="normal",
             init_range=0.1,
             init_std=0.02,
             clamp_len=-1)
@@ -216,7 +202,7 @@ class XLNet(BaseDecoder):
             inp_q=inp_q,
             **kwargs)
 
-        with tf.variable_scope('model', reuse=tf.AUTO_REUSE):
+        with tf.variable_scope("model", reuse=tf.AUTO_REUSE):
             per_example_loss, preds = lm_loss(
                 hidden=model.get_sequence_output(),
                 target=target,
@@ -234,37 +220,37 @@ class XLNet(BaseDecoder):
 
         self.total_loss = tf.reduce_sum(
             per_example_loss * target_mask) / tf.reduce_sum(target_mask)
-        self._tensors['losses'] = per_example_loss * target_mask
-        self._tensors['preds'] = preds
-        self._tensors['mask'] = target_mask
+        self._tensors["losses"] = per_example_loss * target_mask
+        self._tensors["preds"] = preds
+        self._tensors["mask"] = target_mask
 
 
 class XLNetRunConfig:
-    '''XLNetRunConfig contains hyperparameters that could be different
+    """XLNetRunConfig contains hyperparameters that could be different
     between pretraining and finetuning.
     These hyperparameters can also be changed from run to run.
     We store them separately from XLNetConfig for flexibility.
-    '''
+    """
 
     def __init__(self,
                  is_training, use_tpu, use_bfloat16, dropout, dropatt,
-                 init='normal', init_range=0.1, init_std=0.02, mem_len=None,
+                 init="normal", init_range=0.1, init_std=0.02, mem_len=None,
                  reuse_len=None, bi_data=True, clamp_len=-1,
                  same_length=False):
-        '''
+        """
         Args:
           is_training: bool, whether in training mode.
           use_tpu: bool, whether TPUs are used.
           use_bfloat16: bool, use bfloat16 instead of float32.
           dropout: float, dropout rate.
           dropatt: float, dropout rate on attention probabilities.
-          init: str, the initialization scheme, either 'normal' or 'uniform'.
+          init: str, the initialization scheme, either "normal" or "uniform".
           init_range: float, initialize the parameters with a uniform
               distribution in [-init_range, init_range]. Only effective
-              when init='uniform'.
+              when init="uniform".
           init_std: float, initialize the parameters with a normal
               distribution with mean 0 and stddev init_std. Only effective
-              when init='normal'.
+              when init="normal".
           mem_len: int, the number of tokens to cache.
           reuse_len: int, the number of tokens in the currect batch to be
               cached and reused in the future.
@@ -275,7 +261,7 @@ class XLNetRunConfig:
               -1 means no clamping.
           same_length: bool, whether to use the same attention length for
               each token.
-        '''
+        """
 
         self.init = init
         self.init_range = init_range
@@ -293,46 +279,46 @@ class XLNetRunConfig:
 
 
 def _get_initializer(FLAGS):
-    '''Get variable intializer.'''
-    if FLAGS.init == 'uniform':
+    """Get variable intializer."""
+    if FLAGS.init == "uniform":
         initializer = tf.initializers.random_uniform(
             minval=-FLAGS.init_range,
             maxval=FLAGS.init_range,
             seed=None)
-    elif FLAGS.init == 'normal':
+    elif FLAGS.init == "normal":
         initializer = tf.initializers.random_normal(
             stddev=FLAGS.init_std,
             seed=None)
     else:
-        raise ValueError('Initializer {} not supported'.format(FLAGS.init))
+        raise ValueError("Initializer {} not supported".format(FLAGS.init))
     return initializer
 
 
 def embedding_lookup(x, n_token, d_embed, initializer, use_tpu=True,
-                     scope='embedding', tilda_embeddings=None,
+                     scope="embedding", tilda_embeddings=None,
                      reuse=None, dtype=tf.float32):
-    '''TPU and GPU embedding_lookup function.'''
+    """TPU and GPU embedding_lookup function."""
     if tilda_embeddings is not None:
       lookup_table = tilda_embeddings
     else:
       with tf.variable_scope(scope, reuse=reuse):
           lookup_table = tf.get_variable(
-              'lookup_table', [n_token, d_embed], dtype=dtype,
+              "lookup_table", [n_token, d_embed], dtype=dtype,
               initializer=initializer)
     if use_tpu:
         one_hot_idx = tf.one_hot(x, n_token, dtype=dtype)
         if one_hot_idx.shape.ndims == 2:
-            return (tf.einsum('in,nd->id', one_hot_idx, lookup_table),
+            return (tf.einsum("in,nd->id", one_hot_idx, lookup_table),
                     lookup_table)
         else:
-            return (tf.einsum('ibn,nd->ibd', one_hot_idx, lookup_table),
+            return (tf.einsum("ibn,nd->ibd", one_hot_idx, lookup_table),
                     lookup_table)
     else:
         return tf.nn.embedding_lookup(lookup_table, x), lookup_table
 
 
 def positional_embedding(pos_seq, inv_freq, bsz=None):
-    sinusoid_inp = tf.einsum('i,d->id', pos_seq, inv_freq)
+    sinusoid_inp = tf.einsum("i,d->id", pos_seq, inv_freq)
     pos_emb = tf.concat([tf.sin(sinusoid_inp), tf.cos(sinusoid_inp)], -1)
     pos_emb = pos_emb[:, None, :]
 
@@ -343,57 +329,57 @@ def positional_embedding(pos_seq, inv_freq, bsz=None):
 
 
 def positionwise_ffn(inp, d_model, d_inner, dropout, kernel_initializer,
-                     activation_type='relu', scope='ff', is_training=True,
+                     activation_type="relu", scope="ff", is_training=True,
                      reuse=None):
-    '''Position-wise Feed-forward Network.'''
-    if activation_type == 'relu':
+    """Position-wise Feed-forward Network."""
+    if activation_type == "relu":
         activation = tf.nn.relu
-    elif activation_type == 'gelu':
+    elif activation_type == "gelu":
         activation = util.gelu
     else:
-        raise ValueError('Unsupported activation type %s' % activation_type)
+        raise ValueError("Unsupported activation type %s" % activation_type)
 
     output = inp
     with tf.variable_scope(scope, reuse=reuse):
         output = tf.layers.dense(
             output, d_inner, activation=activation,
             kernel_initializer=kernel_initializer,
-            name='layer_1')
+            name="layer_1")
         output = tf.layers.dropout(
             output, dropout, training=is_training,
-            name='drop_1')
+            name="drop_1")
         output = tf.layers.dense(
             output, d_model,
             kernel_initializer=kernel_initializer,
-            name='layer_2')
+            name="layer_2")
         output = tf.layers.dropout(
             output, dropout, training=is_training,
-            name='drop_2')
+            name="drop_2")
         output = util.layer_norm(
             output + inp,
-            name='LayerNorm')
+            name="LayerNorm")
     return output
 
 
 def head_projection(h, d_model, n_head, d_head, kernel_initializer, name):
-    '''Project hidden states to a specific head with a 4D-shape.'''
+    """Project hidden states to a specific head with a 4D-shape."""
     proj_weight = tf.get_variable(
-        '{}/kernel'.format(name),
+        "{}/kernel".format(name),
         [d_model, n_head, d_head], dtype=h.dtype,
         initializer=kernel_initializer)
-    head = tf.einsum('ibh,hnd->ibnd', h, proj_weight)
+    head = tf.einsum("ibh,hnd->ibnd", h, proj_weight)
 
     return head
 
 
 def post_attention(h, attn_vec, d_model, n_head, d_head, dropout, is_training,
                    kernel_initializer, residual=True):
-    '''Post-attention processing.'''
+    """Post-attention processing."""
     # post-attention projection (back to `d_model`)
     proj_o = tf.get_variable(
-        'o/kernel', [d_model, n_head, d_head],
+        "o/kernel", [d_model, n_head, d_head],
         dtype=h.dtype, initializer=kernel_initializer)
-    attn_out = tf.einsum('ibnd,hnd->ibh', attn_vec, proj_o)
+    attn_out = tf.einsum("ibnd,hnd->ibh", attn_vec, proj_o)
 
     attn_out = tf.layers.dropout(attn_out, dropout, training=is_training)
     if residual:
@@ -406,9 +392,9 @@ def post_attention(h, attn_vec, d_model, n_head, d_head, dropout, is_training,
 
 def abs_attn_core(q_head, k_head, v_head, attn_mask, dropatt, is_training,
                   scale):
-    '''Core absolute positional attention operations.'''
+    """Core absolute positional attention operations."""
 
-    attn_score = tf.einsum('ibnd,jbnd->ijbn', q_head, k_head)
+    attn_score = tf.einsum("ibnd,jbnd->ijbn", q_head, k_head)
     attn_score *= scale
     if attn_mask is not None:
         attn_score = attn_score - 1e30 * attn_mask
@@ -418,7 +404,7 @@ def abs_attn_core(q_head, k_head, v_head, attn_mask, dropatt, is_training,
     attn_prob = tf.layers.dropout(attn_prob, dropatt, training=is_training)
 
     # attention output
-    attn_vec = tf.einsum('ijbn,jbnd->ibnd', attn_prob, v_head)
+    attn_vec = tf.einsum("ijbn,jbnd->ibnd", attn_prob, v_head)
 
     return attn_vec
 
@@ -426,21 +412,21 @@ def abs_attn_core(q_head, k_head, v_head, attn_mask, dropatt, is_training,
 def rel_attn_core(q_head, k_head_h, v_head_h, k_head_r, seg_embed, seg_mat,
                   r_w_bias, r_r_bias, r_s_bias, attn_mask, dropatt,
                   is_training, scale):
-    '''Core relative positional attention operations.'''
+    """Core relative positional attention operations."""
 
     # content based attention score
-    ac = tf.einsum('ibnd,jbnd->ijbn', q_head + r_w_bias, k_head_h)
+    ac = tf.einsum("ibnd,jbnd->ijbn", q_head + r_w_bias, k_head_h)
 
     # position based attention score
-    bd = tf.einsum('ibnd,jbnd->ijbn', q_head + r_r_bias, k_head_r)
+    bd = tf.einsum("ibnd,jbnd->ijbn", q_head + r_r_bias, k_head_r)
     bd = rel_shift(bd, klen=tf.shape(ac)[1])
 
     # segment based attention score
     if seg_mat is None:
         ef = 0
     else:
-        ef = tf.einsum('ibnd,snd->ibns', q_head + r_s_bias, seg_embed)
-        ef = tf.einsum('ijbs,ibns->ijbn', seg_mat, ef)
+        ef = tf.einsum("ibnd,snd->ibns", q_head + r_s_bias, seg_embed)
+        ef = tf.einsum("ijbs,ibns->ijbn", seg_mat, ef)
 
     # merge attention scores and perform masking
     attn_score = (ac + bd + ef) * scale
@@ -453,13 +439,13 @@ def rel_attn_core(q_head, k_head_h, v_head_h, k_head_r, seg_embed, seg_mat,
     attn_prob = tf.layers.dropout(attn_prob, dropatt, training=is_training)
 
     # attention output
-    attn_vec = tf.einsum('ijbn,jbnd->ibnd', attn_prob, v_head_h)
+    attn_vec = tf.einsum("ijbn,jbnd->ibnd", attn_prob, v_head_h)
 
     return attn_vec
 
 
 def rel_shift(x, klen=-1):
-    '''perform relative shift to form the relative attention score.'''
+    """perform relative shift to form the relative attention score."""
     x_size = tf.shape(x)
 
     x = tf.reshape(x, [x_size[1], x_size[0], x_size[2], x_size[3]])
@@ -471,7 +457,7 @@ def rel_shift(x, klen=-1):
 
 
 def _create_mask(qlen, mlen, dtype=tf.float32, same_length=False):
-    '''create causal attention mask.'''
+    """create causal attention mask."""
     attn_mask = tf.ones([qlen, qlen], dtype=dtype)
     mask_u = tf.matrix_band_part(attn_mask, 0, -1)
     mask_dia = tf.matrix_band_part(attn_mask, 0, 0)
@@ -485,7 +471,7 @@ def _create_mask(qlen, mlen, dtype=tf.float32, same_length=False):
 
 
 def _cache_mem(curr_out, prev_mem, mem_len, reuse_len=None):
-    '''cache hidden states into memory.'''
+    """cache hidden states into memory."""
     if mem_len is None or mem_len == 0:
         return None
     else:
@@ -502,20 +488,20 @@ def _cache_mem(curr_out, prev_mem, mem_len, reuse_len=None):
 
 def relative_positional_encoding(qlen, klen, d_model, clamp_len, attn_type,
                                  bi_data, bsz=None, dtype=None):
-    '''create relative positional encoding.'''
+    """create relative positional encoding."""
     freq_seq = tf.range(0, d_model, 2.0)
     if dtype is not None and dtype != tf.float32:
         freq_seq = tf.cast(freq_seq, dtype=dtype)
     inv_freq = 1 / (10000 ** (freq_seq / d_model))
 
-    if attn_type == 'bi':
+    if attn_type == "bi":
         # beg, end = klen - 1, -qlen
         beg, end = klen, -qlen
-    elif attn_type == 'uni':
+    elif attn_type == "uni":
         # beg, end = klen - 1, -1
         beg, end = klen, -1
     else:
-        raise ValueError('Unknown `attn_type` {}.'.format(attn_type))
+        raise ValueError("Unknown `attn_type` {}.".format(attn_type))
 
     if bi_data:
         fwd_pos_seq = tf.range(beg, end, -1.0)
@@ -552,18 +538,18 @@ def relative_positional_encoding(qlen, klen, d_model, clamp_len, attn_type,
 
 def multihead_attn(q, k, v, attn_mask, d_model, n_head, d_head, dropout,
                    dropatt, is_training, kernel_initializer, residual=True,
-                   scope='abs_attn', reuse=None):
-    '''Standard multi-head attention with absolute positional embedding.'''
+                   scope="abs_attn", reuse=None):
+    """Standard multi-head attention with absolute positional embedding."""
 
     scale = 1 / (d_head ** 0.5)
     with tf.variable_scope(scope, reuse=reuse):
         # attention heads
         q_head = head_projection(
-            q, d_model, n_head, d_head, kernel_initializer, 'q')
+            q, d_model, n_head, d_head, kernel_initializer, "q")
         k_head = head_projection(
-            k, d_model, n_head, d_head, kernel_initializer, 'k')
+            k, d_model, n_head, d_head, kernel_initializer, "k")
         v_head = head_projection(
-            v, d_model, n_head, d_head, kernel_initializer, 'v')
+            v, d_model, n_head, d_head, kernel_initializer, "v")
 
         # attention vector
         attn_vec = abs_attn_core(
@@ -581,8 +567,8 @@ def multihead_attn(q, k, v, attn_mask, d_model, n_head, d_head, dropout,
 def rel_multihead_attn(h, r, r_w_bias, r_r_bias, seg_mat, r_s_bias, seg_embed,
                        attn_mask, mems, d_model, n_head, d_head, dropout,
                        dropatt, is_training, kernel_initializer,
-                       scope='rel_attn', reuse=None):
-    '''Multi-head attention with relative positional encoding.'''
+                       scope="rel_attn", reuse=None):
+    """Multi-head attention with relative positional encoding."""
 
     scale = 1 / (d_head ** 0.5)
     with tf.variable_scope(scope, reuse=reuse):
@@ -593,15 +579,15 @@ def rel_multihead_attn(h, r, r_w_bias, r_r_bias, seg_mat, r_s_bias, seg_embed,
 
         # content heads
         q_head_h = head_projection(
-            h, d_model, n_head, d_head, kernel_initializer, 'q')
+            h, d_model, n_head, d_head, kernel_initializer, "q")
         k_head_h = head_projection(
-            cat, d_model, n_head, d_head, kernel_initializer, 'k')
+            cat, d_model, n_head, d_head, kernel_initializer, "k")
         v_head_h = head_projection(
-            cat, d_model, n_head, d_head, kernel_initializer, 'v')
+            cat, d_model, n_head, d_head, kernel_initializer, "v")
 
         # positional heads
         k_head_r = head_projection(
-            r, d_model, n_head, d_head, kernel_initializer, 'r')
+            r, d_model, n_head, d_head, kernel_initializer, "r")
 
         # core attention ops
         attn_vec = rel_attn_core(
@@ -620,8 +606,8 @@ def rel_multihead_attn(h, r, r_w_bias, r_r_bias, seg_mat, r_s_bias, seg_embed,
 def two_stream_rel_attn(h, g, r, mems, r_w_bias, r_r_bias, seg_mat, r_s_bias,
                         seg_embed, attn_mask_h, attn_mask_g, target_mapping,
                         d_model, n_head, d_head, dropout, dropatt, is_training,
-                        kernel_initializer, scope='rel_attn'):
-    '''Two-stream attention with relative positional encoding.'''
+                        kernel_initializer, scope="rel_attn"):
+    """Two-stream attention with relative positional encoding."""
 
     scale = 1 / (d_head ** 0.5)
     with tf.variable_scope(scope, reuse=False):
@@ -634,20 +620,20 @@ def two_stream_rel_attn(h, g, r, mems, r_w_bias, r_r_bias, seg_mat, r_s_bias,
 
         # content-based key head
         k_head_h = head_projection(
-            cat, d_model, n_head, d_head, kernel_initializer, 'k')
+            cat, d_model, n_head, d_head, kernel_initializer, "k")
 
         # content-based value head
         v_head_h = head_projection(
-            cat, d_model, n_head, d_head, kernel_initializer, 'v')
+            cat, d_model, n_head, d_head, kernel_initializer, "v")
 
         # position-based key head
         k_head_r = head_projection(
-            r, d_model, n_head, d_head, kernel_initializer, 'r')
+            r, d_model, n_head, d_head, kernel_initializer, "r")
 
         ##### h-stream
         # content-stream query head
         q_head_h = head_projection(
-            h, d_model, n_head, d_head, kernel_initializer, 'q')
+            h, d_model, n_head, d_head, kernel_initializer, "q")
 
         # core attention ops
         attn_vec_h = rel_attn_core(
@@ -664,17 +650,17 @@ def two_stream_rel_attn(h, g, r, mems, r_w_bias, r_r_bias, seg_mat, r_s_bias,
         ##### g-stream
         # query-stream query head
         q_head_g = head_projection(
-            g, d_model, n_head, d_head, kernel_initializer, 'q')
+            g, d_model, n_head, d_head, kernel_initializer, "q")
 
         # core attention ops
         if target_mapping is not None:
-            q_head_g = tf.einsum('mbnd,mlb->lbnd', q_head_g, target_mapping)
+            q_head_g = tf.einsum("mbnd,mlb->lbnd", q_head_g, target_mapping)
             attn_vec_g = rel_attn_core(
                 q_head_g, k_head_h, v_head_h, k_head_r, seg_embed, seg_mat,
                 r_w_bias, r_r_bias, r_s_bias,
                 attn_mask_g, dropatt, is_training, scale)
             attn_vec_g = tf.einsum(
-                'lbnd,mlb->mbnd', attn_vec_g, target_mapping)
+                "lbnd,mlb->mbnd", attn_vec_g, target_mapping)
         else:
             attn_vec_g = rel_attn_core(
                 q_head_g, k_head_h, v_head_h, k_head_r, seg_embed, seg_mat,
@@ -696,10 +682,10 @@ def transformer_xl(inp_k, n_token, n_layer, d_model, n_head,
                    same_length=False, clamp_len=-1, untie_r=False,
                    use_tpu=True, input_mask=None,
                    perm_mask=None, seg_id=None, reuse_len=None,
-                   ff_activation='relu', target_mapping=None,
-                   use_bfloat16=False, scope='transformer',
+                   ff_activation="relu", target_mapping=None,
+                   use_bfloat16=False, scope="transformer",
                    tilda_embeddings=None, **kwargs):
-    '''
+    """
     Defines a Transformer-XL computation graph with additional
     support for XLNet.
 
@@ -731,7 +717,7 @@ def transformer_xl(inp_k, n_token, n_layer, d_model, n_head,
       n_head: int, the number of attention heads.
       d_head: int, the dimension size of each attention head.
       d_inner: int, the hidden size in feed-forward layers.
-      ff_activation: str, 'relu' or 'gelu'.
+      ff_activation: str, "relu" or "gelu".
       untie_r: bool, whether to untie the biases in attention.
       n_token: int, the vocab size.
 
@@ -740,11 +726,11 @@ def transformer_xl(inp_k, n_token, n_layer, d_model, n_head,
       use_bfloat16: bool, use bfloat16 instead of float32.
       dropout: float, dropout rate.
       dropatt: float, dropout rate on attention probabilities.
-      init: str, the initialization scheme, either 'normal' or 'uniform'.
+      init: str, the initialization scheme, either "normal" or "uniform".
       init_range: float, initialize the parameters with a uniform distribution
-          in [-init_range, init_range]. Only effective when init='uniform'.
+          in [-init_range, init_range]. Only effective when init="uniform".
       init_std: float, initialize the parameters with a normal distribution
-          with mean 0 and stddev init_std. Only effective when init='normal'.
+          with mean 0 and stddev init_std. Only effective when init="normal".
       mem_len: int, the number of tokens to cache.
       reuse_len: int, the number of tokens in the currect batch to be cached
           and reused in the future.
@@ -753,24 +739,24 @@ def transformer_xl(inp_k, n_token, n_layer, d_model, n_head,
       clamp_len: int, clamp all relative distances larger than clamp_len.
           -1 means no clamping.
       same_length: bool, whether to use the same attention length for each token.
-      summary_type: str, 'last', 'first', 'mean', or 'attn'. The method
+      summary_type: str, "last", "first", "mean", or "attn". The method
           to pool the input to get a vector representation.
       initializer: A tf initializer.
       scope: scope name for the computation graph.
-    '''
+    """
     tf_float = tf.bfloat16 if use_bfloat16 else tf.float32
 
     new_mems = []
     with tf.variable_scope(scope):
         if untie_r:
-            r_w_bias = tf.get_variable('r_w_bias', [n_layer, n_head, d_head],
+            r_w_bias = tf.get_variable("r_w_bias", [n_layer, n_head, d_head],
                                        dtype=tf_float, initializer=initializer)
-            r_r_bias = tf.get_variable('r_r_bias', [n_layer, n_head, d_head],
+            r_r_bias = tf.get_variable("r_r_bias", [n_layer, n_head, d_head],
                                        dtype=tf_float, initializer=initializer)
         else:
-            r_w_bias = tf.get_variable('r_w_bias', [n_head, d_head],
+            r_w_bias = tf.get_variable("r_w_bias", [n_head, d_head],
                                        dtype=tf_float, initializer=initializer)
-            r_r_bias = tf.get_variable('r_r_bias', [n_head, d_head],
+            r_r_bias = tf.get_variable("r_r_bias", [n_head, d_head],
                                        dtype=tf_float, initializer=initializer)
 
         bsz = tf.shape(inp_k)[1]
@@ -780,13 +766,13 @@ def transformer_xl(inp_k, n_token, n_layer, d_model, n_head,
 
         ##### Attention mask
         # causal attention mask
-        if attn_type == 'uni':
+        if attn_type == "uni":
             attn_mask = _create_mask(qlen, mlen, tf_float, same_length)
             attn_mask = attn_mask[:, :, None, None]
-        elif attn_type == 'bi':
+        elif attn_type == "bi":
             attn_mask = None
         else:
-            raise ValueError('Unsupported attention type: %s' % attn_type)
+            raise ValueError("Unsupported attention type: %s" % attn_type)
 
         # data mask: input mask & perm mask
         if input_mask is not None and perm_mask is not None:
@@ -830,13 +816,13 @@ def transformer_xl(inp_k, n_token, n_layer, d_model, n_head,
             initializer=initializer,
             use_tpu=use_tpu,
             dtype=tf_float,
-            scope='word_embedding',
+            scope="word_embedding",
             tilda_embeddings=tilda_embeddings)
 
         if inp_q is not None:
-            with tf.variable_scope('mask_emb'):
+            with tf.variable_scope("mask_emb"):
                 mask_emb = tf.get_variable(
-                    'mask_emb', [1, 1, d_model], dtype=tf_float)
+                    "mask_emb", [1, 1, d_model], dtype=tf_float)
                 if target_mapping is not None:
                     word_emb_q = tf.tile(
                         mask_emb, [tf.shape(target_mapping)[0], bsz, 1])
@@ -854,16 +840,16 @@ def transformer_xl(inp_k, n_token, n_layer, d_model, n_head,
         if seg_id is not None:
             if untie_r:
                 r_s_bias = tf.get_variable(
-                    'r_s_bias', [n_layer, n_head, d_head],
+                    "r_s_bias", [n_layer, n_head, d_head],
                     dtype=tf_float, initializer=initializer)
             else:
                 # default case (tie)
                 r_s_bias = tf.get_variable(
-                    'r_s_bias', [n_head, d_head],
+                    "r_s_bias", [n_head, d_head],
                     dtype=tf_float, initializer=initializer)
 
             seg_embed = tf.get_variable(
-                'seg_embed', [n_layer, 2, n_head, d_head],
+                "seg_embed", [n_layer, 2, n_head, d_head],
                 dtype=tf_float, initializer=initializer)
 
             # Convert `seg_id` to one-hot `seg_mat`
@@ -900,7 +886,7 @@ def transformer_xl(inp_k, n_token, n_layer, d_model, n_head,
                 r_s_bias_i = r_s_bias if not untie_r else r_s_bias[i]
                 seg_embed_i = seg_embed[i]
 
-            with tf.variable_scope('layer_{}'.format(i)):
+            with tf.variable_scope("layer_{}".format(i)):
                 if inp_q is not None:
                     output_h, output_g = two_stream_rel_attn(
                         h=output_h,
@@ -975,23 +961,23 @@ def transformer_xl(inp_k, n_token, n_layer, d_model, n_head,
 
 def lm_loss(hidden, target, n_token, d_model, initializer, lookup_table=None,
             tie_weight=False, bi_data=True, use_tpu=False):
-    '''doc.'''
+    """doc."""
 
-    with tf.variable_scope('lm_loss'):
+    with tf.variable_scope("lm_loss"):
         if tie_weight:
             assert lookup_table is not None, \
-                'lookup_table cannot be None for tie_weight'
+                "lookup_table cannot be None for tie_weight"
             softmax_w = lookup_table
         else:
             softmax_w = tf.get_variable(
-                'weight', [n_token, d_model],
+                "weight", [n_token, d_model],
                 dtype=hidden.dtype, initializer=initializer)
 
         softmax_b = tf.get_variable(
-            'bias', [n_token], dtype=hidden.dtype,
+            "bias", [n_token], dtype=hidden.dtype,
             initializer=tf.zeros_initializer())
 
-        logits = tf.einsum('ibd,nd->ibn', hidden, softmax_w) + softmax_b
+        logits = tf.einsum("ibd,nd->ibn", hidden, softmax_w) + softmax_b
         preds = tf.argmax(logits, axis=-1)
 
         if use_tpu:
@@ -1009,25 +995,25 @@ def summarize_sequence(summary_type, hidden, d_model, n_head, d_head, dropout,
                        dropatt, input_mask, is_training, initializer,
                        scope=None, reuse=None, use_proj=True):
 
-    '''
+    """
     Different classification tasks may not may not share the same parameters
     to summarize the sequence features.
 
     If shared, one can keep the `scope` to the default value `None`.
     Otherwise, one should specify a different `scope` for each task.
-    '''
+    """
 
-    with tf.variable_scope(scope, 'sequnece_summary', reuse=reuse):
-        if summary_type == 'last':
+    with tf.variable_scope(scope, "sequnece_summary", reuse=reuse):
+        if summary_type == "last":
             summary = hidden[-1]
-        elif summary_type == 'first':
+        elif summary_type == "first":
             summary = hidden[0]
-        elif summary_type == 'mean':
+        elif summary_type == "mean":
             summary = tf.reduce_mean(hidden, axis=0)
-        elif summary_type == 'attn':
+        elif summary_type == "attn":
             bsz = tf.shape(hidden)[1]
 
-            summary_bias = tf.get_variable('summary_bias', [d_model],
+            summary_bias = tf.get_variable("summary_bias", [d_model],
                                            dtype=hidden.dtype,
                                            initializer=initializer)
             summary_bias = tf.tile(summary_bias[None, None], [1, bsz, 1])
@@ -1041,7 +1027,7 @@ def summarize_sequence(summary_type, hidden, d_model, n_head, d_head, dropout,
                 is_training, initializer, residual=False)
             summary = summary[0]
         else:
-            raise ValueError('Unsupported summary type %s' % summary_type)
+            raise ValueError("Unsupported summary type %s" % summary_type)
 
         # use another projection as in BERT
         if use_proj:
@@ -1050,32 +1036,32 @@ def summarize_sequence(summary_type, hidden, d_model, n_head, d_head, dropout,
                 d_model,
                 activation=tf.tanh,
                 kernel_initializer=initializer,
-                name='summary')
+                name="summary")
 
         # dropout
         summary = tf.layers.dropout(
             summary, dropout, training=is_training,
-            name='dropout')
+            name="dropout")
 
     return summary
 
 
 def classification_loss(hidden, labels, n_class, initializer, scope,
                         reuse=None, return_logits=False):
-    '''
+    """
     Different classification tasks should use different scope names to ensure
     different dense layers (parameters) are used to produce the logits.
 
     An exception will be in transfer learning, where one hopes to transfer
     the classification weights.
-    '''
+    """
 
     with tf.variable_scope(scope, reuse=reuse):
         logits = tf.layers.dense(
             hidden,
             n_class,
             kernel_initializer=initializer,
-            name='logit')
+            name="logit")
 
         one_hot_target = tf.one_hot(labels, n_class, dtype=hidden.dtype)
         loss = -tf.reduce_sum(tf.nn.log_softmax(logits) * one_hot_target, -1)
@@ -1093,7 +1079,7 @@ def regression_loss(hidden, labels, initializer, scope, reuse=None,
             hidden,
             1,
             kernel_initializer=initializer,
-            name='logit')
+            name="logit")
 
         logits = tf.squeeze(logits, axis=-1)
         loss = tf.square(logits - labels)
@@ -1105,7 +1091,7 @@ def regression_loss(hidden, labels, initializer, scope, reuse=None,
 
 
 class XLNetConfig:
-    '''XLNetConfig contains hyperparameters that are specific to a model
+    """XLNetConfig contains hyperparameters that are specific to a model
     checkpoint; i.e., these hyperparameters should be the same between
     pretraining and finetuning.
 
@@ -1115,19 +1101,19 @@ class XLNetConfig:
       n_head: int, the number of attention heads.
       d_head: int, the dimension size of each attention head.
       d_inner: int, the hidden size in feed-forward layers.
-      ff_activation: str, 'relu' or 'gelu'.
+      ff_activation: str, "relu" or "gelu".
       untie_r: bool, whether to untie the biases in attention.
       n_token: int, the vocab size.
-    '''
+    """
 
     def __init__(self, FLAGS=None, json_path=None):
-        '''Constructing an XLNetConfig.
-        One of FLAGS or json_path should be provided.'''
+        """Constructing an XLNetConfig.
+        One of FLAGS or json_path should be provided."""
 
         assert FLAGS is not None or json_path is not None
 
-        self.keys = ['n_layer', 'd_model', 'n_head', 'd_head', 'd_inner',
-                     'ff_activation', 'untie_r', 'n_token']
+        self.keys = ["n_layer", "d_model", "n_head", "d_head", "d_inner",
+                     "ff_activation", "untie_r", "n_token"]
 
         if FLAGS is not None:
             self.init_from_flags(FLAGS)
@@ -1146,7 +1132,7 @@ class XLNetConfig:
                 setattr(self, key, json_data[key])
 
     def to_json(self, json_path):
-        '''Save XLNetConfig to a json file.'''
+        """Save XLNetConfig to a json file."""
         json_data = {}
         for key in self.keys:
             json_data[key] = getattr(self, key)
@@ -1154,5 +1140,5 @@ class XLNetConfig:
         json_dir = os.path.dirname(json_path)
         if not tf.gfile.Exists(json_dir):
             tf.gfile.MakeDirs(json_dir)
-        with tf.gfile.Open(json_path, 'w') as f:
+        with tf.gfile.Open(json_path, "w") as f:
             json.dump(json_data, f, indent=4, sort_keys=True)

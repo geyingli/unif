@@ -1,18 +1,4 @@
-# coding:=utf-8
-# Copyright 2021 Tencent. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the 'License');
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an 'AS IS' BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-''' Applications based on RecBERT. '''
+""" Applications based on RecBERT. """
 
 import random
 import numpy as np
@@ -25,14 +11,14 @@ from .. import utils
 
 
 class RecBERTLM(LMModule):
-    ''' Language modeling on RecBERT. '''
+    """ Language modeling on RecBERT. """
     _INFER_ATTRIBUTES = {
-        'max_seq_length': (
-            'An integer that defines max sequence length of input tokens, '
-            'which typically equals `len(tokenize(segments)) + 1'),
-        'init_checkpoint': (
-            'A string that directs to the checkpoint file used for '
-            'initialization')}
+        "max_seq_length": (
+            "An integer that defines max sequence length of input tokens, "
+            "which typically equals `len(tokenize(segments)) + 1"),
+        "init_checkpoint": (
+            "A string that directs to the checkpoint file used for "
+            "initialization")}
 
     def __init__(self,
                  config_file,
@@ -44,7 +30,7 @@ class RecBERTLM(LMModule):
                  add_prob=0.1,
                  del_prob=0.1,
                  do_lower_case=True,
-                 truncate_method='LIFO'):
+                 truncate_method="LIFO"):
         super(LMModule, self).__init__(
             init_checkpoint, output_dir, gpu_ids)
 
@@ -58,8 +44,8 @@ class RecBERTLM(LMModule):
         self.__init_args__ = locals()
 
         assert add_prob <= 0.5, (
-            'The value of `add_prob` should be larger than 0 '
-            'and smaller than 1/2.')
+            "The value of `add_prob` should be larger than 0 "
+            "and smaller than 1/2.")
         self.bert_config = get_bert_config(config_file)
         self.tokenizer = get_word_piece_tokenizer(vocab_file, do_lower_case)
         self._key_to_depths = get_key_to_depths(
@@ -67,7 +53,7 @@ class RecBERTLM(LMModule):
 
     def predict(self, X=None, X_tokenized=None,
                 batch_size=8):
-        ''' Inference on the model.
+        """ Inference on the model.
 
         Args:
             X: list. A list object consisting untokenized inputs.
@@ -76,7 +62,7 @@ class RecBERTLM(LMModule):
             batch_size: int. The size of batch in each step.
         Returns:
             A dict object of model outputs.
-        '''
+        """
 
         self._on_predict = True
         ret = super(LMModule, self).predict(
@@ -89,7 +75,7 @@ class RecBERTLM(LMModule):
                 is_training=False, is_parallel=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
 
-        assert y is None, ('%s is unsupervised. `y` should be None.'
+        assert y is None, ("%s is unsupervised. `y` should be None."
                            % self.__class__.__name__)
 
         n_inputs = None
@@ -102,18 +88,18 @@ class RecBERTLM(LMModule):
             (input_tokens, input_ids, add_label_ids, del_label_ids) = \
                 self._convert_X(
                     X_target, tokenized=tokenized, is_training=is_training)
-            data['input_ids'] = np.array(input_ids, dtype=np.int32)
+            data["input_ids"] = np.array(input_ids, dtype=np.int32)
 
             if is_training:
-                data['add_label_ids'] = np.array(
+                data["add_label_ids"] = np.array(
                     add_label_ids, dtype=np.int32)
-                data['del_label_ids'] = np.array(
+                data["del_label_ids"] = np.array(
                     del_label_ids, dtype=np.int32)
 
             # backup for answer mapping
-            data[utils.BACKUP_DATA + 'input_tokens'] = input_tokens
-            data[utils.BACKUP_DATA + 'tokenized'] = [tokenized]
-            data[utils.BACKUP_DATA + 'X_target'] = X_target
+            data[utils.BACKUP_DATA + "input_tokens"] = input_tokens
+            data[utils.BACKUP_DATA + "tokenized"] = [tokenized]
+            data[utils.BACKUP_DATA + "X_target"] = X_target
 
             n_inputs = len(input_ids)
             if n_inputs < self.batch_size:
@@ -123,7 +109,7 @@ class RecBERTLM(LMModule):
         if is_training or y:
             sample_weight = self._convert_sample_weight(
                 sample_weight, n_inputs)
-            data['sample_weight'] = np.array(sample_weight, dtype=np.float32)
+            data["sample_weight"] = np.array(sample_weight, dtype=np.float32)
 
         return data
 
@@ -177,7 +163,7 @@ class RecBERTLM(LMModule):
             if is_training:
                 if (ex_id + 1) % 10000 == 0:
                     tf.logging.info(
-                        'Sampling wrong tokens of input %d' % (ex_id + 1))
+                        "Sampling wrong tokens of input %d" % (ex_id + 1))
 
                 _add_label_ids = [0] * self.max_seq_length
                 _del_label_ids = [0] * self.max_seq_length
@@ -213,29 +199,29 @@ class RecBERTLM(LMModule):
                 return x
         except Exception:
             raise ValueError(
-                'Wrong input format: \'%s\'. ' % (x))
+                "Wrong input format: \"%s\". " % (x))
 
         # deal with tokenized and multiple inputs
         raise ValueError(
-            '%s only supports single sentence inputs.'
+            "%s only supports single sentence inputs."
             % self.__class__.__name__)
 
     def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
-            'input_ids': utils.get_placeholder(
-                target, 'input_ids',
+            "input_ids": utils.get_placeholder(
+                target, "input_ids",
                 [None, self.max_seq_length], tf.int32),
-            'add_label_ids': utils.get_placeholder(
-                target, 'add_label_ids',
+            "add_label_ids": utils.get_placeholder(
+                target, "add_label_ids",
                 [None, self.max_seq_length], tf.int32),
-            'del_label_ids': utils.get_placeholder(
-                target, 'del_label_ids',
+            "del_label_ids": utils.get_placeholder(
+                target, "del_label_ids",
                 [None, self.max_seq_length], tf.int32),
         }
         if not on_export:
-            self.placeholders['sample_weight'] = \
+            self.placeholders["sample_weight"] = \
                 utils.get_placeholder(
-                    target, 'sample_weight',
+                    target, "sample_weight",
                     [None], tf.float32)
 
     def _forward(self, is_training, split_placeholders, **kwargs):
@@ -243,25 +229,25 @@ class RecBERTLM(LMModule):
         model = RecBERT(
             bert_config=self.bert_config,
             is_training=is_training,
-            input_ids=split_placeholders['input_ids'],
-            add_label_ids=split_placeholders['add_label_ids'],
-            del_label_ids=split_placeholders['del_label_ids'],
-            sample_weight=split_placeholders.get('sample_weight'),
+            input_ids=split_placeholders["input_ids"],
+            add_label_ids=split_placeholders["add_label_ids"],
+            del_label_ids=split_placeholders["del_label_ids"],
+            sample_weight=split_placeholders.get("sample_weight"),
             add_prob=self._add_prob,
             del_prob=self._del_prob,
-            scope='bert',
+            scope="bert",
             **kwargs)
         return model.get_forward_outputs()
 
     def _get_fit_ops(self, as_feature=False):
-        ops = [self._tensors['add_preds'],
-               self._tensors['del_preds'],
-               self._tensors['add_loss'],
-               self._tensors['del_loss']]
+        ops = [self._tensors["add_preds"],
+               self._tensors["del_preds"],
+               self._tensors["add_loss"],
+               self._tensors["del_loss"]]
         if as_feature:
-            ops.extend([self.placeholders['input_ids'],
-                        self.placeholders['add_label_ids'],
-                        self.placeholders['del_label_ids']])
+            ops.extend([self.placeholders["input_ids"],
+                        self.placeholders["add_label_ids"],
+                        self.placeholders["del_label_ids"]])
         return ops
 
     def _get_fit_info(self, output_arrays, feed_dict, as_feature=False):
@@ -271,11 +257,11 @@ class RecBERTLM(LMModule):
             batch_add_labels = output_arrays[-2]
             batch_del_labels = output_arrays[-1]
         else:
-            batch_inputs = feed_dict[self.placeholders['input_ids']]
+            batch_inputs = feed_dict[self.placeholders["input_ids"]]
             batch_add_labels = \
-                feed_dict[self.placeholders['add_label_ids']]
+                feed_dict[self.placeholders["add_label_ids"]]
             batch_del_labels = \
-                feed_dict[self.placeholders['del_label_ids']]
+                feed_dict[self.placeholders["del_label_ids"]]
         batch_mask = (batch_inputs != 0)
 
         # add accuracy
@@ -294,34 +280,34 @@ class RecBERTLM(LMModule):
         batch_del_losses = output_arrays[3]
         del_loss = np.mean(batch_del_losses)
 
-        info = ''
+        info = ""
         if self._add_prob > 0:
-            info += ', add_accuracy %.4f' % add_accuracy
-            info += ', add_loss %.6f' % add_loss
+            info += ", add_accuracy %.4f" % add_accuracy
+            info += ", add_loss %.6f" % add_loss
         if self._del_prob > 0:
-            info += ', del_accuracy %.4f' % del_accuracy
-            info += ', del_loss %.6f' % del_loss
+            info += ", del_accuracy %.4f" % del_accuracy
+            info += ", del_loss %.6f" % del_loss
 
         return info
 
     def _get_predict_ops(self):
-        return [self._tensors['add_preds'],
-                self._tensors['del_preds']]
+        return [self._tensors["add_preds"],
+                self._tensors["del_preds"]]
 
     def _get_predict_outputs(self, batch_outputs):
         n_inputs = len(list(self.data.values())[0])
         output_arrays = list(zip(*batch_outputs))
 
-        input_ids = self.data['input_ids']
+        input_ids = self.data["input_ids"]
         mask = (input_ids > 0)
 
         # integrated preds
         preds = []
         add_preds = utils.transform(output_arrays[0], n_inputs)
         del_preds = utils.transform(output_arrays[1], n_inputs)
-        tokens = self.data[utils.BACKUP_DATA + 'input_tokens']
-        text = self.data[utils.BACKUP_DATA + 'X_target']
-        tokenized = self.data[utils.BACKUP_DATA + 'tokenized'][0]
+        tokens = self.data[utils.BACKUP_DATA + "input_tokens"]
+        text = self.data[utils.BACKUP_DATA + "X_target"]
+        tokenized = self.data[utils.BACKUP_DATA + "tokenized"][0]
         for ex_id in range(n_inputs):
             _add_preds = add_preds[ex_id]
             _del_preds = del_preds[ex_id]
@@ -333,12 +319,12 @@ class RecBERTLM(LMModule):
                 n = 0
                 for i in range(_input_length):
                     if self._del_prob > 0 and _del_preds[i] != 0:
-                        _token = '{del:%s}' % _output_tokens[i + n]
+                        _token = "{del:%s}" % _output_tokens[i + n]
                         _output_tokens[i + n] = _token
                     if self._add_prob > 0 and _add_preds[i] != 0:
                         _token = self.tokenizer.convert_ids_to_tokens(
                             [_add_preds[i]])[0]
-                        _token = '{add:%s}' % _token
+                        _token = "{add:%s}" % _token
                         _output_tokens.insert(i + 1 + n, _token)
                         n += 1
                 preds.append(_output_tokens)
@@ -354,20 +340,20 @@ class RecBERTLM(LMModule):
                         _end_ptr = _mapping_end[i] + n
                         _del_token = _text[_start_ptr: _end_ptr]
 
-                        _token = '{del:%s}' % _del_token
+                        _token = "{del:%s}" % _del_token
                         _text = _text[:_start_ptr] + _token + _text[_end_ptr:]
                         n += len(_token) - len(_del_token)
                     if self._add_prob > 0 and _add_preds[i] != 0:
                         _token = self.tokenizer.convert_ids_to_tokens(
                             [_add_preds[i]])[0]
-                        _token = '{add:%s}' % _token
+                        _token = "{add:%s}" % _token
                         _ptr = _mapping_end[i] + n
                         _text = _text[:_ptr] + _token + _text[_ptr:]
                         n += len(_token)
                 preds.append(_text)
 
         outputs = {}
-        outputs['preds'] = preds
+        outputs["preds"] = preds
 
         return outputs
 

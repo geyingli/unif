@@ -1,18 +1,4 @@
-# coding:=utf-8
-# Copyright 2021 Tencent. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-''' Sentence attention decoder. '''
+""" Sentence attention decoder. """
 
 import math
 
@@ -29,7 +15,7 @@ class SANetDecoder(BaseDecoder):
                  sa_mask,
                  label_ids,
                  sample_weight=None,
-                 scope='sanet',
+                 scope="sanet",
                  alpha=0.5,
                  hidden_dropout_prob=0.1,
                  initializer_range=0.02,
@@ -43,7 +29,7 @@ class SANetDecoder(BaseDecoder):
         hidden_size = shape[2]
         sa_mask = tf.reshape(sa_mask, [batch_size, seq_length, seq_length])
         with tf.variable_scope(scope):
-            with tf.variable_scope('sentence_attention'):
+            with tf.variable_scope("sentence_attention"):
                 (sa_output, _) = self.attention_layer(
                     from_tensor=input_tensor,
                     to_tensor=input_tensor,
@@ -60,14 +46,14 @@ class SANetDecoder(BaseDecoder):
                     to_max_seq_length=seq_length,
                     trainable=trainable)
 
-            with tf.variable_scope('cls/mrc'):
+            with tf.variable_scope("cls/mrc"):
                 output_weights = tf.get_variable(
-                    'output_weights',
+                    "output_weights",
                     shape=[2, hidden_size],
                     initializer=util.create_initializer(initializer_range),
                     trainable=trainable)
                 output_bias = tf.get_variable(
-                    'output_bias',
+                    "output_bias",
                     shape=[2],
                     initializer=tf.zeros_initializer(),
                     trainable=trainable)
@@ -78,9 +64,9 @@ class SANetDecoder(BaseDecoder):
             logits = tf.nn.bias_add(logits, output_bias)
             logits = tf.reshape(logits, [-1, seq_length, 2])
             logits = tf.transpose(logits, [0, 2, 1])
-            probs = tf.nn.softmax(logits, axis=-1, name='probs')
-            self._tensors['probs'] = probs
-            self._tensors['preds'] = tf.argmax(logits, axis=-1)
+            probs = tf.nn.softmax(logits, axis=-1, name="probs")
+            self._tensors["probs"] = probs
+            self._tensors["preds"] = tf.argmax(logits, axis=-1)
 
             start_one_hot_labels = tf.one_hot(
                 label_ids[:, 0], depth=seq_length, dtype=tf.float32)
@@ -97,7 +83,7 @@ class SANetDecoder(BaseDecoder):
                 per_example_loss *= sample_weight
 
             self.total_loss = tf.reduce_mean(per_example_loss)
-            self._tensors['losses'] = per_example_loss
+            self._tensors["losses"] = per_example_loss
 
     def attention_layer(self,
                         from_tensor,
@@ -140,7 +126,7 @@ class SANetDecoder(BaseDecoder):
             from_tensor_2d,
             num_attention_heads * size_per_head,
             activation=query_act,
-            name='query',
+            name="query",
             kernel_initializer=util.create_initializer(initializer_range),
             trainable=trainable)
 
@@ -149,7 +135,7 @@ class SANetDecoder(BaseDecoder):
             to_tensor_2d,
             num_attention_heads * size_per_head,
             activation=key_act,
-            name='key',
+            name="key",
             kernel_initializer=util.create_initializer(initializer_range),
             trainable=trainable)
 
@@ -158,7 +144,7 @@ class SANetDecoder(BaseDecoder):
             to_tensor_2d,
             num_attention_heads * size_per_head,
             activation=value_act,
-            name='value',
+            name="value",
             kernel_initializer=util.create_initializer(initializer_range),
             trainable=trainable)
 
@@ -172,7 +158,7 @@ class SANetDecoder(BaseDecoder):
             key_layer, batch_size, num_attention_heads,
             to_max_seq_length, size_per_head)
 
-        # Take the dot product between 'query' and 'key' to get the raw
+        # Take the dot product between "query" and "key" to get the raw
         # attention scores.
         # attention_scores = [B, N, F, T]
         attention_scores = tf.matmul(query_layer, key_layer, transpose_b=True)

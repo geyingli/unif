@@ -1,18 +1,4 @@
-# coding:=utf-8
-# Copyright 2021 Tencent. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the 'License');
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an 'AS IS' BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-''' Conditional Random Field (CRF). '''
+""" Conditional Random Field (CRF). """
 
 import numpy as np
 
@@ -32,7 +18,7 @@ class CRFDecoder(BaseDecoder):
                  label_ids,
                  label_size=5,
                  sample_weight=None,
-                 scope='cls/sequence',
+                 scope="cls/sequence",
                  hidden_dropout_prob=0.1,
                  initializer_range=0.02,
                  trainable=True,
@@ -43,12 +29,12 @@ class CRFDecoder(BaseDecoder):
         hidden_size = input_tensor.shape.as_list()[-1]
         with tf.variable_scope(scope):
             output_weights = tf.get_variable(
-                'output_weights',
+                "output_weights",
                 shape=[label_size, hidden_size],
                 initializer=util.create_initializer(initializer_range),
                 trainable=trainable)
             output_bias = tf.get_variable(
-                'output_bias',
+                "output_bias",
                 shape=[label_size],
                 initializer=tf.zeros_initializer(),
                 trainable=trainable)
@@ -61,7 +47,7 @@ class CRFDecoder(BaseDecoder):
             logits = tf.nn.bias_add(logits, output_bias)
             logits = tf.reshape(logits, [-1, seq_length, label_size])
 
-            with tf.variable_scope('crf'):
+            with tf.variable_scope("crf"):
                 input_length = tf.reduce_sum(input_mask, axis=-1)
                 per_example_loss, transition_matrix = crf_log_likelihood(
                     input_tensor=logits,
@@ -72,17 +58,17 @@ class CRFDecoder(BaseDecoder):
                     per_example_loss *= tf.cast(
                         sample_weight, dtype=tf.float32)
                 self.total_loss = tf.reduce_mean(per_example_loss)
-                self._tensors['losses'] = per_example_loss
-                self._tensors['preds'] = tf.argmax(logits, axis=-1)
-                self._tensors['logits'] = logits
-                self._tensors['transition_matrix'] = transition_matrix
+                self._tensors["losses"] = per_example_loss
+                self._tensors["preds"] = tf.argmax(logits, axis=-1)
+                self._tensors["logits"] = logits
+                self._tensors["transition_matrix"] = transition_matrix
 
 
 def crf_log_likelihood(input_tensor,
                        tag_indices,
                        sequence_lengths,
                        transition_params=None):
-    ''' Computes the log-likelihood of tag sequences in a CRF.
+    """ Computes the log-likelihood of tag sequences in a CRF.
 
     Args:
         input_tensor: A [batch_size, max_seq_len, num_tags] tensor of unary
@@ -97,14 +83,14 @@ def crf_log_likelihood(input_tensor,
           each example, given the sequence of tag indices.
         transition_params: A [num_tags, num_tags] transition matrix. This is either
           provided by the caller or created in this function.
-    '''
+    """
     # Get shape information.
     num_tags = util.get_shape_list(input_tensor)[2]
 
     # Get the transition matrix if not provided.
     if transition_params is None:
         transition_params = tf.get_variable(
-            'transitions', [num_tags, num_tags])
+            "transitions", [num_tags, num_tags])
 
     sequence_scores = crf_sequence_score(
         input_tensor, tag_indices, sequence_lengths,
@@ -118,7 +104,7 @@ def crf_log_likelihood(input_tensor,
 
 def crf_sequence_score(inputs, tag_indices, sequence_lengths,
                        transition_params):
-    ''' Computes the unnormalized score for a tag sequence.
+    """ Computes the unnormalized score for a tag sequence.
 
     Args:
         inputs: A [batch_size, max_seq_len, num_tags] tensor of unary
@@ -130,7 +116,7 @@ def crf_sequence_score(inputs, tag_indices, sequence_lengths,
 
     Returns:
         sequence_scores: A [batch_size] vector of unnormalized sequence scores.
-    '''
+    """
     # If max_seq_len is 1, we skip the score calculation and simply gather the
     # unary potentials of the single tag.
     def _single_seq_fn():
@@ -161,7 +147,7 @@ def crf_sequence_score(inputs, tag_indices, sequence_lengths,
 
 
 def crf_unary_score(tag_indices, sequence_lengths, inputs):
-    ''' Computes the unary scores of tag sequences.
+    """ Computes the unary scores of tag sequences.
 
     Args:
       tag_indices: A [batch_size, max_seq_len] matrix of tag indices.
@@ -170,7 +156,7 @@ def crf_unary_score(tag_indices, sequence_lengths, inputs):
 
     Returns:
       unary_scores: A [batch_size] vector of unary scores.
-    '''
+    """
     batch_size = tf.shape(inputs)[0]
     max_seq_len = tf.shape(inputs)[1]
     num_tags = tf.shape(inputs)[2]
@@ -180,7 +166,7 @@ def crf_unary_score(tag_indices, sequence_lengths, inputs):
     offsets = tf.expand_dims(
         tf.range(batch_size) * max_seq_len * num_tags, 1)
     offsets += tf.expand_dims(tf.range(max_seq_len) * num_tags, 0)
-    # Use int32 or int64 based on tag_indices' dtype.
+    # Use int32 or int64 based on tag_indices" dtype.
     if tag_indices.dtype == tf.int64:
         offsets = tf.cast(offsets, tf.int64)
     flattened_tag_indices = tf.reshape(offsets + tag_indices, [-1])
@@ -198,7 +184,7 @@ def crf_unary_score(tag_indices, sequence_lengths, inputs):
 
 
 def crf_binary_score(tag_indices, sequence_lengths, transition_params):
-    ''' Computes the binary scores of tag sequences.
+    """ Computes the binary scores of tag sequences.
 
     Args:
       tag_indices: A [batch_size, max_seq_len] matrix of tag indices.
@@ -207,7 +193,7 @@ def crf_binary_score(tag_indices, sequence_lengths, transition_params):
 
     Returns:
       binary_scores: A [batch_size] vector of binary scores.
-    '''
+    """
     # Get shape information.
     num_tags = transition_params.get_shape()[0]
     num_transitions = tf.shape(tag_indices)[1] - 1
@@ -236,7 +222,7 @@ def crf_binary_score(tag_indices, sequence_lengths, transition_params):
 
 
 def crf_log_norm(inputs, sequence_lengths, transition_params):
-    ''' Computes the normalization for a CRF.
+    """ Computes the normalization for a CRF.
 
     Args:
         inputs: A [batch_size, max_seq_len, num_tags] tensor of unary potentials
@@ -246,14 +232,14 @@ def crf_log_norm(inputs, sequence_lengths, transition_params):
 
     Returns:
         log_norm: A [batch_size] vector of normalizers for a CRF.
-    '''
+    """
     # Split up the first and rest of the inputs in preparation for the forward
     # algorithm.
     first_input = tf.slice(inputs, [0, 0, 0], [-1, 1, -1])
     first_input = tf.squeeze(first_input, [1])
 
     # If max_seq_len is 1, we skip the algorithm and simply reduce_logsumexp
-    # over the 'initial state' (the unary potentials).
+    # over the "initial state" (the unary potentials).
     def _single_seq_fn():
       log_norm = tf.reduce_logsumexp(first_input, [1])
       # Mask `log_norm` of the sequences with length <= zero.
@@ -263,7 +249,7 @@ def crf_log_norm(inputs, sequence_lengths, transition_params):
       return log_norm
 
     def _multi_seq_fn():
-      '''Forward computation of alpha values.'''
+      """Forward computation of alpha values."""
       rest_of_input = tf.slice(inputs, [0, 1, 0], [-1, -1, -1])
 
       # Compute the alpha values in the forward algorithm in order to get the
@@ -294,19 +280,19 @@ def crf_log_norm(inputs, sequence_lengths, transition_params):
 
 
 class CrfForwardRnnCell(rnn_cell.RNNCell):
-  ''' Computes the alpha values in a linear-chain CRF.
+  """ Computes the alpha values in a linear-chain CRF.
 
   See http://www.cs.columbia.edu/~mcollins/fb.pdf for reference.
-  '''
+  """
 
   def __init__(self, transition_params):
-    '''Initialize the CrfForwardRnnCell.
+    """Initialize the CrfForwardRnnCell.
 
     Args:
       transition_params: A [num_tags, num_tags] matrix of binary potentials.
           This matrix is expanded into a [1, num_tags, num_tags] in preparation
           for the broadcast summation occurring within the cell.
-    '''
+    """
     self._transition_params = tf.expand_dims(transition_params, 0)
     self._num_tags = util.get_shape_list(transition_params)[0]
 
@@ -319,7 +305,7 @@ class CrfForwardRnnCell(rnn_cell.RNNCell):
       return self._num_tags
 
   def __call__(self, inputs, state, scope=None):
-      ''' Build the CrfForwardRnnCell.
+      """ Build the CrfForwardRnnCell.
 
       Args:
           inputs: A [batch_size, num_tags] matrix of unary potentials.
@@ -330,7 +316,7 @@ class CrfForwardRnnCell(rnn_cell.RNNCell):
       Returns:
           new_alphas, new_alphas: A pair of [batch_size, num_tags] matrices
             values containing the new alpha values.
-      '''
+      """
       state = tf.expand_dims(state, 2)
 
       # This addition op broadcasts self._transitions_params along the zeroth
@@ -349,7 +335,7 @@ class CrfForwardRnnCell(rnn_cell.RNNCell):
 
 
 def viterbi_decode(score, transition_params):
-    ''' Decode the highest scoring sequence of tags outside of TensorFlow.
+    """ Decode the highest scoring sequence of tags outside of TensorFlow.
 
     This should only be used at test time.
 
@@ -361,7 +347,7 @@ def viterbi_decode(score, transition_params):
       viterbi: A [seq_len] list of integers containing the highest scoring tag
           indices.
       viterbi_score: A float containing the score for the Viterbi sequence.
-    '''
+    """
     trellis = np.zeros_like(score)
     backpointers = np.zeros_like(score, dtype=np.int32)
     trellis[0] = score[0]

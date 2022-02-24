@@ -1,18 +1,4 @@
-# coding:=utf-8
-# Copyright 2021 Tencent. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-''' Applications based on RoBERTa. '''
+""" Applications based on RoBERTa. """
 
 import numpy as np
 
@@ -28,27 +14,27 @@ from .. import utils
 
 
 class RoBERTaClassifier(BERTClassifier, ClassifierModule):
-    ''' Single-label classifier on RoBERTa. '''
+    """ Single-label classifier on RoBERTa. """
     _INFER_ATTRIBUTES = BERTClassifier._INFER_ATTRIBUTES
 
 
 class RoBERTaBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
-    ''' Multi-label classifier on RoBERTa. '''
+    """ Multi-label classifier on RoBERTa. """
     _INFER_ATTRIBUTES = BERTBinaryClassifier._INFER_ATTRIBUTES
 
 
 class RoBERTaSeqClassifier(BERTSeqClassifier, ClassifierModule):
-    ''' Sequence labeling classifier on RoBERTa. '''
+    """ Sequence labeling classifier on RoBERTa. """
     _INFER_ATTRIBUTES = BERTSeqClassifier._INFER_ATTRIBUTES
 
 
 class RoBERTaMRC(BERTMRC, MRCModule):
-    ''' Machine reading comprehension on RoBERTa. '''
+    """ Machine reading comprehension on RoBERTa. """
     _INFER_ATTRIBUTES = BERTMRC._INFER_ATTRIBUTES
 
 
 class RoBERTaLM(BERTLM, LMModule):
-    ''' Language modeling on RoBERTa. '''
+    """ Language modeling on RoBERTa. """
     _INFER_ATTRIBUTES = BERTLM._INFER_ATTRIBUTES
 
     def __init__(self,
@@ -63,7 +49,7 @@ class RoBERTaLM(BERTLM, LMModule):
                  masked_lm_prob=0.15,
                  do_whole_word_mask=True,
                  do_lower_case=True,
-                 truncate_method='LIFO'):
+                 truncate_method="LIFO"):
         super(LMModule, self).__init__(
             init_checkpoint, output_dir, gpu_ids)
 
@@ -82,21 +68,21 @@ class RoBERTaLM(BERTLM, LMModule):
         self._key_to_depths = get_key_to_depths(
             self.bert_config.num_hidden_layers)
 
-        if '[CLS]' not in self.tokenizer.vocab:
-            self.tokenizer.add('[CLS]')
+        if "[CLS]" not in self.tokenizer.vocab:
+            self.tokenizer.add("[CLS]")
             self.bert_config.vocab_size += 1
-            tf.logging.info('Add necessary token `[CLS]` into vocabulary.')
-        if '[SEP]' not in self.tokenizer.vocab:
-            self.tokenizer.add('[SEP]')
+            tf.logging.info("Add necessary token `[CLS]` into vocabulary.")
+        if "[SEP]" not in self.tokenizer.vocab:
+            self.tokenizer.add("[SEP]")
             self.bert_config.vocab_size += 1
-            tf.logging.info('Add necessary token `[SEP]` into vocabulary.')
+            tf.logging.info("Add necessary token `[SEP]` into vocabulary.")
 
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
                 is_training=False, is_parallel=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
 
         assert y is None, (
-            'Training of %s is unsupervised. `y` should be None.'
+            "Training of %s is unsupervised. `y` should be None."
             % self.__class__.__name__)
 
         n_inputs = None
@@ -111,16 +97,16 @@ class RoBERTaLM(BERTLM, LMModule):
                 self._convert_X(X_tokenized if tokenized else X,
                                 is_training, tokenized=tokenized)
 
-            data['input_ids'] = np.array(input_ids, dtype=np.int32)
-            data['input_mask'] = np.array(input_mask, dtype=np.int32)
-            data['segment_ids'] = np.array(segment_ids, dtype=np.int32)
-            data['masked_lm_positions'] = \
+            data["input_ids"] = np.array(input_ids, dtype=np.int32)
+            data["input_mask"] = np.array(input_mask, dtype=np.int32)
+            data["segment_ids"] = np.array(segment_ids, dtype=np.int32)
+            data["masked_lm_positions"] = \
                 np.array(masked_lm_positions, dtype=np.int32)
 
             if is_training:
-                data['masked_lm_ids'] = \
+                data["masked_lm_ids"] = \
                     np.array(masked_lm_ids, dtype=np.int32)
-                data['masked_lm_weights'] = \
+                data["masked_lm_weights"] = \
                     np.array(masked_lm_weights, dtype=np.float32)
 
             n_inputs = len(input_ids)
@@ -131,7 +117,7 @@ class RoBERTaLM(BERTLM, LMModule):
         if is_training or y:
             sample_weight = self._convert_sample_weight(
                 sample_weight, n_inputs)
-            data['sample_weight'] = np.array(sample_weight, dtype=np.float32)
+            data["sample_weight"] = np.array(sample_weight, dtype=np.float32)
 
         return data
 
@@ -145,7 +131,7 @@ class RoBERTaLM(BERTLM, LMModule):
                     self._convert_x(example, tokenized))
             except Exception:
                 raise ValueError(
-                    'Wrong input format (line %d): \'%s\'. '
+                    "Wrong input format (line %d): \"%s\". "
                     % (ex_id, example))
 
         input_ids = []
@@ -171,7 +157,7 @@ class RoBERTaLM(BERTLM, LMModule):
             segment_input_tokens = new_segment_input_tokens
 
         for ex_id, segments in enumerate(segment_input_tokens):
-            _input_tokens = ['[CLS]']
+            _input_tokens = ["[CLS]"]
             _input_ids = []
             _input_mask = [1]
             _segment_ids = [0]
@@ -185,7 +171,7 @@ class RoBERTaLM(BERTLM, LMModule):
 
             for s_id, segment in enumerate(segments):
                 _segment_id = min(s_id, 1)
-                _input_tokens.extend(segment + ['[SEP]'])
+                _input_tokens.extend(segment + ["[SEP]"])
                 _input_mask.extend([1] * (len(segment) + 1))
                 _segment_ids.extend([_segment_id] * (len(segment) + 1))
 
@@ -193,7 +179,7 @@ class RoBERTaLM(BERTLM, LMModule):
             if is_training:
                 if (ex_id + 1) % 10000 == 0:
                     tf.logging.info(
-                        'Sampling masks of input %d' % (ex_id + 1))
+                        "Sampling masks of input %d" % (ex_id + 1))
                 (_input_tokens, _masked_lm_positions, _masked_lm_labels) = \
                     create_masked_lm_predictions(
                         tokens=_input_tokens,
@@ -215,7 +201,7 @@ class RoBERTaLM(BERTLM, LMModule):
                 # `masked_lm_positions` is required for both training
                 # and inference of BERT language modeling.
                 for i in range(len(_input_tokens)):
-                    if _input_tokens[i] == '[MASK]':
+                    if _input_tokens[i] == "[MASK]":
                         _masked_lm_positions.append(i)
 
                 # padding
@@ -243,29 +229,29 @@ class RoBERTaLM(BERTLM, LMModule):
 
     def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
-            'input_ids': utils.get_placeholder(
-                target, 'input_ids',
+            "input_ids": utils.get_placeholder(
+                target, "input_ids",
                 [None, self.max_seq_length], tf.int32),
-            'input_mask': utils.get_placeholder(
-                target, 'input_mask',
+            "input_mask": utils.get_placeholder(
+                target, "input_mask",
                 [None, self.max_seq_length], tf.int32),
-            'segment_ids': utils.get_placeholder(
-                target, 'segment_ids',
+            "segment_ids": utils.get_placeholder(
+                target, "segment_ids",
                 [None, self.max_seq_length], tf.int32),
-            'masked_lm_positions': utils.get_placeholder(
-                target, 'masked_lm_positions',
+            "masked_lm_positions": utils.get_placeholder(
+                target, "masked_lm_positions",
                 [None, self._max_predictions_per_seq], tf.int32),
-            'masked_lm_ids': utils.get_placeholder(
-                target, 'masked_lm_ids',
+            "masked_lm_ids": utils.get_placeholder(
+                target, "masked_lm_ids",
                 [None, self._max_predictions_per_seq], tf.int32),
-            'masked_lm_weights': utils.get_placeholder(
-                target, 'masked_lm_weights',
+            "masked_lm_weights": utils.get_placeholder(
+                target, "masked_lm_weights",
                 [None, self._max_predictions_per_seq], tf.float32),
         }
         if not on_export:
-            self.placeholders['sample_weight'] = \
+            self.placeholders["sample_weight"] = \
                 utils.get_placeholder(
-                    target, 'sample_weight',
+                    target, "sample_weight",
                     [None], tf.float32)
 
     def _forward(self, is_training, split_placeholders, **kwargs):
@@ -273,30 +259,30 @@ class RoBERTaLM(BERTLM, LMModule):
         encoder = BERTEncoder(
             bert_config=self.bert_config,
             is_training=is_training,
-            input_ids=split_placeholders['input_ids'],
-            input_mask=split_placeholders['input_mask'],
-            segment_ids=split_placeholders['segment_ids'],
-            scope='bert',
+            input_ids=split_placeholders["input_ids"],
+            input_mask=split_placeholders["input_mask"],
+            segment_ids=split_placeholders["segment_ids"],
+            scope="bert",
             drop_pooler=self._drop_pooler,
             **kwargs)
         decoder = BERTDecoder(
             bert_config=self.bert_config,
             is_training=is_training,
             encoder=encoder,
-            masked_lm_positions=split_placeholders['masked_lm_positions'],
-            masked_lm_ids=split_placeholders['masked_lm_ids'],
-            masked_lm_weights=split_placeholders['masked_lm_weights'],
-            sample_weight=split_placeholders.get('sample_weight'),
-            scope_lm='cls/predictions',
+            masked_lm_positions=split_placeholders["masked_lm_positions"],
+            masked_lm_ids=split_placeholders["masked_lm_ids"],
+            masked_lm_weights=split_placeholders["masked_lm_weights"],
+            sample_weight=split_placeholders.get("sample_weight"),
+            scope_lm="cls/predictions",
             **kwargs)
         return decoder.get_forward_outputs()
 
     def _get_fit_ops(self, as_feature=False):
-        ops = [self._tensors['MLM_preds'], self._tensors['MLM_losses']]
+        ops = [self._tensors["MLM_preds"], self._tensors["MLM_losses"]]
         if as_feature:
             ops.extend(
-                [self.placeholders['masked_lm_positions'],
-                 self.placeholders['masked_lm_ids']])
+                [self.placeholders["masked_lm_positions"],
+                 self.placeholders["masked_lm_ids"]])
         return ops
 
     def _get_fit_info(self, output_arrays, feed_dict, as_feature=False):
@@ -306,9 +292,9 @@ class RoBERTaLM(BERTLM, LMModule):
             batch_mlm_labels = output_arrays[-1]
         else:
             batch_mlm_positions = \
-                feed_dict[self.placeholders['masked_lm_positions']]
+                feed_dict[self.placeholders["masked_lm_positions"]]
             batch_mlm_labels = \
-                feed_dict[self.placeholders['masked_lm_ids']]
+                feed_dict[self.placeholders["masked_lm_ids"]]
 
         # MLM accuracy
         batch_mlm_preds = output_arrays[0]
@@ -321,14 +307,14 @@ class RoBERTaLM(BERTLM, LMModule):
         batch_mlm_losses = output_arrays[1]
         mlm_loss = np.mean(batch_mlm_losses)
 
-        info = ''
-        info += ', MLM accuracy %.4f' % mlm_accuracy
-        info += ', MLM loss %.6f' % mlm_loss
+        info = ""
+        info += ", MLM accuracy %.4f" % mlm_accuracy
+        info += ", MLM loss %.6f" % mlm_loss
 
         return info
 
     def _get_predict_ops(self):
-        return [self._tensors['MLM_preds']]
+        return [self._tensors["MLM_preds"]]
 
     def _get_predict_outputs(self, batch_outputs):
         n_inputs = len(list(self.data.values())[0])
@@ -336,7 +322,7 @@ class RoBERTaLM(BERTLM, LMModule):
 
         # MLM preds
         mlm_preds = []
-        mlm_positions = self.data['masked_lm_positions']
+        mlm_positions = self.data["masked_lm_positions"]
         all_preds = utils.transform(output_arrays[0], n_inputs)
         for ex_id, _preds in enumerate(all_preds):
             _ids = []
@@ -347,7 +333,7 @@ class RoBERTaLM(BERTLM, LMModule):
             mlm_preds.append(self.tokenizer.convert_ids_to_tokens(_ids))
 
         outputs = {}
-        outputs['mlm_preds'] = mlm_preds
+        outputs["mlm_preds"] = mlm_preds
 
         return outputs
 

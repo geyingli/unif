@@ -1,18 +1,4 @@
-# coding:=utf-8
-# Copyright 2021 Tencent. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-''' TinyBERT, a distillation model of BERT. '''
+""" TinyBERT, a distillation model of BERT. """
 
 from ..tools import tf
 from .bert import BERTEncoder
@@ -30,7 +16,7 @@ class TinyBERTCLSDistillor(BaseDecoder):
                  segment_ids,
                  label_ids=None,
                  sample_weight=None,
-                 scope='bert',
+                 scope="bert",
                  dtype=tf.float32,
                  drop_pooler=False,
                  label_size=2,
@@ -42,13 +28,13 @@ class TinyBERTCLSDistillor(BaseDecoder):
         def _get_logits(pooled_output, hidden_size, scope, trainable):
             with tf.variable_scope(scope):
                 output_weights = tf.get_variable(
-                    'output_weights',
+                    "output_weights",
                     shape=[label_size, hidden_size],
                     initializer=util.create_initializer(
                         bert_config.initializer_range),
                     trainable=trainable)
                 output_bias = tf.get_variable(
-                    'output_bias',
+                    "output_bias",
                     shape=[label_size],
                     initializer=tf.zeros_initializer(),
                     trainable=trainable)
@@ -65,14 +51,14 @@ class TinyBERTCLSDistillor(BaseDecoder):
             input_ids=input_ids,
             input_mask=input_mask,
             segment_ids=segment_ids,
-            scope='tiny/bert',
+            scope="tiny/bert",
             use_tilda_embedding=use_tilda_embedding,
             drop_pooler=drop_pooler,
             trainable=True,
             **kwargs)
         student_logits = _get_logits(
             student.get_pooled_output(),
-            student_config.hidden_size, 'tiny/cls/seq_relationship', True)
+            student_config.hidden_size, "tiny/cls/seq_relationship", True)
 
         if is_training:
             teacher = BERTEncoder(
@@ -88,7 +74,7 @@ class TinyBERTCLSDistillor(BaseDecoder):
                 **kwargs)
             teacher_logits = _get_logits(
                 teacher.get_pooled_output(),
-                bert_config.hidden_size, 'cls/seq_relationship', False)
+                bert_config.hidden_size, "cls/seq_relationship", False)
 
             # embedding loss
             embedding_loss = self._get_embedding_loss(
@@ -110,7 +96,7 @@ class TinyBERTCLSDistillor(BaseDecoder):
             distill_loss = (embedding_loss + attention_loss +
                             hidden_loss + pred_loss)
             self.total_loss = distill_loss
-            self._tensors['losses'] = tf.reshape(distill_loss, [1])
+            self._tensors["losses"] = tf.reshape(distill_loss, [1])
 
         else:
             self._infer(student_logits, label_ids, sample_weight, label_size)
@@ -119,7 +105,7 @@ class TinyBERTCLSDistillor(BaseDecoder):
         teacher_embedding = teacher.get_embedding_output()
         teacher_embedding = tf.stop_gradient(teacher_embedding)
         student_embedding = student.get_embedding_output()
-        with tf.variable_scope('embedding_loss'):
+        with tf.variable_scope("embedding_loss"):
             linear_trans = tf.layers.dense(
                 student_embedding,
                 bert_config.hidden_size,
@@ -170,7 +156,7 @@ class TinyBERTCLSDistillor(BaseDecoder):
         num_student_hidden_layers = student_config.num_hidden_layers
         num_projections = int(
             num_teacher_hidden_layers / num_student_hidden_layers)
-        with tf.variable_scope('hidden_loss'):
+        with tf.variable_scope("hidden_loss"):
             hidden_losses = []
             for i in range(num_student_hidden_layers):
                 if sample_weight is not None:
@@ -207,9 +193,9 @@ class TinyBERTCLSDistillor(BaseDecoder):
         return pred_loss
 
     def _infer(self, student_logits, label_ids, sample_weight, label_size):
-        probs = tf.nn.softmax(student_logits, axis=-1, name='probs')
-        self._tensors['probs'] = probs
-        self._tensors['preds'] = tf.argmax(probs, axis=-1, name='preds')
+        probs = tf.nn.softmax(student_logits, axis=-1, name="probs")
+        self._tensors["probs"] = probs
+        self._tensors["preds"] = tf.argmax(probs, axis=-1, name="preds")
 
         if label_ids is not None:
             log_probs = tf.nn.log_softmax(student_logits, axis=-1)
@@ -221,15 +207,15 @@ class TinyBERTCLSDistillor(BaseDecoder):
                 per_example_loss = tf.cast(
                     sample_weight, dtype=tf.float32) * per_example_loss
 
-            self._tensors['losses'] = per_example_loss
+            self._tensors["losses"] = per_example_loss
 
 
 class TinyBERTBinaryCLSDistillor(TinyBERTCLSDistillor):
 
     def _infer(self, student_logits, label_ids, sample_weight, label_size):
-        probs = tf.nn.sigmoid(student_logits, name='probs')
-        self._tensors['probs'] = probs
-        self._tensors['preds'] = tf.greater(probs, 0.5, name='preds')
+        probs = tf.nn.sigmoid(student_logits, name="probs")
+        self._tensors["probs"] = probs
+        self._tensors["preds"] = tf.greater(probs, 0.5, name="preds")
 
         if label_ids is not None:
             per_label_loss = tf.nn.sigmoid_cross_entropy_with_logits(
@@ -239,4 +225,4 @@ class TinyBERTBinaryCLSDistillor(TinyBERTCLSDistillor):
             if sample_weight is not None:
                 per_example_loss *= sample_weight
 
-            self._tensors['losses'] = per_example_loss
+            self._tensors["losses"] = per_example_loss

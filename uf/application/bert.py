@@ -5,7 +5,7 @@ import random
 import collections
 import numpy as np
 
-from ..tools import tf
+from ..thirdparty import tf
 from .base import ClassifierModule, LMModule, NERModule, MRCModule
 from ..modeling.bert import BERTEncoder, BERTDecoder, BERTConfig
 from ..modeling.base import (

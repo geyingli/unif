@@ -1,7 +1,7 @@
 """ UniLM, a unified model of bidirectional modeling, unidirectional modeling
 and sequence-to-sequence modeling. """
 
-from ..tools import tf
+from ..thirdparty import tf
 from .base import BaseEncoder
 from .bert import BERTEncoder
 

@@ -2,7 +2,7 @@
 
 import collections
 
-from ..tools import tf
+from ..thirdparty import tf
 from . import util
 
 

@@ -5,7 +5,7 @@ import random
 import collections
 import numpy as np
 
-from ..tools import tf
+from ..thirdparty import tf
 from .base import LMModule
 from .bert import BERTLM, create_instances_from_document
 from ..modeling.unilm import UniLMEncoder

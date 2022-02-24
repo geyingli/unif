@@ -5,7 +5,7 @@
 
 import re
 
-from .tools import tf
+from .thirdparty import tf
 from . import utils
 
 

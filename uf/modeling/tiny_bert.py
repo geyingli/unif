@@ -1,6 +1,6 @@
 """ TinyBERT, a distillation model of BERT. """
 
-from ..tools import tf
+from ..thirdparty import tf
 from .bert import BERTEncoder
 from .base import BaseDecoder
 from . import util

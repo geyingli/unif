@@ -8,7 +8,7 @@ import copy
 import json
 import numpy as np
 
-from ..tools import tf
+from ..thirdparty import tf
 from .base import BaseEncoder, BaseDecoder
 from . import util
 

@@ -1,6 +1,6 @@
 import numpy as np
 
-from ..tools import tf
+from ..thirdparty import tf
 from .. import utils
 from .base import Training
 

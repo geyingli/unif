@@ -8,7 +8,7 @@ import collections
 import unicodedata
 
 from ..utils import is_whitespace, is_control, is_punctuation, is_chinese_char
-from ..tools import tf
+from ..thirdparty import tf
 
 
 def get_word_piece_tokenizer(vocab_file, do_lower_case=True):

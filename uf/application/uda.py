@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from ..tools import tf
+from ..thirdparty import tf
 from .base import ClassifierModule
 from .bert import BERTClassifier, get_bert_config, get_key_to_depths
 from ..modeling.bert import BERTEncoder

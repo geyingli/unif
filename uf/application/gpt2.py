@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from ..tools import tf
+from ..thirdparty import tf
 from .base import LMModule
 from ..modeling.gpt2 import GPT2
 from ..tokenization.word_piece import get_word_piece_tokenizer

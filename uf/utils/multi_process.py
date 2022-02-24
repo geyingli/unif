@@ -1,6 +1,6 @@
 import multiprocessing
 
-from ..tools import tf
+from ..thirdparty import tf
 
 NUM_PROCESSES = 1
 pool = None

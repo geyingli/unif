@@ -7,7 +7,7 @@ except Exception:
     pass
 from sys import stdout
 
-from ..tools import tf
+from ..thirdparty import tf
 
 
 RESOURCES = [

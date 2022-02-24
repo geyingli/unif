@@ -1,6 +1,6 @@
 """ Convolutional neural network on texture analysis. """
 
-from ..tools import tf
+from ..thirdparty import tf
 from .base import BaseEncoder
 from . import util
 

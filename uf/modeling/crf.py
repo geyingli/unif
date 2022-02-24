@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from ..tools import tf
+from ..thirdparty import tf
 from tensorflow.python.framework import smart_cond as smart
 from tensorflow.python.ops import rnn
 from tensorflow.python.ops import rnn_cell

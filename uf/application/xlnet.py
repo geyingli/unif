@@ -4,7 +4,7 @@ import os
 import random
 import numpy as np
 
-from ..tools import tf
+from ..thirdparty import tf
 from .base import ClassifierModule, LMModule
 from .bert import (
     BERTClassifier, BERTBinaryClassifier, BERTSeqClassifier, BERTLM)

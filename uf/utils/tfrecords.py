@@ -1,6 +1,6 @@
 import collections
 
-from ..tools import tf
+from ..thirdparty import tf
 
 BACKUP_DATA = "ex:"
 

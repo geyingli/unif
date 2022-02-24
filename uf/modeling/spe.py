@@ -2,11 +2,10 @@
 
 import copy
 
-from ..tools import tf
+from ..thirdparty import tf
 from .base import BaseEncoder
 from .bert import BERTEncoder
 from . import util
-
 
 
 class SPEEncoder(BERTEncoder, BaseEncoder):

@@ -1,7 +1,7 @@
 import re
 import numpy as np
 
-from ..tools import tf
+from ..thirdparty import tf
 
 
 def get_grad_and_param(variables, grads, param_name):

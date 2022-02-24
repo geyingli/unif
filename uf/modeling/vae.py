@@ -1,7 +1,7 @@
 """ The text generation model VAE we utilize in clustering, feature extraction
 and negative sample generation. """
 
-from ..tools import tf
+from ..thirdparty import tf
 from .base import BaseDecoder
 from .bert import BERTEncoder
 from . import util

@@ -3,7 +3,7 @@
 import os
 import numpy as np
 
-from ..tools import tf
+from ..thirdparty import tf
 from .base import ClassifierModule, MRCModule, LMModule
 from .bert import (
     BERTClassifier, BERTBinaryClassifier, BERTSeqClassifier, BERTMRC)

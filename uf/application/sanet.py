@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from ..tools import tf
+from ..thirdparty import tf
 from .base import MRCModule
 from .bert import BERTMRC, get_bert_config
 from .albert import get_albert_config

@@ -4,7 +4,7 @@ import os
 import copy
 import numpy as np
 
-from ..tools import tf
+from ..thirdparty import tf
 from .base import ClassifierModule
 from ..modeling.tiny_bert import TinyBERTCLSDistillor, TinyBERTBinaryCLSDistillor
 from .bert import BERTClassifier, BERTBinaryClassifier, get_bert_config

@@ -11,7 +11,7 @@ from .bert import (BERTClassifier, BERTBinaryClassifier, BERTSeqClassifier,
 from ..modeling.albert import ALBERTEncoder, ALBERTDecoder, ALBERTConfig
 from ..modeling.base import CLSDecoder, BinaryCLSDecoder, SeqCLSDecoder, MRCDecoder
 from ..tokenization.word_piece import get_word_piece_tokenizer
-from ..tools import tf
+from ..thirdparty import tf
 from .. import utils
 
 

@@ -9,7 +9,7 @@ import math
 import copy
 import numpy as np
 
-from ..tools import tf
+from ..thirdparty import tf
 from .bert import BERTEncoder
 from . import util
 

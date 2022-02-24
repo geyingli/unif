@@ -3,7 +3,7 @@ import re
 import json
 import collections
 
-from ..tools import tf
+from ..thirdparty import tf
 from .. import application
 
 

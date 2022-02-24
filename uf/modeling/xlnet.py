@@ -6,7 +6,7 @@
 import os
 import json
 
-from ..tools import tf
+from ..thirdparty import tf
 from .base import BaseEncoder, BaseDecoder
 from . import util
 

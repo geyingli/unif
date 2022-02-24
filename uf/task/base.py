@@ -5,7 +5,7 @@ import numpy as np
 import multiprocessing
 from abc import abstractmethod
 
-from ..tools import tf
+from ..thirdparty import tf
 from .. import utils
 
 

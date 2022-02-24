@@ -2,7 +2,7 @@
 
 import math
 
-from ..tools import tf
+from ..thirdparty import tf
 from .base import BaseDecoder
 from . import util
 

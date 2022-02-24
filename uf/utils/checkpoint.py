@@ -1,7 +1,7 @@
 import os
 import re
 
-from ..tools import tf
+from ..thirdparty import tf
 
 
 def get_checkpoint_path(ckpt_dir):

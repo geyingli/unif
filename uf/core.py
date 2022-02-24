@@ -5,7 +5,7 @@ import json
 import collections
 from abc import abstractmethod
 
-from .tools import tf
+from .thirdparty import tf
 from . import task
 from . import optimization
 from . import utils

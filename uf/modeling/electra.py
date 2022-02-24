@@ -7,7 +7,7 @@ import math
 import copy
 import collections
 
-from ..tools import tf
+from ..thirdparty import tf
 from .base import BaseDecoder
 from .bert import BERTConfig
 from . import util

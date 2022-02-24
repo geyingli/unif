@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from ..tools import tf
+from ..thirdparty import tf
 from .bert import BERTClassifier
 from .base import ClassifierModule
 from ..modeling.text_cnn import TextCNNEncoder

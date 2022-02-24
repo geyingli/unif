@@ -3,7 +3,7 @@
 import copy
 import numpy as np
 
-from ..tools import tf
+from ..thirdparty import tf
 from .base import ClassifierModule
 from .bert import BERTClassifier, get_bert_config
 from ..modeling.bert import BERTEncoder

@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from ..tools import tf
+from ..thirdparty import tf
 from .base import LMModule
 from .bert import (BERTLM, get_bert_config,
                    get_word_piece_tokenizer, get_key_to_depths,

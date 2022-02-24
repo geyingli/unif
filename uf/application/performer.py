@@ -1,6 +1,6 @@
 """ Applications based on Performer. """
 
-from ..tools import tf
+from ..thirdparty import tf
 from .base import ClassifierModule
 from .bert import (BERTClassifier,
                    get_bert_config,

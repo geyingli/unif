@@ -2,7 +2,7 @@ import os
 import logging
 import numpy as np
 
-from ..tools import tf
+from ..thirdparty import tf
 
 PACK_DIR = os.path.dirname(__file__)
 

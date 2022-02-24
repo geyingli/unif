@@ -12,17 +12,10 @@ from .. import common
 class TransformerMT(MTModule):
     """ Machine translation on Transformer. """
     _INFER_ATTRIBUTES = {
-        "source_max_seq_length": (
-            "An integer that defines max sequence length of source language "
-            "tokens, which typically equals `len(tokenize(segments)) + "
-            "len(segments)` + 1"),
-        "target_max_seq_length": (
-            "An integer that defines max sequence length of target language "
-            "tokens, which typically equals `len(tokenize(segments)) + "
-            "len(segments)` + 1"),
-        "init_checkpoint": (
-            "A string that directs to the checkpoint file used for "
-            "initialization")}
+        "source_max_seq_length": "An integer that defines max sequence length of source language tokens",
+        "target_max_seq_length": "An integer that defines max sequence length of target language tokens",
+        "init_checkpoint": "A string that directs to the checkpoint file used for initialization",
+    }
 
     def __init__(self,
                  vocab_file,

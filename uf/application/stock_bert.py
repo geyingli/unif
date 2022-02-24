@@ -13,13 +13,10 @@ from .. import common
 class StockBERTClassifier(BERTClassifier, ClassifierModule):
     """ Single-label classifier on Stock-BERT. """
     _INFER_ATTRIBUTES = {
-        "max_seq_length": (
-            "An integer that defines max length of input time spots"),
-        "max_unit_length": (
-            "An integer that defines max length of input sub-prices"),
-        "init_checkpoint": (
-            "A string that directs to the checkpoint file used for "
-            "initialization")}
+        "max_seq_length": "An integer that defines max length of input time spots",
+        "max_unit_length": "An integer that defines max length of input sub-prices",
+        "init_checkpoint": "A string that directs to the checkpoint file used for initialization",
+    }
 
     def __init__(self,
                  config_file,

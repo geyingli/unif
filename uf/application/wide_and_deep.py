@@ -16,16 +16,11 @@ from .. import common
 class WideAndDeepClassifier(BERTClassifier, ClassifierModule):
     """ Single-label classifier on Wide & Deep model with BERT. """
     _INFER_ATTRIBUTES = {
-        "max_seq_length": (
-            "An integer that defines max sequence length of input tokens, "
-            "which typically equals `len(tokenize(segments)) + "
-            "len(segments)` + 1"),
-        "label_size": (
-            "An integer that defines number of possible labels of outputs"),
-        "init_checkpoint": (
-            "A string that directs to the checkpoint file used for "
-            "initialization"),
-        "wide_features": "A list of possible values for `Wide` features (integer or string)"}
+        "max_seq_length": "An integer that defines max sequence length of input tokens",
+        "label_size": "An integer that defines number of possible labels of outputs",
+        "init_checkpoint": "A string that directs to the checkpoint file used for initialization",
+        "wide_features": "A list of possible values for `Wide` features (integer or string)",
+    }
 
     def __init__(self,
                  config_file,
@@ -271,14 +266,10 @@ class WideAndDeepClassifier(BERTClassifier, ClassifierModule):
 class WideAndDeepRegressor(WideAndDeepClassifier, RegressorModule):
     """ Single-label classifier on Wide & Deep model with BERT. """
     _INFER_ATTRIBUTES = {
-        "max_seq_length": (
-            "An integer that defines max sequence length of input tokens, "
-            "which typically equals `len(tokenize(segments)) + "
-            "len(segments)` + 1"),
-        "init_checkpoint": (
-            "A string that directs to the checkpoint file used for "
-            "initialization"),
-        "wide_features": "A list of possible values for `Wide` features (integer or string)"}
+        "max_seq_length": "An integer that defines max sequence length of input tokens",
+        "init_checkpoint": "A string that directs to the checkpoint file used for initialization",
+        "wide_features": "A list of possible values for `Wide` features (integer or string)",
+    }
 
     def __init__(self,
                  config_file,

@@ -17,15 +17,10 @@ from .. import common
 class BERTClassifier(ClassifierModule):
     """ Single-label classifier on BERT. """
     _INFER_ATTRIBUTES = {
-        "max_seq_length": (
-            "An integer that defines max sequence length of input tokens, "
-            "which typically equals `len(tokenize(segments)) + "
-            "len(segments)` + 1"),
-        "label_size": (
-            "An integer that defines number of possible labels of outputs"),
-        "init_checkpoint": (
-            "A string that directs to the checkpoint file used for "
-            "initialization")}
+        "max_seq_length": "An integer that defines max sequence length of input tokens",
+        "label_size": "An integer that defines number of possible labels of outputs",
+        "init_checkpoint": "A string that directs to the checkpoint file used for initialization",
+    }
 
     def __init__(self,
                  config_file,
@@ -749,13 +744,9 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
 class BERTNER(BERTClassifier, NERModule):
     """ Named entity recognition on BERT. """
     _INFER_ATTRIBUTES = {
-        "max_seq_length": (
-            "An integer that defines max sequence length of input tokens, "
-            "which typically equals `len(tokenize(segments)) + "
-            "len(segments)` + 1"),
-        "init_checkpoint": (
-            "A string that directs to the checkpoint file used for "
-            "initialization")}
+        "max_seq_length": "An integer that defines max sequence length of input tokens",
+        "init_checkpoint": "A string that directs to the checkpoint file used for initialization",
+    }
 
     def __init__(self,
                  config_file,
@@ -1270,15 +1261,10 @@ class BERTCRFNER(BERTNER, NERModule):
 class BERTCRFCascadeNER(BERTCRFNER, NERModule):
     """ Named entity recognization and classification on BERT with CRF. """
     _INFER_ATTRIBUTES = {
-        "max_seq_length": (
-            "An integer that defines max sequence length of input tokens, "
-            "which typically equals `len(tokenize(segments)) + "
-            "len(segments)` + 1"),
-        "entity_types": (
-            "A list of strings that defines possible types of entities."),
-        "init_checkpoint": (
-            "A string that directs to the checkpoint file used for "
-            "initialization")}
+        "max_seq_length": "An integer that defines max sequence length of input tokens",
+        "entity_types": "A list of strings that defines possible types of entities",
+        "init_checkpoint": "A string that directs to the checkpoint file used for initialization",
+    }
 
     def __init__(self,
                  config_file,
@@ -1600,13 +1586,9 @@ class BERTCRFCascadeNER(BERTCRFNER, NERModule):
 class BERTMRC(BERTClassifier, MRCModule):
     """ Machine reading comprehension on BERT. """
     _INFER_ATTRIBUTES = {
-        "max_seq_length": (
-            "An integer that defines max sequence length of input tokens, "
-            "which typically equals `len(tokenize(segments)) + "
-            "len(segments)` + 1"),
-        "init_checkpoint": (
-            "A string that directs to the checkpoint file used for "
-            "initialization")}
+        "max_seq_length": "An integer that defines max sequence length of input tokens",
+        "init_checkpoint": "A string that directs to the checkpoint file used for initialization",
+    }
 
     def __init__(self,
                  config_file,
@@ -2367,13 +2349,9 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
 class BERTLM(LMModule):
     """ Language modeling on BERT. """
     _INFER_ATTRIBUTES = {
-        "max_seq_length": (
-            "An integer that defines max sequence length of input tokens, "
-            "which typically equals `len(tokenize(segments)) + "
-            "len(segments)` + 1"),
-        "init_checkpoint": (
-            "A string that directs to the checkpoint file used for "
-            "initialization")}
+        "max_seq_length": "An integer that defines max sequence length of input tokens",
+        "init_checkpoint": "A string that directs to the checkpoint file used for initialization",
+    }
 
     def __init__(self,
                  config_file,

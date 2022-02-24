@@ -12,12 +12,9 @@ from .. import common
 class GPT2LM(LMModule):
     """ Language modeling on GPT-2. """
     _INFER_ATTRIBUTES = {
-        "max_seq_length": (
-            "An integer that defines max sequence length of input tokens, "
-            "which typically equals `len(tokenize(segments)) + 1"),
-        "init_checkpoint": (
-            "A string that directs to the checkpoint file used for "
-            "initialization")}
+        "max_seq_length": "An integer that defines max sequence length of input tokens",
+        "init_checkpoint": "A string that directs to the checkpoint file used for initialization",
+    }
 
     def __init__(self,
                  vocab_file,

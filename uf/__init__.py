@@ -1,5 +1,5 @@
 
-__version__ = "beta v2.9.5"
+__version__ = "v2.3.0"
 
 # loading models
 from .application import *

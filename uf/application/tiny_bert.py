@@ -8,7 +8,7 @@ from ..thirdparty import tf
 from .base import ClassifierModule
 from ..modeling.tiny_bert import TinyBERTCLSDistillor, TinyBERTBinaryCLSDistillor
 from .bert import BERTClassifier, BERTBinaryClassifier, get_bert_config
-from ..tokenization.word_piece import get_word_piece_tokenizer
+from ..tokenization import WordPieceTokenizer
 
 
 class TinyBERTClassifier(BERTClassifier, ClassifierModule):
@@ -40,7 +40,7 @@ class TinyBERTClassifier(BERTClassifier, ClassifierModule):
         self.__init_args__ = locals()
 
         self.bert_config = get_bert_config(config_file)
-        self.tokenizer = get_word_piece_tokenizer(vocab_file, do_lower_case)
+        self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
         self._key_to_depths = "unsupported"
 
         self.student_config = copy.deepcopy(self.bert_config)
@@ -183,7 +183,7 @@ class TinyBERTBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
         self.__init_args__ = locals()
 
         self.bert_config = get_bert_config(config_file)
-        self.tokenizer = get_word_piece_tokenizer(vocab_file, do_lower_case)
+        self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
         self._key_to_depths = "unsupported"
 
         self.student_config = copy.deepcopy(self.bert_config)

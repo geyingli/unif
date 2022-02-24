@@ -7,8 +7,8 @@ from .bert import BERTClassifier
 from .base import ClassifierModule
 from ..modeling.text_cnn import TextCNNEncoder
 from ..modeling.base import CLSDecoder
-from ..tokenization.word_piece import get_word_piece_tokenizer
-from .. import utils
+from ..tokenization import WordPieceTokenizer
+from .. import common
 
 
 class TextCNNClassifier(BERTClassifier, ClassifierModule):
@@ -40,7 +40,7 @@ class TextCNNClassifier(BERTClassifier, ClassifierModule):
         self._id_to_label = None
         self.__init_args__ = locals()
 
-        self.tokenizer = get_word_piece_tokenizer(vocab_file, do_lower_case)
+        self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
         self._key_to_depths = get_key_to_depths()
 
         if "[CLS]" not in self.tokenizer.vocab:
@@ -90,15 +90,15 @@ class TextCNNClassifier(BERTClassifier, ClassifierModule):
 
     def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
-            "input_ids": utils.get_placeholder(
+            "input_ids": common.get_placeholder(
                 target, "input_ids",
                 [None, self.max_seq_length], tf.int32),
-            "label_ids": utils.get_placeholder(
+            "label_ids": common.get_placeholder(
                 target, "label_ids", [None], tf.int32),
         }
         if not on_export:
             self.placeholders["sample_weight"] = \
-                utils.get_placeholder(
+                common.get_placeholder(
                     target, "sample_weight",
                     [None], tf.float32)
 

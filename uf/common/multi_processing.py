@@ -32,7 +32,7 @@ class MultiProcess:
         NUM_PROCESSES = 1
 
 
-def _parallel_convert_single_process(args):
+def parallel_convert_single_process(args):
     bucket_id = args[0]
     app_class = args[1]
     mapping = args[2]

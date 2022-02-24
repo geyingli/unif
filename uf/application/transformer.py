@@ -5,8 +5,8 @@ import numpy as np
 from ..thirdparty import tf
 from .base import MTModule
 from ..modeling.transformer import Transformer
-from ..tokenization.word_piece import get_word_piece_tokenizer
-from .. import utils
+from ..tokenization import WordPieceTokenizer
+from .. import common
 
 
 class TransformerMT(MTModule):
@@ -48,7 +48,7 @@ class TransformerMT(MTModule):
         self._num_attention_heads = num_attention_heads
         self.__init_args__ = locals()
 
-        self.tokenizer = get_word_piece_tokenizer(vocab_file, do_lower_case)
+        self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
         self._key_to_depths = get_key_to_depths(num_hidden_layers)
 
         if "<s>" not in self.tokenizer.vocab:
@@ -104,7 +104,7 @@ class TransformerMT(MTModule):
                     % (ex_id, example))
             _source_ids = self.tokenizer.convert_tokens_to_ids(_source_tokens)
 
-            utils.truncate_segments(
+            common.truncate_segments(
                 [_source_ids], self.source_max_seq_length,
                 truncate_method=self.truncate_method)
 
@@ -144,7 +144,7 @@ class TransformerMT(MTModule):
                     "single sentence inputs.")
                 _target_ids = self.tokenizer.convert_tokens_to_ids(_y)
 
-            utils.truncate_segments(
+            common.truncate_segments(
                 [_target_ids], self.target_max_seq_length - 2,
                 truncate_method=self.truncate_method)
             _target_ids = [sos_id] + _target_ids + [eos_id]
@@ -158,16 +158,16 @@ class TransformerMT(MTModule):
 
     def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
-            "source_ids": utils.get_placeholder(
+            "source_ids": common.get_placeholder(
                 target, "source_ids",
                 [None, self.source_max_seq_length], tf.int32),
-            "target_ids": utils.get_placeholder(
+            "target_ids": common.get_placeholder(
                 target, "target_ids",
                 [None, self.target_max_seq_length], tf.int32),
         }
         if not on_export:
             self.placeholders["sample_weight"] = \
-                utils.get_placeholder(
+                common.get_placeholder(
                     target, "sample_weight",
                     [None], tf.float32)
 
@@ -226,7 +226,7 @@ class TransformerMT(MTModule):
         output_arrays = list(zip(*batch_outputs))
 
         # preds
-        all_preds = utils.transform(output_arrays[0], n_inputs).tolist()
+        all_preds = common.transform(output_arrays[0], n_inputs).tolist()
         preds = []
         for _pred_ids in all_preds:
             _pred_tokens = self.tokenizer.convert_ids_to_tokens(_pred_ids)
@@ -234,7 +234,7 @@ class TransformerMT(MTModule):
                 if _pred_tokens[i] == "</s>":
                     _pred_tokens = _pred_tokens[:i]
                     break
-            _pred_text = utils.convert_tokens_to_text(_pred_tokens)
+            _pred_text = common.convert_tokens_to_text(_pred_tokens)
             preds.append(_pred_text)
 
         outputs = {}
@@ -250,7 +250,7 @@ class TransformerMT(MTModule):
         output_arrays = list(zip(*batch_outputs))
 
         # accuracy
-        preds = utils.transform(output_arrays[0], n_inputs)
+        preds = common.transform(output_arrays[0], n_inputs)
         target = self.data["target_ids"]
         labels = np.hstack(
             (target[:, 1:], np.zeros((n_inputs, 1))))
@@ -265,7 +265,7 @@ class TransformerMT(MTModule):
         rouge = self._get_rouge(preds, labels, mask)
 
         # loss
-        losses = utils.transform(output_arrays[1], n_inputs)
+        losses = common.transform(output_arrays[1], n_inputs)
         loss = np.mean(losses)
 
         outputs = {}

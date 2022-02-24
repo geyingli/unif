@@ -10,8 +10,8 @@ from .base import LMModule
 from .bert import BERTLM, create_instances_from_document
 from ..modeling.unilm import UniLMEncoder
 from ..modeling.bert import BERTDecoder, BERTConfig
-from ..tokenization.word_piece import get_word_piece_tokenizer
-from .. import utils
+from ..tokenization import WordPieceTokenizer
+from .. import common
 
 
 class UniLM(BERTLM, LMModule):
@@ -66,7 +66,7 @@ class UniLM(BERTLM, LMModule):
             "LM Mode: `%s`. Use method `.to_mode()` to convert it into "
             "`bi`, `l2r`, `r2l` or `s2s`." % mode)
         self.bert_config = get_bert_config(config_file)
-        self.tokenizer = get_word_piece_tokenizer(vocab_file, do_lower_case)
+        self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
         self._key_to_depths = get_key_to_depths(
             self.bert_config.num_hidden_layers)
 
@@ -223,7 +223,7 @@ class UniLM(BERTLM, LMModule):
             _masked_lm_ids = []
             _masked_lm_weights = []
 
-            utils.truncate_segments(
+            common.truncate_segments(
                 segments, self.max_seq_length - len(segments) - 1,
                 truncate_method=self.truncate_method)
 
@@ -388,7 +388,7 @@ class UniLM(BERTLM, LMModule):
         # MLM preds
         mlm_preds = []
         mlm_positions = self.data["masked_lm_positions"]
-        all_preds = utils.transform(output_arrays[0], n_inputs)
+        all_preds = common.transform(output_arrays[0], n_inputs)
         for ex_id, _preds in enumerate(all_preds):
             _ids = []
             for p_id, _id in enumerate(_preds):
@@ -403,10 +403,10 @@ class UniLM(BERTLM, LMModule):
         if self.mode == "bi":
 
             # NSP preds
-            nsp_preds = utils.transform(output_arrays[1], n_inputs).tolist()
+            nsp_preds = common.transform(output_arrays[1], n_inputs).tolist()
 
             # NSP probs
-            nsp_probs = utils.transform(output_arrays[2], n_inputs)
+            nsp_probs = common.transform(output_arrays[2], n_inputs)
 
             outputs["nsp_preds"] = nsp_preds
             outputs["nsp_probs"] = nsp_probs

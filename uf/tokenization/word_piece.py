@@ -7,21 +7,17 @@ import os
 import collections
 import unicodedata
 
-from ..utils import is_whitespace, is_control, is_punctuation, is_chinese_char
+from ..common import is_whitespace, is_control, is_punctuation, is_chinese_char
 from ..thirdparty import tf
-
-
-def get_word_piece_tokenizer(vocab_file, do_lower_case=True):
-    if not os.path.exists(vocab_file):
-        raise ValueError(
-            "Can\"t find vocab_file \"%s\". "
-            "Please pass the correct path of vocabulary file, "
-            "e.g.`vocab.txt`." % vocab_file)
-    return WordPieceTokenizer(vocab_file, do_lower_case=do_lower_case)
 
 
 class WordPieceTokenizer:
     def __init__(self, vocab_file, do_lower_case=True):
+        if not os.path.exists(vocab_file):
+            raise ValueError(
+                "Can\"t find vocab_file \"%s\". "
+                "Please pass the correct path of vocabulary file, "
+                "e.g.`vocab.txt`." % vocab_file)
         self.vocab = load_vocab(vocab_file)  # word: idx
         self.inv_vocab = {v: k for k, v in self.vocab.items()}
         self.processor = [BasicTokenizer(do_lower_case=do_lower_case),

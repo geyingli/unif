@@ -1,26 +1,23 @@
 
 __version__ = "beta v2.9.5"
 
+# loading models
 from .application import *
 
-from .utils import MultiProcess
-from .utils import load
-from .utils import download
-from .utils import download_all
-from .utils import get_checkpoint_path
-from .utils import get_assignment_map
-from .utils import list_variables
-from .utils import list_resources
-from .utils import set_verbosity
-from .utils import set_log
-
+from .common import MultiProcess
+from .common import load
+from .common import download
+from .common import download_all
+from .common import get_checkpoint_path
+from .common import get_assignment_map
+from .common import list_variables
+from .common import list_resources
+from .common import set_verbosity
+from .common import set_log
 
 set_verbosity()
 
-
 __all__ = [
-
-    # handy methods
     "MultiProcess",
     "load",
     "download",

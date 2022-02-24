@@ -20,6 +20,8 @@ class Null:
 
 
 def unimported_module(name, required):
+    """ Returns an invalid module where error occurs only when being called. """
+
     class UnimportedModule:
         def __init__(self, *args, **kwargs):
             raise ImportError(
@@ -29,12 +31,8 @@ def unimported_module(name, required):
     return UnimportedModule
 
 
-class TFModuleError(Exception):
-    def __init__(self, *args, **kwargs):
-        pass
-
-
 def warning(func):
+    """ A function wrapper to avoid application crash. """
     def wrapper(*args, **kwargs):
         try:
             func(*args, **kwargs)
@@ -44,6 +42,7 @@ def warning(func):
 
 
 def set_verbosity(level=2):
+    """ Set exposure level of detail information. """
     if level == 2:
         tf.logging.set_verbosity(tf.logging.INFO)
     elif level == 1:
@@ -58,6 +57,7 @@ def set_verbosity(level=2):
 
 
 def set_log(log_file):
+    """ Set logging file. """
     log = logging.getLogger("tensorflow")
     log.setLevel(logging.INFO)
     fh = logging.FileHandler(log_file)
@@ -66,17 +66,19 @@ def set_log(log_file):
 
 
 def get_placeholder(target, name, shape, dtype):
+    """ Returns `PlaceHolder` for feeding data in memory or `FixedLenFeature` for local TFRecords. """
     if target == "placeholder":
         return tf.placeholder(name=name, shape=shape, dtype=dtype)
 
     if dtype.name.startswith("int"):
         dtype = tf.int64
-    elif dtype.name.startswith("int"):
+    elif dtype.name.startswith("float"):
         dtype = tf.float32
     return tf.FixedLenFeature(shape[1:], dtype)
 
 
 def truncate_segments(segments, max_seq_length, truncate_method="LIFO"):
+    """ Truncate sequence segments to avoid the overall length exceeds the `max_seq_length`. """
     total_seq_length = sum([len(segment) for segment in segments])
     if total_seq_length <= max_seq_length:
         return
@@ -100,15 +102,22 @@ def truncate_segments(segments, max_seq_length, truncate_method="LIFO"):
                 "Pick one from `longer-FO`, `FIFO`, `LIFO`.")
 
 
-def transform(output_arrays, n_inputs=None, reshape=False):
-    if not n_inputs:
-        n_inputs = 100000000
+def transform(output_arrays, n_inputs=None):
+    """ Transform raw outputs. """
 
+    # consolidate different batches
     if isinstance(output_arrays[0], np.ndarray):
-        if len(output_arrays[0].shape) > 1:
-            return np.vstack(output_arrays)[:n_inputs]
-        return np.hstack(output_arrays)[:n_inputs]
-    elif isinstance(output_arrays[0], list):    # flatten
+        if len(output_arrays[0].shape) == 1:    # 1D
+            out = np.vstack(output_arrays)
+        else:                                   # 2D/3D/...
+            out = np.hstack(output_arrays)
+        if n_inputs:
+            out = out[:n_inputs]
+        return out
+
+    # flatten
+    elif isinstance(output_arrays[0], list):
         return [item for output_array in output_arrays for item in output_array]
+
     else:
         return output_arrays

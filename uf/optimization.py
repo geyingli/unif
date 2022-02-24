@@ -6,10 +6,66 @@
 import re
 
 from .thirdparty import tf
-from . import utils
+from . import common
 
 
-class UnifiedOptimizer:
+def get_optimizer(init_lr, global_step, num_train_steps,
+                  num_warmup_steps=None, key_to_depths=None, **kwargs):
+    learning_rate = tf.constant(value=init_lr, shape=[], dtype=tf.float32)
+
+    # learning rate linear decay
+    learning_rate = tf.train.polynomial_decay(
+        learning_rate,
+        global_step,
+        num_train_steps,
+        end_learning_rate=0.0,
+        power=1.0,
+        cycle=False)
+
+    # learning rate warmup
+    if num_warmup_steps:
+        global_steps_int = tf.cast(global_step, tf.int32)
+        warmup_steps_int = tf.constant(num_warmup_steps, dtype=tf.int32)
+        global_steps_float = tf.cast(global_steps_int, dtype=tf.float32)
+        warmup_steps_float = tf.cast(warmup_steps_int, dtype=tf.float32)
+
+        warmup_learning_rate = \
+            init_lr * global_steps_float / warmup_steps_float
+        is_warmup = tf.cast(
+            global_steps_int < warmup_steps_int, dtype=tf.float32)
+        learning_rate = ((1.0 - is_warmup) * learning_rate +
+                         is_warmup * warmup_learning_rate)
+
+    # layer-wise learning rate decay
+    layerwise_lr_decay_ratio = kwargs.get("layerwise_lr_decay_ratio")
+    if layerwise_lr_decay_ratio:
+        if key_to_depths == "unsupported":
+            tf.logging.warning(
+                "Layer-wise learning rate decay is not supported "
+                "in the current module. Ignored.")
+        else:
+            learning_rate = {
+                key: learning_rate * layerwise_lr_decay_ratio ** depth
+                for (key, depth) in key_to_depths.items()}
+
+    # optimier
+    optimizer = Optimizer(
+        learning_rate=learning_rate,
+        exclude_from_weight_decay=["LayerNorm", "layer_norm", "bias"],
+        **kwargs)
+
+    return optimizer
+
+
+def get_global_step():
+    return tf.get_variable(
+        "global_step", shape=(),
+        initializer=tf.zeros_initializer,
+        dtype=tf.int32,
+        trainable=False)
+
+
+class Optimizer:
     """ A unified optimizer for GD, Adam, AdamW and LAMB optimizers. """
     def __init__(self,
                  learning_rate,
@@ -24,16 +80,16 @@ class UnifiedOptimizer:
         self.beta_1 = tf.cast(beta_1, dtype=tf.float32)
         self.beta_2 = tf.cast(beta_2, dtype=tf.float32)
         self.exclude_from_weight_decay = exclude_from_weight_decay
-        self.optimizer = optimizer.lower()
+        self.algorithm = optimizer.lower()
         self.kwargs = kwargs
 
-        if self.optimizer in ("adam", "adamw"):
+        if self.algorithm in ("adam", "adamw"):
             self.prefix = "adam"
-        elif self.optimizer == "lamb":
+        elif self.algorithm == "lamb":
             self.prefix = "lamb"
 
     def get_mv(self, param):
-        param_name = utils.get_param_name(param)
+        param_name = common.get_param_name(param)
         m = tf.get_variable(
             name=param_name + "/%s_m" % self.prefix,
             shape=param.shape.as_list(),
@@ -54,7 +110,7 @@ class UnifiedOptimizer:
             if grad is None or param is None:
                 continue
 
-            if self.optimizer == "gd":
+            if self.algorithm == "gd":
                 update = grad
 
             else:
@@ -68,11 +124,11 @@ class UnifiedOptimizer:
                 update = next_m / (tf.sqrt(next_v) + 1e-6)
 
                 # weight decay regularization
-                if self.optimizer in ("adamw", "lamb") and self._do_use_weight_decay(param):
+                if self.algorithm in ("adamw", "lamb") and self._do_use_weight_decay(param):
                     update += self.weight_decay_rate * param
 
                 # implemente lamb
-                if self.optimizer == "lamb":
+                if self.algorithm == "lamb":
                     # Note: Here are two choices for scaling function \phi(z)
                     # minmax:   \phi(z) = min(max(z, \gamma_l), \gamma_u)
                     # identity: \phi(z) = z
@@ -129,7 +185,7 @@ class UnifiedOptimizer:
         return tf.group(*assignments, name=name)
 
     def _do_use_weight_decay(self, param):
-        param_name = utils.get_param_name(param)
+        param_name = common.get_param_name(param)
         if not self.weight_decay_rate:
             return False
         if self.exclude_from_weight_decay:
@@ -137,59 +193,3 @@ class UnifiedOptimizer:
                 if re.search(hint, param_name) is not None:
                     return False
         return True
-
-
-def get_global_step():
-    return tf.get_variable(
-        "global_step", shape=(),
-        initializer=tf.zeros_initializer,
-        dtype=tf.int32,
-        trainable=False)
-
-
-def get_optimizer(init_lr, global_step, num_train_steps,
-                  num_warmup_steps=None, key_to_depths=None, **kwargs):
-    learning_rate = tf.constant(value=init_lr, shape=[], dtype=tf.float32)
-
-    # learning rate linear decay
-    learning_rate = tf.train.polynomial_decay(
-        learning_rate,
-        global_step,
-        num_train_steps,
-        end_learning_rate=0.0,
-        power=1.0,
-        cycle=False)
-
-    # learning rate warmup
-    if num_warmup_steps:
-        global_steps_int = tf.cast(global_step, tf.int32)
-        warmup_steps_int = tf.constant(num_warmup_steps, dtype=tf.int32)
-        global_steps_float = tf.cast(global_steps_int, dtype=tf.float32)
-        warmup_steps_float = tf.cast(warmup_steps_int, dtype=tf.float32)
-
-        warmup_learning_rate = \
-            init_lr * global_steps_float / warmup_steps_float
-        is_warmup = tf.cast(
-            global_steps_int < warmup_steps_int, dtype=tf.float32)
-        learning_rate = ((1.0 - is_warmup) * learning_rate +
-                         is_warmup * warmup_learning_rate)
-
-    # layer-wise learning rate decay
-    layerwise_lr_decay_ratio = kwargs.get("layerwise_lr_decay_ratio")
-    if layerwise_lr_decay_ratio:
-        if key_to_depths == "unsupported":
-            tf.logging.warning(
-                "Layer-wise learning rate decay is not supported "
-                "in the current module. Ignored.")
-        else:
-            learning_rate = {
-                key: learning_rate * layerwise_lr_decay_ratio ** depth
-                for (key, depth) in key_to_depths.items()}
-
-    # optimier
-    optimizer = UnifiedOptimizer(
-        learning_rate=learning_rate,
-        exclude_from_weight_decay=["LayerNorm", "layer_norm", "bias"],
-        **kwargs)
-
-    return optimizer

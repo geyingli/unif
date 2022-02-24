@@ -6,12 +6,11 @@ import numpy as np
 
 from ..thirdparty import tf
 from .base import ClassifierModule, LMModule
-from .bert import (
-    BERTClassifier, BERTBinaryClassifier, BERTSeqClassifier, BERTLM)
+from .bert import BERTClassifier, BERTBinaryClassifier, BERTSeqClassifier, BERTLM
 from ..modeling.base import CLSDecoder, BinaryCLSDecoder, SeqCLSDecoder
 from ..modeling.xlnet import XLNetEncoder, XLNet, XLNetConfig
-from ..tokenization.sentence_piece import get_sentence_piece_tokenizer
-from .. import utils
+from ..tokenization import SentencePieceTokenizer
+from .. import common
 
 
 SEG_ID_A = 0
@@ -62,7 +61,7 @@ class XLNetClassifier(BERTClassifier, ClassifierModule):
         self.__init_args__ = locals()
 
         self.xlnet_config = get_xlnet_config(config_file)
-        self.tokenizer = get_sentence_piece_tokenizer(spm_file, do_lower_case)
+        self.tokenizer = SentencePieceTokenizer(spm_file, do_lower_case)
         self._key_to_depths = get_key_to_depths(self.xlnet_config.n_layer)
 
     def _convert_X(self, X_target, tokenized):
@@ -85,7 +84,7 @@ class XLNetClassifier(BERTClassifier, ClassifierModule):
             _input_mask = []
             _segment_ids = []
 
-            utils.truncate_segments(
+            common.truncate_segments(
                 segments, self.max_seq_length - len(segments) - 1,
                 truncate_method=self.truncate_method)
 
@@ -165,7 +164,7 @@ class XLNetBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
         self.__init_args__ = locals()
 
         self.xlnet_config = get_xlnet_config(config_file)
-        self.tokenizer = get_sentence_piece_tokenizer(spm_file, do_lower_case)
+        self.tokenizer = SentencePieceTokenizer(spm_file, do_lower_case)
         self._key_to_depths = get_key_to_depths(self.xlnet_config.n_layer)
 
     def _convert_X(self, X_target, tokenized):
@@ -188,7 +187,7 @@ class XLNetBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
             _input_mask = []
             _segment_ids = []
 
-            utils.truncate_segments(
+            common.truncate_segments(
                 segments, self.max_seq_length - len(segments) - 1,
                 truncate_method=self.truncate_method)
 
@@ -267,7 +266,7 @@ class XLNetSeqClassifier(BERTSeqClassifier, ClassifierModule):
         self.__init_args__ = locals()
 
         self.xlnet_config = get_xlnet_config(config_file)
-        self.tokenizer = get_sentence_piece_tokenizer(spm_file, do_lower_case)
+        self.tokenizer = SentencePieceTokenizer(spm_file, do_lower_case)
         self._key_to_depths = get_key_to_depths(self.xlnet_config.n_layer)
 
     def _convert_X(self, X_target, tokenized):
@@ -291,7 +290,7 @@ class XLNetSeqClassifier(BERTSeqClassifier, ClassifierModule):
             _input_mask = []
             _segment_ids = []
 
-            utils.truncate_segments(
+            common.truncate_segments(
                 segments, self.max_seq_length - len(segments) - 1,
                 truncate_method=self.truncate_method)
 
@@ -384,7 +383,7 @@ class XLNetLM(BERTLM, LMModule):
         self.__init_args__ = locals()
 
         self.xlnet_config = get_xlnet_config(config_file)
-        self.tokenizer = get_sentence_piece_tokenizer(spm_file, do_lower_case)
+        self.tokenizer = SentencePieceTokenizer(spm_file, do_lower_case)
         self._key_to_depths = get_key_to_depths(self.xlnet_config.n_layer)
 
     def predict(self, *args, **kwargs):
@@ -487,25 +486,25 @@ class XLNetLM(BERTLM, LMModule):
 
     def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
-            "input": utils.get_placeholder(
+            "input": common.get_placeholder(
                 target, "input",
                 [None, self.max_seq_length], tf.int32),
-            "target": utils.get_placeholder(
+            "target": common.get_placeholder(
                 target, "target",
                 [None, self.max_seq_length], tf.int32),
-            "seg_id": utils.get_placeholder(
+            "seg_id": common.get_placeholder(
                 target, "seg_id",
                 [None, self.max_seq_length], tf.int32),
-            "label": utils.get_placeholder(
+            "label": common.get_placeholder(
                 target, "label",
                 [None], tf.int32),
-            "is_masked": utils.get_placeholder(
+            "is_masked": common.get_placeholder(
                 target, "is_masked",
                 [None, self.max_seq_length], tf.int32),
         }
         if not on_export:
             self.placeholders["sample_weight"] = \
-                utils.get_placeholder(
+                common.get_placeholder(
                     target, "sample_weight",
                     [None], tf.float32)
 
@@ -585,7 +584,7 @@ class XLNetLM(BERTLM, LMModule):
         output_arrays = list(zip(*batch_outputs))
 
         # PLM preds
-        plm_preds = utils.transform(output_arrays[0], n_inputs).tolist()
+        plm_preds = common.transform(output_arrays[0], n_inputs).tolist()
         plm_preds = [
             self.tokenizer.convert_ids_to_tokens(line) for line in plm_preds]
 

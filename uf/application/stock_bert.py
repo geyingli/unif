@@ -7,7 +7,7 @@ from .base import ClassifierModule
 from .bert import BERTClassifier, get_bert_config, get_key_to_depths
 from ..modeling.stock_bert import StockBERTEncoder
 from ..modeling.base import CLSDecoder
-from .. import utils
+from .. import common
 
 
 class StockBERTClassifier(BERTClassifier, ClassifierModule):
@@ -110,7 +110,7 @@ class StockBERTClassifier(BERTClassifier, ClassifierModule):
             _input_values = []
             _input_mask = []
 
-            utils.truncate_segments(
+            common.truncate_segments(
                 [segments], self.max_seq_length - 1,
                 truncate_method=self.truncate_method)
             for s_id, segment in enumerate(segments):
@@ -166,18 +166,18 @@ class StockBERTClassifier(BERTClassifier, ClassifierModule):
 
     def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
-            "input_values": utils.get_placeholder(
+            "input_values": common.get_placeholder(
                 target, "input_values",
                 [None, self.max_seq_length - 1, self.max_unit_length], tf.float32),
-            "input_mask": utils.get_placeholder(
+            "input_mask": common.get_placeholder(
                 target, "input_mask",
                 [None, self.max_seq_length], tf.int32),
-            "label_ids": utils.get_placeholder(
+            "label_ids": common.get_placeholder(
                 target, "label_ids", [None], tf.int32),
         }
         if not on_export:
             self.placeholders["sample_weight"] = \
-                utils.get_placeholder(
+                common.get_placeholder(
                     target, "sample_weight",
                     [None], tf.float32)
 

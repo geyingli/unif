@@ -6,13 +6,12 @@ import collections
 import numpy as np
 
 from .base import ClassifierModule, MRCModule, LMModule
-from .bert import (BERTClassifier, BERTBinaryClassifier, BERTSeqClassifier,
-                   BERTMRC, BERTLM)
+from .bert import BERTClassifier, BERTBinaryClassifier, BERTSeqClassifier, BERTMRC, BERTLM
 from ..modeling.albert import ALBERTEncoder, ALBERTDecoder, ALBERTConfig
 from ..modeling.base import CLSDecoder, BinaryCLSDecoder, SeqCLSDecoder, MRCDecoder
-from ..tokenization.word_piece import get_word_piece_tokenizer
+from ..tokenization import WordPieceTokenizer
 from ..thirdparty import tf
-from .. import utils
+from .. import common
 
 
 class ALBERTClassifier(BERTClassifier, ClassifierModule):
@@ -42,7 +41,7 @@ class ALBERTClassifier(BERTClassifier, ClassifierModule):
         self.__init_args__ = locals()
 
         self.albert_config = get_albert_config(config_file)
-        self.tokenizer = get_word_piece_tokenizer(vocab_file, do_lower_case)
+        self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
         self._key_to_depths = get_key_to_depths(
             self.albert_config.num_hidden_layers)
 
@@ -107,7 +106,7 @@ class ALBERTBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
         self.__init_args__ = locals()
 
         self.albert_config = get_albert_config(config_file)
-        self.tokenizer = get_word_piece_tokenizer(vocab_file, do_lower_case)
+        self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
         self._key_to_depths = get_key_to_depths(
             self.albert_config.num_hidden_layers)
 
@@ -169,7 +168,7 @@ class ALBERTSeqClassifier(BERTSeqClassifier, ClassifierModule):
         self.__init_args__ = locals()
 
         self.albert_config = get_albert_config(config_file)
-        self.tokenizer = get_word_piece_tokenizer(vocab_file, do_lower_case)
+        self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
         self._key_to_depths = get_key_to_depths(
             self.albert_config.num_hidden_layers)
 
@@ -230,7 +229,7 @@ class ALBERTMRC(BERTMRC, MRCModule):
         self.__init_args__ = locals()
 
         self.albert_config = get_albert_config(config_file)
-        self.tokenizer = get_word_piece_tokenizer(vocab_file, do_lower_case)
+        self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
         self._key_to_depths = get_key_to_depths(
             self.albert_config.num_hidden_layers)
 
@@ -306,7 +305,7 @@ class ALBERTLM(BERTLM, LMModule):
         self.__init_args__ = locals()
 
         self.albert_config = get_albert_config(config_file)
-        self.tokenizer = get_word_piece_tokenizer(vocab_file, do_lower_case)
+        self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
         self._key_to_depths = get_key_to_depths(
             self.albert_config.num_hidden_layers)
 
@@ -425,7 +424,7 @@ class ALBERTLM(BERTLM, LMModule):
             _masked_lm_ids = []
             _masked_lm_weights = []
 
-            utils.truncate_segments(
+            common.truncate_segments(
                 segments, self.max_seq_length - len(segments) - 1,
                 truncate_method=self.truncate_method)
 
@@ -495,34 +494,34 @@ class ALBERTLM(BERTLM, LMModule):
 
     def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
-            "input_ids": utils.get_placeholder(
+            "input_ids": common.get_placeholder(
                 target, "input_ids",
                 [None, self.max_seq_length], tf.int32),
-            "input_mask": utils.get_placeholder(
+            "input_mask": common.get_placeholder(
                 target, "input_mask",
                 [None, self.max_seq_length], tf.int32),
-            "segment_ids": utils.get_placeholder(
+            "segment_ids": common.get_placeholder(
                 target, "segment_ids",
                 [None, self.max_seq_length], tf.int32),
-            "masked_lm_positions": utils.get_placeholder(
+            "masked_lm_positions": common.get_placeholder(
                 target, "masked_lm_positions",
                 [None, self._max_predictions_per_seq * (
                     1 + self._do_permutation)], tf.int32),
-            "masked_lm_ids": utils.get_placeholder(
+            "masked_lm_ids": common.get_placeholder(
                 target, "masked_lm_ids",
                 [None, self._max_predictions_per_seq * (
                     1 + self._do_permutation)], tf.int32),
-            "masked_lm_weights": utils.get_placeholder(
+            "masked_lm_weights": common.get_placeholder(
                 target, "masked_lm_weights",
                 [None, self._max_predictions_per_seq * (
                     1 + self._do_permutation)], tf.float32),
-            "sentence_order_labels": utils.get_placeholder(
+            "sentence_order_labels": common.get_placeholder(
                 target, "sentence_order_labels",
                 [None], tf.int32),
         }
         if not on_export:
             self.placeholders["sample_weight"] = \
-                utils.get_placeholder(
+                common.get_placeholder(
                     target, "sample_weight",
                     [None], tf.float32)
 
@@ -616,7 +615,7 @@ class ALBERTLM(BERTLM, LMModule):
         # MLM preds
         mlm_preds = []
         mlm_positions = self.data["masked_lm_positions"]
-        all_preds = utils.transform(output_arrays[0], n_inputs)
+        all_preds = common.transform(output_arrays[0], n_inputs)
         for ex_id, _preds in enumerate(all_preds):
             _ids = []
             for p_id, _id in enumerate(_preds):
@@ -626,10 +625,10 @@ class ALBERTLM(BERTLM, LMModule):
             mlm_preds.append(self.tokenizer.convert_ids_to_tokens(_ids))
 
         # SOP preds
-        SOP_preds = utils.transform(output_arrays[1], n_inputs).tolist()
+        SOP_preds = common.transform(output_arrays[1], n_inputs).tolist()
 
         # SOP probs
-        SOP_probs = utils.transform(output_arrays[2], n_inputs)
+        SOP_probs = common.transform(output_arrays[2], n_inputs)
 
         outputs = {}
         outputs["mlm_preds"] = mlm_preds

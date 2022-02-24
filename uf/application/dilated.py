@@ -5,9 +5,10 @@ import numpy as np
 
 from ..thirdparty import tf
 from .base import LMModule
-from .bert import get_bert_config, get_word_piece_tokenizer, get_key_to_depths
+from .bert import get_bert_config, get_key_to_depths
 from ..modeling.dilated import DLM
-from .. import utils
+from ..tokenization import WordPieceTokenizer
+from .. import common
 
 
 class DilatedLM(LMModule):
@@ -45,7 +46,7 @@ class DilatedLM(LMModule):
         self.__init_args__ = locals()
 
         self.bert_config = get_bert_config(config_file)
-        self.tokenizer = get_word_piece_tokenizer(vocab_file, do_lower_case)
+        self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
         self._key_to_depths = get_key_to_depths(
             self.bert_config.num_hidden_layers)
 
@@ -146,7 +147,7 @@ class DilatedLM(LMModule):
             _input_ids = self.tokenizer.convert_tokens_to_ids(
                 _input_tokens)
 
-            utils.truncate_segments(
+            common.truncate_segments(
                 [_input_ids], self.max_seq_length,
                 truncate_method=self.truncate_method)
             nonpad_seq_length = len(_input_ids)
@@ -198,16 +199,16 @@ class DilatedLM(LMModule):
 
     def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
-            "dilated_ids": utils.get_placeholder(
+            "dilated_ids": common.get_placeholder(
                 target, "dilated_ids",
                 [None, self.max_seq_length * 2], tf.int32),
-            "label_ids": utils.get_placeholder(
+            "label_ids": common.get_placeholder(
                 target, "label_ids",
                 [None, self.max_seq_length * 2], tf.int32),
         }
         if not on_export:
             self.placeholders["sample_weight"] = \
-                utils.get_placeholder(
+                common.get_placeholder(
                     target, "sample_weight",
                     [None], tf.float32)
 
@@ -266,13 +267,13 @@ class DilatedLM(LMModule):
         output_arrays = list(zip(*batch_outputs))
 
         # preds
-        all_preds = utils.transform(output_arrays[0], n_inputs).tolist()
+        all_preds = common.transform(output_arrays[0], n_inputs).tolist()
         preds = []
         for _pred_ids in all_preds:
             _pred_ids = [_pred_id for _pred_id in _pred_ids[1:]
                          if _pred_id != 0]
             _pred_tokens = self.tokenizer.convert_ids_to_tokens(_pred_ids)
-            _pred_text = utils.convert_tokens_to_text(_pred_tokens)
+            _pred_text = common.convert_tokens_to_text(_pred_tokens)
             preds.append(_pred_text)
 
         outputs = {}

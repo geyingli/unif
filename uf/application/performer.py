@@ -2,12 +2,10 @@
 
 from ..thirdparty import tf
 from .base import ClassifierModule
-from .bert import (BERTClassifier,
-                   get_bert_config,
-                   get_word_piece_tokenizer,
-                   get_key_to_depths)
+from .bert import BERTClassifier, get_bert_config, get_key_to_depths
 from ..modeling.performer import PerformerEncoder
 from ..modeling.base import CLSDecoder
+from ..tokenization import WordPieceTokenizer
 
 
 class PerformerClassifier(BERTClassifier, ClassifierModule):
@@ -41,7 +39,7 @@ class PerformerClassifier(BERTClassifier, ClassifierModule):
         self.__init_args__ = locals()
 
         self.bert_config = get_bert_config(config_file)
-        self.tokenizer = get_word_piece_tokenizer(vocab_file, do_lower_case)
+        self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
         self._key_to_depths = get_key_to_depths(
             self.bert_config.num_hidden_layers)
 

@@ -9,8 +9,8 @@ from .albert import get_albert_config
 from ..modeling.bert import BERTEncoder
 from ..modeling.albert import ALBERTEncoder
 from ..modeling.sanet import SANetDecoder
-from ..tokenization.word_piece import get_word_piece_tokenizer
-from .. import utils
+from ..tokenization import WordPieceTokenizer
+from .. import common
 
 
 class SANetMRC(BERTMRC, MRCModule):
@@ -50,7 +50,7 @@ class SANetMRC(BERTMRC, MRCModule):
         assert reading_module in ("bert", "albert", "electra"), (
             "Invalid value of `reading_module`: %s. Pick one from "
             "`bert`, `albert` and `electra`.")
-        self.tokenizer = get_word_piece_tokenizer(vocab_file, do_lower_case)
+        self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
         self._key_to_depths = get_key_to_depths(
             self.bert_config.num_hidden_layers)
 
@@ -87,9 +87,9 @@ class SANetMRC(BERTMRC, MRCModule):
             n_inputs = len(input_ids)
 
             # backup for answer mapping
-            data[utils.BACKUP_DATA + "input_tokens"] = input_tokens
-            data[utils.BACKUP_DATA + "tokenized"] = [tokenized]
-            data[utils.BACKUP_DATA + "X_target"] = X_target
+            data[common.BACKUP_DATA + "input_tokens"] = input_tokens
+            data[common.BACKUP_DATA + "tokenized"] = [tokenized]
+            data[common.BACKUP_DATA + "X_target"] = X_target
 
             if n_inputs < self.batch_size:
                 self.batch_size = max(n_inputs, len(self._gpu_ids))
@@ -143,7 +143,7 @@ class SANetMRC(BERTMRC, MRCModule):
             _doc_sent_tokens = segments.pop("doc")
             _doc_sent_num = len(_doc_sent_tokens)
             segments = list(segments.values()) + _doc_sent_tokens
-            utils.truncate_segments(
+            common.truncate_segments(
                 segments,
                 self.max_seq_length - (len(segments) - _doc_sent_num + 1) - 1,
                 truncate_method=self.truncate_method)
@@ -234,27 +234,27 @@ class SANetMRC(BERTMRC, MRCModule):
 
     def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
-            "input_ids": utils.get_placeholder(
+            "input_ids": common.get_placeholder(
                 target, "input_ids",
                 [None, self.max_seq_length], tf.int32),
-            "input_mask": utils.get_placeholder(
+            "input_mask": common.get_placeholder(
                 target, "input_mask",
                 [None, self.max_seq_length], tf.int32),
-            "sa_mask": utils.get_placeholder(
+            "sa_mask": common.get_placeholder(
                 target, "sa_mask",
                 [None, self.max_seq_length ** 2], tf.int32),
-            "segment_ids": utils.get_placeholder(
+            "segment_ids": common.get_placeholder(
                 target, "segment_ids",
                 [None, self.max_seq_length], tf.int32),
-            "label_ids": utils.get_placeholder(
+            "label_ids": common.get_placeholder(
                 target, "label_ids",
                 [None, 2], tf.int32),
-            "has_answer": utils.get_placeholder(
+            "has_answer": common.get_placeholder(
                 target, "has_answer",
                 [None], tf.int32),
         }
         if not on_export:
-            self.placeholders["sample_weight"] = utils.get_placeholder(
+            self.placeholders["sample_weight"] = common.get_placeholder(
                 target, "sample_weight",
                 [None], tf.float32)
 

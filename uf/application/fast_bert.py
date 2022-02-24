@@ -6,8 +6,8 @@ from ..thirdparty import tf
 from .base import ClassifierModule
 from ..modeling.fast_bert import FastBERTCLSDistillor, convert_ignore_cls
 from .bert import BERTClassifier, get_bert_config
-from ..tokenization.word_piece import get_word_piece_tokenizer
-from .. import utils
+from ..tokenization import WordPieceTokenizer
+from .. import common
 
 
 class FastBERTClassifier(BERTClassifier, ClassifierModule):
@@ -41,7 +41,7 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
         self.__init_args__ = locals()
 
         self.bert_config = get_bert_config(config_file)
-        self.tokenizer = get_word_piece_tokenizer(vocab_file, do_lower_case)
+        self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
         self._key_to_depths = "unsupported"
 
         assert label_size, ("`label_size` can\"t be None.")
@@ -268,8 +268,8 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
             probs_array, sources_array = _permutate(batch_probs)
             probs_arrays.append(probs_array)
             sources_arrays.append(sources_array)
-        probs = utils.transform(probs_arrays, n_inputs)
-        sources = utils.transform(sources_arrays, n_inputs).tolist()
+        probs = common.transform(probs_arrays, n_inputs)
+        sources = common.transform(sources_arrays, n_inputs).tolist()
 
         # preds
         preds = np.argmax(probs, axis=-1).tolist()

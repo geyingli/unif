@@ -3,7 +3,7 @@
 import numpy as np
 
 from ..core import BaseModule
-from .. import utils
+from .. import common
 
 
 class ClassifierModule(BaseModule):
@@ -209,8 +209,8 @@ class MTModule(BaseModule):
                     ngram = _labels[i:i+1+n].tolist()
                     if ngram in ngrams:
                         continue
-                    cand_count = len(utils.find_all_boyer_moore(_preds, ngram))
-                    ref_count = len(utils.find_all_boyer_moore(_labels, ngram))
+                    cand_count = len(common.find_all_boyer_moore(_preds, ngram))
+                    ref_count = len(common.find_all_boyer_moore(_labels, ngram))
                     nominator += min(cand_count, ref_count)
                     denominator += cand_count
                     ngrams.append(ngram)
@@ -247,9 +247,9 @@ class MTModule(BaseModule):
                     ngram = _labels[i:i+1+n].tolist()
                     if ngram in ngrams:
                         continue
-                    nominator += len(utils.find_all_boyer_moore(_preds, ngram))
+                    nominator += len(common.find_all_boyer_moore(_preds, ngram))
                     denominator += \
-                        len(utils.find_all_boyer_moore(_labels, ngram))
+                        len(common.find_all_boyer_moore(_labels, ngram))
                     ngrams.append(ngram)
 
             _rouge = nominator / (denominator + 1e-6)

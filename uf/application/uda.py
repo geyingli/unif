@@ -7,8 +7,8 @@ from .base import ClassifierModule
 from .bert import BERTClassifier, get_bert_config, get_key_to_depths
 from ..modeling.bert import BERTEncoder
 from ..modeling.uda import UDADecoder
-from ..tokenization.word_piece import get_word_piece_tokenizer
-from .. import utils
+from ..tokenization import WordPieceTokenizer
+from .. import common
 from ..modeling import util
 
 
@@ -45,7 +45,7 @@ class UDAClassifier(BERTClassifier, ClassifierModule):
         self.__init_args__ = locals()
 
         self.bert_config = get_bert_config(config_file)
-        self.tokenizer = get_word_piece_tokenizer(vocab_file, do_lower_case)
+        self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
         self._key_to_depths = get_key_to_depths(
             self.bert_config.num_hidden_layers)
 
@@ -150,7 +150,7 @@ class UDAClassifier(BERTClassifier, ClassifierModule):
             _input_mask = [1]
             _segment_ids = [0]
 
-            utils.truncate_segments(
+            common.truncate_segments(
                 segments, self.max_seq_length - len(segments) - 1,
                 truncate_method=self.truncate_method)
             for s_id, segment in enumerate(segments):
@@ -180,7 +180,7 @@ class UDAClassifier(BERTClassifier, ClassifierModule):
             _input_mask = [1]
             _segment_ids = [0]
 
-            utils.truncate_segments(
+            common.truncate_segments(
                 segments, self.max_seq_length - len(segments) - 1,
                 truncate_method=self.truncate_method)
             for s_id, segment in enumerate(segments):
@@ -239,34 +239,34 @@ class UDAClassifier(BERTClassifier, ClassifierModule):
 
     def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
-            "input_ids": utils.get_placeholder(
+            "input_ids": common.get_placeholder(
                 target, "input_ids",
                 [None, self.max_seq_length], tf.int32),
-            "input_mask": utils.get_placeholder(
+            "input_mask": common.get_placeholder(
                 target, "input_mask",
                 [None, self.max_seq_length], tf.int32),
-            "segment_ids": utils.get_placeholder(
+            "segment_ids": common.get_placeholder(
                 target, "segment_ids",
                 [None, self.max_seq_length], tf.int32),
-            "label_ids": utils.get_placeholder(
+            "label_ids": common.get_placeholder(
                 target, "label_ids", [None], tf.int32),
         }
         if kwargs.get("is_training"):
-            self.placeholders["aug_input_ids"] = utils.get_placeholder(
+            self.placeholders["aug_input_ids"] = common.get_placeholder(
                 target, "aug_input_ids",
                 [None, self.max_seq_length], tf.int32)
-            self.placeholders["aug_input_mask"] = utils.get_placeholder(
+            self.placeholders["aug_input_mask"] = common.get_placeholder(
                 target, "aug_input_mask",
                 [None, self.max_seq_length], tf.int32)
-            self.placeholders["aug_segment_ids"] = utils.get_placeholder(
+            self.placeholders["aug_segment_ids"] = common.get_placeholder(
                 target, "aug_segment_ids",
                 [None, self.max_seq_length], tf.int32)
-            self.placeholders["is_supervised"] = utils.get_placeholder(
+            self.placeholders["is_supervised"] = common.get_placeholder(
                 target, "is_supervised",
                 [None], tf.float32)
         if not on_export:
             self.placeholders["sample_weight"] = \
-                utils.get_placeholder(
+                common.get_placeholder(
                     target, "sample_weight",
                     [None], tf.float32)
 

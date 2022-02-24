@@ -101,7 +101,6 @@ class RegDecoder(BaseDecoder):
                  **kwargs):
         super().__init__(**kwargs)
 
-        hidden_size = input_tensor.shape.as_list()[-1]
         with tf.variable_scope(scope):
             intermediate_output = tf.layers.dense(
                 input_tensor,

@@ -8,11 +8,10 @@ import numpy as np
 from ..thirdparty import tf
 from .base import ClassifierModule, LMModule, NERModule, MRCModule
 from ..modeling.bert import BERTEncoder, BERTDecoder, BERTConfig
-from ..modeling.base import (
-    CLSDecoder, BinaryCLSDecoder, SeqCLSDecoder, MRCDecoder)
+from ..modeling.base import CLSDecoder, BinaryCLSDecoder, SeqCLSDecoder, MRCDecoder
 from ..modeling.crf import CRFDecoder, viterbi_decode
-from ..tokenization.word_piece import get_word_piece_tokenizer
-from .. import utils
+from ..tokenization import WordPieceTokenizer
+from .. import common
 
 
 class BERTClassifier(ClassifierModule):
@@ -51,7 +50,7 @@ class BERTClassifier(ClassifierModule):
         self.__init_args__ = locals()
 
         self.bert_config = get_bert_config(config_file)
-        self.tokenizer = get_word_piece_tokenizer(vocab_file, do_lower_case)
+        self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
         self._key_to_depths = get_key_to_depths(
             self.bert_config.num_hidden_layers)
 
@@ -126,7 +125,7 @@ class BERTClassifier(ClassifierModule):
             _input_mask = [1]
             _segment_ids = [0]
 
-            utils.truncate_segments(
+            common.truncate_segments(
                 segments, self.max_seq_length - len(segments) - 1,
                 truncate_method=self.truncate_method)
             for s_id, segment in enumerate(segments):
@@ -196,21 +195,21 @@ class BERTClassifier(ClassifierModule):
 
     def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
-            "input_ids": utils.get_placeholder(
+            "input_ids": common.get_placeholder(
                 target, "input_ids",
                 [None, self.max_seq_length], tf.int32),
-            "input_mask": utils.get_placeholder(
+            "input_mask": common.get_placeholder(
                 target, "input_mask",
                 [None, self.max_seq_length], tf.int32),
-            "segment_ids": utils.get_placeholder(
+            "segment_ids": common.get_placeholder(
                 target, "segment_ids",
                 [None, self.max_seq_length], tf.int32),
-            "label_ids": utils.get_placeholder(
+            "label_ids": common.get_placeholder(
                 target, "label_ids", [None], tf.int32),
         }
         if not on_export:
             self.placeholders["sample_weight"] = \
-                utils.get_placeholder(
+                common.get_placeholder(
                     target, "sample_weight",
                     [None], tf.float32)
 
@@ -271,7 +270,7 @@ class BERTClassifier(ClassifierModule):
         output_arrays = list(zip(*batch_outputs))
 
         # probs
-        probs = utils.transform(output_arrays[0], n_inputs)
+        probs = common.transform(output_arrays[0], n_inputs)
 
         # preds
         preds = np.argmax(probs, axis=-1).tolist()
@@ -292,12 +291,12 @@ class BERTClassifier(ClassifierModule):
         output_arrays = list(zip(*batch_outputs))
 
         # accuracy
-        preds = utils.transform(output_arrays[0], n_inputs)
+        preds = common.transform(output_arrays[0], n_inputs)
         labels = self.data["label_ids"]
         accuracy = np.mean(preds == labels)
 
         # loss
-        losses = utils.transform(output_arrays[1], n_inputs)
+        losses = common.transform(output_arrays[1], n_inputs)
         loss = np.mean(losses)
 
         outputs = {}
@@ -336,7 +335,7 @@ class BERTBinaryClassifier(BERTClassifier, ClassifierModule):
         self.__init_args__ = locals()
 
         self.bert_config = get_bert_config(config_file)
-        self.tokenizer = get_word_piece_tokenizer(vocab_file, do_lower_case)
+        self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
         self._key_to_depths = get_key_to_depths(
             self.bert_config.num_hidden_layers)
 
@@ -392,21 +391,22 @@ class BERTBinaryClassifier(BERTClassifier, ClassifierModule):
 
     def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
-            "input_ids": utils.get_placeholder(
+            "input_ids": common.get_placeholder(
                 target, "input_ids",
                 [None, self.max_seq_length], tf.int32),
-            "input_mask": utils.get_placeholder(
+            "input_mask": common.get_placeholder(
                 target, "input_mask",
                 [None, self.max_seq_length], tf.int32),
-            "segment_ids": utils.get_placeholder(
+            "segment_ids": common.get_placeholder(
                 target, "segment_ids",
                 [None, self.max_seq_length], tf.int32),
-            "label_ids": utils.get_placeholder(
-                target, "label_ids", [None, self.label_size], tf.int32),
+            "label_ids": common.get_placeholder(
+                target, "label_ids",
+                [None, self.label_size], tf.int32),
         }
         if not on_export:
             self.placeholders["sample_weight"] = \
-                utils.get_placeholder(
+                common.get_placeholder(
                     target, "sample_weight",
                     [None], tf.float32)
 
@@ -440,7 +440,7 @@ class BERTBinaryClassifier(BERTClassifier, ClassifierModule):
         n_inputs = len(list(self.data.values())[0])
         output_arrays = list(zip(*batch_outputs))
         # probs
-        probs = utils.transform(output_arrays[0], n_inputs)
+        probs = common.transform(output_arrays[0], n_inputs)
 
         # preds
         preds = (probs >= 0.5)
@@ -483,7 +483,7 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
         self.__init_args__ = locals()
 
         self.bert_config = get_bert_config(config_file)
-        self.tokenizer = get_word_piece_tokenizer(vocab_file, do_lower_case)
+        self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
         self._key_to_depths = get_key_to_depths(
             self.bert_config.num_hidden_layers)
 
@@ -536,7 +536,7 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
         for ex_id, example in enumerate(X_target):
             _input_tokens = self._convert_x(example, tokenized)
 
-            utils.truncate_segments(
+            common.truncate_segments(
                 [_input_tokens], self.max_seq_length,
                 truncate_method=self.truncate_method)
 
@@ -613,7 +613,7 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
             elif num_labels > self.max_seq_length:
                 sample = sample[:self.max_seq_length]
 
-                utils.truncate_segments(
+                common.truncate_segments(
                     [sample], self.max_seq_length,
                     truncate_method=self.truncate_method)
 
@@ -623,21 +623,21 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
 
     def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
-            "input_ids": utils.get_placeholder(
+            "input_ids": common.get_placeholder(
                 target, "input_ids",
                 [None, self.max_seq_length], tf.int32),
-            "input_mask": utils.get_placeholder(
+            "input_mask": common.get_placeholder(
                 target, "input_mask",
                 [None, self.max_seq_length], tf.int32),
-            "segment_ids": utils.get_placeholder(
+            "segment_ids": common.get_placeholder(
                 target, "segment_ids",
                 [None, self.max_seq_length], tf.int32),
-            "label_ids": utils.get_placeholder(
+            "label_ids": common.get_placeholder(
                 target, "label_ids", [None, self.max_seq_length], tf.int32),
         }
         if not on_export:
             self.placeholders["sample_weight"] = \
-                utils.get_placeholder(
+                common.get_placeholder(
                     target, "sample_weight",
                     [None], tf.float32)
 
@@ -702,7 +702,7 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
         output_arrays = list(zip(*batch_outputs))
 
         # probs
-        probs = utils.transform(output_arrays[0], n_inputs)
+        probs = common.transform(output_arrays[0], n_inputs)
 
         # preds
         all_preds = np.argmax(probs, axis=-1)
@@ -729,14 +729,14 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
         output_arrays = list(zip(*batch_outputs))
 
         # accuracy
-        preds = utils.transform(output_arrays[0], n_inputs)
+        preds = common.transform(output_arrays[0], n_inputs)
         labels = self.data["label_ids"]
         mask = self.data["input_mask"]
         accuracy = (np.sum((preds == labels) * mask) /
                     mask.sum())
 
         # loss
-        losses = utils.transform(output_arrays[1], n_inputs)
+        losses = common.transform(output_arrays[1], n_inputs)
         loss = np.mean(losses)
 
         outputs = {}
@@ -777,7 +777,7 @@ class BERTNER(BERTClassifier, NERModule):
         self.__init_args__ = locals()
 
         self.bert_config = get_bert_config(config_file)
-        self.tokenizer = get_word_piece_tokenizer(vocab_file, do_lower_case)
+        self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
         self._key_to_depths = get_key_to_depths(
             self.bert_config.num_hidden_layers)
 
@@ -823,9 +823,9 @@ class BERTNER(BERTClassifier, NERModule):
             n_inputs = len(input_ids)
 
             # backup for answer mapping
-            data[utils.BACKUP_DATA + "input_tokens"] = input_tokens
-            data[utils.BACKUP_DATA + "tokenized"] = [tokenized]
-            data[utils.BACKUP_DATA + "X_target"] = X_target
+            data[common.BACKUP_DATA + "input_tokens"] = input_tokens
+            data[common.BACKUP_DATA + "tokenized"] = [tokenized]
+            data[common.BACKUP_DATA + "X_target"] = X_target
 
             if n_inputs < self.batch_size:
                 self.batch_size = max(n_inputs, len(self._gpu_ids))
@@ -866,7 +866,7 @@ class BERTNER(BERTClassifier, NERModule):
             _input_mask = [1]
             _segment_ids = [0]
 
-            utils.truncate_segments(
+            common.truncate_segments(
                 segments, self.max_seq_length - len(segments) - 1,
                 truncate_method=self.truncate_method)
             for s_id, segment in enumerate(segments):
@@ -925,7 +925,7 @@ class BERTNER(BERTClassifier, NERModule):
             # tagging
             _label_ids = [self.O_ID for _ in range(self.max_seq_length)]
             for _entity in _entity_ids:
-                start_positions = utils.find_all_boyer_moore(
+                start_positions = common.find_all_boyer_moore(
                     _input_ids, _entity)
                 if not start_positions:
                     tf.logging.warning(
@@ -952,21 +952,21 @@ class BERTNER(BERTClassifier, NERModule):
 
     def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
-            "input_ids": utils.get_placeholder(
+            "input_ids": common.get_placeholder(
                 target, "input_ids",
                 [None, self.max_seq_length], tf.int32),
-            "input_mask": utils.get_placeholder(
+            "input_mask": common.get_placeholder(
                 target, "input_mask",
                 [None, self.max_seq_length], tf.int32),
-            "segment_ids": utils.get_placeholder(
+            "segment_ids": common.get_placeholder(
                 target, "segment_ids",
                 [None, self.max_seq_length], tf.int32),
-            "label_ids": utils.get_placeholder(
+            "label_ids": common.get_placeholder(
                 target, "label_ids", [None, self.max_seq_length], tf.int32),
         }
         if not on_export:
             self.placeholders["sample_weight"] = \
-                utils.get_placeholder(
+                common.get_placeholder(
                     target, "sample_weight",
                     [None], tf.float32)
 
@@ -1032,14 +1032,14 @@ class BERTNER(BERTClassifier, NERModule):
         output_arrays = list(zip(*batch_outputs))
 
         # probs
-        probs = utils.transform(output_arrays[0], n_inputs)
+        probs = common.transform(output_arrays[0], n_inputs)
 
         # preds
         all_preds = np.argmax(probs, axis=-1)
-        tokens = self.data[utils.BACKUP_DATA + "input_tokens"]
+        tokens = self.data[common.BACKUP_DATA + "input_tokens"]
         mask = self.data["input_mask"]
-        text = self.data[utils.BACKUP_DATA + "X_target"]
-        tokenized = self.data[utils.BACKUP_DATA + "tokenized"][0]
+        text = self.data[common.BACKUP_DATA + "X_target"]
+        tokenized = self.data[common.BACKUP_DATA + "tokenized"][0]
         preds = []
         for i in range(len(all_preds)):
             _preds = all_preds[i]
@@ -1057,7 +1057,7 @@ class BERTNER(BERTClassifier, NERModule):
             if not tokenized:
                 if isinstance(_text, list):
                     _text = " ".join(_text)
-                _mapping_start, _mapping_end = utils.align_tokens_with_text(
+                _mapping_start, _mapping_end = common.align_tokens_with_text(
                     _tokens, _text, self._do_lower_case)
 
             for _entity in _entities:
@@ -1089,14 +1089,14 @@ class BERTNER(BERTClassifier, NERModule):
         output_arrays = list(zip(*batch_outputs))
 
         # f1
-        preds = utils.transform(output_arrays[0], n_inputs)
+        preds = common.transform(output_arrays[0], n_inputs)
         labels = self.data["label_ids"]
         mask = self.data["input_mask"]
         f1_token, f1_entity = self._get_f1(
             preds, labels, mask)
 
         # loss
-        losses = utils.transform(output_arrays[1], n_inputs)
+        losses = common.transform(output_arrays[1], n_inputs)
         loss = np.mean(losses)
 
         outputs = {}
@@ -1181,12 +1181,12 @@ class BERTCRFNER(BERTNER, NERModule):
         output_arrays = list(zip(*batch_outputs))
 
         # preds
-        logits = utils.transform(output_arrays[0], n_inputs)
+        logits = common.transform(output_arrays[0], n_inputs)
         transition_matrix = output_arrays[1][0]
-        tokens = self.data[utils.BACKUP_DATA + "input_tokens"]
+        tokens = self.data[common.BACKUP_DATA + "input_tokens"]
         mask = self.data["input_mask"]
-        text = self.data[utils.BACKUP_DATA + "X_target"]
-        tokenized = self.data[utils.BACKUP_DATA + "tokenized"][0]
+        text = self.data[common.BACKUP_DATA + "X_target"]
+        tokenized = self.data[common.BACKUP_DATA + "tokenized"][0]
         preds = []
         for i in range(len(logits)):
             _logits = logits[i]
@@ -1206,7 +1206,7 @@ class BERTCRFNER(BERTNER, NERModule):
             if not tokenized:
                 if isinstance(_text, list):
                     _text = " ".join(_text)
-                _mapping_start, _mapping_end = utils.align_tokens_with_text(
+                _mapping_start, _mapping_end = common.align_tokens_with_text(
                     _tokens, _text, self._do_lower_case)
 
             for _entity in _entities:
@@ -1242,7 +1242,7 @@ class BERTCRFNER(BERTNER, NERModule):
         output_arrays = list(zip(*batch_outputs))
 
         # f1
-        logits = utils.transform(output_arrays[0], n_inputs)
+        logits = common.transform(output_arrays[0], n_inputs)
         transition_matrix = output_arrays[1][0]
         mask = self.data["input_mask"]
         labels = self.data["label_ids"]
@@ -1256,7 +1256,7 @@ class BERTCRFNER(BERTNER, NERModule):
             preds, labels, mask)
 
         # loss
-        losses = utils.transform(output_arrays[2], n_inputs)
+        losses = common.transform(output_arrays[2], n_inputs)
         loss = np.mean(losses)
 
         outputs = {}
@@ -1302,7 +1302,7 @@ class BERTCRFCascadeNER(BERTCRFNER, NERModule):
         self.__init_args__ = locals()
 
         self.bert_config = get_bert_config(config_file)
-        self.tokenizer = get_word_piece_tokenizer(vocab_file, do_lower_case)
+        self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
         self._key_to_depths = get_key_to_depths(
             self.bert_config.num_hidden_layers)
 
@@ -1341,9 +1341,9 @@ class BERTCRFCascadeNER(BERTCRFNER, NERModule):
             n_inputs = len(input_ids)
 
             # backup for answer mapping
-            data[utils.BACKUP_DATA + "input_tokens"] = input_tokens
-            data[utils.BACKUP_DATA + "tokenized"] = [tokenized]
-            data[utils.BACKUP_DATA + "X_target"] = X_target
+            data[common.BACKUP_DATA + "input_tokens"] = input_tokens
+            data[common.BACKUP_DATA + "tokenized"] = [tokenized]
+            data[common.BACKUP_DATA + "X_target"] = X_target
 
             if n_inputs < self.batch_size:
                 self.batch_size = max(n_inputs, len(self._gpu_ids))
@@ -1412,7 +1412,7 @@ class BERTCRFCascadeNER(BERTCRFNER, NERModule):
                                 % (ex_id, _entity))
 
                     # search and tag
-                    start_positions = utils.find_all_boyer_moore(
+                    start_positions = common.find_all_boyer_moore(
                         _input_ids, _entity_ids)
                     if not start_positions:
                         tf.logging.warning(
@@ -1509,12 +1509,12 @@ class BERTCRFCascadeNER(BERTCRFNER, NERModule):
         output_arrays = list(zip(*batch_outputs))
 
         # preds
-        logits = utils.transform(output_arrays[0], n_inputs)
+        logits = common.transform(output_arrays[0], n_inputs)
         transition_matrix = output_arrays[1][0]
-        tokens = self.data[utils.BACKUP_DATA + "input_tokens"]
+        tokens = self.data[common.BACKUP_DATA + "input_tokens"]
         mask = self.data["input_mask"]
-        text = self.data[utils.BACKUP_DATA + "X_target"]
-        tokenized = self.data[utils.BACKUP_DATA + "tokenized"][0]
+        text = self.data[common.BACKUP_DATA + "X_target"]
+        tokenized = self.data[common.BACKUP_DATA + "tokenized"][0]
         preds = []
         for i in range(len(logits)):
             _logits = logits[i]
@@ -1529,7 +1529,7 @@ class BERTCRFCascadeNER(BERTCRFNER, NERModule):
             if not tokenized:
                 if isinstance(_text, list):
                     _text = " ".join(_text)
-                _mapping_start, _mapping_end = utils.align_tokens_with_text(
+                _mapping_start, _mapping_end = common.align_tokens_with_text(
                     _tokens, _text, self._do_lower_case)
 
             _preds = {}
@@ -1572,7 +1572,7 @@ class BERTCRFCascadeNER(BERTCRFNER, NERModule):
         output_arrays = list(zip(*batch_outputs))
 
         # f1
-        logits = utils.transform(output_arrays[0], n_inputs)
+        logits = common.transform(output_arrays[0], n_inputs)
         transition_matrix = output_arrays[1][0]
         mask = self.data["input_mask"]
         labels = self.data["label_ids"]
@@ -1586,7 +1586,7 @@ class BERTCRFCascadeNER(BERTCRFNER, NERModule):
             preds, labels, mask)
 
         # loss
-        losses = utils.transform(output_arrays[2], n_inputs)
+        losses = common.transform(output_arrays[2], n_inputs)
         loss = np.mean(losses)
 
         outputs = {}
@@ -1628,7 +1628,7 @@ class BERTMRC(BERTClassifier, MRCModule):
         self.__init_args__ = locals()
 
         self.bert_config = get_bert_config(config_file)
-        self.tokenizer = get_word_piece_tokenizer(vocab_file, do_lower_case)
+        self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
         self._key_to_depths = get_key_to_depths(
             self.bert_config.num_hidden_layers)
 
@@ -1676,9 +1676,9 @@ class BERTMRC(BERTClassifier, MRCModule):
             n_inputs = len(input_ids)
 
             # backup for answer mapping
-            data[utils.BACKUP_DATA + "input_tokens"] = input_tokens
-            data[utils.BACKUP_DATA + "tokenized"] = [tokenized]
-            data[utils.BACKUP_DATA + "X_target"] = X_target
+            data[common.BACKUP_DATA + "input_tokens"] = input_tokens
+            data[common.BACKUP_DATA + "tokenized"] = [tokenized]
+            data[common.BACKUP_DATA + "X_target"] = X_target
 
             if n_inputs < self.batch_size:
                 self.batch_size = max(n_inputs, len(self._gpu_ids))
@@ -1727,7 +1727,7 @@ class BERTMRC(BERTClassifier, MRCModule):
 
             _doc_tokens = segments.pop("doc")
             segments = list(segments.values()) + [_doc_tokens]
-            utils.truncate_segments(
+            common.truncate_segments(
                 segments, self.max_seq_length - len(segments) - 1,
                 truncate_method=self.truncate_method)
             _doc_tokens = segments[-1]
@@ -1813,10 +1813,10 @@ class BERTMRC(BERTClassifier, MRCModule):
                     % (ex_id, _answer_text))
 
             if isinstance(_answer_text, str):
-                _overlap_time = len(utils.find_all_boyer_moore(
+                _overlap_time = len(common.find_all_boyer_moore(
                     doc_text[ex_id][:_answer_start], _answer_text))
                 try:
-                    start_position = utils.find_all_boyer_moore(
+                    start_position = common.find_all_boyer_moore(
                         _doc_ids, _answer_ids)[_overlap_time]
                     end_position = start_position + len(_answer_ids) - 1
                 except IndexError:
@@ -1848,21 +1848,21 @@ class BERTMRC(BERTClassifier, MRCModule):
 
     def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
-            "input_ids": utils.get_placeholder(
+            "input_ids": common.get_placeholder(
                 target, "input_ids",
                 [None, self.max_seq_length], tf.int32),
-            "input_mask": utils.get_placeholder(
+            "input_mask": common.get_placeholder(
                 target, "input_mask",
                 [None, self.max_seq_length], tf.int32),
-            "segment_ids": utils.get_placeholder(
+            "segment_ids": common.get_placeholder(
                 target, "segment_ids",
                 [None, self.max_seq_length], tf.int32),
-            "label_ids": utils.get_placeholder(
+            "label_ids": common.get_placeholder(
                 target, "label_ids", [None, 2], tf.int32),
         }
         if not on_export:
             self.placeholders["sample_weight"] = \
-                utils.get_placeholder(
+                common.get_placeholder(
                     target, "sample_weight",
                     [None], tf.float32)
 
@@ -1922,13 +1922,13 @@ class BERTMRC(BERTClassifier, MRCModule):
         output_arrays = list(zip(*batch_outputs))
 
         # probs
-        probs = utils.transform(output_arrays[0], n_inputs)
+        probs = common.transform(output_arrays[0], n_inputs)
 
         # preds
-        batch_preds = utils.transform(output_arrays[1], n_inputs)
-        tokens = self.data[utils.BACKUP_DATA + "input_tokens"]
-        text = self.data[utils.BACKUP_DATA + "X_target"]
-        tokenized = self.data[utils.BACKUP_DATA + "tokenized"][0]
+        batch_preds = common.transform(output_arrays[1], n_inputs)
+        tokens = self.data[common.BACKUP_DATA + "input_tokens"]
+        text = self.data[common.BACKUP_DATA + "X_target"]
+        tokenized = self.data[common.BACKUP_DATA + "tokenized"][0]
         preds = []
         for ex_id, _preds in enumerate(batch_preds):
             _start, _end = int(_preds[0]), int(_preds[1])
@@ -1945,7 +1945,7 @@ class BERTMRC(BERTClassifier, MRCModule):
                 _text = [_sample[key] for key in _sample if key != "doc"]
                 _text.append(_sample["doc"])
                 _text = " ".join(_text)
-                _mapping_start, _mapping_end = utils.align_tokens_with_text(
+                _mapping_start, _mapping_end = common.align_tokens_with_text(
                     _tokens, _text, self._do_lower_case)
 
                 try:
@@ -1971,12 +1971,12 @@ class BERTMRC(BERTClassifier, MRCModule):
         output_arrays = list(zip(*batch_outputs))
 
         # exact match & f1
-        batch_preds = utils.transform(output_arrays[0], n_inputs)
+        batch_preds = common.transform(output_arrays[0], n_inputs)
         batch_labels = self.data["label_ids"]
         exact_match, f1 = self._get_em_and_f1(batch_preds, batch_labels)
 
         # loss
-        losses = utils.transform(output_arrays[1], n_inputs)
+        losses = common.transform(output_arrays[1], n_inputs)
         loss = np.mean(losses)
 
         outputs = {}
@@ -2014,7 +2014,7 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
         self.__init_args__ = locals()
 
         self.bert_config = get_bert_config(config_file)
-        self.tokenizer = get_word_piece_tokenizer(vocab_file, do_lower_case)
+        self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
         self._key_to_depths = get_key_to_depths(
             self.bert_config.num_hidden_layers)
 
@@ -2050,9 +2050,9 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
             n_inputs = len(input_ids)
 
             # backup for answer mapping
-            data[utils.BACKUP_DATA + "input_tokens"] = input_tokens
-            data[utils.BACKUP_DATA + "tokenized"] = [tokenized]
-            data[utils.BACKUP_DATA + "X_target"] = X_target
+            data[common.BACKUP_DATA + "input_tokens"] = input_tokens
+            data[common.BACKUP_DATA + "tokenized"] = [tokenized]
+            data[common.BACKUP_DATA + "X_target"] = X_target
 
             if n_inputs < self.batch_size:
                 self.batch_size = max(n_inputs, len(self._gpu_ids))
@@ -2112,10 +2112,10 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
                     % (ex_id, _answer_text))
 
             if isinstance(_answer_text, str):
-                _overlap_time = len(utils.find_all_boyer_moore(
+                _overlap_time = len(common.find_all_boyer_moore(
                     doc_text[ex_id][:_answer_start], _answer_text))
 
-                start_positions = utils.find_all_boyer_moore(
+                start_positions = common.find_all_boyer_moore(
                     _doc_ids, _answer_ids)
                 if _overlap_time >= len(start_positions):
                     label_ids.append([0, 0])
@@ -2152,24 +2152,24 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
 
     def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
-            "input_ids": utils.get_placeholder(
+            "input_ids": common.get_placeholder(
                 target, "input_ids",
                 [None, self.max_seq_length], tf.int32),
-            "input_mask": utils.get_placeholder(
+            "input_mask": common.get_placeholder(
                 target, "input_mask",
                 [None, self.max_seq_length], tf.int32),
-            "segment_ids": utils.get_placeholder(
+            "segment_ids": common.get_placeholder(
                 target, "segment_ids",
                 [None, self.max_seq_length], tf.int32),
-            "label_ids": utils.get_placeholder(
+            "label_ids": common.get_placeholder(
                 target, "label_ids",
                 [None, 2], tf.int32),
-            "has_answer": utils.get_placeholder(
+            "has_answer": common.get_placeholder(
                 target, "has_answer",
                 [None], tf.int32),
         }
         if not on_export:
-            self.placeholders["sample_weight"] = utils.get_placeholder(
+            self.placeholders["sample_weight"] = common.get_placeholder(
                 target, "sample_weight",
                 [None], tf.float32)
 
@@ -2278,15 +2278,15 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
         output_arrays = list(zip(*batch_outputs))
 
         # verifier preds & probs
-        verifier_probs = utils.transform(output_arrays[0], n_inputs)[:, 1]
-        verifier_preds = utils.transform(output_arrays[1], n_inputs)
+        verifier_probs = common.transform(output_arrays[0], n_inputs)[:, 1]
+        verifier_preds = common.transform(output_arrays[1], n_inputs)
 
         # mrc preds & probs
-        probs = utils.transform(output_arrays[2], n_inputs)
-        mrc_preds = utils.transform(output_arrays[3], n_inputs)
-        tokens = self.data[utils.BACKUP_DATA + "input_tokens"]
-        text = self.data[utils.BACKUP_DATA + "X_target"]
-        tokenized = self.data[utils.BACKUP_DATA + "tokenized"][0]
+        probs = common.transform(output_arrays[2], n_inputs)
+        mrc_preds = common.transform(output_arrays[3], n_inputs)
+        tokens = self.data[common.BACKUP_DATA + "input_tokens"]
+        text = self.data[common.BACKUP_DATA + "X_target"]
+        tokenized = self.data[common.BACKUP_DATA + "tokenized"][0]
         preds = []
         for ex_id, _preds in enumerate(mrc_preds):
             _start, _end = int(_preds[0]), int(_preds[1])
@@ -2304,7 +2304,7 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
                 _text = [_sample[key] for key in _sample if key != "doc"]
                 _text.append(_sample["doc"])
                 _text = " ".join(_text)
-                _mapping_start, _mapping_end = utils.align_tokens_with_text(
+                _mapping_start, _mapping_end = common.align_tokens_with_text(
                     _tokens, _text, self._do_lower_case)
 
                 try:
@@ -2335,23 +2335,23 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
         output_arrays = list(zip(*batch_outputs))
 
         # verifier accuracy
-        has_answer_preds = utils.transform(output_arrays[0], n_inputs)
+        has_answer_preds = common.transform(output_arrays[0], n_inputs)
         has_answer_accuracy = np.mean(
             has_answer_preds == self.data["has_answer"])
 
         # verifier loss
-        verifier_losses = utils.transform(output_arrays[1], n_inputs)
+        verifier_losses = common.transform(output_arrays[1], n_inputs)
         verifier_loss = np.mean(verifier_losses)
 
         # mrc exact match & f1
-        preds = utils.transform(output_arrays[2], n_inputs)
+        preds = common.transform(output_arrays[2], n_inputs)
         for i in range(len(has_answer_preds)):
             if has_answer_preds[i] == 0:
                 preds[i] = 0
         exact_match, f1 = self._get_em_and_f1(preds, self.data["label_ids"])
 
         # mrc loss
-        losses = utils.transform(output_arrays[3], n_inputs)
+        losses = common.transform(output_arrays[3], n_inputs)
         loss = np.mean(losses)
 
         outputs = {}
@@ -2407,7 +2407,7 @@ class BERTLM(LMModule):
         self.__init_args__ = locals()
 
         self.bert_config = get_bert_config(config_file)
-        self.tokenizer = get_word_piece_tokenizer(vocab_file, do_lower_case)
+        self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
         self._key_to_depths = get_key_to_depths(
             self.bert_config.num_hidden_layers)
 
@@ -2526,7 +2526,7 @@ class BERTLM(LMModule):
             _masked_lm_ids = []
             _masked_lm_weights = []
 
-            utils.truncate_segments(
+            common.truncate_segments(
                 segments, self.max_seq_length - len(segments) - 1,
                 truncate_method=self.truncate_method)
 
@@ -2636,31 +2636,31 @@ class BERTLM(LMModule):
 
     def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
-            "input_ids": utils.get_placeholder(
+            "input_ids": common.get_placeholder(
                 target, "input_ids",
                 [None, self.max_seq_length], tf.int32),
-            "input_mask": utils.get_placeholder(
+            "input_mask": common.get_placeholder(
                 target, "input_mask",
                 [None, self.max_seq_length], tf.int32),
-            "segment_ids": utils.get_placeholder(
+            "segment_ids": common.get_placeholder(
                 target, "segment_ids",
                 [None, self.max_seq_length], tf.int32),
-            "masked_lm_positions": utils.get_placeholder(
+            "masked_lm_positions": common.get_placeholder(
                 target, "masked_lm_positions",
                 [None, self._max_predictions_per_seq], tf.int32),
-            "masked_lm_ids": utils.get_placeholder(
+            "masked_lm_ids": common.get_placeholder(
                 target, "masked_lm_ids",
                 [None, self._max_predictions_per_seq], tf.int32),
-            "masked_lm_weights": utils.get_placeholder(
+            "masked_lm_weights": common.get_placeholder(
                 target, "masked_lm_weights",
                 [None, self._max_predictions_per_seq], tf.float32),
-            "next_sentence_labels": utils.get_placeholder(
+            "next_sentence_labels": common.get_placeholder(
                 target, "next_sentence_labels",
                 [None], tf.int32),
         }
         if not on_export:
             self.placeholders["sample_weight"] = \
-                utils.get_placeholder(
+                common.get_placeholder(
                     target, "sample_weight",
                     [None], tf.float32)
 
@@ -2752,7 +2752,7 @@ class BERTLM(LMModule):
         # MLM preds
         mlm_preds = []
         mlm_positions = self.data["masked_lm_positions"]
-        all_preds = utils.transform(output_arrays[0], n_inputs).tolist()
+        all_preds = common.transform(output_arrays[0], n_inputs).tolist()
         for ex_id, _preds in enumerate(all_preds):
             _ids = []
             for p_id, _id in enumerate(_preds):
@@ -2762,10 +2762,10 @@ class BERTLM(LMModule):
             mlm_preds.append(self.tokenizer.convert_ids_to_tokens(_ids))
 
         # NSP preds
-        nsp_preds = utils.transform(output_arrays[1], n_inputs).tolist()
+        nsp_preds = common.transform(output_arrays[1], n_inputs).tolist()
 
         # NSP probs
-        nsp_probs = utils.transform(output_arrays[2], n_inputs)
+        nsp_probs = common.transform(output_arrays[2], n_inputs)
 
         outputs = {}
         outputs["mlm_preds"] = mlm_preds

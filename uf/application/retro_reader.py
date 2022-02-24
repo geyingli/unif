@@ -9,8 +9,8 @@ from .albert import get_albert_config
 from ..modeling.bert import BERTEncoder
 from ..modeling.albert import ALBERTEncoder
 from ..modeling.retro_reader import RetroReaderDecoder
-from ..tokenization.word_piece import get_word_piece_tokenizer
-from .. import utils
+from ..tokenization import WordPieceTokenizer
+from .. import common
 
 
 class RetroReaderMRC(BERTVerifierMRC, MRCModule):
@@ -58,7 +58,7 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
             "cross-attention", "matching-attention"), (
                 "Invalid value of `matching_machanism`: %s. Pick one from "
                 "`cross-attention` and `matching-attention`.")
-        self.tokenizer = get_word_piece_tokenizer(vocab_file, do_lower_case)
+        self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
         self._key_to_depths = get_key_to_depths(
             self.bert_config.num_hidden_layers)
 
@@ -95,9 +95,9 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
             n_inputs = len(input_ids)
 
             # backup for answer mapping
-            data[utils.BACKUP_DATA + "input_tokens"] = input_tokens
-            data[utils.BACKUP_DATA + "tokenized"] = [tokenized]
-            data[utils.BACKUP_DATA + "X_target"] = X_target
+            data[common.BACKUP_DATA + "input_tokens"] = input_tokens
+            data[common.BACKUP_DATA + "tokenized"] = [tokenized]
+            data[common.BACKUP_DATA + "X_target"] = X_target
 
             if n_inputs < self.batch_size:
                 self.batch_size = max(n_inputs, len(self._gpu_ids))
@@ -149,7 +149,7 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
 
             _doc_tokens = segments.pop("doc")
             segments = list(segments.values()) + [_doc_tokens]
-            utils.truncate_segments(
+            common.truncate_segments(
                 segments, self.max_seq_length - len(segments) - 1,
                 truncate_method=self.truncate_method)
             _doc_tokens = segments[-1]
@@ -188,27 +188,27 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
 
     def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
-            "input_ids": utils.get_placeholder(
+            "input_ids": common.get_placeholder(
                 target, "input_ids",
                 [None, self.max_seq_length], tf.int32),
-            "input_mask": utils.get_placeholder(
+            "input_mask": common.get_placeholder(
                 target, "input_mask",
                 [None, self.max_seq_length], tf.int32),
-            "query_mask": utils.get_placeholder(
+            "query_mask": common.get_placeholder(
                 target, "query_mask",
                 [None, self.max_seq_length], tf.int32),
-            "segment_ids": utils.get_placeholder(
+            "segment_ids": common.get_placeholder(
                 target, "segment_ids",
                 [None, self.max_seq_length], tf.int32),
-            "label_ids": utils.get_placeholder(
+            "label_ids": common.get_placeholder(
                 target, "label_ids",
                 [None, 2], tf.int32),
-            "has_answer": utils.get_placeholder(
+            "has_answer": common.get_placeholder(
                 target, "has_answer",
                 [None], tf.int32),
         }
         if not on_export:
-            self.placeholders["sample_weight"] = utils.get_placeholder(
+            self.placeholders["sample_weight"] = common.get_placeholder(
                 target, "sample_weight",
                 [None], tf.float32)
 
@@ -324,16 +324,16 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
         output_arrays = list(zip(*batch_outputs))
 
         # verifier preds & probs
-        verifier_probs = utils.transform(output_arrays[0], n_inputs)
-        verifier_preds = utils.transform(output_arrays[1], n_inputs)
+        verifier_probs = common.transform(output_arrays[0], n_inputs)
+        verifier_preds = common.transform(output_arrays[1], n_inputs)
 
         # mrc preds & probs
         preds = []
-        probs = utils.transform(output_arrays[2], n_inputs)
-        mrc_preds = utils.transform(output_arrays[3], n_inputs)
-        tokens = self.data[utils.BACKUP_DATA + "input_tokens"]
-        text = self.data[utils.BACKUP_DATA + "X_target"]
-        tokenized = self.data[utils.BACKUP_DATA + "tokenized"][0]
+        probs = common.transform(output_arrays[2], n_inputs)
+        mrc_preds = common.transform(output_arrays[3], n_inputs)
+        tokens = self.data[common.BACKUP_DATA + "input_tokens"]
+        text = self.data[common.BACKUP_DATA + "X_target"]
+        tokenized = self.data[common.BACKUP_DATA + "tokenized"][0]
         for ex_id, _preds in enumerate(mrc_preds):
             _start, _end = int(_preds[0]), int(_preds[1])
             if verifier_preds[ex_id] == 0 or _start == 0 or _end == 0 \
@@ -350,7 +350,7 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
                 _text = [_sample[key] for key in _sample if key != "doc"]
                 _text.append(_sample["doc"])
                 _text = " ".join(_text)
-                _mapping_start, _mapping_end = utils.align_tokens_with_text(
+                _mapping_start, _mapping_end = common.align_tokens_with_text(
                     _tokens, _text, self._do_lower_case)
 
                 try:
@@ -381,23 +381,23 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
         output_arrays = list(zip(*batch_outputs))
 
         # verifier accuracy
-        has_answer_preds = utils.transform(output_arrays[0], n_inputs)
+        has_answer_preds = common.transform(output_arrays[0], n_inputs)
         has_answer_accuracy = np.mean(
             has_answer_preds == self.data["has_answer"])
 
         # mrc exact match & f1
-        preds = utils.transform(output_arrays[1], n_inputs)
+        preds = common.transform(output_arrays[1], n_inputs)
         for i in range(len(has_answer_preds)):
             if has_answer_preds[i] == 0:
                 preds[i] = 0
         exact_match, f1 = self._get_em_and_f1(preds, self.data["label_ids"])
 
         # sketchy loss
-        sketchy_losses = utils.transform(output_arrays[2], n_inputs)
+        sketchy_losses = common.transform(output_arrays[2], n_inputs)
         sketchy_loss = np.mean(sketchy_losses)
 
         # intensive loss
-        intensive_losses = utils.transform(output_arrays[3], n_inputs)
+        intensive_losses = common.transform(output_arrays[3], n_inputs)
         intensive_loss = np.mean(intensive_losses)
 
         outputs = {}

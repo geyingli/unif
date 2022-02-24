@@ -1,6 +1,6 @@
 
 
-from ..utils import unimported_module
+from ..common import unimported_module
 
 from .bert import BERTLM
 from .roberta import RoBERTaLM
@@ -52,10 +52,8 @@ try:
     from .xlnet import XLNetClassifier
     from .xlnet import XLNetBinaryClassifier
 except ModuleNotFoundError:
-    XLNetClassifier = unimported_module(
-        "XLNetClassifier", "sentencepiece")
-    XLNetBinaryClassifier = unimported_module(
-        "XLNetBinaryClassifier", "sentencepiece")
+    XLNetClassifier = unimported_module("XLNetClassifier", "sentencepiece")
+    XLNetBinaryClassifier = unimported_module("XLNetBinaryClassifier", "sentencepiece")
 
 del unimported_module
 
@@ -65,9 +63,6 @@ __all__ = [
     "RoBERTaLM",
     "ALBERTLM",
     "ELECTRALM",
-    "DilatedLM",
-    "RecBERTLM",
-    "SPELM",
     "VAELM",
     "GPT2LM",
     "UniLM",
@@ -83,7 +78,6 @@ __all__ = [
     "TinyBERTClassifier",
     "TinyBERTBinaryClassifier",
     "FastBERTClassifier",
-    "StockBERTClassifier",
     "BERTBinaryClassifier",
     "XLNetBinaryClassifier",
     "RoBERTaBinaryClassifier",
@@ -107,5 +101,9 @@ __all__ = [
     "TransformerMT",
 
     # trial
+    "DilatedLM",
+    "RecBERTLM",
+    "SPELM",
+    "StockBERTClassifier",
     "PerformerClassifier",
 ]

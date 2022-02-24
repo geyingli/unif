@@ -9,8 +9,8 @@ from .bert import (BERTClassifier, BERTBinaryClassifier, BERTSeqClassifier,
                    BERTMRC, BERTLM,
                    get_bert_config, get_key_to_depths,
                    create_masked_lm_predictions)
-from ..tokenization.word_piece import get_word_piece_tokenizer
-from .. import utils
+from ..tokenization import WordPieceTokenizer
+from .. import common
 
 
 class RoBERTaClassifier(BERTClassifier, ClassifierModule):
@@ -64,7 +64,7 @@ class RoBERTaLM(BERTLM, LMModule):
         self.__init_args__ = locals()
 
         self.bert_config = get_bert_config(config_file)
-        self.tokenizer = get_word_piece_tokenizer(vocab_file, do_lower_case)
+        self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
         self._key_to_depths = get_key_to_depths(
             self.bert_config.num_hidden_layers)
 
@@ -165,7 +165,7 @@ class RoBERTaLM(BERTLM, LMModule):
             _masked_lm_ids = []
             _masked_lm_weights = []
 
-            utils.truncate_segments(
+            common.truncate_segments(
                 segments, self.max_seq_length - len(segments) - 1,
                 truncate_method=self.truncate_method)
 
@@ -229,28 +229,28 @@ class RoBERTaLM(BERTLM, LMModule):
 
     def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
-            "input_ids": utils.get_placeholder(
+            "input_ids": common.get_placeholder(
                 target, "input_ids",
                 [None, self.max_seq_length], tf.int32),
-            "input_mask": utils.get_placeholder(
+            "input_mask": common.get_placeholder(
                 target, "input_mask",
                 [None, self.max_seq_length], tf.int32),
-            "segment_ids": utils.get_placeholder(
+            "segment_ids": common.get_placeholder(
                 target, "segment_ids",
                 [None, self.max_seq_length], tf.int32),
-            "masked_lm_positions": utils.get_placeholder(
+            "masked_lm_positions": common.get_placeholder(
                 target, "masked_lm_positions",
                 [None, self._max_predictions_per_seq], tf.int32),
-            "masked_lm_ids": utils.get_placeholder(
+            "masked_lm_ids": common.get_placeholder(
                 target, "masked_lm_ids",
                 [None, self._max_predictions_per_seq], tf.int32),
-            "masked_lm_weights": utils.get_placeholder(
+            "masked_lm_weights": common.get_placeholder(
                 target, "masked_lm_weights",
                 [None, self._max_predictions_per_seq], tf.float32),
         }
         if not on_export:
             self.placeholders["sample_weight"] = \
-                utils.get_placeholder(
+                common.get_placeholder(
                     target, "sample_weight",
                     [None], tf.float32)
 
@@ -323,7 +323,7 @@ class RoBERTaLM(BERTLM, LMModule):
         # MLM preds
         mlm_preds = []
         mlm_positions = self.data["masked_lm_positions"]
-        all_preds = utils.transform(output_arrays[0], n_inputs)
+        all_preds = common.transform(output_arrays[0], n_inputs)
         for ex_id, _preds in enumerate(all_preds):
             _ids = []
             for p_id, _id in enumerate(_preds):

@@ -8,18 +8,13 @@ import unicodedata
 from sentencepiece import SentencePieceProcessor
 
 
-
-def get_sentence_piece_tokenizer(spm_file, do_lower_case=True):
-    if not os.path.exists(spm_file):
-        raise ValueError(
-            "Can\"t find spm_file \"%s\". "
-            "Please pass the correct path of sentence-piece model file, "
-            "e.g.`spiece.model`." % spm_file)
-    return SentencePieceTokenizer(spm_file, do_lower_case=do_lower_case)
-
-
 class SentencePieceTokenizer:
     def __init__(self, spm_file, do_lower_case=True):
+        if not os.path.exists(spm_file):
+            raise ValueError(
+                "Can\"t find spm_file \"%s\". "
+                "Please pass the correct path of sentence-piece model file, "
+                "e.g.`spiece.model`." % spm_file)
         self.processor = SentencePieceProcessor()
         self.processor.Load(spm_file)
         self.do_lower_case = do_lower_case

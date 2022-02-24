@@ -8,7 +8,7 @@ from abc import abstractmethod
 from .thirdparty import tf
 from . import task
 from . import optimization
-from . import utils
+from . import common
 
 
 class BaseModule:
@@ -107,7 +107,7 @@ class BaseModule:
         data = self._parallel_convert(X, y, sample_weight, X_tokenized, is_training=True)
 
         tf.logging.info("Serializing data into %s" % tfrecords_file)
-        utils.write_tfrecords(data, tfrecords_file)
+        common.write_tfrecords(data, tfrecords_file)
 
     def fit_from_tfrecords(
             self, batch_size=32,
@@ -175,7 +175,7 @@ class BaseModule:
         # steps. In reality, we use a slanted learning rate
         # that starts to decay after gradually climing to
         # the pre-assigned peak level.
-        n_inputs = utils.get_tfrecords_length(tfrecords_files)
+        n_inputs = common.get_tfrecords_length(tfrecords_files)
         self.steps_per_epoch = (n_inputs - 1) // batch_size + 1
         if total_steps < 0:
             total_steps = -total_steps * self.steps_per_epoch
@@ -202,9 +202,9 @@ class BaseModule:
             kwargs.update(tfrecords_files=tfrecords_files, n_jobs=n_jobs)
 
             if kwargs.get("adversarial"):
-                t = task.adversarial.AdversarialTraining(self, **kwargs)
+                t = task.AdversarialTraining(self, **kwargs)
             else:
-                t = task.base.Training(self, **kwargs)
+                t = task.Training(self, **kwargs)
             return t.run(
                 target_steps,
                 print_per_secs=print_per_secs,
@@ -296,9 +296,9 @@ class BaseModule:
                 **kwargs)
 
             if kwargs.get("adversarial"):
-                t = task.adversarial.AdversarialTraining(self, **kwargs)
+                t = task.AdversarialTraining(self, **kwargs)
             else:
-                t = task.base.Training(self, **kwargs)
+                t = task.Training(self, **kwargs)
             return t.run(
                 target_steps,
                 print_per_secs=print_per_secs,
@@ -349,7 +349,7 @@ class BaseModule:
 
         # Register the task, and then run.
         with self.graph.as_default(), tf.variable_scope("", reuse=tf.AUTO_REUSE):
-            t = task.base.Inference(self)
+            t = task.Inference(self)
             return t.run()
 
     def score(self, X=None, y=None, sample_weight=None, X_tokenized=None,
@@ -401,7 +401,7 @@ class BaseModule:
 
         # Register the task, and then run.
         with self.graph.as_default(), tf.variable_scope("", reuse=tf.AUTO_REUSE):
-            t = task.base.Scoring(self)
+            t = task.Scoring(self)
             return t.run()
 
     def save(self, max_to_keep=10000):
@@ -474,7 +474,7 @@ class BaseModule:
             # convert to relative path
             if key == "init_checkpoint" or key.endswith("_dir") or key.endswith("_file"):
                 if isinstance(value, str) and not value.startswith("/"):
-                    value = utils.get_relative_path(
+                    value = common.get_relative_path(
                         source=cache_file,
                         target=value)
 
@@ -512,7 +512,7 @@ class BaseModule:
 
         # Register the task, and then run.
         with self.graph.as_default(), tf.variable_scope("", reuse=tf.AUTO_REUSE):
-            t = task.base.Initialization(self)
+            t = task.Initialization(self)
             return t.run(
                 reinit_all=reinit_all,
                 ignore_checkpoint=(self.init_checkpoint is None))
@@ -533,7 +533,7 @@ class BaseModule:
             if not self.init_checkpoint:
                 raise ValueError("No checkpoint file assigned for the module.")
             init_checkpoint = self.init_checkpoint
-        checkpoint_path = utils.get_checkpoint_path(init_checkpoint)
+        checkpoint_path = common.get_checkpoint_path(init_checkpoint)
         if not checkpoint_path:
             raise ValueError("Checkpoint file \"%s\" does not exist. "
                              "Make sure you pass correct value to "
@@ -548,7 +548,7 @@ class BaseModule:
         if "assignment_map" not in self.__dict__:
             self.assignment_map = {}
         if not assignment_map:
-            (assignment_map, _) = utils.get_assignment_map(
+            (assignment_map, _) = common.get_assignment_map(
                 checkpoint_path, self.global_variables, continual=False)
             for key in assignment_map:
                 if key not in self.assignment_map:
@@ -613,7 +613,7 @@ class BaseModule:
 
         # Register the task, and then run.
         with self.graph.as_default(), tf.variable_scope("", reuse=tf.AUTO_REUSE):
-            t = task.base.Exportation(self)
+            t = task.Exportation(self)
             t.run(
                 export_dir, rename_inputs, rename_outputs,
                 ignore_inputs, ignore_outputs)
@@ -622,14 +622,14 @@ class BaseModule:
                           X_tokenized=None, is_training=False):
         """ Parallel data conversion in multi processes, a general method. """
 
-        if utils.NUM_PROCESSES <= 1:
+        if common.NUM_PROCESSES <= 1:
             return self.convert(X, y, sample_weight, X_tokenized, is_training)
 
         tf.logging.info("Parsing input data on %d parallel processes"
-                        % utils.NUM_PROCESSES)
+                        % common.NUM_PROCESSES)
 
         n_inputs = len(X if X else X_tokenized)
-        n_buckets = max(min(n_inputs, utils.NUM_PROCESSES), 1)
+        n_buckets = max(min(n_inputs, common.NUM_PROCESSES), 1)
         bucket_size = (n_inputs - 1) // n_buckets + 1
 
         buckets = [{"X": [] if X else None,
@@ -648,21 +648,20 @@ class BaseModule:
             if X_tokenized:
                 buckets[index]["X_tokenized"].append(X_tokenized[i])
 
-        values = utils.get_init_values(self)
+        values = common.get_init_values(self)
         args = zip(list(range(n_buckets)),
                    [self.__class__ for _ in range(n_buckets)],
                    [values for _ in range(n_buckets)],
                    buckets,
                    [is_training for _ in range(n_buckets)])
-        data_buckets = utils.pool.map(
-            utils._parallel_convert_single_process, args)
+        data_buckets = common.pool.map(
+            common.parallel_convert_single_process, args)
 
         data = {}
         data_buckets.sort(key=lambda x: x[0])    # re-order inputs
 
         for key in data_buckets[0][1].keys():
-            data[key] = utils.transform(
-                [_data[key] for _bucket_id, _data in data_buckets])
+            data[key] = common.transform([_data[key] for _bucket_id, _data in data_buckets])
         return data
 
     @abstractmethod
@@ -716,6 +715,7 @@ class BaseModule:
 
     @abstractmethod
     def _set_placeholders(self, *args, **kwargs):
+        """ As its name. """
         raise NotImplementedError()
 
     def _parallel_forward(self, is_training=True, **kwargs):
@@ -736,7 +736,7 @@ class BaseModule:
         # map
         # The `Null` class makes the following codes about running on GPUs
         # compatible with running on CPU.
-        device = utils.Null if n_device <= 1 else tf.device
+        device = common.Null if n_device <= 1 else tf.device
         for idx in range(n_device):
             _gpu_id = self._gpu_ids[idx] if self._gpu_ids else ""
             with device("gpu:%s" % _gpu_id):
@@ -773,7 +773,7 @@ class BaseModule:
                     if d_grads[i] is not None:
                         split_grads.append(d_grads[i])
                 if split_grads:
-                    average_grad = utils.average_n_grads(split_grads)
+                    average_grad = common.average_n_grads(split_grads)
                     average_grads.append(average_grad)
                 else:
                     average_grads.append(None)

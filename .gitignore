@@ -4,7 +4,9 @@
 *.tar.gz
 *.zip
 docs/*.pptx
+
 test.py
+replace.py
 
 build
 dist

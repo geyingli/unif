@@ -710,7 +710,7 @@ class Attention(tf.keras.layers.Layer):
     return attention_output
 
 
-#@tf.keras.utils.register_keras_serializable(package="Text")
+#@tf.keras.common.register_keras_serializable(package="Text")
 class DenseEinsum(tf.keras.layers.Layer):
   """A densely connected layer that uses tf.einsum as the backing computation.
   This layer can perform einsum calculations of arbitrary dimensionality.

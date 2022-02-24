@@ -5,9 +5,10 @@ import numpy as np
 
 from ..thirdparty import tf
 from .base import LMModule
-from .bert import get_bert_config, get_word_piece_tokenizer, get_key_to_depths
+from .bert import get_bert_config, get_key_to_depths
 from ..modeling.rec_bert import RecBERT
-from .. import utils
+from ..tokenization import WordPieceTokenizer
+from .. import common
 
 
 class RecBERTLM(LMModule):
@@ -47,7 +48,7 @@ class RecBERTLM(LMModule):
             "The value of `add_prob` should be larger than 0 "
             "and smaller than 1/2.")
         self.bert_config = get_bert_config(config_file)
-        self.tokenizer = get_word_piece_tokenizer(vocab_file, do_lower_case)
+        self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
         self._key_to_depths = get_key_to_depths(
             self.bert_config.num_hidden_layers)
 
@@ -97,9 +98,9 @@ class RecBERTLM(LMModule):
                     del_label_ids, dtype=np.int32)
 
             # backup for answer mapping
-            data[utils.BACKUP_DATA + "input_tokens"] = input_tokens
-            data[utils.BACKUP_DATA + "tokenized"] = [tokenized]
-            data[utils.BACKUP_DATA + "X_target"] = X_target
+            data[common.BACKUP_DATA + "input_tokens"] = input_tokens
+            data[common.BACKUP_DATA + "tokenized"] = [tokenized]
+            data[common.BACKUP_DATA + "X_target"] = X_target
 
             n_inputs = len(input_ids)
             if n_inputs < self.batch_size:
@@ -130,7 +131,7 @@ class RecBERTLM(LMModule):
                         len(_input_tokens) > self.max_seq_length:
                     continue
             else:
-                utils.truncate_segments(
+                common.truncate_segments(
                     [_input_tokens], self.max_seq_length,
                     truncate_method=self.truncate_method)
 
@@ -208,19 +209,19 @@ class RecBERTLM(LMModule):
 
     def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
-            "input_ids": utils.get_placeholder(
+            "input_ids": common.get_placeholder(
                 target, "input_ids",
                 [None, self.max_seq_length], tf.int32),
-            "add_label_ids": utils.get_placeholder(
+            "add_label_ids": common.get_placeholder(
                 target, "add_label_ids",
                 [None, self.max_seq_length], tf.int32),
-            "del_label_ids": utils.get_placeholder(
+            "del_label_ids": common.get_placeholder(
                 target, "del_label_ids",
                 [None, self.max_seq_length], tf.int32),
         }
         if not on_export:
             self.placeholders["sample_weight"] = \
-                utils.get_placeholder(
+                common.get_placeholder(
                     target, "sample_weight",
                     [None], tf.float32)
 
@@ -303,11 +304,11 @@ class RecBERTLM(LMModule):
 
         # integrated preds
         preds = []
-        add_preds = utils.transform(output_arrays[0], n_inputs)
-        del_preds = utils.transform(output_arrays[1], n_inputs)
-        tokens = self.data[utils.BACKUP_DATA + "input_tokens"]
-        text = self.data[utils.BACKUP_DATA + "X_target"]
-        tokenized = self.data[utils.BACKUP_DATA + "tokenized"][0]
+        add_preds = common.transform(output_arrays[0], n_inputs)
+        del_preds = common.transform(output_arrays[1], n_inputs)
+        tokens = self.data[common.BACKUP_DATA + "input_tokens"]
+        text = self.data[common.BACKUP_DATA + "X_target"]
+        tokenized = self.data[common.BACKUP_DATA + "tokenized"][0]
         for ex_id in range(n_inputs):
             _add_preds = add_preds[ex_id]
             _del_preds = del_preds[ex_id]
@@ -330,7 +331,7 @@ class RecBERTLM(LMModule):
                 preds.append(_output_tokens)
             else:
                 _text = text[ex_id]
-                _mapping_start, _mapping_end = utils.align_tokens_with_text(
+                _mapping_start, _mapping_end = common.align_tokens_with_text(
                     _input_tokens, _text, self._do_lower_case)
 
                 n = 0

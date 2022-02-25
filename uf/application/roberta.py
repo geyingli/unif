@@ -1,5 +1,3 @@
-""" Applications based on RoBERTa. """
-
 import numpy as np
 
 from ..thirdparty import tf

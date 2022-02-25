@@ -1,5 +1,3 @@
-""" Applications based on ALBERT. """
-
 import os
 import random
 import collections

@@ -1,5 +1,3 @@
-""" Applications based on TinyBERT. """
-
 import os
 import copy
 import numpy as np

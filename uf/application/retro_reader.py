@@ -1,5 +1,3 @@
-""" Applications based on Retro-Reader. """
-
 import numpy as np
 
 from ..thirdparty import tf

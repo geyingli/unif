@@ -1,5 +1,3 @@
-""" Applications based on ELECTRA. """
-
 import os
 import numpy as np
 

@@ -1,5 +1,3 @@
-""" Applications based on DilatedBERT. """
-
 import random
 import numpy as np
 

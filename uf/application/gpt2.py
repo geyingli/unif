@@ -1,5 +1,3 @@
-""" Applications based on GPT-2. """
-
 import numpy as np
 
 from ..thirdparty import tf

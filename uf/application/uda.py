@@ -1,5 +1,3 @@
-""" Applications based on UDA. """
-
 import numpy as np
 
 from ..thirdparty import tf

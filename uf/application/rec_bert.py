@@ -1,5 +1,3 @@
-""" Applications based on RecBERT. """
-
 import random
 import numpy as np
 

@@ -1,5 +1,3 @@
-""" Applications based on XLNet. """
-
 import os
 import random
 import numpy as np

@@ -1,5 +1,3 @@
-""" Applications based on BERT. """
-
 import numpy as np
 
 from ..thirdparty import tf

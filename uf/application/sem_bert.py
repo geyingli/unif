@@ -1,5 +1,3 @@
-""" Applications based on SemBERT model. """
-
 import copy
 import numpy as np
 

@@ -1,5 +1,3 @@
-""" Applications based on Wide & Deep model. """
-
 import numpy as np
 
 from ..thirdparty import tf

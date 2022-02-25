@@ -1,5 +1,3 @@
-""" Applications based on UniLM. """
-
 import os
 import random
 import collections

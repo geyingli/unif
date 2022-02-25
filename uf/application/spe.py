@@ -1,5 +1,3 @@
-""" Applications based on Semantic-Parsing-Enhanced language modeling. """
-
 import numpy as np
 
 from ..thirdparty import tf
@@ -12,7 +10,7 @@ from .. import common
 
 
 class SPELM(BERTLM, LMModule):
-    """ Language modeling on SPE. """
+    """ Language modeling on Semantic-Parsing-Enhanced. """
     _INFER_ATTRIBUTES = BERTLM._INFER_ATTRIBUTES
 
     def __init__(self,

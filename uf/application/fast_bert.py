@@ -1,5 +1,3 @@
-""" Applications based on FastBERT. """
-
 import numpy as np
 
 from ..thirdparty import tf

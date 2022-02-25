@@ -1,5 +1,3 @@
-""" Applications based on BERT. """
-
 import os
 import random
 import collections

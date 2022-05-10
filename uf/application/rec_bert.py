@@ -5,7 +5,7 @@ from ..thirdparty import tf
 from .base import LMModule
 from .bert import get_bert_config, get_key_to_depths
 from ..modeling.rec_bert import RecBERT
-from ..tokenization import WordPieceTokenizer
+from ..tokenization.word_piece import WordPieceTokenizer
 from .. import common
 
 

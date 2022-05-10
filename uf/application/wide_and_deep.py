@@ -7,7 +7,7 @@ from .albert import get_albert_config
 from ..modeling.bert import BERTEncoder
 from ..modeling.albert import ALBERTEncoder
 from ..modeling.wide_and_deep import WideAndDeepCLSDecoder, WideAndDeepRegDecoder
-from ..tokenization import WordPieceTokenizer
+from ..tokenization.word_piece import WordPieceTokenizer
 from .. import common
 
 

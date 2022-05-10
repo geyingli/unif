@@ -6,7 +6,7 @@ from .base import ClassifierModule
 from .bert import BERTClassifier, get_bert_config
 from ..modeling.bert import BERTEncoder
 from ..modeling.sem_bert import SemBERTDecoder
-from ..tokenization import WordPieceTokenizer
+from ..tokenization.word_piece import WordPieceTokenizer
 from .. import common
 
 

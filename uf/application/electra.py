@@ -10,7 +10,7 @@ from ..modeling.bert import BERTEncoder, BERTConfig
 from ..modeling.electra import ELECTRA
 from ..modeling.base import (
     CLSDecoder, BinaryCLSDecoder, SeqCLSDecoder, MRCDecoder)
-from ..tokenization import WordPieceTokenizer
+from ..tokenization.word_piece import WordPieceTokenizer
 from .. import common
 
 

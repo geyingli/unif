@@ -7,7 +7,7 @@ from .base import ClassifierModule, LMModule
 from .bert import BERTClassifier, BERTBinaryClassifier, BERTSeqClassifier, BERTLM
 from ..modeling.base import CLSDecoder, BinaryCLSDecoder, SeqCLSDecoder
 from ..modeling.xlnet import XLNetEncoder, XLNet, XLNetConfig
-from ..tokenization import SentencePieceTokenizer
+from ..tokenization.sentence_piece import SentencePieceTokenizer
 from .. import common
 
 

@@ -5,7 +5,7 @@ from .bert import BERTClassifier
 from .base import ClassifierModule
 from ..modeling.text_cnn import TextCNNEncoder
 from ..modeling.base import CLSDecoder
-from ..tokenization import WordPieceTokenizer
+from ..tokenization.word_piece import WordPieceTokenizer
 from .. import common
 
 

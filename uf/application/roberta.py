@@ -7,7 +7,7 @@ from .bert import (BERTClassifier, BERTBinaryClassifier, BERTSeqClassifier,
                    BERTMRC, BERTLM,
                    get_bert_config, get_key_to_depths,
                    create_masked_lm_predictions)
-from ..tokenization import WordPieceTokenizer
+from ..tokenization.word_piece import WordPieceTokenizer
 from .. import common
 
 

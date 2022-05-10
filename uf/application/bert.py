@@ -8,7 +8,7 @@ from .base import ClassifierModule, LMModule, NERModule, MRCModule
 from ..modeling.bert import BERTEncoder, BERTDecoder, BERTConfig
 from ..modeling.base import CLSDecoder, BinaryCLSDecoder, SeqCLSDecoder, MRCDecoder
 from ..modeling.crf import CRFDecoder, viterbi_decode
-from ..tokenization import WordPieceTokenizer
+from ..tokenization.word_piece import WordPieceTokenizer
 from .. import common
 
 

@@ -3,7 +3,7 @@ import numpy as np
 from ..thirdparty import tf
 from .base import LMModule
 from ..modeling.gpt2 import GPT2
-from ..tokenization import WordPieceTokenizer
+from ..tokenization.word_piece import WordPieceTokenizer
 from .. import common
 
 

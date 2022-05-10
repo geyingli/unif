@@ -6,7 +6,7 @@ from ..thirdparty import tf
 from .base import ClassifierModule
 from ..modeling.tiny_bert import TinyBERTCLSDistillor, TinyBERTBinaryCLSDistillor
 from .bert import BERTClassifier, BERTBinaryClassifier, get_bert_config
-from ..tokenization import WordPieceTokenizer
+from ..tokenization.word_piece import WordPieceTokenizer
 
 
 class TinyBERTClassifier(BERTClassifier, ClassifierModule):

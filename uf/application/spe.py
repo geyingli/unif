@@ -5,7 +5,7 @@ from .base import LMModule
 from .bert import BERTLM, get_bert_config, get_key_to_depths, create_masked_lm_predictions
 from ..modeling.bert import BERTDecoder
 from ..modeling.spe import SPEEncoder
-from ..tokenization import WordPieceTokenizer
+from ..tokenization.word_piece import WordPieceTokenizer
 from .. import common
 
 

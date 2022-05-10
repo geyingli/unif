@@ -1,5 +1,5 @@
 
-__version__ = "v2.3.0"
+__version__ = "v2.3.1"
 
 # loading models
 from .application import *

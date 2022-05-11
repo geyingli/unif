@@ -7,7 +7,7 @@ from .base import ClassifierModule, MRCModule, LMModule
 from .bert import BERTClassifier, BERTBinaryClassifier, BERTSeqClassifier, BERTMRC, BERTLM
 from ..modeling.albert import ALBERTEncoder, ALBERTDecoder, ALBERTConfig
 from ..modeling.base import CLSDecoder, BinaryCLSDecoder, SeqCLSDecoder, MRCDecoder
-from ..tokenization.word_piece import WordPieceTokenizer
+from ..tokenization import WordPieceTokenizer
 from ..thirdparty import tf
 from .. import common
 

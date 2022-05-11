@@ -4,7 +4,7 @@ from ..thirdparty import tf
 from .base import ClassifierModule
 from ..modeling.fast_bert import FastBERTCLSDistillor, convert_ignore_cls
 from .bert import BERTClassifier, get_bert_config
-from ..tokenization.word_piece import WordPieceTokenizer
+from ..tokenization import WordPieceTokenizer
 from .. import common
 
 

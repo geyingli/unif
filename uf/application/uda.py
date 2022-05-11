@@ -5,7 +5,7 @@ from .base import ClassifierModule
 from .bert import BERTClassifier, get_bert_config, get_key_to_depths
 from ..modeling.bert import BERTEncoder
 from ..modeling.uda import UDADecoder
-from ..tokenization.word_piece import WordPieceTokenizer
+from ..tokenization import WordPieceTokenizer
 from .. import common
 from ..modeling import util
 

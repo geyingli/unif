@@ -8,7 +8,7 @@ from .base import LMModule
 from .bert import BERTLM, create_instances_from_document
 from ..modeling.unilm import UniLMEncoder
 from ..modeling.bert import BERTDecoder, BERTConfig
-from ..tokenization.word_piece import WordPieceTokenizer
+from ..tokenization import WordPieceTokenizer
 from .. import common
 
 

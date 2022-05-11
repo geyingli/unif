@@ -7,7 +7,7 @@ from .albert import get_albert_config
 from ..modeling.bert import BERTEncoder
 from ..modeling.albert import ALBERTEncoder
 from ..modeling.sanet import SANetDecoder
-from ..tokenization.word_piece import WordPieceTokenizer
+from ..tokenization import WordPieceTokenizer
 from .. import common
 
 

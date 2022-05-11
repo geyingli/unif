@@ -242,6 +242,84 @@ class SeqCLSDecoder(BaseDecoder):
             self.total_loss = tf.reduce_mean(per_example_loss)
 
 
+class SeqCLSMultiTaskDecoder(BaseDecoder):
+    def __init__(self,
+                 is_training,
+                 input_tensor,
+                 input_mask,
+                 seq_cls_label_ids,
+                 cls_label_ids,
+                 seq_cls_label_size=2,
+                 cls_label_size=2,
+                 sample_weight=None,
+                 seq_cls_scope="cls/tokens",
+                 cls_scope="cls/sequence",
+                 hidden_dropout_prob=0.1,
+                 initializer_range=0.02,
+                 trainable=True,
+                 **kwargs):
+        super().__init__(**kwargs)
+
+        shape = input_tensor.shape.as_list()
+        seq_length = shape[-2]
+        hidden_size = shape[-1]
+
+        # seq cls
+        with tf.variable_scope(seq_cls_scope):
+            output_weights = tf.get_variable(
+                "output_weights",
+                shape=[seq_cls_label_size, hidden_size],
+                initializer=util.create_initializer(initializer_range),
+                trainable=trainable)
+            output_bias = tf.get_variable(
+                "output_bias",
+                shape=[seq_cls_label_size],
+                initializer=tf.zeros_initializer(),
+                trainable=trainable)
+            output_layer = util.dropout(input_tensor, hidden_dropout_prob if is_training else 0.0)
+            output_layer = tf.reshape(output_layer, [-1, hidden_size])
+            logits = tf.matmul(output_layer, output_weights, transpose_b=True)
+            logits = tf.nn.bias_add(logits, output_bias)
+            logits = tf.reshape(logits, [-1, seq_length, seq_cls_label_size])
+            self._tensors["seq_cls_preds"] = tf.argmax(logits, axis=-1, name="seq_cls_preds")
+            self._tensors["seq_cls_probs"] = tf.nn.softmax(logits, axis=-1, name="seq_cls_probs")
+            log_probs = tf.nn.log_softmax(logits, axis=-1)
+            one_hot_labels = tf.one_hot(seq_cls_label_ids, depth=seq_cls_label_size, dtype=tf.float32)
+            per_token_loss = - tf.reduce_sum(one_hot_labels * log_probs, axis=-1)
+            input_mask = tf.cast(input_mask, tf.float32)
+            per_token_loss *= input_mask / tf.reduce_sum(input_mask, keepdims=True, axis=-1)
+            per_example_loss = tf.reduce_sum(per_token_loss, axis=-1)
+            if sample_weight is not None:
+                per_example_loss *= tf.cast(sample_weight, dtype=tf.float32)
+            self._tensors["seq_cls_losses"] = per_example_loss
+
+        # cls
+        with tf.variable_scope(cls_scope):
+            output_weights = tf.get_variable(
+                "output_weights",
+                shape=[cls_label_size, hidden_size],
+                initializer=util.create_initializer(initializer_range),
+                trainable=trainable)
+            output_bias = tf.get_variable(
+                "output_bias",
+                shape=[cls_label_size],
+                initializer=tf.zeros_initializer(),
+                trainable=trainable)
+            output_layer = util.dropout(input_tensor, hidden_dropout_prob if is_training else 0.0)
+            logits = tf.matmul(output_layer[:,0,:], output_weights, transpose_b=True)
+            logits = tf.nn.bias_add(logits, output_bias)
+            self._tensors["cls_preds"] = tf.argmax(logits, axis=-1, name="cls_preds")
+            self._tensors["cls_probs"] = tf.nn.softmax(logits, axis=-1, name="cls_probs")
+            log_probs = tf.nn.log_softmax(logits, axis=-1)
+            one_hot_labels = tf.one_hot(cls_label_ids, depth=cls_label_size, dtype=tf.float32)
+            per_example_loss = - tf.reduce_sum(one_hot_labels * log_probs, axis=-1)
+            if sample_weight is not None:
+                per_example_loss = tf.cast(sample_weight, dtype=tf.float32) * per_example_loss
+            self._tensors["cls_losses"] = per_example_loss
+
+        self.total_loss = tf.reduce_mean(self._tensors["seq_cls_losses"]) + tf.reduce_mean(self._tensors["cls_losses"])
+
+
 class MRCDecoder(BaseDecoder):
     def __init__(self,
                  is_training,

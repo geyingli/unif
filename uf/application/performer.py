@@ -3,7 +3,7 @@ from .base import ClassifierModule
 from .bert import BERTClassifier, get_bert_config, get_key_to_depths
 from ..modeling.performer import PerformerEncoder
 from ..modeling.base import CLSDecoder
-from ..tokenization.word_piece import WordPieceTokenizer
+from ..tokenization import WordPieceTokenizer
 
 
 class PerformerClassifier(BERTClassifier, ClassifierModule):

@@ -8,7 +8,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-v2.3.1-blue">
+        <img src="https://img.shields.io/badge/version-v2.3.2-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-1.x\2.x-yellow">
@@ -98,6 +98,7 @@ print(model.predict(X))
 |  		| [`RoBERTaSeqClassifier`](./examples/tutorial/RoBERTaSeqClassifier.ipynb) 		| - |
 |  		| [`ALBERTSeqClassifier`](./examples/tutorial/ALBERTSeqClassifier.ipynb) 		| - |
 |  		| [`ELECTRASeqClassifier`](./examples/tutorial/ELECTRASeqClassifier.ipynb) 		| - |
+|  		| [`BERTSeqMultiTaskClassifier`](./examples/tutorial/BERTSeqMultiTaskClassifier.ipynb) 		| 序列标注与分类结合的多任务学习 |
 | 模型蒸馏 | [`TinyBERTClassifier`](./examples/tutorial/TinyBERTClassifier.ipynb) 		| 大幅压缩模型参数，提速十倍以上 |
 |       | [`TinyBERTBinaryClassifier`](./examples/tutorial/TinyBERTBinaryClassifier.ipynb)     | - |
 |  		| [`FastBERTClassifier`](./examples/tutorial/FastBERTClassifier.ipynb) 		| 动态推理，易分样本提前离开模型 |

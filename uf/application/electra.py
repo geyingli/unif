@@ -552,8 +552,6 @@ class ELECTRALM(BERTLM, LMModule):
         mlm_preds = []
         mlm_positions = self.data["masked_lm_positions"]
         all_preds = common.transform(output_arrays[0], n_inputs)
-        tf.logging.info(output_arrays[0])
-        tf.logging.info(all_preds)
         for ex_id, _preds in enumerate(all_preds):
             _ids = []
             for p_id, _id in enumerate(_preds):

@@ -5,6 +5,7 @@
 *.tar.gz
 *.zip
 docs/*.pptx
+examples/tutorial/tmp
 
 test.py
 replace.py

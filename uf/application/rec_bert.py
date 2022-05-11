@@ -231,7 +231,6 @@ class RecBERTLM(LMModule):
             sample_weight=split_placeholders.get("sample_weight"),
             add_prob=self._add_prob,
             del_prob=self._del_prob,
-            scope="bert",
             **kwargs)
         return model.get_forward_outputs()
 

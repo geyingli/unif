@@ -108,7 +108,6 @@ class TextCNNClassifier(BERTClassifier, ClassifierModule):
             num_channels=self._num_channels,
             is_training=is_training,
             input_ids=split_placeholders["input_ids"],
-            scope="text_cnn",
             embedding_size=self._hidden_size,
             **kwargs)
         encoder_output = encoder.get_pooled_output()

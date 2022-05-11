@@ -182,7 +182,6 @@ class GPT2LM(LMModule):
             is_training=is_training,
             input_ids=split_placeholders["input_ids"],
             sample_weight=split_placeholders.get("sample_weight"),
-            scope="model",
             given=self._given,
             **kwargs)
         return model.get_forward_outputs()

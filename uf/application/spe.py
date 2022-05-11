@@ -236,7 +236,6 @@ class SPELM(BERTLM, LMModule):
             input_mask=split_placeholders["input_mask"],
             segment_ids=split_placeholders["segment_ids"],
             position_ids=split_placeholders["position_ids"],
-            scope="bert",
             drop_pooler=self._drop_pooler,
             **kwargs)
         decoder = BERTDecoder(

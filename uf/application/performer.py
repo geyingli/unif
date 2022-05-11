@@ -58,7 +58,6 @@ class PerformerClassifier(BERTClassifier, ClassifierModule):
             input_ids=split_placeholders["input_ids"],
             input_mask=split_placeholders["input_mask"],
             segment_ids=split_placeholders["segment_ids"],
-            scope="performer",
             kernel_transformation=self._kernel_transformation,
             nb_random_features=self._nb_random_features,
             drop_pooler=self._drop_pooler,

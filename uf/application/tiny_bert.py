@@ -131,7 +131,6 @@ class TinyBERTClassifier(BERTClassifier, ClassifierModule):
             segment_ids=split_placeholders["segment_ids"],
             label_ids=split_placeholders.get("label_ids"),
             sample_weight=split_placeholders.get("sample_weight"),
-            scope="bert",
             drop_pooler=self._drop_pooler,
             label_size=self.label_size,
             **kwargs)
@@ -274,7 +273,6 @@ class TinyBERTBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
             segment_ids=split_placeholders["segment_ids"],
             label_ids=split_placeholders.get("label_ids"),
             sample_weight=split_placeholders.get("sample_weight"),
-            scope="bert",
             drop_pooler=self._drop_pooler,
             label_size=self.label_size,
             **kwargs)

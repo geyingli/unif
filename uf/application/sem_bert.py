@@ -216,7 +216,6 @@ class SemBERTClassifier(BERTClassifier, ClassifierModule):
             input_mask=split_placeholders["input_mask"],
             segment_ids=split_placeholders["segment_ids"],
             drop_pooler=self._drop_pooler,
-            scope="bert",
             **kwargs)
         encoder_output = encoder.get_pooled_output()
         decoder = SemBERTDecoder(

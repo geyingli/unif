@@ -297,7 +297,6 @@ class UniLM(BERTLM, LMModule):
             input_ids=split_placeholders["input_ids"],
             input_mask=split_placeholders["input_mask"],
             segment_ids=split_placeholders["segment_ids"],
-            scope="bert",
             drop_pooler=self._drop_pooler,
             **kwargs)
         decoder = BERTDecoder(

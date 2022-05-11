@@ -266,7 +266,6 @@ class SANetMRC(BERTMRC, MRCModule):
                     input_ids=split_placeholders["input_ids"],
                     input_mask=split_placeholders["input_mask"],
                     segment_ids=split_placeholders["segment_ids"],
-                    scope="bert",
                     **kwargs)
             elif model_name == "albert":
                 encoder = ALBERTEncoder(
@@ -275,7 +274,6 @@ class SANetMRC(BERTMRC, MRCModule):
                     input_ids=split_placeholders["input_ids"],
                     input_mask=split_placeholders["input_mask"],
                     segment_ids=split_placeholders["segment_ids"],
-                    scope="bert",
                     drop_pooler=self._drop_pooler,
                     **kwargs)
             elif model_name == "electra":
@@ -298,7 +296,6 @@ class SANetMRC(BERTMRC, MRCModule):
             label_ids=split_placeholders["label_ids"],
             sample_weight=split_placeholders.get("sample_weight"),
             alpha=self._alpha,
-            scope="sanet",
             trainable=True,
             **kwargs)
         return decoder.get_forward_outputs()

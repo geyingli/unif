@@ -203,7 +203,6 @@ class VAELM(BERTClassifier, LMModule):
             num_hidden_layers=self._num_hidden_layers,
             num_attention_heads=self._num_attention_heads,
             bias=self._bias,
-            scope="vae",
             **kwargs)
         return model.get_forward_outputs()
 

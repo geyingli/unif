@@ -300,7 +300,6 @@ class UDAClassifier(BERTClassifier, ClassifierModule):
             input_ids=input_ids,
             input_mask=input_mask,
             segment_ids=segment_ids,
-            scope="bert",
             drop_pooler=self._drop_pooler,
             **kwargs)
         encoder_output = encoder.get_pooled_output()

@@ -60,7 +60,6 @@ class ALBERTClassifier(BERTClassifier, ClassifierModule):
             input_ids=split_placeholders["input_ids"],
             input_mask=split_placeholders["input_mask"],
             segment_ids=split_placeholders["segment_ids"],
-            scope="bert",
             drop_pooler=self._drop_pooler,
             **kwargs)
         encoder_output = encoder.get_pooled_output()
@@ -125,7 +124,6 @@ class ALBERTBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
             input_ids=split_placeholders["input_ids"],
             input_mask=split_placeholders["input_mask"],
             segment_ids=split_placeholders["segment_ids"],
-            scope="bert",
             drop_pooler=self._drop_pooler,
             **kwargs)
         encoder_output = encoder.get_pooled_output()
@@ -187,7 +185,6 @@ class ALBERTSeqClassifier(BERTSeqClassifier, ClassifierModule):
             input_ids=split_placeholders["input_ids"],
             input_mask=split_placeholders["input_mask"],
             segment_ids=split_placeholders["segment_ids"],
-            scope="bert",
             **kwargs)
         encoder_output = encoder.get_sequence_output()
         decoder = SeqCLSDecoder(
@@ -248,7 +245,6 @@ class ALBERTMRC(BERTMRC, MRCModule):
             input_ids=split_placeholders["input_ids"],
             input_mask=split_placeholders["input_mask"],
             segment_ids=split_placeholders["segment_ids"],
-            scope="bert",
             **kwargs)
         encoder_output = encoder.get_sequence_output()
         decoder = MRCDecoder(
@@ -531,7 +527,6 @@ class ALBERTLM(BERTLM, LMModule):
             input_ids=split_placeholders["input_ids"],
             input_mask=split_placeholders["input_mask"],
             segment_ids=split_placeholders["segment_ids"],
-            scope="bert",
             drop_pooler=self._drop_pooler,
             **kwargs)
         decoder = ALBERTDecoder(

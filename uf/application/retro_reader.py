@@ -220,7 +220,6 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
                     input_ids=split_placeholders["input_ids"],
                     input_mask=split_placeholders["input_mask"],
                     segment_ids=split_placeholders["segment_ids"],
-                    scope="bert",
                     **kwargs)
             elif model_name == "albert":
                 sketchy_encoder = ALBERTEncoder(
@@ -229,7 +228,6 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
                     input_ids=split_placeholders["input_ids"],
                     input_mask=split_placeholders["input_mask"],
                     segment_ids=split_placeholders["segment_ids"],
-                    scope="bert",
                     **kwargs)
             elif model_name == "electra":
                 sketchy_encoder = BERTEncoder(
@@ -253,7 +251,6 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
             label_ids=split_placeholders["label_ids"],
             has_answer=split_placeholders["has_answer"],
             sample_weight=split_placeholders.get("sample_weight"),
-            scope="retro_reader",
             matching_mechanism=self._matching_mechanism,
             beta_1=self.beta_1,
             beta_2=self.beta_2,

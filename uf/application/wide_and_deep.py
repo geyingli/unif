@@ -224,7 +224,6 @@ class WideAndDeepClassifier(BERTClassifier, ClassifierModule):
                     input_ids=split_placeholders["input_ids"],
                     input_mask=split_placeholders["input_mask"],
                     segment_ids=split_placeholders["segment_ids"],
-                    scope="bert",
                     **kwargs)
             elif model_name == "albert":
                 encoder = ALBERTEncoder(
@@ -233,7 +232,6 @@ class WideAndDeepClassifier(BERTClassifier, ClassifierModule):
                     input_ids=split_placeholders["input_ids"],
                     input_mask=split_placeholders["input_mask"],
                     segment_ids=split_placeholders["segment_ids"],
-                    scope="bert",
                     **kwargs)
             elif model_name == "electra":
                 encoder = BERTEncoder(
@@ -495,7 +493,6 @@ class WideAndDeepRegressor(WideAndDeepClassifier, RegressorModule):
                     input_ids=split_placeholders["input_ids"],
                     input_mask=split_placeholders["input_mask"],
                     segment_ids=split_placeholders["segment_ids"],
-                    scope="bert",
                     **kwargs)
             elif model_name == "albert":
                 encoder = ALBERTEncoder(
@@ -504,7 +501,6 @@ class WideAndDeepRegressor(WideAndDeepClassifier, RegressorModule):
                     input_ids=split_placeholders["input_ids"],
                     input_mask=split_placeholders["input_mask"],
                     segment_ids=split_placeholders["segment_ids"],
-                    scope="bert",
                     **kwargs)
             elif model_name == "electra":
                 encoder = BERTEncoder(

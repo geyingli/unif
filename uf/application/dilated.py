@@ -218,7 +218,6 @@ class DilatedLM(LMModule):
             spad_id=self.tokenizer.convert_tokens_to_ids(["[SPAD]"])[0],
             loop=self._loop,
             sample_weight=split_placeholders.get("sample_weight"),
-            scope="dilated",
             **kwargs)
         return model.get_forward_outputs()
 

@@ -183,7 +183,6 @@ class StockBERTClassifier(BERTClassifier, ClassifierModule):
             is_training=is_training,
             input_values=split_placeholders["input_values"],
             input_mask=split_placeholders["input_mask"],
-            scope="stock_bert",
             drop_pooler=self._drop_pooler,
             **kwargs)
         encoder_output = encoder.get_pooled_output()

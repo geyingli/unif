@@ -214,7 +214,6 @@ class BERTClassifier(ClassifierModule):
             input_ids=split_placeholders["input_ids"],
             input_mask=split_placeholders["input_mask"],
             segment_ids=split_placeholders["segment_ids"],
-            scope="bert",
             drop_pooler=self._drop_pooler,
             **kwargs)
         encoder_output = encoder.get_pooled_output()
@@ -411,7 +410,6 @@ class BERTBinaryClassifier(BERTClassifier, ClassifierModule):
             input_ids=split_placeholders["input_ids"],
             input_mask=split_placeholders["input_mask"],
             segment_ids=split_placeholders["segment_ids"],
-            scope="bert",
             drop_pooler=self._drop_pooler,
             **kwargs)
         encoder_output = encoder.get_pooled_output()
@@ -642,7 +640,6 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
             input_ids=split_placeholders["input_ids"],
             input_mask=split_placeholders["input_mask"],
             segment_ids=split_placeholders["segment_ids"],
-            scope="bert",
             **kwargs)
         encoder_output = encoder.get_sequence_output()
         decoder = SeqCLSDecoder(
@@ -957,7 +954,6 @@ class BERTSeqMultiTaskClassifier(BERTClassifier, ClassifierModule):
             input_ids=split_placeholders["input_ids"],
             input_mask=split_placeholders["input_mask"],
             segment_ids=split_placeholders["segment_ids"],
-            scope="bert",
             **kwargs)
         encoder_output = encoder.get_sequence_output()
         decoder = SeqCLSMultiTaskDecoder(
@@ -1316,7 +1312,6 @@ class BERTNER(BERTClassifier, NERModule):
             input_ids=split_placeholders["input_ids"],
             input_mask=split_placeholders["input_mask"],
             segment_ids=split_placeholders["segment_ids"],
-            scope="bert",
             **kwargs)
         encoder_output = encoder.get_sequence_output()
         decoder = SeqCLSDecoder(
@@ -1457,7 +1452,6 @@ class BERTCRFNER(BERTNER, NERModule):
             input_ids=split_placeholders["input_ids"],
             input_mask=split_placeholders["input_mask"],
             segment_ids=split_placeholders["segment_ids"],
-            scope="bert",
             **kwargs)
         encoder_output = encoder.get_sequence_output()
         decoder = CRFDecoder(
@@ -1780,7 +1774,6 @@ class BERTCRFCascadeNER(BERTCRFNER, NERModule):
             input_ids=split_placeholders["input_ids"],
             input_mask=split_placeholders["input_mask"],
             segment_ids=split_placeholders["segment_ids"],
-            scope="bert",
             **kwargs)
         encoder_output = encoder.get_sequence_output()
         decoder = CRFDecoder(
@@ -2203,7 +2196,6 @@ class BERTMRC(BERTClassifier, MRCModule):
             input_ids=split_placeholders["input_ids"],
             input_mask=split_placeholders["input_mask"],
             segment_ids=split_placeholders["segment_ids"],
-            scope="bert",
             **kwargs)
         encoder_output = encoder.get_sequence_output()
         decoder = MRCDecoder(
@@ -2510,7 +2502,6 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
             input_ids=split_placeholders["input_ids"],
             input_mask=split_placeholders["input_mask"],
             segment_ids=split_placeholders["segment_ids"],
-            scope="bert",
             drop_pooler=self._drop_pooler,
             **kwargs)
         verifier = CLSDecoder(
@@ -2997,7 +2988,6 @@ class BERTLM(LMModule):
             input_ids=split_placeholders["input_ids"],
             input_mask=split_placeholders["input_mask"],
             segment_ids=split_placeholders["segment_ids"],
-            scope="bert",
             drop_pooler=self._drop_pooler,
             **kwargs)
         decoder = BERTDecoder(

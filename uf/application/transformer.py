@@ -174,7 +174,6 @@ class TransformerMT(MTModule):
             hidden_size=self._hidden_size,
             num_blocks=self._num_hidden_layers,
             num_attention_heads=self._num_attention_heads,
-            scope="transformer",
             **kwargs)
         return model.get_forward_outputs()
 

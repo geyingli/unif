@@ -15,20 +15,21 @@ class SANetMRC(BERTMRC, MRCModule):
     """ Machine reading comprehension on SANet. """
     _INFER_ATTRIBUTES = BERTMRC._INFER_ATTRIBUTES
 
-    def __init__(self,
-                 config_file,
-                 vocab_file,
-                 max_seq_length=256,
-                 init_checkpoint=None,
-                 output_dir=None,
-                 gpu_ids=None,
-                 do_lower_case=True,
-                 reading_module="bert",
-                 split_signs=",，。?？!！;；",
-                 alpha=0.5,
-                 truncate_method="longer-FO"):
-        super(MRCModule, self).__init__(
-            init_checkpoint, output_dir, gpu_ids)
+    def __init__(
+        self,
+        config_file,
+        vocab_file,
+        max_seq_length=256,
+        init_checkpoint=None,
+        output_dir=None,
+        gpu_ids=None,
+        do_lower_case=True,
+        reading_module="bert",
+        split_signs=",，。?？!！;；",
+        alpha=0.5,
+        truncate_method="longer-FO",
+    ):
+        super(MRCModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.batch_size = 0
         self.max_seq_length = max_seq_length
@@ -47,10 +48,10 @@ class SANetMRC(BERTMRC, MRCModule):
 
         assert reading_module in ("bert", "albert", "electra"), (
             "Invalid value of `reading_module`: %s. Pick one from "
-            "`bert`, `albert` and `electra`.")
+            "`bert`, `albert` and `electra`."
+        )
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
-        self._key_to_depths = get_key_to_depths(
-            self.bert_config.num_hidden_layers)
+        self._key_to_depths = get_key_to_depths(self.bert_config.num_hidden_layers)
 
         if "[CLS]" not in self.tokenizer.vocab:
             self.tokenizer.add("[CLS]")
@@ -61,8 +62,7 @@ class SANetMRC(BERTMRC, MRCModule):
             self.bert_config.vocab_size += 1
             tf.logging.info("Add necessary token `[SEP]` into vocabulary.")
 
-    def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
-                is_training=False, is_parallel=False):
+    def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None, is_training=False, is_parallel=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
 
         if is_training:
@@ -76,8 +76,7 @@ class SANetMRC(BERTMRC, MRCModule):
             tokenized = False if X else X_tokenized
             X_target = X_tokenized if tokenized else X
             (input_tokens, input_ids, input_mask, sa_mask, segment_ids,
-             doc_ids, doc_text, doc_start) = self._convert_X(
-                X_target, tokenized=tokenized)
+             doc_ids, doc_text, doc_start) = self._convert_X(X_target, tokenized=tokenized)
             data["input_ids"] = np.array(input_ids, dtype=np.int32)
             data["input_mask"] = np.array(input_mask, dtype=np.int32)
             data["sa_mask"] = np.array(sa_mask, dtype=np.int32)
@@ -94,14 +93,12 @@ class SANetMRC(BERTMRC, MRCModule):
 
         # convert y
         if y:
-            label_ids = self._convert_y(
-                y, doc_ids, doc_text, doc_start, tokenized)
+            label_ids = self._convert_y(y, doc_ids, doc_text, doc_start, tokenized)
             data["label_ids"] = np.array(label_ids, dtype=np.int32)
 
         # convert sample_weight
         if is_training or y:
-            sample_weight = self._convert_sample_weight(
-                sample_weight, n_inputs)
+            sample_weight = self._convert_sample_weight(sample_weight, n_inputs)
             data["sample_weight"] = np.array(sample_weight, dtype=np.float32)
 
         return data
@@ -112,14 +109,14 @@ class SANetMRC(BERTMRC, MRCModule):
         segment_input_tokens = []
         for ex_id, example in enumerate(X_target):
             try:
-                segment_input_tokens.append(
-                    self._convert_x(example, tokenized))
+                segment_input_tokens.append(self._convert_x(example, tokenized))
             except Exception:
                 raise ValueError(
                     "Wrong input format (line %d): \"%s\". "
                     "An untokenized example: "
                     "`X = [{\"doc\": \"...\", \"question\": \"...\", ...}, "
-                    "...]`" % (ex_id, example))
+                    "...]`" % (ex_id, example)
+                )
 
         input_tokens = []
         input_ids = []
@@ -134,17 +131,13 @@ class SANetMRC(BERTMRC, MRCModule):
             _input_ids = []
             _input_mask = [1]
             _segment_ids = [0]
-            _sa_mask = np.zeros(
-                (self.max_seq_length, self.max_seq_length), dtype=np.int32)
+            _sa_mask = np.zeros((self.max_seq_length, self.max_seq_length), dtype=np.int32)
             _sa_mask[0, 0] = 1
 
             _doc_sent_tokens = segments.pop("doc")
             _doc_sent_num = len(_doc_sent_tokens)
             segments = list(segments.values()) + _doc_sent_tokens
-            common.truncate_segments(
-                segments,
-                self.max_seq_length - (len(segments) - _doc_sent_num + 1) - 1,
-                truncate_method=self.truncate_method)
+            common.truncate_segments(segments, self.max_seq_length - (len(segments) - _doc_sent_num + 1) - 1, truncate_method=self.truncate_method)
 
             # split doc and other infos after truncation
             non_doc_segments = segments[:-_doc_sent_num]
@@ -193,8 +186,7 @@ class SANetMRC(BERTMRC, MRCModule):
             doc_text.append(X_target[ex_id]["doc"])
             doc_start.append(_doc_start)
 
-        return (input_tokens, input_ids, input_mask, sa_mask, segment_ids,
-                doc_ids, doc_text, doc_start)
+        return (input_tokens, input_ids, input_mask, sa_mask, segment_ids, doc_ids, doc_text, doc_start)
 
     def _convert_x(self, x, tokenized):
         output = {}
@@ -203,7 +195,8 @@ class SANetMRC(BERTMRC, MRCModule):
             raise ValueError(
                 "Wrong input format of `y`. An untokenized example: "
                 "`y = [{\"doc\": \"...\", \"question\": \"...\", ...}, "
-                "None, ...]`")
+                "None, ...]`"
+            )
 
         for key in x:
             if not tokenized:
@@ -232,29 +225,15 @@ class SANetMRC(BERTMRC, MRCModule):
 
     def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
-            "input_ids": common.get_placeholder(
-                target, "input_ids",
-                [None, self.max_seq_length], tf.int32),
-            "input_mask": common.get_placeholder(
-                target, "input_mask",
-                [None, self.max_seq_length], tf.int32),
-            "sa_mask": common.get_placeholder(
-                target, "sa_mask",
-                [None, self.max_seq_length ** 2], tf.int32),
-            "segment_ids": common.get_placeholder(
-                target, "segment_ids",
-                [None, self.max_seq_length], tf.int32),
-            "label_ids": common.get_placeholder(
-                target, "label_ids",
-                [None, 2], tf.int32),
-            "has_answer": common.get_placeholder(
-                target, "has_answer",
-                [None], tf.int32),
+            "input_ids": common.get_placeholder(target, "input_ids", [None, self.max_seq_length], tf.int32),
+            "input_mask": common.get_placeholder(target, "input_mask", [None, self.max_seq_length], tf.int32),
+            "sa_mask": common.get_placeholder(target, "sa_mask", [None, self.max_seq_length ** 2], tf.int32),
+            "segment_ids": common.get_placeholder(target, "segment_ids", [None, self.max_seq_length], tf.int32),
+            "label_ids": common.get_placeholder(target, "label_ids", [None, 2], tf.int32),
+            "has_answer": common.get_placeholder(target, "has_answer", [None], tf.int32),
         }
         if not on_export:
-            self.placeholders["sample_weight"] = common.get_placeholder(
-                target, "sample_weight",
-                [None], tf.float32)
+            self.placeholders["sample_weight"] = common.get_placeholder(target, "sample_weight", [None], tf.float32)
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
@@ -266,7 +245,8 @@ class SANetMRC(BERTMRC, MRCModule):
                     input_ids=split_placeholders["input_ids"],
                     input_mask=split_placeholders["input_mask"],
                     segment_ids=split_placeholders["segment_ids"],
-                    **kwargs)
+                    **kwargs,
+                )
             elif model_name == "albert":
                 encoder = ALBERTEncoder(
                     albert_config=self.bert_config,
@@ -275,7 +255,8 @@ class SANetMRC(BERTMRC, MRCModule):
                     input_mask=split_placeholders["input_mask"],
                     segment_ids=split_placeholders["segment_ids"],
                     drop_pooler=self._drop_pooler,
-                    **kwargs)
+                    **kwargs,
+                )
             elif model_name == "electra":
                 encoder = BERTEncoder(
                     bert_config=self.bert_config,
@@ -284,7 +265,8 @@ class SANetMRC(BERTMRC, MRCModule):
                     input_mask=split_placeholders["input_mask"],
                     segment_ids=split_placeholders["segment_ids"],
                     scope="electra",
-                    **kwargs)
+                    **kwargs,
+                )
             return encoder
 
         encoder = _get_encoder(self._reading_module)
@@ -297,7 +279,8 @@ class SANetMRC(BERTMRC, MRCModule):
             sample_weight=split_placeholders.get("sample_weight"),
             alpha=self._alpha,
             trainable=True,
-            **kwargs)
+            **kwargs,
+        )
         return decoder.get_forward_outputs()
 
 
@@ -305,8 +288,8 @@ def get_key_to_depths(num_hidden_layers):
     key_to_depths = {
         "/embeddings": num_hidden_layers + 2,
         "/sentence_attention/": 1,
-        "/cls/mrc/": 0}
+        "/cls/mrc/": 0,
+    }
     for layer_idx in range(num_hidden_layers):
-        key_to_depths["/layer_%d/" % layer_idx] = \
-            num_hidden_layers - layer_idx + 1
+        key_to_depths["/layer_%d/" % layer_idx] = num_hidden_layers - layer_idx + 1
     return key_to_depths

@@ -33,22 +33,18 @@ class NERModule(BaseModule):
         for i, entity_type in enumerate(self.entity_types):
             B_id = 1 + i * 4
             B_ids.append(B_id)
-            f1_token, f1_entity = self._get_f1(
-                preds, labels, mask, B_id=B_id)
+            f1_token, f1_entity = self._get_f1(preds, labels, mask, B_id=B_id)
             metrics["f1/%s-token" % entity_type] = f1_token
             metrics["f1/%s-entity" % entity_type] = f1_entity
 
         # macro f1
-        f1_macro_token = np.mean(
-            [metrics[key] for key in metrics if "-token" in key])
-        f1_macro_entity = np.mean(
-            [metrics[key] for key in metrics if "-entity" in key])
+        f1_macro_token = np.mean([metrics[key] for key in metrics if "-token" in key])
+        f1_macro_entity = np.mean([metrics[key] for key in metrics if "-entity" in key])
         metrics["macro f1/token"] = f1_macro_token
         metrics["macro f1/entity"] = f1_macro_entity
 
         # micro f1
-        f1_micro_token, f1_micro_entity = self._get_f1(
-            preds, labels, mask, B_id=B_ids)
+        f1_micro_token, f1_micro_entity = self._get_f1(preds, labels, mask, B_id=B_ids)
         metrics["micro f1/token"] = f1_micro_token
         metrics["micro f1/entity"] = f1_micro_entity
 
@@ -91,13 +87,11 @@ class NERModule(BaseModule):
 
         pre_token = tp_token / (tp_token + fp_token + 1e-6)
         rec_token = tp_token / (tp_token + fn_token + 1e-6)
-        f1_token = 2 * pre_token * rec_token / (
-            pre_token + rec_token + 1e-6)
+        f1_token = 2 * pre_token * rec_token / (pre_token + rec_token + 1e-6)
 
         pre_entity = tp_entity / (tp_entity + fp_entity + 1e-6)
         rec_entity = tp_entity / (tp_entity + fn_entity + 1e-6)
-        f1_entity = 2 * pre_entity * rec_entity / (
-            pre_entity + rec_entity + 1e-6)
+        f1_entity = 2 * pre_entity * rec_entity / (pre_entity + rec_entity + 1e-6)
 
         return f1_token, f1_entity
 
@@ -168,8 +162,7 @@ class MRCModule(BaseModule):
 
             # answer prediction (has intersection)
             else:
-                tp = (min(end_pred, end_label) + 1 -
-                      max(start_pred, start_label))
+                tp = (min(end_pred, end_label) + 1 - max(start_pred, start_label))
                 fp = (max(0, end_pred - end_label) + max(0, start_label - start_pred))
                 fn = (max(0, start_pred - start_label) + max(0, end_label - end_pred))
                 if fp + fn == 0:
@@ -215,8 +208,7 @@ class MTModule(BaseModule):
                     denominator += cand_count
                     ngrams.append(ngram)
 
-                power += 1 / (n + 1) * np.log(
-                    nominator / (denominator + 1e-6) + 1e-6)
+                power += 1 / (n + 1) * np.log(nominator / (denominator + 1e-6) + 1e-6)
 
             _bleu = np.exp(power)
             if len(_preds) >= len(_labels):
@@ -248,8 +240,7 @@ class MTModule(BaseModule):
                     if ngram in ngrams:
                         continue
                     nominator += len(common.find_all_boyer_moore(_preds, ngram))
-                    denominator += \
-                        len(common.find_all_boyer_moore(_labels, ngram))
+                    denominator += len(common.find_all_boyer_moore(_labels, ngram))
                     ngrams.append(ngram)
 
             _rouge = nominator / (denominator + 1e-6)
@@ -262,16 +253,18 @@ class LMModule(BaseModule):
     """ Application class of language modeling (LM). """
 
     def fit_from_tfrecords(
-            self, batch_size=32,
-            learning_rate=5e-5,
-            target_steps=None,
-            total_steps=1000000,
-            warmup_ratio=0.01,
-            print_per_secs=0.1,
-            save_per_steps=10000,
-            tfrecords_files=None,
-            n_jobs=3,
-            **kwargs):
+        self,
+        batch_size=32,
+        learning_rate=5e-5,
+        target_steps=None,
+        total_steps=1000000,
+        warmup_ratio=0.01,
+        print_per_secs=0.1,
+        save_per_steps=10000,
+        tfrecords_files=None,
+        n_jobs=3,
+        **kwargs,
+    ):
         """ Training the model using TFRecords.
 
         Args:
@@ -314,17 +307,21 @@ class LMModule(BaseModule):
             save_per_steps,
             tfrecords_files,
             n_jobs,
-            **kwargs)
+            **kwargs,
+        )
 
-    def fit(self, X=None, y=None, sample_weight=None, X_tokenized=None,
-            batch_size=32,
-            learning_rate=5e-5,
-            target_steps=None,
-            total_steps=1000000,
-            warmup_ratio=0.01,
-            print_per_secs=0.1,
-            save_per_steps=10000,
-            **kwargs):
+    def fit(
+        self,
+        X=None, y=None, sample_weight=None, X_tokenized=None,
+        batch_size=32,
+        learning_rate=5e-5,
+        target_steps=None,
+        total_steps=1000000,
+        warmup_ratio=0.01,
+        print_per_secs=0.1,
+        save_per_steps=10000,
+        **kwargs,
+    ):
         """ Training the model.
 
         Args:
@@ -368,9 +365,8 @@ class LMModule(BaseModule):
             warmup_ratio,
             print_per_secs,
             save_per_steps,
-            **kwargs)
+            **kwargs,
+        )
 
     def score(self, *args, **kwargs):
-        raise AttributeError(
-            "`score` method is not supported for unsupervised "
-            "language modeling (LM) modules.")
+        raise AttributeError("`score` method is not supported for unsupervised language modeling (LM) modules.")

@@ -29,8 +29,7 @@ def write_tfrecords(data, tfrecords_file):
                 features[keys[i]] = create_float_feature(value.tolist())
             else:
                 raise ValueError("Invalid data type: %s." % type(value))
-        tf_example = tf.train.Example(
-            features=tf.train.Features(feature=features))
+        tf_example = tf.train.Example(features=tf.train.Features(feature=features))
         writer.write(tf_example.SerializeToString())
 
 
@@ -54,8 +53,7 @@ def create_int_feature(values):
     """ Convert list of values into tf-serializable Int64. """
     if not isinstance(values, list):
         values = [values]
-    feature = tf.train.Feature(
-        int64_list=tf.train.Int64List(value=values))
+    feature = tf.train.Feature(int64_list=tf.train.Int64List(value=values))
     return feature
 
 
@@ -63,6 +61,5 @@ def create_float_feature(values):
     """ Convert list of values into tf-serializable Float. """
     if not isinstance(values, list):
         values = [values]
-    feature = tf.train.Feature(
-        float_list=tf.train.FloatList(value=values))
+    feature = tf.train.Feature(float_list=tf.train.FloatList(value=values))
     return feature

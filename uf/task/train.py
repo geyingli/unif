@@ -31,7 +31,11 @@ class Training(Task):
         else:
             grads, self.module._tensors = self.module._parallel_forward(**kwargs)
             update_params_op = common.update_global_params(
-                self.module.trainable_variables, self.module._global_step, self.module._optimizer, grads)
+                self.module.trainable_variables,
+                self.module._global_step,
+                self.module._optimizer,
+                grads,
+            )
             update_step_op = self.module._global_step.assign(self.module._global_step + 1)
             self.train_ops = [update_params_op, update_step_op]
 
@@ -60,7 +64,8 @@ class Training(Task):
                     shape=values_shape,
                     dtype=tf.float32,
                     trainable=False,
-                    initializer=tf.zeros_initializer())
+                    initializer=tf.zeros_initializer(),
+                )
 
                 # variable to store indices
                 indices_shape = grad.indices.shape.as_list()    # [None]
@@ -70,7 +75,8 @@ class Training(Task):
                     shape=indices_shape,
                     dtype=tf.int32,
                     trainable=False,
-                    initializer=tf.zeros_initializer())
+                    initializer=tf.zeros_initializer(),
+                )
 
                 # add new values
                 new_values = tf.concat([values_variable[n_elements:], grad.values / self.grad_acc_steps], axis=0)
@@ -84,7 +90,8 @@ class Training(Task):
                 new_grad = tf.IndexedSlices(
                     values=values_variable,
                     indices=indices_variable,
-                    dense_shape=dense_shape)
+                    dense_shape=dense_shape,
+                )
 
                 update_grad_op = tf.group([values_assign_op, indices_assign_op])
                 new_grads.append(new_grad)
@@ -95,7 +102,8 @@ class Training(Task):
                     shape=grad_shape,
                     dtype=tf.float32,
                     trainable=False,
-                    initializer=tf.zeros_initializer())
+                    initializer=tf.zeros_initializer(),
+                )
                 new_grad = grad_variable + grad / self.grad_acc_steps
                 update_grad_op = tf.assign(grad_variable, new_grad)
                 new_grads.append(grad_variable)
@@ -107,11 +115,13 @@ class Training(Task):
         update_step_op = self.module._global_step.assign(self.module._global_step + 1)
         self.train_ops = [update_grads_op, update_step_op]
         self.update_params_op = common.update_global_params(
-            params, self.module._global_step, self.module._optimizer, new_grads)
+            params,
+            self.module._global_step,
+            self.module._optimizer,
+            new_grads,
+        )
 
-    def run(self, target_steps,
-            print_per_secs=60,
-            save_per_steps=1000):
+    def run(self, target_steps, print_per_secs=60, save_per_steps=1000):
 
         if self.shuffle and not self.tfrecords_files:
             self._shuffle()
@@ -133,11 +143,13 @@ class Training(Task):
         if self.adversarial:
             tf.logging.info(
                 "Running adversarial training `%s` on %d samples (step %d -> %d)",
-                self.adversarial, self.n_inputs, self.module.step, target_steps)
+                self.adversarial, self.n_inputs, self.module.step, target_steps,
+            )
         else:
             tf.logging.info(
                 "Running training on %d samples (step %d -> %d)",
-                self.n_inputs, self.module.step, target_steps)
+                self.n_inputs, self.module.step, target_steps,
+            )
         if self.grad_acc_steps > 1:
             tf.logging.info("Accumulate gradients every %d steps" % self.grad_acc_steps)
 
@@ -152,8 +164,8 @@ class Training(Task):
         for i in range(target_steps - self.module.step):
             last_tic, last_step = self._train_one_batch(
                 self.module.step + 1, last_tic, last_step, target_steps,
-                print_per_secs, save_per_steps, saver,
-                self.adversarial)
+                print_per_secs, save_per_steps, saver, self.adversarial,
+            )
             self.module.step += 1
 
             # use accumulated gradients to update parameters
@@ -165,13 +177,13 @@ class Training(Task):
             self.n_inputs = common.get_tfrecords_length(self.tfrecords_files)
 
             self.module._set_placeholders("feature", is_training=True)
-            features = {key: self.module.placeholders[key]
-                        for key in common.get_tfrecords_keys(
-                            self.tfrecords_files[0])}
+            features = {
+                key: self.module.placeholders[key]
+                for key in common.get_tfrecords_keys(self.tfrecords_files[0])
+            }
 
             def decode_record(record):
-                example = tf.parse_single_example(
-                    record, features)
+                example = tf.parse_single_example(record, features)
                 for name in list(example.keys()):
                     _t = example[name]
                     if _t.dtype == tf.int64:
@@ -189,7 +201,8 @@ class Training(Task):
                 decode_record,
                 batch_size=self.module.batch_size,
                 num_parallel_batches=self.n_jobs,
-                drop_remainder=True))
+                drop_remainder=True),
+            )
             dataset = dataset.shuffle(buffer_size=100)
             iterator = dataset.make_one_shot_iterator()    # never stop
             self.module.placeholders = iterator.get_next()
@@ -208,9 +221,7 @@ class Training(Task):
                 continue
             self.module.data[key] = self.module.data[key][index_list]
 
-    def _train_one_batch(self, step, last_tic, last_step, target_steps,
-                         print_per_secs, save_per_steps, saver,
-                         adversarial=None):
+    def _train_one_batch(self, step, last_tic, last_step, target_steps, print_per_secs, save_per_steps, saver, adversarial=None):
         feed_dict = {}
         as_feature = True
         if not self.from_tfrecords:
@@ -269,13 +280,12 @@ class AdversarialTraining(Training):
             else:
                 ok = False
         except Exception:
-            raise ValueError("`%s` does not support adversarial training."
-                             % self.module.__class__.__name__)
+            raise ValueError("`%s` does not support adversarial training." % self.module.__class__.__name__)
         if not ok:
             raise ValueError(
-                "Wrong adversarial algorithm `%s`. "
-                "Pick one in the following list: "
-                "FGM, PGD, FreeLB, FreeAT, SMART." % self.adversarial)
+                "Wrong adversarial algorithm `%s`. Pick one in the following list: "
+                "FGM, PGD, FreeLB, FreeAT, SMART." % self.adversarial
+            )
 
     def _fgm(self, epsilon=0.5, **kwargs):
         # FGM takes average on actual gradient and virtual
@@ -299,11 +309,16 @@ class AdversarialTraining(Training):
 
         # sum up
         with tf.control_dependencies([restore_op]):
-            grads = [common.average_n_grads([actual_grad, attack_grad])
-                     for (actual_grad, attack_grad) in zip(actual_grads, attack_grads)]
+            grads = [
+                common.average_n_grads([actual_grad, attack_grad])
+                for (actual_grad, attack_grad) in zip(actual_grads, attack_grads)
+            ]
         update_params_op = common.update_global_params(
-            self.module.trainable_variables, self.module._global_step,
-            self.module._optimizer, grads)
+            self.module.trainable_variables,
+            self.module._global_step,
+            self.module._optimizer,
+            grads,
+        )
         update_step_op = self.module._global_step.assign(self.module._global_step + 1)
         self.train_ops = [update_params_op, update_step_op]
 
@@ -337,7 +352,8 @@ class AdversarialTraining(Training):
                 cur_r = tf.cond(
                     norm > epsilon,
                     lambda: (acc_r + tmp_r) * tf.divide(epsilon, norm),
-                    lambda: (acc_r + tmp_r))
+                    lambda: (acc_r + tmp_r),
+                )
                 r = cur_r - acc_r    # calculate current step
                 attack_op = param.assign(param + r)
                 acc_r = cur_r
@@ -349,12 +365,16 @@ class AdversarialTraining(Training):
 
         # sum up
         with tf.control_dependencies([restore_op]):
-            grads = [common.average_n_grads([actual_grad, attack_grad])
-                     for (actual_grad, attack_grad) in zip(
-                         actual_grads, attack_grads)]
+            grads = [
+                common.average_n_grads([actual_grad, attack_grad])
+                for (actual_grad, attack_grad) in zip(actual_grads, attack_grads)
+            ]
         update_params_op = common.update_global_params(
-            self.module.trainable_variables, self.module._global_step,
-            self.module._optimizer, grads)
+            self.module.trainable_variables,
+            self.module._global_step,
+            self.module._optimizer,
+            grads,
+        )
         update_step_op = self.module._global_step.assign(self.module._global_step + 1)
         self.train_ops = [update_params_op, update_step_op]
 
@@ -375,19 +395,16 @@ class AdversarialTraining(Training):
         grad, param = common.get_grad_and_param(self.module.trainable_variables, d_grads, "word_embedding")
         init_r = tf.get_variable(
             "init_r",
-            shape=[self.module.batch_size * self.module.max_seq_length,
-                   param.shape.as_list()[-1]],
-            initializer=tf.random_uniform_initializer(
-                minval=-epsilon, maxval=epsilon),
-            trainable=False)
+            shape=[self.module.batch_size * self.module.max_seq_length, param.shape.as_list()[-1]],
+            initializer=tf.random_uniform_initializer(minval=-epsilon, maxval=epsilon),
+            trainable=False,
+        )
         init_op = tf.variables_initializer([init_r])
         with tf.control_dependencies([init_op]):    # fix perturbation
             # Scale randomly initialized permutation, to make sure norm
             # of `r` is smaller than epsilon.
             r = tf.divide(init_r, tf.norm(init_r, np.inf))
-            r = tf.IndexedSlices(values=r,
-                                 indices=grad.indices,
-                                 dense_shape=grad.dense_shape)
+            r = tf.IndexedSlices(values=r, indices=grad.indices, dense_shape=grad.dense_shape)
             attack_op = param.assign(param + r)
 
         # attack
@@ -399,7 +416,9 @@ class AdversarialTraining(Training):
                 all_grads.append(attack_grads)
                 grad, _ = common.get_grad_and_param(
                     self.module.trainable_variables,
-                    attack_grads, "word_embedding")
+                    attack_grads,
+                    "word_embedding",
+                )
                 tmp_r = tf.multiply(1 / n_loop, grad / (tf.norm(grad) + 1e-9))
 
                 # In order not to shuffle the distribution of gradient-
@@ -409,7 +428,8 @@ class AdversarialTraining(Training):
                 cur_r = tf.cond(
                     norm > epsilon,
                     lambda: (acc_r + tmp_r) * tf.divide(epsilon, norm),
-                    lambda: (acc_r + tmp_r))
+                    lambda: (acc_r + tmp_r),
+                )
                 r = cur_r - acc_r    # calculate current step
                 attack_op = param.assign(param + r)
                 acc_r = cur_r
@@ -422,11 +442,13 @@ class AdversarialTraining(Training):
 
         # sum up
         with tf.control_dependencies([restore_op]):
-            grads = [common.average_n_grads(split_grad) for split_grad in zip(
-                *all_grads)]
+            grads = [common.average_n_grads(split_grad) for split_grad in zip(*all_grads)]
         update_params_op = common.update_global_params(
-            self.module.trainable_variables, self.module._global_step,
-            self.module._optimizer, grads)
+            self.module.trainable_variables,
+            self.module._global_step,
+            self.module._optimizer,
+            grads,
+        )
         update_step_op = self.module._global_step.assign(self.module._global_step + 1)
         self.train_ops = [update_params_op, update_step_op]
 
@@ -446,33 +468,35 @@ class AdversarialTraining(Training):
                 if k == 0:
                     self.module._tensors = tensors
                 grad, param = common.get_grad_and_param(
-                    self.module.trainable_variables, grads, "word_embedding")
+                    self.module.trainable_variables,
+                    grads,
+                    "word_embedding",
+                )
                 update_params_op = common.update_global_params(
-                    self.module.trainable_variables, self.module._global_step,
-                    self.module._optimizer, grads)
+                    self.module.trainable_variables,
+                    self.module._global_step,
+                    self.module._optimizer,
+                    grads,
+                )
 
             # attack
             with tf.control_dependencies([update_params_op]):
                 # any operator directly applied to `IndexedSlice` is dangerous
                 sign = tf.cast(tf.greater(grad.values, 0.0), tf.float32)
-                r = last_r + tf.multiply(epsilon, sign) if k > 0 else \
-                    tf.multiply(epsilon, sign)
-                r = tf.cond(tf.norm(r) > epsilon,
-                            lambda: r * tf.divide(epsilon, tf.norm(r)),
-                            lambda: r)
-                r_slice = tf.IndexedSlices(
-                    values=r,
-                    indices=grad.indices,
-                    dense_shape=grad.dense_shape)
+                r = last_r + tf.multiply(epsilon, sign) if k > 0 else tf.multiply(epsilon, sign)
+                r = tf.cond(
+                    tf.norm(r) > epsilon,
+                    lambda: r * tf.divide(epsilon, tf.norm(r)),
+                    lambda: r,
+                )
+                r_slice = tf.IndexedSlices(values=r, indices=grad.indices, dense_shape=grad.dense_shape)
                 attack_op = param.assign(param - last_r_slice + r_slice)
                 last_r = r
                 last_r_slice = r_slice
         update_step_op = self.module._global_step.assign(self.module._global_step + 1)
         self.train_ops = [update_params_op, update_step_op]
 
-    def _smart(self, epsilon=0.01, n_loop=2,
-               prtb_lambda=0.5, breg_miu=0.2, tilda_beta=0.3,
-               **kwargs):
+    def _smart(self, epsilon=0.01, n_loop=2, prtb_lambda=0.5, breg_miu=0.2, tilda_beta=0.3, **kwargs):
         # SMART is essentially a different adversarial training algorithm
         # compared to the ones above. It consists of two key and new
         # features: smothness-inducing regularization and Bregman proximal
@@ -494,39 +518,36 @@ class AdversarialTraining(Training):
         tilda = tf.get_variable(
             name="tilda_embeddings",
             shape=embedding_shape,
-            initializer=tf.zeros_initializer, trainable=False)
+            initializer=tf.zeros_initializer,
+            trainable=False,
+        )
         _, breg_tensors = self.module._parallel_forward(use_tilda_embedding=True, **kwargs)
         probs = self.module._tensors["probs"]
         probs_breg = breg_tensors["probs"]
-        per_example_loss = tf.reduce_sum(
-            probs_breg * (tf.log(probs_breg) - tf.log(probs)), axis=-1)
-        per_example_loss_breg = tf.reduce_sum(
-            probs * (tf.log(probs) - tf.log(probs_breg)), axis=-1)
-        breg_loss = breg_miu * (
-            tf.reduce_mean(per_example_loss) +
-            tf.reduce_mean(per_example_loss_breg))
-        self.module._tensors["breg"] = breg_miu * (
-            per_example_loss +
-            per_example_loss_breg)
+        per_example_loss = tf.reduce_sum(probs_breg * (tf.log(probs_breg) - tf.log(probs)), axis=-1)
+        per_example_loss_breg = tf.reduce_sum(probs * (tf.log(probs) - tf.log(probs_breg)), axis=-1)
+        breg_loss = breg_miu * (tf.reduce_mean(per_example_loss) + tf.reduce_mean(per_example_loss_breg))
+        self.module._tensors["breg"] = breg_miu * (per_example_loss + per_example_loss_breg)
 
         # perturbation
         grad, param = common.get_grad_and_param(
-            self.module.trainable_variables, unused_grads, "word_embedding")
+            self.module.trainable_variables,
+            unused_grads,
+            "word_embedding",
+        )
         init_r = tf.get_variable(
             "init_r",
-            shape=[self.module.batch_size * self.module.max_seq_length,
-                   embedding_shape[-1]],
+            shape=[self.module.batch_size * self.module.max_seq_length, embedding_shape[-1]],
             initializer=tf.random_normal_initializer(stddev=epsilon),
-            trainable=False)
+            trainable=False,
+        )
         with tf.control_dependencies([breg_loss]):
             init_op = tf.variables_initializer([init_r])
         with tf.control_dependencies([init_op]):    # fix perturbation
             # Scale randomly initialized permutation, to make sure norm
             # of `r` is smaller than epsilon.
             r = tf.divide(init_r, tf.norm(init_r, np.inf))
-            r = tf.IndexedSlices(values=r,
-                                 indices=grad.indices,
-                                 dense_shape=grad.dense_shape)
+            r = tf.IndexedSlices(values=r, indices=grad.indices, dense_shape=grad.dense_shape)
             attack_op = param.assign(param + r)
 
         # attack
@@ -537,25 +558,21 @@ class AdversarialTraining(Training):
 
                 # smoothness-inducing adversarial regulization
                 probs_prtb = prtb_tensors["probs"]
-                per_example_loss = tf.reduce_sum(
-                    probs_prtb * (tf.log(probs_prtb) - tf.log(probs)), axis=-1)
-                per_example_loss_prtb = tf.reduce_sum(
-                    probs * (tf.log(probs) - tf.log(probs_prtb)), axis=-1)
-                prtb_loss = prtb_lambda * (
-                    tf.reduce_mean(per_example_loss) +
-                    tf.reduce_mean(per_example_loss_prtb))
-                self.module._tensors["prtb"] = prtb_lambda * (
-                    per_example_loss +
-                    per_example_loss_prtb)
+                per_example_loss = tf.reduce_sum(probs_prtb * (tf.log(probs_prtb) - tf.log(probs)), axis=-1)
+                per_example_loss_prtb = tf.reduce_sum(probs * (tf.log(probs) - tf.log(probs_prtb)), axis=-1)
+                prtb_loss = prtb_lambda * (tf.reduce_mean(per_example_loss) + tf.reduce_mean(per_example_loss_prtb))
+                self.module._tensors["prtb"] = prtb_lambda * (per_example_loss + per_example_loss_prtb)
 
                 # sum up
                 total_loss = cls_loss + breg_loss + prtb_loss
                 grads = tf.gradients(total_loss, self.module.trainable_variables)
                 grad, _ = common.get_grad_and_param(
-                    self.module.trainable_variables, grads, "word_embedding")
+                    self.module.trainable_variables,
+                    grads,
+                    "word_embedding",
+                )
 
-                tmp_r = tf.multiply(1 / n_loop, grad / (
-                    tf.norm(grad, np.inf) + 1e-9))
+                tmp_r = tf.multiply(1 / n_loop, grad / (tf.norm(grad, np.inf) + 1e-9))
 
                 # In order not to shuffle the distribution of gradient-induced
                 # perturbation, we use norm to scale instead of simply clip the
@@ -568,8 +585,11 @@ class AdversarialTraining(Training):
 
         # update
         update_params_op = common.update_global_params(
-            self.module.trainable_variables, self.module._global_step,
-            self.module._optimizer, grads)
+            self.module.trainable_variables,
+            self.module._global_step,
+            self.module._optimizer,
+            grads,
+        )
         update_step_op = self.module._global_step.assign(self.module._global_step + 1)
         self.train_ops = [update_params_op, update_step_op]
 
@@ -577,5 +597,4 @@ class AdversarialTraining(Training):
         self.init_tilda_op = tilda.assign(param)
 
         # runs at the end of each training epoch
-        self.update_tilda_op = tilda.assign(
-            (1 - tilda_beta) * param + tilda_beta * tilda)
+        self.update_tilda_op = tilda.assign((1 - tilda_beta) * param + tilda_beta * tilda)

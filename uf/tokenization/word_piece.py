@@ -17,11 +17,14 @@ class WordPieceTokenizer:
             raise ValueError(
                 "Can\"t find vocab_file \"%s\". "
                 "Please pass the correct path of vocabulary file, "
-                "e.g.`vocab.txt`." % vocab_file)
+                "e.g.`vocab.txt`." % vocab_file
+            )
         self.vocab = load_vocab(vocab_file)  # word: idx
         self.inv_vocab = {v: k for k, v in self.vocab.items()}
-        self.processor = [BasicTokenizer(do_lower_case=do_lower_case),
-                          WordpieceTokenizer(vocab=self.vocab)]
+        self.processor = [
+            BasicTokenizer(do_lower_case=do_lower_case),
+            WordpieceTokenizer(vocab=self.vocab),
+        ]
 
     def tokenize(self, text):
         tokens = []

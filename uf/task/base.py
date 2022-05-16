@@ -38,10 +38,12 @@ class Task:
         if not ignore_checkpoint and self.module.init_checkpoint:
             checkpoint_path = common.get_checkpoint_path(self.module.init_checkpoint)
             if not checkpoint_path:
-                raise ValueError("Checkpoint file \"%s\" does not exist. "
-                                 "Make sure you pass correct value to "
-                                 "`init_checkpoint`."
-                                 % self.module.init_checkpoint)
+                raise ValueError(
+                    "Checkpoint file \"%s\" does not exist. "
+                    "Make sure you pass correct value to "
+                    "`init_checkpoint`."
+                    % self.module.init_checkpoint
+                )
             self.module.init_checkpoint = checkpoint_path
 
             # `continual` means we tend to succeed the training step
@@ -50,8 +52,7 @@ class Task:
             if continual:
                 self.module.step = int(checkpoint_path.split("-")[-1])
 
-            (assignment_map, uninited_vars) = common.get_assignment_map(
-                checkpoint_path, variables, continual=continual)
+            (assignment_map, uninited_vars) = common.get_assignment_map(checkpoint_path, variables, continual=continual)
             self.module.assignment_map = assignment_map
             self.module.uninited_vars = uninited_vars
 
@@ -59,7 +60,8 @@ class Task:
                 tf.logging.info(
                     "%d local variables failed to match up with the "
                     "checkpoint file. Check more details through "
-                    "`.uninited_vars`." % len(uninited_vars))
+                    "`.uninited_vars`." % len(uninited_vars)
+                )
 
             if not self.module.assignment_map:    # no variables to restore
                 return

@@ -27,7 +27,8 @@ def unimported_module(name, required):
             raise ImportError(
                 "Module `%s` is required to launch %s. Check "
                 "\"https://pypi.org/project/%s/\" for installation details."
-                % (required, name, required))
+                % (required, name, required)
+            )
     return UnimportedModule
 
 
@@ -52,8 +53,8 @@ def set_verbosity(level=2):
     else:
         raise ValueError(
           "Invalid value: %s. Pick from `0`, `1` and `2`. "
-          "The larger the value, the more information will be printed."
-          % level)
+          "The larger the value, the more information will be printed." % level
+        )
 
 
 def set_log(log_file):
@@ -97,9 +98,7 @@ def truncate_segments(segments, max_seq_length, truncate_method="LIFO"):
                 index -= 1
             segments[index].pop()
         else:
-            raise ValueError(
-                "Invalid value for `truncate_method`. "
-                "Pick one from `longer-FO`, `FIFO`, `LIFO`.")
+            raise ValueError("Invalid value for `truncate_method`. Pick one from `longer-FO`, `FIFO`, `LIFO`.")
 
 
 def transform(output_arrays, n_inputs=None):

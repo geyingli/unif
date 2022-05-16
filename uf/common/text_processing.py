@@ -21,9 +21,7 @@ def convert_tokens_to_text(tokens):
 
                 # remove space between chars and punctuations
                 if not is_english_char(_last) or not is_english_char(_next):
-                    text = text.replace(
-                        "%s%s%s" % (_last, text[i], _next),
-                        "%s%s" % (_last, _next))
+                    text = text.replace("%s%s%s" % (_last, text[i], _next), "%s%s" % (_last, _next))
             i += 1
 
     return text.strip()

@@ -2,11 +2,8 @@ import numpy as np
 
 from ..thirdparty import tf
 from .base import ClassifierModule, MRCModule, LMModule
+from .bert import BERTClassifier, BERTBinaryClassifier, BERTSeqClassifier, BERTMRC, BERTLM, get_bert_config, get_key_to_depths, create_masked_lm_predictions
 from ..modeling.bert import BERTEncoder, BERTDecoder
-from .bert import (BERTClassifier, BERTBinaryClassifier, BERTSeqClassifier,
-                   BERTMRC, BERTLM,
-                   get_bert_config, get_key_to_depths,
-                   create_masked_lm_predictions)
 from ..tokenization import WordPieceTokenizer
 from .. import common
 

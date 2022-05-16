@@ -14,20 +14,21 @@ class SemBERTClassifier(BERTClassifier, ClassifierModule):
     """ Single-label classifier on SemBERT. """
     _INFER_ATTRIBUTES = BERTClassifier._INFER_ATTRIBUTES
 
-    def __init__(self,
-                 config_file,
-                 vocab_file,
-                 max_seq_length=128,
-                 label_size=None,
-                 init_checkpoint=None,
-                 output_dir=None,
-                 gpu_ids=None,
-                 sem_features=None,
-                 drop_pooler=False,
-                 do_lower_case=True,
-                 truncate_method="LIFO"):
-        super(ClassifierModule, self).__init__(
-            init_checkpoint, output_dir, gpu_ids)
+    def __init__(
+        self,
+        config_file,
+        vocab_file,
+        max_seq_length=128,
+        label_size=None,
+        init_checkpoint=None,
+        output_dir=None,
+        gpu_ids=None,
+        sem_features=None,
+        drop_pooler=False,
+        do_lower_case=True,
+        truncate_method="LIFO",
+    ):
+        super(ClassifierModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.batch_size = 0
         self.max_seq_length = max_seq_length
@@ -40,8 +41,7 @@ class SemBERTClassifier(BERTClassifier, ClassifierModule):
 
         self.bert_config = get_bert_config(config_file)
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
-        self._key_to_depths = get_key_to_depths(
-            self.bert_config.num_hidden_layers)
+        self._key_to_depths = get_key_to_depths(self.bert_config.num_hidden_layers)
 
         if "[CLS]" not in self.tokenizer.vocab:
             self.tokenizer.add("[CLS]")
@@ -52,16 +52,13 @@ class SemBERTClassifier(BERTClassifier, ClassifierModule):
             self.bert_config.vocab_size += 1
             tf.logging.info("Add necessary token `[SEP]` into vocabulary.")
 
-    def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
-                is_training=False, is_parallel=False):
+    def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None, is_training=False, is_parallel=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
 
         if is_training:
             assert y is not None, "`y` can\"t be None."
         if is_parallel:
-            assert self.label_size, (
-                "Can\"t parse data on multi-processing "
-                "when `label_size` is None.")
+            assert self.label_size, "Can\"t parse data on multi-processing when `label_size` is None."
 
         n_inputs = None
         data = {}
@@ -69,12 +66,8 @@ class SemBERTClassifier(BERTClassifier, ClassifierModule):
         # convert X
         if X or X_tokenized:
             tokenized = False if X else X_tokenized
-            assert tokenized, (
-                "Inputs of `%s` must be already tokenized "
-                "and fed into `X_tokenized`." % self.__class__.__name__)
-            (input_ids, input_mask, segment_ids,
-             sem_features) = self._convert_X(
-                 X_tokenized if tokenized else X, tokenized=tokenized)
+            assert tokenized, ("Inputs of `%s` must be already tokenized and fed into `X_tokenized`." % self.__class__.__name__)
+            (input_ids, input_mask, segment_ids, sem_features) = self._convert_X(X_tokenized if tokenized else X, tokenized=tokenized)
             data["input_ids"] = np.array(input_ids, dtype=np.int32)
             data["input_mask"] = np.array(input_mask, dtype=np.int32)
             data["segment_ids"] = np.array(segment_ids, dtype=np.int32)
@@ -91,8 +84,7 @@ class SemBERTClassifier(BERTClassifier, ClassifierModule):
 
         # convert sample_weight
         if is_training or y:
-            sample_weight = self._convert_sample_weight(
-                sample_weight, n_inputs)
+            sample_weight = self._convert_sample_weight(sample_weight, n_inputs)
             data["sample_weight"] = np.array(sample_weight, dtype=np.float32)
 
         return data
@@ -110,15 +102,17 @@ class SemBERTClassifier(BERTClassifier, ClassifierModule):
                 sem = copy.deepcopy(example["Sem"])
                 if not isinstance(sem[0], list):
                     sem = [sem]
-                segment_inputs.append(
-                    {"Sem": sem,
-                     "Text": self._convert_x(example["Text"], tokenized)})
+                segment_inputs.append({
+                    "Sem": sem,
+                    "Text": self._convert_x(example["Text"], tokenized),
+                })
             except Exception:
                 raise ValueError(
                     "Wrong input format (line %d): %s. An example: "
                     "X_tokenized = [{\"Sem\": [\"n\", \"v\", \"n\"], "
                     "\"Text\": [\"I\", \"love\", \"you\"]}, ...]"
-                    % (ex_id, example))
+                    % (ex_id, example)
+                )
 
         if self.sem_features is None:
             self.sem_features = set()
@@ -130,10 +124,9 @@ class SemBERTClassifier(BERTClassifier, ClassifierModule):
         elif not isinstance(self.sem_features, list):
             raise ValueError(
                 "`sem_features` should be a list of possible values "
-                "(integer or string). E.g. [\"n\", \"v\", \"adj\"].")
-        sem_features_map = {
-            self.sem_features[i]: i + 3
-            for i in range(len(self.sem_features))}
+                "(integer or string). E.g. [\"n\", \"v\", \"adj\"]."
+            )
+        sem_features_map = {self.sem_features[i]: i + 3 for i in range(len(self.sem_features))}
 
         input_ids = []
         input_mask = []
@@ -146,9 +139,7 @@ class SemBERTClassifier(BERTClassifier, ClassifierModule):
             _segment_ids = [0]
             _sem_features = [1]  # same as [CLS]
 
-            common.truncate_segments(
-                segments["Text"], self.max_seq_length - len(segments["Text"]) - 1,
-                truncate_method=self.truncate_method)
+            common.truncate_segments(segments["Text"], self.max_seq_length - len(segments["Text"]) - 1, truncate_method=self.truncate_method)
             for s_id, segment in enumerate(segments["Text"]):
                 _segment_id = min(s_id, 1)
                 _input_tokens.extend(segment + ["[SEP]"])
@@ -164,9 +155,7 @@ class SemBERTClassifier(BERTClassifier, ClassifierModule):
                     try:
                         _sem_features.append(sem_features_map[feature])
                     except Exception:
-                        tf.logging.warning(
-                            "Unregistered semantic feature: %s. Ignored."
-                            % feature)
+                        tf.logging.warning("Unregistered semantic feature: %s. Ignored." % feature)
                         continue
                 _sem_features.append(2)  # same as [SEP]
 
@@ -186,26 +175,14 @@ class SemBERTClassifier(BERTClassifier, ClassifierModule):
 
     def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
-            "input_ids": common.get_placeholder(
-                target, "input_ids",
-                [None, self.max_seq_length], tf.int32),
-            "input_mask": common.get_placeholder(
-                target, "input_mask",
-                [None, self.max_seq_length], tf.int32),
-            "segment_ids": common.get_placeholder(
-                target, "segment_ids",
-                [None, self.max_seq_length], tf.int32),
-            "sem_features": common.get_placeholder(
-                target, "sem_features",
-                [None, self.max_seq_length], tf.int32),
-            "label_ids": common.get_placeholder(
-                target, "label_ids", [None], tf.int32),
+            "input_ids": common.get_placeholder(target, "input_ids", [None, self.max_seq_length], tf.int32),
+            "input_mask": common.get_placeholder(target, "input_mask", [None, self.max_seq_length], tf.int32),
+            "segment_ids": common.get_placeholder(target, "segment_ids", [None, self.max_seq_length], tf.int32),
+            "sem_features": common.get_placeholder(target, "sem_features", [None, self.max_seq_length], tf.int32),
+            "label_ids": common.get_placeholder(target, "label_ids", [None], tf.int32),
         }
         if not on_export:
-            self.placeholders["sample_weight"] = \
-                common.get_placeholder(
-                    target, "sample_weight",
-                    [None], tf.float32)
+            self.placeholders["sample_weight"] = common.get_placeholder(target, "sample_weight", [None], tf.float32)
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
@@ -216,7 +193,8 @@ class SemBERTClassifier(BERTClassifier, ClassifierModule):
             input_mask=split_placeholders["input_mask"],
             segment_ids=split_placeholders["segment_ids"],
             drop_pooler=self._drop_pooler,
-            **kwargs)
+            **kwargs,
+        )
         encoder_output = encoder.get_pooled_output()
         decoder = SemBERTDecoder(
             bert_config=self.bert_config,
@@ -230,7 +208,8 @@ class SemBERTClassifier(BERTClassifier, ClassifierModule):
             label_size=self.label_size,
             sample_weight=split_placeholders.get("sample_weight"),
             scope="cls/seq_relationship",
-            **kwargs)
+            **kwargs,
+        )
         return decoder.get_forward_outputs()
 
 
@@ -239,8 +218,8 @@ def get_key_to_depths(num_hidden_layers):
         "/embeddings": num_hidden_layers + 2,
         "sem/": 2,
         "/pooler/": 1,
-        "cls/": 0}
+        "cls/": 0,
+    }
     for layer_idx in range(num_hidden_layers):
-        key_to_depths["/layer_%d/" % layer_idx] = \
-            num_hidden_layers - layer_idx + 1
+        key_to_depths["/layer_%d/" % layer_idx] = num_hidden_layers - layer_idx + 1
     return key_to_depths

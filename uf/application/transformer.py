@@ -15,20 +15,21 @@ class TransformerMT(MTModule):
         "init_checkpoint": "A string that directs to the checkpoint file used for initialization",
     }
 
-    def __init__(self,
-                 vocab_file,
-                 source_max_seq_length=64,
-                 target_max_seq_length=64,
-                 init_checkpoint=None,
-                 output_dir=None,
-                 gpu_ids=None,
-                 hidden_size=768,
-                 num_hidden_layers=12,
-                 num_attention_heads=12,
-                 do_lower_case=True,
-                 truncate_method="LIFO"):
-        super(MTModule, self).__init__(
-            init_checkpoint, output_dir, gpu_ids)
+    def __init__(
+        self,
+        vocab_file,
+        source_max_seq_length=64,
+        target_max_seq_length=64,
+        init_checkpoint=None,
+        output_dir=None,
+        gpu_ids=None,
+        hidden_size=768,
+        num_hidden_layers=12,
+        num_attention_heads=12,
+        do_lower_case=True,
+        truncate_method="LIFO",
+    ):
+        super(MTModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.batch_size = 0
         self.source_max_seq_length = source_max_seq_length
@@ -49,8 +50,7 @@ class TransformerMT(MTModule):
             self.tokenizer.add("</s>")
             tf.logging.info("Add necessary token `</s>` into vocabulary.")
 
-    def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
-                is_training=False, is_parallel=False):
+    def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None, is_training=False, is_parallel=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
 
         if is_training:
@@ -62,8 +62,7 @@ class TransformerMT(MTModule):
         # convert X
         if X or X_tokenized:
             tokenized = False if X else X_tokenized
-            source_ids = self._convert_X(
-                X_tokenized if tokenized else X, tokenized=tokenized)
+            source_ids = self._convert_X(X_tokenized if tokenized else X, tokenized=tokenized)
             data["source_ids"] = np.array(source_ids, dtype=np.int32)
             n_inputs = len(source_ids)
 
@@ -77,8 +76,7 @@ class TransformerMT(MTModule):
 
         # convert sample_weight
         if is_training or y:
-            sample_weight = self._convert_sample_weight(
-                sample_weight, n_inputs)
+            sample_weight = self._convert_sample_weight(sample_weight, n_inputs)
             data["sample_weight"] = np.array(sample_weight, dtype=np.float32)
 
         return data
@@ -90,18 +88,13 @@ class TransformerMT(MTModule):
             try:
                 _source_tokens = self._convert_x(example, tokenized)
             except Exception:
-                raise ValueError(
-                    "Wrong input format (line %d): \"%s\". "
-                    % (ex_id, example))
+                raise ValueError("Wrong input format (line %d): \"%s\". " % (ex_id, example))
             _source_ids = self.tokenizer.convert_tokens_to_ids(_source_tokens)
 
-            common.truncate_segments(
-                [_source_ids], self.source_max_seq_length,
-                truncate_method=self.truncate_method)
+            common.truncate_segments([_source_ids], self.source_max_seq_length, truncate_method=self.truncate_method)
 
             if len(_source_ids) < self.source_max_seq_length:
-                _source_ids.extend([0 for _ in range(
-                    self.source_max_seq_length - len(_source_ids))])
+                _source_ids.extend([0 for _ in range(self.source_max_seq_length - len(_source_ids))])
             source_ids.append(_source_ids)
 
         return source_ids
@@ -117,8 +110,7 @@ class TransformerMT(MTModule):
             return x
 
         # deal with tokenized and multiple inputs
-        raise ValueError(
-            "Machine translation module only supports single sentence inputs.")
+        raise ValueError("Machine translation module only supports single sentence inputs.")
 
     def _convert_y(self, y):
         target_ids = []
@@ -127,40 +119,27 @@ class TransformerMT(MTModule):
 
         for _y in y:
             if isinstance(_y, str):
-                _target_ids = self.tokenizer.convert_tokens_to_ids(
-                    self.tokenizer.tokenize(_y))
+                _target_ids = self.tokenizer.convert_tokens_to_ids(self.tokenizer.tokenize(_y))
             elif isinstance(_y, list):
-                assert isinstance(_y[0], str), (
-                    "Machine translation module only supports "
-                    "single sentence inputs.")
+                assert isinstance(_y[0], str), "Machine translation module only supports single sentence inputs."
                 _target_ids = self.tokenizer.convert_tokens_to_ids(_y)
 
-            common.truncate_segments(
-                [_target_ids], self.target_max_seq_length - 2,
-                truncate_method=self.truncate_method)
+            common.truncate_segments([_target_ids], self.target_max_seq_length - 2, truncate_method=self.truncate_method)
             _target_ids = [sos_id] + _target_ids + [eos_id]
 
             if len(_target_ids) < self.target_max_seq_length:
-                _target_ids.extend([0 for _ in range(
-                    self.target_max_seq_length - len(_target_ids))])
+                _target_ids.extend([0 for _ in range(self.target_max_seq_length - len(_target_ids))])
             target_ids.append(_target_ids)
 
         return target_ids
 
     def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
-            "source_ids": common.get_placeholder(
-                target, "source_ids",
-                [None, self.source_max_seq_length], tf.int32),
-            "target_ids": common.get_placeholder(
-                target, "target_ids",
-                [None, self.target_max_seq_length], tf.int32),
+            "source_ids": common.get_placeholder(target, "source_ids", [None, self.source_max_seq_length], tf.int32),
+            "target_ids": common.get_placeholder(target, "target_ids", [None, self.target_max_seq_length], tf.int32),
         }
         if not on_export:
-            self.placeholders["sample_weight"] = \
-                common.get_placeholder(
-                    target, "sample_weight",
-                    [None], tf.float32)
+            self.placeholders["sample_weight"] = common.get_placeholder(target, "sample_weight", [None], tf.float32)
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
@@ -174,7 +153,8 @@ class TransformerMT(MTModule):
             hidden_size=self._hidden_size,
             num_blocks=self._num_hidden_layers,
             num_attention_heads=self._num_attention_heads,
-            **kwargs)
+            **kwargs,
+        )
         return model.get_forward_outputs()
 
     def _get_fit_ops(self, as_feature=False):
@@ -192,11 +172,9 @@ class TransformerMT(MTModule):
 
         # accuracy
         batch_preds = output_arrays[0]
-        batch_labels = np.hstack(
-            (batch_target[:, 1:], np.zeros((self.batch_size, 1))))
+        batch_labels = np.hstack((batch_target[:, 1:], np.zeros((self.batch_size, 1))))
         batch_mask = (batch_labels > 0)
-        accuracy = np.sum((batch_preds == batch_labels) * batch_mask) / \
-            np.sum(batch_mask)
+        accuracy = np.sum((batch_preds == batch_labels) * batch_mask) / np.sum(batch_mask)
 
         # loss
         batch_losses = output_arrays[1]
@@ -242,11 +220,9 @@ class TransformerMT(MTModule):
         # accuracy
         preds = common.transform(output_arrays[0], n_inputs)
         target = self.data["target_ids"]
-        labels = np.hstack(
-            (target[:, 1:], np.zeros((n_inputs, 1))))
+        labels = np.hstack((target[:, 1:], np.zeros((n_inputs, 1))))
         mask = (labels > 0)
-        accuracy = np.sum((preds == labels) * mask) / \
-            np.sum(mask)
+        accuracy = np.sum((preds == labels) * mask) / np.sum(mask)
 
         # bleu
         bleu = self._get_bleu(preds, labels, mask)

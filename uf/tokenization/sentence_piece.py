@@ -14,7 +14,8 @@ class SentencePieceTokenizer:
             raise ValueError(
                 "Can\"t find spm_file \"%s\". "
                 "Please pass the correct path of sentence-piece model file, "
-                "e.g.`spiece.model`." % spm_file)
+                "e.g.`spiece.model`." % spm_file
+            )
         self.processor = SentencePieceProcessor()
         self.processor.Load(spm_file)
         self.do_lower_case = do_lower_case
@@ -32,8 +33,7 @@ class SentencePieceTokenizer:
         return pieces
 
 
-def preprocess_text(inputs, lower=False, remove_space=True,
-                    keep_accents=False):
+def preprocess_text(inputs, lower=False, remove_space=True, keep_accents=False):
     if remove_space:
         outputs = " ".join(inputs.strip().split())
     else:

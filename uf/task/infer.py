@@ -39,8 +39,7 @@ class Inference(Task):
 
         return self.module._get_predict_outputs(batch_outputs)
 
-    def _predict_one_batch(self, step, last_tic,
-                           total_steps, batch_outputs):
+    def _predict_one_batch(self, step, last_tic, total_steps, batch_outputs):
         feed_dict = self._build_feed_dict()
         predict_ops = self.module._get_predict_ops()
         output_arrays = self.module.sess.run(predict_ops, feed_dict=feed_dict)

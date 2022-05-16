@@ -10,9 +10,7 @@ class MultiProcess:
     def __init__(self, n_process="auto"):
         n_cpu = multiprocessing.cpu_count()
         if n_process != "auto":
-            assert n_process <= n_cpu, (
-                "Invalid value of `n_process`. It can not exceed the num "
-                "of cpu cores in the device: %d." % n_cpu)
+            assert n_process <= n_cpu, ("Invalid value of `n_process`. It can not exceed the num of cpu cores in the device: %d." % n_cpu)
         else:
             n_process = n_cpu
         self.n = n_process
@@ -47,5 +45,6 @@ def parallel_convert_single_process(args):
 
     data = model.convert(
         data["X"], data["y"], data["sample_weight"], data["X_tokenized"],
-        is_training, True)
+        is_training, True,
+    )
     return (bucket_id, data)

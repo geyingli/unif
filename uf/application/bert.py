@@ -20,19 +20,20 @@ class BERTClassifier(ClassifierModule):
         "init_checkpoint": "A string that directs to the checkpoint file used for initialization",
     }
 
-    def __init__(self,
-                 config_file,
-                 vocab_file,
-                 max_seq_length=128,
-                 label_size=None,
-                 init_checkpoint=None,
-                 output_dir=None,
-                 gpu_ids=None,
-                 drop_pooler=False,
-                 do_lower_case=True,
-                 truncate_method="LIFO"):
-        super(ClassifierModule, self).__init__(
-            init_checkpoint, output_dir, gpu_ids)
+    def __init__(
+        self,
+        config_file,
+        vocab_file,
+        max_seq_length=128,
+        label_size=None,
+        init_checkpoint=None,
+        output_dir=None,
+        gpu_ids=None,
+        drop_pooler=False,
+        do_lower_case=True,
+        truncate_method="LIFO",
+    ):
+        super(ClassifierModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.batch_size = 0
         self.max_seq_length = max_seq_length
@@ -44,8 +45,7 @@ class BERTClassifier(ClassifierModule):
 
         self.bert_config = get_bert_config(config_file)
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
-        self._key_to_depths = get_key_to_depths(
-            self.bert_config.num_hidden_layers)
+        self._key_to_depths = get_key_to_depths(self.bert_config.num_hidden_layers)
 
         if "[CLS]" not in self.tokenizer.vocab:
             self.tokenizer.add("[CLS]")
@@ -56,16 +56,13 @@ class BERTClassifier(ClassifierModule):
             self.bert_config.vocab_size += 1
             tf.logging.info("Add necessary token `[SEP]` into vocabulary.")
 
-    def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
-                is_training=False, is_parallel=False):
+    def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None, is_training=False, is_parallel=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
 
         if is_training:
             assert y is not None, "`y` can\"t be None."
         if is_parallel:
-            assert self.label_size, (
-                "Can\"t parse data on multi-processing "
-                "when `label_size` is None.")
+            assert self.label_size, "Can\"t parse data on multi-processing when `label_size` is None."
 
         n_inputs = None
         data = {}
@@ -73,8 +70,7 @@ class BERTClassifier(ClassifierModule):
         # convert X
         if X or X_tokenized:
             tokenized = False if X else X_tokenized
-            input_ids, input_mask, segment_ids = self._convert_X(
-                X_tokenized if tokenized else X, tokenized=tokenized)
+            input_ids, input_mask, segment_ids = self._convert_X(X_tokenized if tokenized else X, tokenized=tokenized)
             data["input_ids"] = np.array(input_ids, dtype=np.int32)
             data["input_mask"] = np.array(input_mask, dtype=np.int32)
             data["segment_ids"] = np.array(segment_ids, dtype=np.int32)
@@ -90,8 +86,7 @@ class BERTClassifier(ClassifierModule):
 
         # convert sample_weight
         if is_training or y:
-            sample_weight = self._convert_sample_weight(
-                sample_weight, n_inputs)
+            sample_weight = self._convert_sample_weight(sample_weight, n_inputs)
             data["sample_weight"] = np.array(sample_weight, dtype=np.float32)
 
         return data
@@ -102,12 +97,9 @@ class BERTClassifier(ClassifierModule):
         segment_input_tokens = []
         for ex_id, example in enumerate(X_target):
             try:
-                segment_input_tokens.append(
-                    self._convert_x(example, tokenized))
+                segment_input_tokens.append(self._convert_x(example, tokenized))
             except Exception:
-                raise ValueError(
-                    "Wrong input format (line %d): \"%s\". "
-                    % (ex_id, example))
+                raise ValueError("Wrong input format (line %d): \"%s\". " % (ex_id, example))
 
         input_ids = []
         input_mask = []
@@ -118,9 +110,7 @@ class BERTClassifier(ClassifierModule):
             _input_mask = [1]
             _segment_ids = [0]
 
-            common.truncate_segments(
-                segments, self.max_seq_length - len(segments) - 1,
-                truncate_method=self.truncate_method)
+            common.truncate_segments(segments, self.max_seq_length - len(segments) - 1, truncate_method=self.truncate_method)
             for s_id, segment in enumerate(segments):
                 _segment_id = min(s_id, 1)
                 _input_tokens.extend(segment + ["[SEP]"])
@@ -162,8 +152,7 @@ class BERTClassifier(ClassifierModule):
 
         # automatically set `label_size`
         if self.label_size:
-            assert len(label_set) <= self.label_size, (
-                "Number of unique `y`s exceeds `label_size`.")
+            assert len(label_set) <= self.label_size, "Number of unique `y`s exceeds `label_size`."
         else:
             self.label_size = len(label_set)
 
@@ -180,31 +169,20 @@ class BERTClassifier(ClassifierModule):
                 self._id_to_label = list(range(self.label_size))
 
         # automatically set `label_to_id` for prediction
-        self._label_to_id = {
-            label: index for index, label in enumerate(self._id_to_label)}
+        self._label_to_id = {label: index for index, label in enumerate(self._id_to_label)}
 
         label_ids = [self._label_to_id[label] for label in y]
         return label_ids
 
     def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
-            "input_ids": common.get_placeholder(
-                target, "input_ids",
-                [None, self.max_seq_length], tf.int32),
-            "input_mask": common.get_placeholder(
-                target, "input_mask",
-                [None, self.max_seq_length], tf.int32),
-            "segment_ids": common.get_placeholder(
-                target, "segment_ids",
-                [None, self.max_seq_length], tf.int32),
-            "label_ids": common.get_placeholder(
-                target, "label_ids", [None], tf.int32),
+            "input_ids": common.get_placeholder(target, "input_ids", [None, self.max_seq_length], tf.int32),
+            "input_mask": common.get_placeholder(target, "input_mask", [None, self.max_seq_length], tf.int32),
+            "segment_ids": common.get_placeholder(target, "segment_ids", [None, self.max_seq_length], tf.int32),
+            "label_ids": common.get_placeholder(target, "label_ids", [None], tf.int32),
         }
         if not on_export:
-            self.placeholders["sample_weight"] = \
-                common.get_placeholder(
-                    target, "sample_weight",
-                    [None], tf.float32)
+            self.placeholders["sample_weight"] = common.get_placeholder(target, "sample_weight", [None], tf.float32)
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
@@ -215,7 +193,8 @@ class BERTClassifier(ClassifierModule):
             input_mask=split_placeholders["input_mask"],
             segment_ids=split_placeholders["segment_ids"],
             drop_pooler=self._drop_pooler,
-            **kwargs)
+            **kwargs,
+        )
         encoder_output = encoder.get_pooled_output()
         decoder = CLSDecoder(
             is_training=is_training,
@@ -224,7 +203,8 @@ class BERTClassifier(ClassifierModule):
             label_size=self.label_size,
             sample_weight=split_placeholders.get("sample_weight"),
             scope="cls/seq_relationship",
-            **kwargs)
+            **kwargs,
+        )
         return decoder.get_forward_outputs()
 
     def _get_fit_ops(self, as_feature=False):
@@ -302,20 +282,21 @@ class BERTBinaryClassifier(BERTClassifier, ClassifierModule):
     """ Multi-label classifier on BERT. """
     _INFER_ATTRIBUTES = BERTClassifier._INFER_ATTRIBUTES
 
-    def __init__(self,
-                 config_file,
-                 vocab_file,
-                 max_seq_length=128,
-                 label_size=None,
-                 label_weight=None,
-                 init_checkpoint=None,
-                 output_dir=None,
-                 gpu_ids=None,
-                 drop_pooler=False,
-                 do_lower_case=True,
-                 truncate_method="LIFO"):
-        super(ClassifierModule, self).__init__(
-            init_checkpoint, output_dir, gpu_ids)
+    def __init__(
+        self,
+        config_file,
+        vocab_file,
+        max_seq_length=128,
+        label_size=None,
+        label_weight=None,
+        init_checkpoint=None,
+        output_dir=None,
+        gpu_ids=None,
+        drop_pooler=False,
+        do_lower_case=True,
+        truncate_method="LIFO",
+    ):
+        super(ClassifierModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.batch_size = 0
         self.max_seq_length = max_seq_length
@@ -328,8 +309,7 @@ class BERTBinaryClassifier(BERTClassifier, ClassifierModule):
 
         self.bert_config = get_bert_config(config_file)
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
-        self._key_to_depths = get_key_to_depths(
-            self.bert_config.num_hidden_layers)
+        self._key_to_depths = get_key_to_depths(self.bert_config.num_hidden_layers)
 
         if "[CLS]" not in self.tokenizer.vocab:
             self.tokenizer.add("[CLS]")
@@ -350,14 +330,11 @@ class BERTBinaryClassifier(BERTClassifier, ClassifierModule):
                     label_set.add(_y)
                     _label_set.add(_y)
         except Exception:
-            raise ValueError(
-                "The element of `y` should be a list of multiple answers. "
-                "E.g. y=[[1, 3], [0], [0, 2]].")
+            raise ValueError("The element of `y` should be a list of multiple answers. E.g. y=[[1, 3], [0], [0, 2]].")
 
         # automatically set `label_size`
         if self.label_size:
-            assert len(label_set) <= self.label_size, (
-                "Number of unique labels exceeds `label_size`.")
+            assert len(label_set) <= self.label_size, "Number of unique labels exceeds `label_size`."
         else:
             self.label_size = len(label_set)
 
@@ -374,33 +351,20 @@ class BERTBinaryClassifier(BERTClassifier, ClassifierModule):
                 self._id_to_label = list(range(self.label_size))
 
         # automatically set `label_to_id` for prediction
-        self._label_to_id = {
-            label: index for index, label in enumerate(self._id_to_label)}
+        self._label_to_id = {label: index for index, label in enumerate(self._id_to_label)}
 
-        label_ids = [[1 if self._id_to_label[i] in sample else 0
-                      for i in range(self.label_size)] for sample in y]
+        label_ids = [[1 if self._id_to_label[i] in sample else 0 for i in range(self.label_size)] for sample in y]
         return label_ids
 
     def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
-            "input_ids": common.get_placeholder(
-                target, "input_ids",
-                [None, self.max_seq_length], tf.int32),
-            "input_mask": common.get_placeholder(
-                target, "input_mask",
-                [None, self.max_seq_length], tf.int32),
-            "segment_ids": common.get_placeholder(
-                target, "segment_ids",
-                [None, self.max_seq_length], tf.int32),
-            "label_ids": common.get_placeholder(
-                target, "label_ids",
-                [None, self.label_size], tf.int32),
+            "input_ids": common.get_placeholder(target, "input_ids", [None, self.max_seq_length], tf.int32),
+            "input_mask": common.get_placeholder(target, "input_mask", [None, self.max_seq_length], tf.int32),
+            "segment_ids": common.get_placeholder(target, "segment_ids", [None, self.max_seq_length], tf.int32),
+            "label_ids": common.get_placeholder(target, "label_ids", [None, self.label_size], tf.int32),
         }
         if not on_export:
-            self.placeholders["sample_weight"] = \
-                common.get_placeholder(
-                    target, "sample_weight",
-                    [None], tf.float32)
+            self.placeholders["sample_weight"] = common.get_placeholder(target, "sample_weight", [None], tf.float32)
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
@@ -411,7 +375,8 @@ class BERTBinaryClassifier(BERTClassifier, ClassifierModule):
             input_mask=split_placeholders["input_mask"],
             segment_ids=split_placeholders["segment_ids"],
             drop_pooler=self._drop_pooler,
-            **kwargs)
+            **kwargs,
+        )
         encoder_output = encoder.get_pooled_output()
         decoder = BinaryCLSDecoder(
             is_training=is_training,
@@ -421,7 +386,8 @@ class BERTBinaryClassifier(BERTClassifier, ClassifierModule):
             sample_weight=split_placeholders.get("sample_weight"),
             label_weight=self.label_weight,
             scope="cls/seq_relationship",
-            **kwargs)
+            **kwargs,
+        )
         return decoder.get_forward_outputs()
 
     def _get_predict_ops(self):
@@ -436,11 +402,9 @@ class BERTBinaryClassifier(BERTClassifier, ClassifierModule):
         # preds
         preds = (probs >= 0.5)
         if self._id_to_label:
-            preds = [[self._id_to_label[i] for i in range(self.label_size)
-                      if _preds[i]] for _preds in preds]
+            preds = [[self._id_to_label[i] for i in range(self.label_size) if _preds[i]] for _preds in preds]
         else:
-            preds = [[i for i in range(self.label_size) if _preds[i]]
-                     for _preds in preds]
+            preds = [[i for i in range(self.label_size) if _preds[i]] for _preds in preds]
 
         outputs = {}
         outputs["preds"] = preds
@@ -453,18 +417,19 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
     """ Sequence labeling classifier on BERT. """
     _INFER_ATTRIBUTES = BERTClassifier._INFER_ATTRIBUTES
 
-    def __init__(self,
-                 config_file,
-                 vocab_file,
-                 max_seq_length=128,
-                 label_size=None,
-                 init_checkpoint=None,
-                 output_dir=None,
-                 gpu_ids=None,
-                 do_lower_case=True,
-                 truncate_method="LIFO"):
-        super(ClassifierModule, self).__init__(
-            init_checkpoint, output_dir, gpu_ids)
+    def __init__(
+        self,
+        config_file,
+        vocab_file,
+        max_seq_length=128,
+        label_size=None,
+        init_checkpoint=None,
+        output_dir=None,
+        gpu_ids=None,
+        do_lower_case=True,
+        truncate_method="LIFO",
+    ):
+        super(ClassifierModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.batch_size = 0
         self.max_seq_length = max_seq_length
@@ -475,19 +440,15 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
 
         self.bert_config = get_bert_config(config_file)
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
-        self._key_to_depths = get_key_to_depths(
-            self.bert_config.num_hidden_layers)
+        self._key_to_depths = get_key_to_depths(self.bert_config.num_hidden_layers)
 
-    def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
-                is_training=False, is_parallel=False):
+    def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None, is_training=False, is_parallel=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
 
         if is_training:
             assert y is not None, "`y` can\"t be None."
         if is_parallel:
-            assert self.label_size, (
-                "Can\"t parse data on multi-processing "
-                "when `label_size` is None.")
+            assert self.label_size, "Can\"t parse data on multi-processing when `label_size` is None."
 
         n_inputs = None
         data = {}
@@ -495,8 +456,7 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
         # convert X
         if X or X_tokenized:
             tokenized = False if X else X_tokenized
-            input_ids, input_mask, segment_ids = self._convert_X(
-                X_tokenized if tokenized else X, tokenized=tokenized)
+            input_ids, input_mask, segment_ids = self._convert_X(X_tokenized if tokenized else X, tokenized=tokenized)
             data["input_ids"] = np.array(input_ids, dtype=np.int32)
             data["input_mask"] = np.array(input_mask, dtype=np.int32)
             data["segment_ids"] = np.array(segment_ids, dtype=np.int32)
@@ -512,8 +472,7 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
 
         # convert sample_weight
         if is_training or y:
-            sample_weight = self._convert_sample_weight(
-                sample_weight, n_inputs)
+            sample_weight = self._convert_sample_weight(sample_weight, n_inputs)
             data["sample_weight"] = np.array(sample_weight, dtype=np.float32)
 
         return data
@@ -527,9 +486,7 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
         for ex_id, example in enumerate(X_target):
             _input_tokens = self._convert_x(example, tokenized)
 
-            common.truncate_segments(
-                [_input_tokens], self.max_seq_length,
-                truncate_method=self.truncate_method)
+            common.truncate_segments([_input_tokens], self.max_seq_length, truncate_method=self.truncate_method)
 
             _input_ids = self.tokenizer.convert_tokens_to_ids(_input_tokens)
             _input_mask = [1 for _ in range(len(_input_tokens))]
@@ -549,17 +506,14 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
 
     def _convert_x(self, x, tokenized):
         if not tokenized:
-            raise ValueError(
-                "Inputs of sequence classifier must be already tokenized "
-                "and fed into `X_tokenized`.")
+            raise ValueError("Inputs of sequence classifier must be already tokenized and fed into `X_tokenized`.")
 
         # deal with tokenized inputs
         if isinstance(x[0], str):
             return x
 
         # deal with tokenized and multiple inputs
-        raise ValueError(
-            "Sequence classifier does not support multi-segment inputs.")
+        raise ValueError("Sequence classifier does not support multi-segment inputs.")
 
     def _convert_y(self, y):
         try:
@@ -568,13 +522,11 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
                 for _y in sample:
                     label_set.add(_y)
         except Exception:
-            raise ValueError(
-                "The element of `y` should be a list of labels.")
+            raise ValueError("The element of `y` should be a list of labels.")
 
         # automatically set `label_size`
         if self.label_size:
-            assert len(label_set) <= self.label_size, (
-                "Number of unique `y`s exceeds `label_size`.")
+            assert len(label_set) <= self.label_size, "Number of unique `y`s exceeds `label_size`."
         else:
             self.label_size = len(label_set)
 
@@ -591,8 +543,7 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
                 self._id_to_label = list(range(self.label_size))
 
         # automatically set `label_to_id` for prediction
-        self._label_to_id = {
-            label: index for index, label in enumerate(self._id_to_label)}
+        self._label_to_id = {label: index for index, label in enumerate(self._id_to_label)}
 
         label_ids = []
         for sample in y:
@@ -604,9 +555,7 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
             elif num_labels > self.max_seq_length:
                 sample = sample[:self.max_seq_length]
 
-                common.truncate_segments(
-                    [sample], self.max_seq_length,
-                    truncate_method=self.truncate_method)
+                common.truncate_segments([sample], self.max_seq_length, truncate_method=self.truncate_method)
 
             _label_ids = [self._label_to_id[label] for label in sample]
             label_ids.append(_label_ids)
@@ -614,23 +563,13 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
 
     def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
-            "input_ids": common.get_placeholder(
-                target, "input_ids",
-                [None, self.max_seq_length], tf.int32),
-            "input_mask": common.get_placeholder(
-                target, "input_mask",
-                [None, self.max_seq_length], tf.int32),
-            "segment_ids": common.get_placeholder(
-                target, "segment_ids",
-                [None, self.max_seq_length], tf.int32),
-            "label_ids": common.get_placeholder(
-                target, "label_ids", [None, self.max_seq_length], tf.int32),
+            "input_ids": common.get_placeholder(target, "input_ids", [None, self.max_seq_length], tf.int32),
+            "input_mask": common.get_placeholder(target, "input_mask", [None, self.max_seq_length], tf.int32),
+            "segment_ids": common.get_placeholder(target, "segment_ids", [None, self.max_seq_length], tf.int32),
+            "label_ids": common.get_placeholder(target, "label_ids", [None, self.max_seq_length], tf.int32),
         }
         if not on_export:
-            self.placeholders["sample_weight"] = \
-                common.get_placeholder(
-                    target, "sample_weight",
-                    [None], tf.float32)
+            self.placeholders["sample_weight"] = common.get_placeholder(target, "sample_weight", [None], tf.float32)
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
@@ -640,7 +579,8 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
             input_ids=split_placeholders["input_ids"],
             input_mask=split_placeholders["input_mask"],
             segment_ids=split_placeholders["segment_ids"],
-            **kwargs)
+            **kwargs,
+        )
         encoder_output = encoder.get_sequence_output()
         decoder = SeqCLSDecoder(
             is_training=is_training,
@@ -650,14 +590,14 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
             label_size=self.label_size,
             sample_weight=split_placeholders.get("sample_weight"),
             scope="cls/sequence",
-            **kwargs)
+            **kwargs,
+        )
         return decoder.get_forward_outputs()
 
     def _get_fit_ops(self, as_feature=False):
         ops = [self._tensors["preds"], self._tensors["losses"]]
         if as_feature:
-            ops.extend([self.placeholders["input_mask"],
-                        self.placeholders["label_ids"]])
+            ops.extend([self.placeholders["input_mask"], self.placeholders["label_ids"]])
         return ops
 
     def _get_fit_info(self, output_arrays, feed_dict, as_feature=False):
@@ -671,8 +611,7 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
 
         # accuracy
         batch_preds = output_arrays[0]
-        accuracy = (np.sum((batch_preds == batch_labels) * batch_mask) /
-                    batch_mask.sum())
+        accuracy = (np.sum((batch_preds == batch_labels) * batch_mask) / batch_mask.sum())
 
         # loss
         batch_losses = output_arrays[1]
@@ -722,8 +661,7 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
         preds = common.transform(output_arrays[0], n_inputs)
         labels = self.data["label_ids"]
         mask = self.data["input_mask"]
-        accuracy = (np.sum((preds == labels) * mask) /
-                    mask.sum())
+        accuracy = (np.sum((preds == labels) * mask) / mask.sum())
 
         # loss
         losses = common.transform(output_arrays[1], n_inputs)
@@ -745,19 +683,20 @@ class BERTSeqMultiTaskClassifier(BERTClassifier, ClassifierModule):
         "init_checkpoint": "A string that directs to the checkpoint file used for initialization",
     }
 
-    def __init__(self,
-                 config_file,
-                 vocab_file,
-                 max_seq_length=128,
-                 seq_cls_label_size=None,
-                 cls_label_size=None,
-                 init_checkpoint=None,
-                 output_dir=None,
-                 gpu_ids=None,
-                 do_lower_case=True,
-                 truncate_method="LIFO"):
-        super(ClassifierModule, self).__init__(
-            init_checkpoint, output_dir, gpu_ids)
+    def __init__(
+        self,
+        config_file,
+        vocab_file,
+        max_seq_length=128,
+        seq_cls_label_size=None,
+        cls_label_size=None,
+        init_checkpoint=None,
+        output_dir=None,
+        gpu_ids=None,
+        do_lower_case=True,
+        truncate_method="LIFO",
+    ):
+        super(ClassifierModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.batch_size = 0
         self.max_seq_length = max_seq_length
@@ -770,22 +709,16 @@ class BERTSeqMultiTaskClassifier(BERTClassifier, ClassifierModule):
 
         self.bert_config = get_bert_config(config_file)
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
-        self._key_to_depths = get_key_to_depths(
-            self.bert_config.num_hidden_layers)
+        self._key_to_depths = get_key_to_depths(self.bert_config.num_hidden_layers)
 
-    def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
-                is_training=False, is_parallel=False):
+    def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None, is_training=False, is_parallel=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
 
         if is_training:
             assert y is not None, "`y` can\"t be None."
         if is_parallel:
-            assert self.seq_cls_label_size, (
-                "Can\"t parse data on multi-processing "
-                "when `seq_cls_label_size` is None.")
-            assert self.cls_label_size, (
-                "Can\"t parse data on multi-processing "
-                "when `cls_label_size` is None.")
+            assert self.seq_cls_label_size, "Can\"t parse data on multi-processing when `seq_cls_label_size` is None."
+            assert self.cls_label_size, "Can\"t parse data on multi-processing when `cls_label_size` is None."
 
         n_inputs = None
         data = {}
@@ -793,8 +726,7 @@ class BERTSeqMultiTaskClassifier(BERTClassifier, ClassifierModule):
         # convert X
         if X or X_tokenized:
             tokenized = False if X else X_tokenized
-            input_ids, input_mask, segment_ids = self._convert_X(
-                X_tokenized if tokenized else X, tokenized=tokenized)
+            input_ids, input_mask, segment_ids = self._convert_X(X_tokenized if tokenized else X, tokenized=tokenized)
             data["input_ids"] = np.array(input_ids, dtype=np.int32)
             data["input_mask"] = np.array(input_mask, dtype=np.int32)
             data["segment_ids"] = np.array(segment_ids, dtype=np.int32)
@@ -811,8 +743,7 @@ class BERTSeqMultiTaskClassifier(BERTClassifier, ClassifierModule):
 
         # convert sample_weight
         if is_training or y:
-            sample_weight = self._convert_sample_weight(
-                sample_weight, n_inputs)
+            sample_weight = self._convert_sample_weight(sample_weight, n_inputs)
             data["sample_weight"] = np.array(sample_weight, dtype=np.float32)
 
         return data
@@ -826,9 +757,7 @@ class BERTSeqMultiTaskClassifier(BERTClassifier, ClassifierModule):
         for ex_id, example in enumerate(X_target):
             _input_tokens = self._convert_x(example, tokenized)
 
-            common.truncate_segments(
-                [_input_tokens], self.max_seq_length,
-                truncate_method=self.truncate_method)
+            common.truncate_segments([_input_tokens], self.max_seq_length, truncate_method=self.truncate_method)
 
             _input_ids = self.tokenizer.convert_tokens_to_ids(_input_tokens)
             _input_mask = [1 for _ in range(len(_input_tokens))]
@@ -924,27 +853,14 @@ class BERTSeqMultiTaskClassifier(BERTClassifier, ClassifierModule):
 
     def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
-            "input_ids": common.get_placeholder(
-                target, "input_ids",
-                [None, self.max_seq_length], tf.int32),
-            "input_mask": common.get_placeholder(
-                target, "input_mask",
-                [None, self.max_seq_length], tf.int32),
-            "segment_ids": common.get_placeholder(
-                target, "segment_ids",
-                [None, self.max_seq_length], tf.int32),
-            "seq_cls_label_ids": common.get_placeholder(
-                target, "seq_cls_label_ids",
-                [None, self.max_seq_length], tf.int32),
-            "cls_label_ids": common.get_placeholder(
-                target, "cls_label_ids",
-                [None], tf.int32),
+            "input_ids": common.get_placeholder(target, "input_ids", [None, self.max_seq_length], tf.int32),
+            "input_mask": common.get_placeholder(target, "input_mask", [None, self.max_seq_length], tf.int32),
+            "segment_ids": common.get_placeholder(target, "segment_ids", [None, self.max_seq_length], tf.int32),
+            "seq_cls_label_ids": common.get_placeholder(target, "seq_cls_label_ids", [None, self.max_seq_length], tf.int32),
+            "cls_label_ids": common.get_placeholder(target, "cls_label_ids", [None], tf.int32),
         }
         if not on_export:
-            self.placeholders["sample_weight"] = \
-                common.get_placeholder(
-                    target, "sample_weight",
-                    [None], tf.float32)
+            self.placeholders["sample_weight"] = common.get_placeholder(target, "sample_weight", [None], tf.float32)
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
@@ -954,7 +870,8 @@ class BERTSeqMultiTaskClassifier(BERTClassifier, ClassifierModule):
             input_ids=split_placeholders["input_ids"],
             input_mask=split_placeholders["input_mask"],
             segment_ids=split_placeholders["segment_ids"],
-            **kwargs)
+            **kwargs,
+        )
         encoder_output = encoder.get_sequence_output()
         decoder = SeqCLSMultiTaskDecoder(
             is_training=is_training,
@@ -967,7 +884,8 @@ class BERTSeqMultiTaskClassifier(BERTClassifier, ClassifierModule):
             sample_weight=split_placeholders.get("sample_weight"),
             seq_cls_scope="cls/tokens",
             cls_scope="cls/sequence",
-            **kwargs)
+            **kwargs,
+        )
         return decoder.get_forward_outputs()
 
     def _get_fit_ops(self, as_feature=False):
@@ -1091,17 +1009,18 @@ class BERTNER(BERTClassifier, NERModule):
         "init_checkpoint": "A string that directs to the checkpoint file used for initialization",
     }
 
-    def __init__(self,
-                 config_file,
-                 vocab_file,
-                 max_seq_length=128,
-                 init_checkpoint=None,
-                 output_dir=None,
-                 gpu_ids=None,
-                 do_lower_case=True,
-                 truncate_method="LIFO"):
-        super(NERModule, self).__init__(
-            init_checkpoint, output_dir, gpu_ids)
+    def __init__(
+        self,
+        config_file,
+        vocab_file,
+        max_seq_length=128,
+        init_checkpoint=None,
+        output_dir=None,
+        gpu_ids=None,
+        do_lower_case=True,
+        truncate_method="LIFO",
+    ):
+        super(NERModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.batch_size = 0
         self.max_seq_length = max_seq_length
@@ -1112,8 +1031,7 @@ class BERTNER(BERTClassifier, NERModule):
 
         self.bert_config = get_bert_config(config_file)
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
-        self._key_to_depths = get_key_to_depths(
-            self.bert_config.num_hidden_layers)
+        self._key_to_depths = get_key_to_depths(self.bert_config.num_hidden_layers)
 
         if "[CLS]" not in self.tokenizer.vocab:
             self.tokenizer.add("[CLS]")
@@ -1127,16 +1045,14 @@ class BERTNER(BERTClassifier, NERModule):
     def predict(self, X=None, X_tokenized=None, batch_size=8):
 
         self._on_predict = True
-        ret = super(NERModule, self).predict(
-            X, X_tokenized, batch_size)
+        ret = super(NERModule, self).predict(X, X_tokenized, batch_size)
         self._on_predict = False
 
         return ret
 
     predict.__doc__ = NERModule.predict.__doc__
 
-    def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
-                is_training=False, is_parallel=False):
+    def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None, is_training=False, is_parallel=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
 
         if is_training:
@@ -1149,8 +1065,7 @@ class BERTNER(BERTClassifier, NERModule):
         if X or X_tokenized:
             tokenized = False if X else X_tokenized
             X_target = X_tokenized if tokenized else X
-            input_tokens, input_ids, input_mask, segment_ids = self._convert_X(
-                X_target, tokenized=tokenized)
+            input_tokens, input_ids, input_mask, segment_ids = self._convert_X(X_target, tokenized=tokenized)
             data["input_ids"] = np.array(input_ids, dtype=np.int32)
             data["input_mask"] = np.array(input_mask, dtype=np.int32)
             data["segment_ids"] = np.array(segment_ids, dtype=np.int32)
@@ -1171,8 +1086,7 @@ class BERTNER(BERTClassifier, NERModule):
 
         # convert sample_weight
         if is_training or y:
-            sample_weight = self._convert_sample_weight(
-                sample_weight, n_inputs)
+            sample_weight = self._convert_sample_weight(sample_weight, n_inputs)
             data["sample_weight"] = np.array(sample_weight, dtype=np.float32)
 
         return data
@@ -1183,12 +1097,9 @@ class BERTNER(BERTClassifier, NERModule):
         segment_input_tokens = []
         for ex_id, example in enumerate(X_target):
             try:
-                segment_input_tokens.append(
-                    self._convert_x(example, tokenized))
+                segment_input_tokens.append(self._convert_x(example, tokenized))
             except Exception:
-                raise ValueError(
-                    "Wrong input format (line %d): \"%s\". "
-                    % (ex_id, example))
+                raise ValueError("Wrong input format (line %d): \"%s\". " % (ex_id, example))
 
         input_tokens = []
         input_ids = []
@@ -1200,9 +1111,7 @@ class BERTNER(BERTClassifier, NERModule):
             _input_mask = [1]
             _segment_ids = [0]
 
-            common.truncate_segments(
-                segments, self.max_seq_length - len(segments) - 1,
-                truncate_method=self.truncate_method)
+            common.truncate_segments(segments, self.max_seq_length - len(segments) - 1, truncate_method=self.truncate_method)
             for s_id, segment in enumerate(segments):
                 _segment_id = min(s_id, 1)
                 _input_tokens.extend(segment + ["[SEP]"])
@@ -1234,40 +1143,33 @@ class BERTNER(BERTClassifier, NERModule):
 
             if isinstance(_y, str):
                 _entity_tokens = self.tokenizer.tokenize(_y)
-                _entity_ids = [self.tokenizer.convert_tokens_to_ids(
-                    _entity_tokens)]
+                _entity_ids = [self.tokenizer.convert_tokens_to_ids(_entity_tokens)]
             elif isinstance(_y, list):
                 if isinstance(_y[0], str):
                     if tokenized:
-                        _entity_ids = \
-                            [self.tokenizer.convert_tokens_to_ids(_y)]
+                        _entity_ids = [self.tokenizer.convert_tokens_to_ids(_y)]
                     else:
                         _entity_ids = []
                         for _entity in _y:
-                            _entity_ids.append(
-                                self.tokenizer.convert_tokens_to_ids(
-                                    self.tokenizer.tokenize(_entity)))
+                            _entity_ids.append(self.tokenizer.convert_tokens_to_ids(self.tokenizer.tokenize(_entity)))
                 elif isinstance(_y[0], list):
                     _entity_ids = []
                     for _entity in _y:
-                        _entity_ids.append(
-                            self.tokenizer.convert_tokens_to_ids(_entity))
+                        _entity_ids.append(self.tokenizer.convert_tokens_to_ids(_entity))
             else:
-                raise ValueError(
-                    "`y` should be a list of entity strings.")
+                raise ValueError("`y` should be a list of entity strings.")
 
             # tagging
             _label_ids = [self.O_ID for _ in range(self.max_seq_length)]
             for _entity in _entity_ids:
-                start_positions = common.find_all_boyer_moore(
-                    _input_ids, _entity)
+                start_positions = common.find_all_boyer_moore(_input_ids, _entity)
                 if not start_positions:
                     tf.logging.warning(
                         "Failed to find the mapping of entity to "
                         "inputs at line %d. A possible reason is "
                         "that the entity span is truncated due "
-                        "to the `max_seq_length` setting."
-                        % (ex_id))
+                        "to the `max_seq_length` setting." % (ex_id)
+                    )
                     continue
 
                 for start_position in start_positions:
@@ -1286,23 +1188,13 @@ class BERTNER(BERTClassifier, NERModule):
 
     def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
-            "input_ids": common.get_placeholder(
-                target, "input_ids",
-                [None, self.max_seq_length], tf.int32),
-            "input_mask": common.get_placeholder(
-                target, "input_mask",
-                [None, self.max_seq_length], tf.int32),
-            "segment_ids": common.get_placeholder(
-                target, "segment_ids",
-                [None, self.max_seq_length], tf.int32),
-            "label_ids": common.get_placeholder(
-                target, "label_ids", [None, self.max_seq_length], tf.int32),
+            "input_ids": common.get_placeholder(target, "input_ids", [None, self.max_seq_length], tf.int32),
+            "input_mask": common.get_placeholder(target, "input_mask", [None, self.max_seq_length], tf.int32),
+            "segment_ids": common.get_placeholder(target, "segment_ids", [None, self.max_seq_length], tf.int32),
+            "label_ids": common.get_placeholder(target, "label_ids", [None, self.max_seq_length], tf.int32),
         }
         if not on_export:
-            self.placeholders["sample_weight"] = \
-                common.get_placeholder(
-                    target, "sample_weight",
-                    [None], tf.float32)
+            self.placeholders["sample_weight"] = common.get_placeholder(target, "sample_weight", [None], tf.float32)
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
@@ -1312,7 +1204,8 @@ class BERTNER(BERTClassifier, NERModule):
             input_ids=split_placeholders["input_ids"],
             input_mask=split_placeholders["input_mask"],
             segment_ids=split_placeholders["segment_ids"],
-            **kwargs)
+            **kwargs,
+        )
         encoder_output = encoder.get_sequence_output()
         decoder = SeqCLSDecoder(
             is_training=is_training,
@@ -1322,14 +1215,14 @@ class BERTNER(BERTClassifier, NERModule):
             label_size=5,
             sample_weight=split_placeholders.get("sample_weight"),
             scope="cls/sequence",
-            **kwargs)
+            **kwargs,
+        )
         return decoder.get_forward_outputs()
 
     def _get_fit_ops(self, as_feature=False):
         ops = [self._tensors["preds"], self._tensors["losses"]]
         if as_feature:
-            ops.extend([self.placeholders["input_mask"],
-                        self.placeholders["label_ids"]])
+            ops.extend([self.placeholders["input_mask"], self.placeholders["label_ids"]])
         return ops
 
     def _get_fit_info(self, output_arrays, feed_dict, as_feature=False):
@@ -1343,8 +1236,7 @@ class BERTNER(BERTClassifier, NERModule):
 
         # f1
         batch_preds = output_arrays[0]
-        f1_token, f1_entity = self._get_f1(
-            batch_preds, batch_labels, batch_mask)
+        f1_token, f1_entity = self._get_f1(batch_preds, batch_labels, batch_mask)
 
         # loss
         batch_losses = output_arrays[1]
@@ -1390,8 +1282,7 @@ class BERTNER(BERTClassifier, NERModule):
             if not tokenized:
                 if isinstance(_text, list):
                     _text = " ".join(_text)
-                _mapping_start, _mapping_end = common.align_tokens_with_text(
-                    _tokens, _text, self._do_lower_case)
+                _mapping_start, _mapping_end = common.align_tokens_with_text(_tokens, _text, self._do_lower_case)
 
             for _entity in _entities:
                 _start, _end = _entity[0], _entity[1]
@@ -1425,8 +1316,7 @@ class BERTNER(BERTClassifier, NERModule):
         preds = common.transform(output_arrays[0], n_inputs)
         labels = self.data["label_ids"]
         mask = self.data["input_mask"]
-        f1_token, f1_entity = self._get_f1(
-            preds, labels, mask)
+        f1_token, f1_entity = self._get_f1(preds, labels, mask)
 
         # loss
         losses = common.transform(output_arrays[1], n_inputs)
@@ -1452,7 +1342,8 @@ class BERTCRFNER(BERTNER, NERModule):
             input_ids=split_placeholders["input_ids"],
             input_mask=split_placeholders["input_mask"],
             segment_ids=split_placeholders["segment_ids"],
-            **kwargs)
+            **kwargs,
+        )
         encoder_output = encoder.get_sequence_output()
         decoder = CRFDecoder(
             is_training=is_training,
@@ -1462,15 +1353,14 @@ class BERTCRFNER(BERTNER, NERModule):
             label_size=5,
             sample_weight=split_placeholders.get("sample_weight"),
             scope="cls/sequence",
-            **kwargs)
+            **kwargs,
+        )
         return decoder.get_forward_outputs()
 
     def _get_fit_ops(self, as_feature=False):
-        ops = [self._tensors["logits"], self._tensors["transition_matrix"],
-               self._tensors["losses"]]
+        ops = [self._tensors["logits"], self._tensors["transition_matrix"], self._tensors["losses"]]
         if as_feature:
-            ops.extend([self.placeholders["input_mask"],
-                        self.placeholders["label_ids"]])
+            ops.extend([self.placeholders["input_mask"], self.placeholders["label_ids"]])
         return ops
 
     def _get_fit_info(self, output_arrays, feed_dict, as_feature=False):
@@ -1488,11 +1378,9 @@ class BERTCRFNER(BERTNER, NERModule):
         batch_input_length = np.sum(batch_mask, axis=-1)
         batch_preds = []
         for logit, seq_len in zip(batch_logits, batch_input_length):
-            viterbi_seq, _ = viterbi_decode(
-                logit[:seq_len], batch_transition_matrix)
+            viterbi_seq, _ = viterbi_decode(logit[:seq_len], batch_transition_matrix)
             batch_preds.append(viterbi_seq)
-        f1_token, f1_entity = self._get_f1(
-            batch_preds, batch_labels, batch_mask)
+        f1_token, f1_entity = self._get_f1(batch_preds, batch_labels, batch_mask)
 
         # loss
         batch_losses = output_arrays[2]
@@ -1527,8 +1415,7 @@ class BERTCRFNER(BERTNER, NERModule):
             _text = text[i]
 
             _input_length = int(np.sum(_mask))
-            _viterbi_seq, _ = viterbi_decode(
-                _logits[:_input_length], transition_matrix)
+            _viterbi_seq, _ = viterbi_decode(_logits[:_input_length], transition_matrix)
             _entities = self._get_entities(_viterbi_seq)
             _preds = []
             if not _entities:
@@ -1538,8 +1425,7 @@ class BERTCRFNER(BERTNER, NERModule):
             if not tokenized:
                 if isinstance(_text, list):
                     _text = " ".join(_text)
-                _mapping_start, _mapping_end = common.align_tokens_with_text(
-                    _tokens, _text, self._do_lower_case)
+                _mapping_start, _mapping_end = common.align_tokens_with_text(_tokens, _text, self._do_lower_case)
 
             for _entity in _entities:
                 _start, _end = _entity[0], _entity[1]
@@ -1566,8 +1452,7 @@ class BERTCRFNER(BERTNER, NERModule):
         return outputs
 
     def _get_score_ops(self):
-        return [self._tensors["logits"], self._tensors["transition_matrix"],
-                self._tensors["losses"]]
+        return [self._tensors["logits"], self._tensors["transition_matrix"], self._tensors["losses"]]
 
     def _get_score_outputs(self, batch_outputs):
         n_inputs = len(list(self.data.values())[0])
@@ -1581,11 +1466,9 @@ class BERTCRFNER(BERTNER, NERModule):
         input_length = np.sum(mask, axis=-1)
         preds = []
         for logit, seq_len in zip(logits, input_length):
-            viterbi_seq, _ = viterbi_decode(
-                logit[:seq_len], transition_matrix)
+            viterbi_seq, _ = viterbi_decode(logit[:seq_len], transition_matrix)
             preds.append(viterbi_seq)
-        f1_token, f1_entity = self._get_f1(
-            preds, labels, mask)
+        f1_token, f1_entity = self._get_f1(preds, labels, mask)
 
         # loss
         losses = common.transform(output_arrays[2], n_inputs)
@@ -1607,18 +1490,19 @@ class BERTCRFCascadeNER(BERTCRFNER, NERModule):
         "init_checkpoint": "A string that directs to the checkpoint file used for initialization",
     }
 
-    def __init__(self,
-                 config_file,
-                 vocab_file,
-                 max_seq_length=128,
-                 init_checkpoint=None,
-                 output_dir=None,
-                 gpu_ids=None,
-                 do_lower_case=True,
-                 entity_types=None,
-                 truncate_method="LIFO"):
-        super(NERModule, self).__init__(
-            init_checkpoint, output_dir, gpu_ids)
+    def __init__(
+        self,
+        config_file,
+        vocab_file,
+        max_seq_length=128,
+        init_checkpoint=None,
+        output_dir=None,
+        gpu_ids=None,
+        do_lower_case=True,
+        entity_types=None,
+        truncate_method="LIFO",
+    ):
+        super(NERModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.batch_size = 0
         self.max_seq_length = max_seq_length
@@ -1630,8 +1514,7 @@ class BERTCRFCascadeNER(BERTCRFNER, NERModule):
 
         self.bert_config = get_bert_config(config_file)
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
-        self._key_to_depths = get_key_to_depths(
-            self.bert_config.num_hidden_layers)
+        self._key_to_depths = get_key_to_depths(self.bert_config.num_hidden_layers)
 
         if "[CLS]" not in self.tokenizer.vocab:
             self.tokenizer.add("[CLS]")
@@ -1642,16 +1525,13 @@ class BERTCRFCascadeNER(BERTCRFNER, NERModule):
             self.bert_config.vocab_size += 1
             tf.logging.info("Add necessary token `[SEP]` into vocabulary.")
 
-    def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
-                is_training=False, is_parallel=False):
+    def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None, is_training=False, is_parallel=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
 
         if is_training:
             assert y is not None, "`y` can\"t be None."
         if is_parallel:
-            assert self.entity_types, (
-                "Can\"t parse data on multi-processing "
-                "when `entity_types` is None.")
+            assert self.entity_types, "Can\"t parse data on multi-processing when `entity_types` is None."
 
         n_inputs = None
         data = {}
@@ -1660,8 +1540,7 @@ class BERTCRFCascadeNER(BERTCRFNER, NERModule):
         if X or X_tokenized:
             tokenized = False if X else X_tokenized
             X_target = X_tokenized if tokenized else X
-            input_tokens, input_ids, input_mask, segment_ids = self._convert_X(
-                X_target, tokenized=tokenized)
+            input_tokens, input_ids, input_mask, segment_ids = self._convert_X(X_target, tokenized=tokenized)
             data["input_ids"] = np.array(input_ids, dtype=np.int32)
             data["input_mask"] = np.array(input_mask, dtype=np.int32)
             data["segment_ids"] = np.array(segment_ids, dtype=np.int32)
@@ -1682,8 +1561,7 @@ class BERTCRFCascadeNER(BERTCRFNER, NERModule):
 
         # convert sample_weight
         if is_training or y:
-            sample_weight = self._convert_sample_weight(
-                sample_weight, n_inputs)
+            sample_weight = self._convert_sample_weight(sample_weight, n_inputs)
             data["sample_weight"] = np.array(sample_weight, dtype=np.float32)
 
         return data
@@ -1694,9 +1572,10 @@ class BERTCRFCascadeNER(BERTCRFNER, NERModule):
         if not self.entity_types:
             type_B_id = {}
         else:
-            type_B_id = {entity_type: 1 + 4 * i
-                         for i, entity_type
-                         in enumerate(self.entity_types)}
+            type_B_id = {
+                entity_type: 1 + 4 * i
+                for i, entity_type in enumerate(self.entity_types)
+            }
         for ex_id, (_y, _input_ids) in enumerate(zip(y, input_ids)):
             if not _y:
                 label_ids.append([self.O_ID] * self.max_seq_length)
@@ -1706,7 +1585,8 @@ class BERTCRFCascadeNER(BERTCRFNER, NERModule):
                 raise ValueError(
                     "Wrong input format of `y`. An untokenized example: "
                     "`y = [{\"Person\": [\"Trump\", \"Obama\"], "
-                    "\"City\": [\"Washington D.C.\"], ...}, ...]`")
+                    "\"City\": [\"Washington D.C.\"], ...}, ...]`"
+                )
 
             # tagging
             _label_ids = [self.O_ID for _ in range(self.max_seq_length)]
@@ -1718,7 +1598,8 @@ class BERTCRFCascadeNER(BERTCRFNER, NERModule):
                 if _key not in type_B_id:
                     assert not self.entity_types, (
                         "Entity type `%s` not found in entity_types: %s."
-                        % (_key, self.entity_types))
+                        % (_key, self.entity_types)
+                    )
                     type_B_id[_key] = 1 + 4 * len(list(type_B_id.keys()))
                 _entities = _y[_key]
 
@@ -1726,21 +1607,15 @@ class BERTCRFCascadeNER(BERTCRFNER, NERModule):
                 for _entity in _entities:
                     if isinstance(_entity, str):
                         _entity_tokens = self.tokenizer.tokenize(_entity)
-                        _entity_ids = \
-                            self.tokenizer.convert_tokens_to_ids(
-                                _entity_tokens)
+                        _entity_ids = self.tokenizer.convert_tokens_to_ids(_entity_tokens)
                     elif isinstance(_entity, list):
                         if isinstance(_entity[0], str):
-                            _entity_ids = \
-                                self.tokenizer.convert_tokens_to_ids(_y)
+                            _entity_ids = self.tokenizer.convert_tokens_to_ids(_y)
                         else:
-                            raise ValueError(
-                                "Wrong input format (line %d): \"%s\". "
-                                % (ex_id, _entity))
+                            raise ValueError("Wrong input format (line %d): \"%s\". " % (ex_id, _entity))
 
                     # search and tag
-                    start_positions = common.find_all_boyer_moore(
-                        _input_ids, _entity_ids)
+                    start_positions = common.find_all_boyer_moore(_input_ids, _entity_ids)
                     if not start_positions:
                         tf.logging.warning(
                             "Failed to find the mapping of entity "
@@ -1748,7 +1623,8 @@ class BERTCRFCascadeNER(BERTCRFNER, NERModule):
                             "reason is that the entity span is "
                             "truncated due to the "
                             "`max_seq_length` setting."
-                            % (ex_id))
+                            % (ex_id)
+                        )
                         continue
 
                     for start_position in start_positions:
@@ -1774,7 +1650,8 @@ class BERTCRFCascadeNER(BERTCRFNER, NERModule):
             input_ids=split_placeholders["input_ids"],
             input_mask=split_placeholders["input_mask"],
             segment_ids=split_placeholders["segment_ids"],
-            **kwargs)
+            **kwargs,
+        )
         encoder_output = encoder.get_sequence_output()
         decoder = CRFDecoder(
             is_training=is_training,
@@ -1784,15 +1661,14 @@ class BERTCRFCascadeNER(BERTCRFNER, NERModule):
             label_size=1 + len(self.entity_types) * 4,
             sample_weight=split_placeholders.get("sample_weight"),
             scope="cls/sequence",
-            **kwargs)
+            **kwargs,
+        )
         return decoder.get_forward_outputs()
 
     def _get_fit_ops(self, as_feature=False):
-        ops = [self._tensors["logits"], self._tensors["transition_matrix"],
-               self._tensors["losses"]]
+        ops = [self._tensors["logits"], self._tensors["transition_matrix"], self._tensors["losses"]]
         if as_feature:
-            ops.extend([self.placeholders["input_mask"],
-                        self.placeholders["label_ids"]])
+            ops.extend([self.placeholders["input_mask"], self.placeholders["label_ids"]])
         return ops
 
     def _get_fit_info(self, output_arrays, feed_dict, as_feature=False):
@@ -1810,11 +1686,9 @@ class BERTCRFCascadeNER(BERTCRFNER, NERModule):
         batch_input_length = np.sum(batch_mask, axis=-1)
         batch_preds = []
         for logit, seq_len in zip(batch_logits, batch_input_length):
-            viterbi_seq, _ = viterbi_decode(
-                logit[:seq_len], batch_transition_matrix)
+            viterbi_seq, _ = viterbi_decode(logit[:seq_len], batch_transition_matrix)
             batch_preds.append(viterbi_seq)
-        metrics = self._get_cascade_f1(
-            batch_preds, batch_labels, batch_mask)
+        metrics = self._get_cascade_f1(batch_preds, batch_labels, batch_mask)
 
         # loss
         batch_losses = output_arrays[2]
@@ -1849,14 +1723,12 @@ class BERTCRFCascadeNER(BERTCRFNER, NERModule):
             _text = text[i]
 
             _input_length = int(np.sum(_mask))
-            _viterbi_seq, _ = viterbi_decode(
-                _logits[:_input_length], transition_matrix)
+            _viterbi_seq, _ = viterbi_decode(_logits[:_input_length], transition_matrix)
 
             if not tokenized:
                 if isinstance(_text, list):
                     _text = " ".join(_text)
-                _mapping_start, _mapping_end = common.align_tokens_with_text(
-                    _tokens, _text, self._do_lower_case)
+                _mapping_start, _mapping_end = common.align_tokens_with_text(_tokens, _text, self._do_lower_case)
 
             _preds = {}
             for i, entity_type in enumerate(self.entity_types):
@@ -1890,8 +1762,7 @@ class BERTCRFCascadeNER(BERTCRFNER, NERModule):
         return outputs
 
     def _get_score_ops(self):
-        return [self._tensors["logits"], self._tensors["transition_matrix"],
-                self._tensors["losses"]]
+        return [self._tensors["logits"], self._tensors["transition_matrix"], self._tensors["losses"]]
 
     def _get_score_outputs(self, batch_outputs):
         n_inputs = len(list(self.data.values())[0])
@@ -1905,11 +1776,9 @@ class BERTCRFCascadeNER(BERTCRFNER, NERModule):
         input_length = np.sum(mask, axis=-1)
         preds = []
         for logit, seq_len in zip(logits, input_length):
-            viterbi_seq, _ = viterbi_decode(
-                logit[:seq_len], transition_matrix)
+            viterbi_seq, _ = viterbi_decode(logit[:seq_len], transition_matrix)
             preds.append(viterbi_seq)
-        metrics = self._get_cascade_f1(
-            preds, labels, mask)
+        metrics = self._get_cascade_f1(preds, labels, mask)
 
         # loss
         losses = common.transform(output_arrays[2], n_inputs)
@@ -1930,17 +1799,18 @@ class BERTMRC(BERTClassifier, MRCModule):
         "init_checkpoint": "A string that directs to the checkpoint file used for initialization",
     }
 
-    def __init__(self,
-                 config_file,
-                 vocab_file,
-                 max_seq_length=256,
-                 init_checkpoint=None,
-                 output_dir=None,
-                 gpu_ids=None,
-                 do_lower_case=True,
-                 truncate_method="longer-FO"):
-        super(MRCModule, self).__init__(
-            init_checkpoint, output_dir, gpu_ids)
+    def __init__(
+        self,
+        config_file,
+        vocab_file,
+        max_seq_length=256,
+        init_checkpoint=None,
+        output_dir=None,
+        gpu_ids=None,
+        do_lower_case=True,
+        truncate_method="longer-FO",
+    ):
+        super(MRCModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.batch_size = 0
         self.max_seq_length = max_seq_length
@@ -1951,8 +1821,7 @@ class BERTMRC(BERTClassifier, MRCModule):
 
         self.bert_config = get_bert_config(config_file)
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
-        self._key_to_depths = get_key_to_depths(
-            self.bert_config.num_hidden_layers)
+        self._key_to_depths = get_key_to_depths(self.bert_config.num_hidden_layers)
 
         if "[CLS]" not in self.tokenizer.vocab:
             self.tokenizer.add("[CLS]")
@@ -1963,20 +1832,17 @@ class BERTMRC(BERTClassifier, MRCModule):
             self.bert_config.vocab_size += 1
             tf.logging.info("Add necessary token `[SEP]` into vocabulary.")
 
-    def predict(self, X=None, X_tokenized=None,
-                batch_size=8):
+    def predict(self, X=None, X_tokenized=None, batch_size=8):
 
         self._on_predict = True
-        ret = super(MRCModule, self).predict(
-            X, X_tokenized, batch_size)
+        ret = super(MRCModule, self).predict(X, X_tokenized, batch_size)
         self._on_predict = False
 
         return ret
 
     predict.__doc__ = MRCModule.predict.__doc__
 
-    def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
-                is_training=False, is_parallel=False):
+    def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None, is_training=False, is_parallel=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
 
         if is_training:
@@ -1989,9 +1855,7 @@ class BERTMRC(BERTClassifier, MRCModule):
         if X or X_tokenized:
             tokenized = False if X else X_tokenized
             X_target = X_tokenized if tokenized else X
-            (input_tokens, input_ids, input_mask, segment_ids,
-             doc_ids, doc_text, doc_start) = self._convert_X(
-                 X_target, tokenized=tokenized)
+            (input_tokens, input_ids, input_mask, segment_ids, doc_ids, doc_text, doc_start) = self._convert_X(X_target, tokenized=tokenized)
             data["input_ids"] = np.array(input_ids, dtype=np.int32)
             data["input_mask"] = np.array(input_mask, dtype=np.int32)
             data["segment_ids"] = np.array(segment_ids, dtype=np.int32)
@@ -2007,14 +1871,12 @@ class BERTMRC(BERTClassifier, MRCModule):
 
         # convert y
         if y:
-            label_ids = self._convert_y(
-                y, doc_ids, doc_text, doc_start, tokenized)
+            label_ids = self._convert_y(y, doc_ids, doc_text, doc_start, tokenized)
             data["label_ids"] = np.array(label_ids, dtype=np.int32)
 
         # convert sample_weight
         if is_training or y:
-            sample_weight = self._convert_sample_weight(
-                sample_weight, n_inputs)
+            sample_weight = self._convert_sample_weight(sample_weight, n_inputs)
             data["sample_weight"] = np.array(sample_weight, dtype=np.float32)
 
         return data
@@ -2025,14 +1887,14 @@ class BERTMRC(BERTClassifier, MRCModule):
         segment_input_tokens = []
         for ex_id, example in enumerate(X_target):
             try:
-                segment_input_tokens.append(
-                    self._convert_x(example, tokenized))
+                segment_input_tokens.append(self._convert_x(example, tokenized))
             except Exception:
                 raise ValueError(
                     "Wrong input format (line %d): \"%s\". "
                     "An untokenized example: "
                     "`X = [{\"doc\": \"...\", \"question\": \"...\", ...}, "
-                    "...]`" % (ex_id, example))
+                    "...]`" % (ex_id, example)
+                )
 
         input_tokens = []
         input_ids = []
@@ -2049,9 +1911,7 @@ class BERTMRC(BERTClassifier, MRCModule):
 
             _doc_tokens = segments.pop("doc")
             segments = list(segments.values()) + [_doc_tokens]
-            common.truncate_segments(
-                segments, self.max_seq_length - len(segments) - 1,
-                truncate_method=self.truncate_method)
+            common.truncate_segments(segments, self.max_seq_length - len(segments) - 1, truncate_method=self.truncate_method)
             _doc_tokens = segments[-1]
 
             for s_id, segment in enumerate(segments):
@@ -2078,8 +1938,7 @@ class BERTMRC(BERTClassifier, MRCModule):
             doc_text.append(X_target[ex_id]["doc"])
             doc_start.append(_doc_start)
 
-        return (input_tokens, input_ids, input_mask, segment_ids,
-                doc_ids, doc_text, doc_start)
+        return (input_tokens, input_ids, input_mask, segment_ids, doc_ids, doc_text, doc_start)
 
     def _convert_x(self, x, tokenized):
         output = {}
@@ -2106,12 +1965,12 @@ class BERTMRC(BERTClassifier, MRCModule):
                 label_ids.append([0, 0])
                 continue
 
-            if not isinstance(_y, dict) or \
-                    "text" not in _y or "answer_start" not in _y:
+            if not isinstance(_y, dict) or "text" not in _y or "answer_start" not in _y:
                 raise ValueError(
                     "Wrong input format of `y`. An untokenized example: "
                     "`y = [{\"text\": \"Obama\", \"answer_start\": 12}, "
-                    "None, ...]`")
+                    "None, ...]`"
+                )
 
             _answer_text = _y["text"]
             _answer_start = _y["answer_start"]
@@ -2120,26 +1979,18 @@ class BERTMRC(BERTClassifier, MRCModule):
             # tokenization
             if isinstance(_answer_text, str):
                 _answer_tokens = self.tokenizer.tokenize(_answer_text)
-                _answer_ids = self.tokenizer.convert_tokens_to_ids(
-                    _answer_tokens)
+                _answer_ids = self.tokenizer.convert_tokens_to_ids(_answer_tokens)
             elif isinstance(_answer_text, list):
-                assert tokenized, (
-                    "%s does not support multiple answer spans."
-                    % self.__class__.__name__)
+                assert tokenized, "%s does not support multiple answer spans." % self.__class__.__name__
                 _answer_tokens = _answer_text
-                _answer_ids = self.tokenizer.convert_tokens_to_ids(
-                    _answer_text)
+                _answer_ids = self.tokenizer.convert_tokens_to_ids(_answer_text)
             else:
-                raise ValueError(
-                    "Invalid answer text at line %d: `%s`."
-                    % (ex_id, _answer_text))
+                raise ValueError("Invalid answer text at line %d: `%s`." % (ex_id, _answer_text))
 
             if isinstance(_answer_text, str):
-                _overlap_time = len(common.find_all_boyer_moore(
-                    doc_text[ex_id][:_answer_start], _answer_text))
+                _overlap_time = len(common.find_all_boyer_moore(doc_text[ex_id][:_answer_start], _answer_text))
                 try:
-                    start_position = common.find_all_boyer_moore(
-                        _doc_ids, _answer_ids)[_overlap_time]
+                    start_position = common.find_all_boyer_moore(_doc_ids, _answer_ids)[_overlap_time]
                     end_position = start_position + len(_answer_ids) - 1
                 except IndexError:
                     label_ids.append([0, 0])
@@ -2149,44 +2000,32 @@ class BERTMRC(BERTClassifier, MRCModule):
                 start_position = _answer_start
                 end_position = start_position + len(_answer_ids) - 1
                 if _doc_ids[_answer_start: end_position + 1] != _answer_ids:
-                    tf.logging.warning(
-                        "Wrong `answer_start` at line %d. Ignored and set "
-                        "label to null text.")
+                    tf.logging.warning("Wrong `answer_start` at line %d. Ignored and set label to null text.")
                     label_ids.append([0, 0])
                     invalid_ids.append(ex_id)
                     continue
 
-            label_ids.append([start_position + doc_start[ex_id],
-                              end_position + doc_start[ex_id]])
+            label_ids.append([start_position + doc_start[ex_id], end_position + doc_start[ex_id]])
 
         if invalid_ids:
             tf.logging.warning(
                 "Failed to find the mapping of answer to inputs at "
                 "line %s. A possible reason is that the answer spans "
                 "are truncated due to the `max_seq_length` setting."
-                % invalid_ids)
+                % invalid_ids
+            )
 
         return label_ids
 
     def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
-            "input_ids": common.get_placeholder(
-                target, "input_ids",
-                [None, self.max_seq_length], tf.int32),
-            "input_mask": common.get_placeholder(
-                target, "input_mask",
-                [None, self.max_seq_length], tf.int32),
-            "segment_ids": common.get_placeholder(
-                target, "segment_ids",
-                [None, self.max_seq_length], tf.int32),
-            "label_ids": common.get_placeholder(
-                target, "label_ids", [None, 2], tf.int32),
+            "input_ids": common.get_placeholder(target, "input_ids", [None, self.max_seq_length], tf.int32),
+            "input_mask": common.get_placeholder(target, "input_mask", [None, self.max_seq_length], tf.int32),
+            "segment_ids": common.get_placeholder(target, "segment_ids", [None, self.max_seq_length], tf.int32),
+            "label_ids": common.get_placeholder(target, "label_ids", [None, 2], tf.int32),
         }
         if not on_export:
-            self.placeholders["sample_weight"] = \
-                common.get_placeholder(
-                    target, "sample_weight",
-                    [None], tf.float32)
+            self.placeholders["sample_weight"] = common.get_placeholder(target, "sample_weight", [None], tf.float32)
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
@@ -2196,7 +2035,8 @@ class BERTMRC(BERTClassifier, MRCModule):
             input_ids=split_placeholders["input_ids"],
             input_mask=split_placeholders["input_mask"],
             segment_ids=split_placeholders["segment_ids"],
-            **kwargs)
+            **kwargs,
+        )
         encoder_output = encoder.get_sequence_output()
         decoder = MRCDecoder(
             is_training=is_training,
@@ -2204,7 +2044,8 @@ class BERTMRC(BERTClassifier, MRCModule):
             label_ids=split_placeholders["label_ids"],
             sample_weight=split_placeholders.get("sample_weight"),
             scope="mrc",
-            **kwargs)
+            **kwargs,
+        )
         return decoder.get_forward_outputs()
 
     def _get_fit_ops(self, as_feature=False):
@@ -2266,8 +2107,7 @@ class BERTMRC(BERTClassifier, MRCModule):
                 _text = [_sample[key] for key in _sample if key != "doc"]
                 _text.append(_sample["doc"])
                 _text = " ".join(_text)
-                _mapping_start, _mapping_end = common.align_tokens_with_text(
-                    _tokens, _text, self._do_lower_case)
+                _mapping_start, _mapping_end = common.align_tokens_with_text(_tokens, _text, self._do_lower_case)
 
                 try:
                     _text_start = _mapping_start[_start]
@@ -2313,18 +2153,19 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
     verifier. """
     _INFER_ATTRIBUTES = BERTMRC._INFER_ATTRIBUTES
 
-    def __init__(self,
-                 config_file,
-                 vocab_file,
-                 max_seq_length=256,
-                 init_checkpoint=None,
-                 output_dir=None,
-                 gpu_ids=None,
-                 do_lower_case=True,
-                 drop_pooler=False,
-                 truncate_method="longer-FO"):
-        super(MRCModule, self).__init__(
-            init_checkpoint, output_dir, gpu_ids)
+    def __init__(
+        self,
+        config_file,
+        vocab_file,
+        max_seq_length=256,
+        init_checkpoint=None,
+        output_dir=None,
+        gpu_ids=None,
+        do_lower_case=True,
+        drop_pooler=False,
+        truncate_method="longer-FO",
+    ):
+        super(MRCModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.batch_size = 0
         self.max_seq_length = max_seq_length
@@ -2336,8 +2177,7 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
 
         self.bert_config = get_bert_config(config_file)
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
-        self._key_to_depths = get_key_to_depths(
-            self.bert_config.num_hidden_layers)
+        self._key_to_depths = get_key_to_depths(self.bert_config.num_hidden_layers)
 
         if "[CLS]" not in self.tokenizer.vocab:
             self.tokenizer.add("[CLS]")
@@ -2348,8 +2188,7 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
             self.bert_config.vocab_size += 1
             tf.logging.info("Add necessary token `[SEP]` into vocabulary.")
 
-    def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
-                is_training=False, is_parallel=False):
+    def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None, is_training=False, is_parallel=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
 
         if is_training:
@@ -2362,9 +2201,7 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
         if X or X_tokenized:
             tokenized = False if X else X_tokenized
             X_target = X_tokenized if tokenized else X
-            (input_tokens, input_ids, input_mask, segment_ids,
-             doc_ids, doc_text, doc_start) = self._convert_X(
-                 X_target, tokenized=tokenized)
+            (input_tokens, input_ids, input_mask, segment_ids, doc_ids, doc_text, doc_start) = self._convert_X(X_target, tokenized=tokenized)
             data["input_ids"] = np.array(input_ids, dtype=np.int32)
             data["input_mask"] = np.array(input_mask, dtype=np.int32)
             data["segment_ids"] = np.array(segment_ids, dtype=np.int32)
@@ -2380,15 +2217,13 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
 
         # convert y
         if y:
-            label_ids, has_answer = self._convert_y(
-                y, doc_ids, doc_text, doc_start, tokenized)
+            label_ids, has_answer = self._convert_y(y, doc_ids, doc_text, doc_start, tokenized)
             data["label_ids"] = np.array(label_ids, dtype=np.int32)
             data["has_answer"] = np.array(has_answer, dtype=np.int32)
 
         # convert sample_weight
         if is_training or y:
-            sample_weight = self._convert_sample_weight(
-                sample_weight, n_inputs)
+            sample_weight = self._convert_sample_weight(sample_weight, n_inputs)
             data["sample_weight"] = np.array(sample_weight, dtype=np.float32)
 
         return data
@@ -2404,12 +2239,12 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
                 has_answer.append(0)
                 continue
 
-            if not isinstance(_y, dict) or \
-                    "text" not in _y or "answer_start" not in _y:
+            if not isinstance(_y, dict) or "text" not in _y or "answer_start" not in _y:
                 raise ValueError(
                     "Wrong input format of `y`. An untokenized example: "
                     "`y = [{\"text\": \"Obama\", \"answer_start\": 12}, "
-                    "None, ...]`")
+                    "None, ...]`"
+                )
 
             _answer_text = _y["text"]
             _answer_start = _y["answer_start"]
@@ -2418,26 +2253,18 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
             # tokenization
             if isinstance(_answer_text, str):
                 _answer_tokens = self.tokenizer.tokenize(_answer_text)
-                _answer_ids = self.tokenizer.convert_tokens_to_ids(
-                    _answer_tokens)
+                _answer_ids = self.tokenizer.convert_tokens_to_ids(_answer_tokens)
             elif isinstance(_answer_text, list):
-                assert tokenized, (
-                    "%s does not support multiple answer spans."
-                    % self.__class__.__name__)
+                assert tokenized, "%s does not support multiple answer spans." % self.__class__.__name__
                 _answer_tokens = _answer_text
-                _answer_ids = self.tokenizer.convert_tokens_to_ids(
-                    _answer_text)
+                _answer_ids = self.tokenizer.convert_tokens_to_ids(_answer_text)
             else:
-                raise ValueError(
-                    "Invalid answer text at line %d: `%s`."
-                    % (ex_id, _answer_text))
+                raise ValueError("Invalid answer text at line %d: `%s`." % (ex_id, _answer_text))
 
             if isinstance(_answer_text, str):
-                _overlap_time = len(common.find_all_boyer_moore(
-                    doc_text[ex_id][:_answer_start], _answer_text))
+                _overlap_time = len(common.find_all_boyer_moore(doc_text[ex_id][:_answer_start], _answer_text))
 
-                start_positions = common.find_all_boyer_moore(
-                    _doc_ids, _answer_ids)
+                start_positions = common.find_all_boyer_moore(_doc_ids, _answer_ids)
                 if _overlap_time >= len(start_positions):
                     label_ids.append([0, 0])
                     has_answer.append(0)
@@ -2450,16 +2277,13 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
                 start_position = _answer_start
                 end_position = start_position + len(_answer_ids) - 1
                 if _doc_ids[_answer_start: end_position + 1] != _answer_ids:
-                    tf.logging.warning(
-                        "Wrong `answer_start` at line %d. Ignored and set "
-                        "label to null text.")
+                    tf.logging.warning("Wrong `answer_start` at line %d. Ignored and set label to null text.")
                     label_ids.append([0, 0])
                     has_answer.append(0)
                     invalid_ids.append(ex_id)
                     continue
 
-            label_ids.append([start_position + doc_start[ex_id],
-                              end_position + doc_start[ex_id]])
+            label_ids.append([start_position + doc_start[ex_id], end_position + doc_start[ex_id]])
             has_answer.append(1)
 
         if invalid_ids:
@@ -2467,32 +2291,21 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
                 "Failed to find the mapping of answer to inputs at "
                 "line %s. A possible reason is that the answer spans "
                 "are truncated due to the `max_seq_length` setting."
-                % invalid_ids)
+                % invalid_ids
+            )
 
         return label_ids, has_answer
 
     def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
-            "input_ids": common.get_placeholder(
-                target, "input_ids",
-                [None, self.max_seq_length], tf.int32),
-            "input_mask": common.get_placeholder(
-                target, "input_mask",
-                [None, self.max_seq_length], tf.int32),
-            "segment_ids": common.get_placeholder(
-                target, "segment_ids",
-                [None, self.max_seq_length], tf.int32),
-            "label_ids": common.get_placeholder(
-                target, "label_ids",
-                [None, 2], tf.int32),
-            "has_answer": common.get_placeholder(
-                target, "has_answer",
-                [None], tf.int32),
+            "input_ids": common.get_placeholder(target, "input_ids", [None, self.max_seq_length], tf.int32),
+            "input_mask": common.get_placeholder(target, "input_mask", [None, self.max_seq_length], tf.int32),
+            "segment_ids": common.get_placeholder(target, "segment_ids", [None, self.max_seq_length], tf.int32),
+            "label_ids": common.get_placeholder(target, "label_ids", [None, 2], tf.int32),
+            "has_answer": common.get_placeholder(target, "has_answer", [None], tf.int32),
         }
         if not on_export:
-            self.placeholders["sample_weight"] = common.get_placeholder(
-                target, "sample_weight",
-                [None], tf.float32)
+            self.placeholders["sample_weight"] = common.get_placeholder(target, "sample_weight", [None], tf.float32)
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
@@ -2503,7 +2316,8 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
             input_mask=split_placeholders["input_mask"],
             segment_ids=split_placeholders["segment_ids"],
             drop_pooler=self._drop_pooler,
-            **kwargs)
+            **kwargs,
+        )
         verifier = CLSDecoder(
             is_training=is_training,
             input_tensor=encoder.get_pooled_output(),
@@ -2511,11 +2325,10 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
             label_size=2,
             sample_weight=split_placeholders.get("sample_weight"),
             scope="cls/verifier",
-            **kwargs)
+            **kwargs,
+        )
         if is_training:
-            sample_weight = (
-                tf.cast(split_placeholders["has_answer"], tf.float32) *
-                split_placeholders.get("sample_weight"))
+            sample_weight = tf.cast(split_placeholders["has_answer"], tf.float32) * split_placeholders.get("sample_weight")
         else:
             sample_weight = split_placeholders.get("sample_weight")
         decoder = MRCDecoder(
@@ -2524,7 +2337,8 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
             label_ids=split_placeholders["label_ids"],
             sample_weight=sample_weight,
             scope="mrc",
-            **kwargs)
+            **kwargs,
+        )
 
         verifier_total_loss, verifier_tensors = verifier.get_forward_outputs()
         decoder_total_loss, decoder_tensors = decoder.get_forward_outputs()
@@ -2539,10 +2353,12 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
         return total_loss, tensors
 
     def _get_fit_ops(self, as_feature=False):
-        ops = [self._tensors["verifier_preds"],
-               self._tensors["verifier_losses"],
-               self._tensors["mrc_preds"],
-               self._tensors["mrc_losses"]]
+        ops = [
+            self._tensors["verifier_preds"],
+            self._tensors["verifier_losses"],
+            self._tensors["mrc_preds"],
+            self._tensors["mrc_losses"],
+        ]
         if as_feature:
             ops.extend([self.placeholders["label_ids"]])
             ops.extend([self.placeholders["has_answer"]])
@@ -2555,13 +2371,11 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
             batch_has_answer = output_arrays[-1]
         else:
             batch_labels = feed_dict[self.placeholders["label_ids"]]
-            batch_has_answer = feed_dict[
-                self.placeholders["has_answer"]]
+            batch_has_answer = feed_dict[self.placeholders["has_answer"]]
 
         # verifier accuracy
         batch_has_answer_preds = output_arrays[0]
-        has_answer_accuracy = np.mean(
-            batch_has_answer_preds == batch_has_answer)
+        has_answer_accuracy = np.mean(batch_has_answer_preds == batch_has_answer)
 
         # verifier loss
         batch_verifier_losses = output_arrays[1]
@@ -2588,10 +2402,12 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
         return info
 
     def _get_predict_ops(self):
-        return [self._tensors["verifier_probs"],
-                self._tensors["verifier_preds"],
-                self._tensors["mrc_probs"],
-                self._tensors["mrc_preds"]]
+        return [
+            self._tensors["verifier_probs"],
+            self._tensors["verifier_preds"],
+            self._tensors["mrc_probs"],
+            self._tensors["mrc_preds"],
+        ]
 
     def _get_predict_outputs(self, batch_outputs):
         n_inputs = len(list(self.data.values())[0])
@@ -2610,8 +2426,7 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
         preds = []
         for ex_id, _preds in enumerate(mrc_preds):
             _start, _end = int(_preds[0]), int(_preds[1])
-            if verifier_preds[ex_id] == 0 or _start == 0 or _end == 0 \
-                    or _start > _end:
+            if verifier_preds[ex_id] == 0 or _start == 0 or _end == 0 or _start > _end:
                 preds.append(None)
                 continue
             _tokens = tokens[ex_id]
@@ -2624,8 +2439,7 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
                 _text = [_sample[key] for key in _sample if key != "doc"]
                 _text.append(_sample["doc"])
                 _text = " ".join(_text)
-                _mapping_start, _mapping_end = common.align_tokens_with_text(
-                    _tokens, _text, self._do_lower_case)
+                _mapping_start, _mapping_end = common.align_tokens_with_text(_tokens, _text, self._do_lower_case)
 
                 try:
                     _text_start = _mapping_start[_start]
@@ -2645,10 +2459,12 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
         return outputs
 
     def _get_score_ops(self):
-        return [self._tensors["verifier_preds"],
-                self._tensors["verifier_losses"],
-                self._tensors["mrc_preds"],
-                self._tensors["mrc_losses"]]
+        return [
+            self._tensors["verifier_preds"],
+            self._tensors["verifier_losses"],
+            self._tensors["mrc_preds"],
+            self._tensors["mrc_losses"],
+        ]
 
     def _get_score_outputs(self, batch_outputs):
         n_inputs = len(list(self.data.values())[0])
@@ -2656,8 +2472,7 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
 
         # verifier accuracy
         has_answer_preds = common.transform(output_arrays[0], n_inputs)
-        has_answer_accuracy = np.mean(
-            has_answer_preds == self.data["has_answer"])
+        has_answer_accuracy = np.mean(has_answer_preds == self.data["has_answer"])
 
         # verifier loss
         verifier_losses = common.transform(output_arrays[1], n_inputs)
@@ -2691,23 +2506,24 @@ class BERTLM(LMModule):
         "init_checkpoint": "A string that directs to the checkpoint file used for initialization",
     }
 
-    def __init__(self,
-                 config_file,
-                 vocab_file,
-                 max_seq_length=128,
-                 init_checkpoint=None,
-                 output_dir=None,
-                 gpu_ids=None,
-                 drop_pooler=False,
-                 do_sample_next_sentence=True,
-                 max_predictions_per_seq=20,
-                 masked_lm_prob=0.15,
-                 short_seq_prob=0.1,
-                 do_whole_word_mask=False,
-                 do_lower_case=True,
-                 truncate_method="LIFO"):
-        super(BERTLM, self).__init__(
-            init_checkpoint, output_dir, gpu_ids)
+    def __init__(
+        self,
+        config_file,
+        vocab_file,
+        max_seq_length=128,
+        init_checkpoint=None,
+        output_dir=None,
+        gpu_ids=None,
+        drop_pooler=False,
+        do_sample_next_sentence=True,
+        max_predictions_per_seq=20,
+        masked_lm_prob=0.15,
+        short_seq_prob=0.1,
+        do_whole_word_mask=False,
+        do_lower_case=True,
+        truncate_method="LIFO",
+    ):
+        super(BERTLM, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.batch_size = 0
         self.max_seq_length = max_seq_length
@@ -2724,8 +2540,7 @@ class BERTLM(LMModule):
 
         self.bert_config = get_bert_config(config_file)
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
-        self._key_to_depths = get_key_to_depths(
-            self.bert_config.num_hidden_layers)
+        self._key_to_depths = get_key_to_depths(self.bert_config.num_hidden_layers)
 
         if "[CLS]" not in self.tokenizer.vocab:
             self.tokenizer.add("[CLS]")
@@ -2736,17 +2551,14 @@ class BERTLM(LMModule):
             self.bert_config.vocab_size += 1
             tf.logging.info("Add necessary token `[SEP]` into vocabulary.")
 
-    def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
-                is_training=False, is_parallel=False):
+    def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None, is_training=False, is_parallel=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
 
         if is_training:
             if y is not None:
-                assert not self.do_sample_next_sentence, (
-                    "`y` should be None when `do_sample_next_sentence` is True.")
+                assert not self.do_sample_next_sentence, "`y` should be None when `do_sample_next_sentence` is True."
             else:
-                assert self.do_sample_next_sentence, (
-                    "`y` can\"t be None when `do_sample_next_sentence` is False.")
+                assert self.do_sample_next_sentence, "`y` can't be None when `do_sample_next_sentence` is False."
 
         n_inputs = None
         data = {}
@@ -2757,25 +2569,19 @@ class BERTLM(LMModule):
 
             (input_ids, input_mask, segment_ids,
              masked_lm_positions, masked_lm_ids, masked_lm_weights,
-             next_sentence_labels) = self._convert_X(
-                 X_tokenized if tokenized else X,
-                 is_training, tokenized=tokenized)
+             next_sentence_labels) = self._convert_X(X_tokenized if tokenized else X, is_training, tokenized=tokenized)
 
             data["input_ids"] = np.array(input_ids, dtype=np.int32)
             data["input_mask"] = np.array(input_mask, dtype=np.int32)
             data["segment_ids"] = np.array(segment_ids, dtype=np.int32)
-            data["masked_lm_positions"] = \
-                np.array(masked_lm_positions, dtype=np.int32)
+            data["masked_lm_positions"] = np.array(masked_lm_positions, dtype=np.int32)
 
             if is_training:
-                data["masked_lm_ids"] = \
-                    np.array(masked_lm_ids, dtype=np.int32)
-                data["masked_lm_weights"] = \
-                    np.array(masked_lm_weights, dtype=np.float32)
+                data["masked_lm_ids"] = np.array(masked_lm_ids, dtype=np.int32)
+                data["masked_lm_weights"] = np.array(masked_lm_weights, dtype=np.float32)
 
             if is_training and self.do_sample_next_sentence:
-                data["next_sentence_labels"] = \
-                    np.array(next_sentence_labels, dtype=np.int32)
+                data["next_sentence_labels"] = np.array(next_sentence_labels, dtype=np.int32)
 
             n_inputs = len(input_ids)
             if n_inputs < self.batch_size:
@@ -2784,13 +2590,11 @@ class BERTLM(LMModule):
         # convert y
         if y:
             next_sentence_labels = self._convert_y(y)
-            data["next_sentence_labels"] = \
-                np.array(next_sentence_labels, dtype=np.int32)
+            data["next_sentence_labels"] = np.array(next_sentence_labels, dtype=np.int32)
 
         # convert sample_weight
         if is_training or y:
-            sample_weight = self._convert_sample_weight(
-                sample_weight, n_inputs)
+            sample_weight = self._convert_sample_weight(sample_weight, n_inputs)
             data["sample_weight"] = np.array(sample_weight, dtype=np.float32)
 
         return data
@@ -2801,12 +2605,9 @@ class BERTLM(LMModule):
         segment_input_tokens = []
         for ex_id, example in enumerate(X_target):
             try:
-                segment_input_tokens.append(
-                    self._convert_x(example, tokenized))
+                segment_input_tokens.append(self._convert_x(example, tokenized))
             except Exception:
-                tf.logging.warning(
-                    "Wrong input format (line %d): \"%s\". "
-                    % (ex_id, example))
+                tf.logging.warning("Wrong input format (line %d): \"%s\". " % (ex_id, example))
 
         input_ids = []
         input_mask = []
@@ -2827,7 +2628,8 @@ class BERTLM(LMModule):
                     masked_lm_prob=self.masked_lm_prob,
                     max_predictions_per_seq=self._max_predictions_per_seq,
                     short_seq_prob=self.short_seq_prob,
-                    vocab_words=list(self.tokenizer.vocab.keys()))
+                    vocab_words=list(self.tokenizer.vocab.keys()),
+                )
                 for (segments, is_random_next) in instances:
                     new_segment_input_tokens.append(segments)
                     next_sentence_labels.append(is_random_next)
@@ -2842,9 +2644,7 @@ class BERTLM(LMModule):
             _masked_lm_ids = []
             _masked_lm_weights = []
 
-            common.truncate_segments(
-                segments, self.max_seq_length - len(segments) - 1,
-                truncate_method=self.truncate_method)
+            common.truncate_segments(segments, self.max_seq_length - len(segments) - 1, truncate_method=self.truncate_method)
 
             for s_id, segment in enumerate(segments):
                 _segment_id = min(s_id, 1)
@@ -2855,22 +2655,19 @@ class BERTLM(LMModule):
             # random sampling of masked tokens
             if is_training:
                 if (ex_id + 1) % 10000 == 0:
-                    tf.logging.info(
-                        "Sampling masks of input %d" % (ex_id + 1))
-                (_input_tokens, _masked_lm_positions, _masked_lm_labels) = \
-                    create_masked_lm_predictions(
-                        tokens=_input_tokens,
-                        masked_lm_prob=self.masked_lm_prob,
-                        max_predictions_per_seq=self._max_predictions_per_seq,
-                        vocab_words=list(self.tokenizer.vocab.keys()),
-                        do_whole_word_mask=self.do_whole_word_mask)
-                _masked_lm_ids = \
-                    self.tokenizer.convert_tokens_to_ids(_masked_lm_labels)
+                    tf.logging.info("Sampling masks of input %d" % (ex_id + 1))
+                _input_tokens, _masked_lm_positions, _masked_lm_labels = create_masked_lm_predictions(
+                    tokens=_input_tokens,
+                    masked_lm_prob=self.masked_lm_prob,
+                    max_predictions_per_seq=self._max_predictions_per_seq,
+                    vocab_words=list(self.tokenizer.vocab.keys()),
+                    do_whole_word_mask=self.do_whole_word_mask,
+                )
+                _masked_lm_ids = self.tokenizer.convert_tokens_to_ids(_masked_lm_labels)
                 _masked_lm_weights = [1.0] * len(_masked_lm_positions)
 
                 # padding
-                for _ in range(self._max_predictions_per_seq -
-                               len(_masked_lm_positions)):
+                for _ in range(self._max_predictions_per_seq - len(_masked_lm_positions)):
                     _masked_lm_positions.append(0)
                     _masked_lm_ids.append(0)
                     _masked_lm_weights.append(0.0)
@@ -2882,8 +2679,7 @@ class BERTLM(LMModule):
                         _masked_lm_positions.append(i)
 
                 # padding
-                for _ in range(self._max_predictions_per_seq -
-                               len(_masked_lm_positions)):
+                for _ in range(self._max_predictions_per_seq - len(_masked_lm_positions)):
                     _masked_lm_positions.append(0)
 
             _input_ids = self.tokenizer.convert_tokens_to_ids(_input_tokens)
@@ -2901,9 +2697,7 @@ class BERTLM(LMModule):
             masked_lm_ids.append(_masked_lm_ids)
             masked_lm_weights.append(_masked_lm_weights)
 
-        return (input_ids, input_mask, segment_ids,
-                masked_lm_positions, masked_lm_ids, masked_lm_weights,
-                next_sentence_labels)
+        return (input_ids, input_mask, segment_ids, masked_lm_positions, masked_lm_ids, masked_lm_weights, next_sentence_labels)
 
     def _convert_x(self, x, tokenized):
         if not tokenized:
@@ -2926,8 +2720,7 @@ class BERTLM(LMModule):
 
         # automatically set `label_size`
         if self.label_size:
-            assert len(label_set) <= self.label_size, (
-                "Number of unique `y`s exceeds 2.")
+            assert len(label_set) <= self.label_size, "Number of unique `y`s exceeds 2."
         else:
             self.label_size = len(label_set)
 
@@ -2944,41 +2737,23 @@ class BERTLM(LMModule):
                 self._id_to_label = list(range(self.label_size))
 
         # automatically set `label_to_id` for prediction
-        self._label_to_id = {
-            label: index for index, label in enumerate(self._id_to_label)}
+        self._label_to_id = {label: index for index, label in enumerate(self._id_to_label)}
 
         label_ids = [self._label_to_id[label] for label in y]
         return label_ids
 
     def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
-            "input_ids": common.get_placeholder(
-                target, "input_ids",
-                [None, self.max_seq_length], tf.int32),
-            "input_mask": common.get_placeholder(
-                target, "input_mask",
-                [None, self.max_seq_length], tf.int32),
-            "segment_ids": common.get_placeholder(
-                target, "segment_ids",
-                [None, self.max_seq_length], tf.int32),
-            "masked_lm_positions": common.get_placeholder(
-                target, "masked_lm_positions",
-                [None, self._max_predictions_per_seq], tf.int32),
-            "masked_lm_ids": common.get_placeholder(
-                target, "masked_lm_ids",
-                [None, self._max_predictions_per_seq], tf.int32),
-            "masked_lm_weights": common.get_placeholder(
-                target, "masked_lm_weights",
-                [None, self._max_predictions_per_seq], tf.float32),
-            "next_sentence_labels": common.get_placeholder(
-                target, "next_sentence_labels",
-                [None], tf.int32),
+            "input_ids": common.get_placeholder(target, "input_ids", [None, self.max_seq_length], tf.int32),
+            "input_mask": common.get_placeholder(target, "input_mask", [None, self.max_seq_length], tf.int32),
+            "segment_ids": common.get_placeholder(target, "segment_ids", [None, self.max_seq_length], tf.int32),
+            "masked_lm_positions": common.get_placeholder(target, "masked_lm_positions", [None, self._max_predictions_per_seq], tf.int32),
+            "masked_lm_ids": common.get_placeholder(target, "masked_lm_ids", [None, self._max_predictions_per_seq], tf.int32),
+            "masked_lm_weights": common.get_placeholder(target, "masked_lm_weights", [None, self._max_predictions_per_seq], tf.float32),
+            "next_sentence_labels": common.get_placeholder(target, "next_sentence_labels", [None], tf.int32),
         }
         if not on_export:
-            self.placeholders["sample_weight"] = \
-                common.get_placeholder(
-                    target, "sample_weight",
-                    [None], tf.float32)
+            self.placeholders["sample_weight"] = common.get_placeholder(target, "sample_weight", [None], tf.float32)
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
@@ -2989,7 +2764,8 @@ class BERTLM(LMModule):
             input_mask=split_placeholders["input_mask"],
             segment_ids=split_placeholders["segment_ids"],
             drop_pooler=self._drop_pooler,
-            **kwargs)
+            **kwargs,
+        )
         decoder = BERTDecoder(
             bert_config=self.bert_config,
             is_training=is_training,
@@ -3001,17 +2777,23 @@ class BERTLM(LMModule):
             sample_weight=split_placeholders.get("sample_weight"),
             scope_lm="cls/predictions",
             scope_cls="cls/seq_relationship",
-            **kwargs)
+            **kwargs,
+        )
         return decoder.get_forward_outputs()
 
     def _get_fit_ops(self, as_feature=False):
-        ops = [self._tensors["MLM_preds"], self._tensors["NSP_preds"],
-               self._tensors["MLM_losses"], self._tensors["NSP_losses"]]
+        ops = [
+            self._tensors["MLM_preds"],
+            self._tensors["NSP_preds"],
+            self._tensors["MLM_losses"],
+            self._tensors["NSP_losses"],
+        ]
         if as_feature:
-            ops.extend(
-                [self.placeholders["masked_lm_positions"],
-                 self.placeholders["masked_lm_ids"],
-                 self.placeholders["next_sentence_labels"]])
+            ops.extend([
+                self.placeholders["masked_lm_positions"],
+                self.placeholders["masked_lm_ids"],
+                self.placeholders["next_sentence_labels"],
+            ])
         return ops
 
     def _get_fit_info(self, output_arrays, feed_dict, as_feature=False):
@@ -3021,19 +2803,14 @@ class BERTLM(LMModule):
             batch_mlm_labels = output_arrays[-2]
             batch_nsp_labels = output_arrays[-1]
         else:
-            batch_mlm_positions = \
-                feed_dict[self.placeholders["masked_lm_positions"]]
-            batch_mlm_labels = \
-                feed_dict[self.placeholders["masked_lm_ids"]]
-            batch_nsp_labels = \
-                feed_dict[self.placeholders["next_sentence_labels"]]
+            batch_mlm_positions = feed_dict[self.placeholders["masked_lm_positions"]]
+            batch_mlm_labels = feed_dict[self.placeholders["masked_lm_ids"]]
+            batch_nsp_labels = feed_dict[self.placeholders["next_sentence_labels"]]
 
         # MLM accuracy
         batch_mlm_preds = output_arrays[0]
         batch_mlm_mask = (batch_mlm_positions > 0)
-        mlm_accuracy = (
-            np.sum((batch_mlm_preds == batch_mlm_labels) * batch_mlm_mask) /
-            batch_mlm_mask.sum())
+        mlm_accuracy = np.sum((batch_mlm_preds == batch_mlm_labels) * batch_mlm_mask) / batch_mlm_mask.sum()
 
         # NSP accuracy
         batch_nsp_preds = output_arrays[1]
@@ -3056,9 +2833,11 @@ class BERTLM(LMModule):
         return info
 
     def _get_predict_ops(self):
-        return [self._tensors["MLM_preds"],
-                self._tensors["NSP_preds"],
-                self._tensors["NSP_probs"]]
+        return [
+            self._tensors["MLM_preds"],
+            self._tensors["NSP_preds"],
+            self._tensors["NSP_probs"],
+        ]
 
     def _get_predict_outputs(self, batch_outputs):
         n_inputs = len(list(self.data.values())[0])
@@ -3090,10 +2869,7 @@ class BERTLM(LMModule):
         return outputs
 
 
-def create_instances_from_document(all_documents, document_index,
-                                   max_seq_length, masked_lm_prob,
-                                   max_predictions_per_seq,
-                                   short_seq_prob, vocab_words):
+def create_instances_from_document(all_documents, document_index, max_seq_length, masked_lm_prob, max_predictions_per_seq, short_seq_prob, vocab_words):
     document = all_documents[document_index]
 
     # We *usually* want to fill up the entire sequence since we are padding
@@ -3144,8 +2920,7 @@ def create_instances_from_document(all_documents, document_index,
                     # make sure that the random document is not the same as
                     # the document we"re processing.
                     for _ in range(10):
-                        random_document_index = random.randint(
-                            0, len(all_documents) - 1)
+                        random_document_index = random.randint(0, len(all_documents) - 1)
                         if random_document_index != document_index:
                             break
 
@@ -3176,15 +2951,10 @@ def create_instances_from_document(all_documents, document_index,
     return instances
 
 
-MaskedLmInstance = collections.namedtuple("MaskedLmInstance",
-                                          ["index", "label"])
+MaskedLmInstance = collections.namedtuple("MaskedLmInstance", ["index", "label"])
 
 
-def create_masked_lm_predictions(tokens,
-                                 masked_lm_prob,
-                                 max_predictions_per_seq,
-                                 vocab_words,
-                                 do_whole_word_mask=False):
+def create_masked_lm_predictions(tokens, masked_lm_prob, max_predictions_per_seq, vocab_words, do_whole_word_mask=False):
     """ Creates the predictions for the masked LM objective. """
 
     cand_indexes = []
@@ -3200,8 +2970,7 @@ def create_masked_lm_predictions(tokens,
         # Note that Whole Word Masking does *not* change the training code
         # at all -- we still predict each WordPiece independently, softmaxed
         # over the entire vocabulary.
-        if (do_whole_word_mask and len(cand_indexes) >= 1 and
-                token.startswith("##")):
+        if (do_whole_word_mask and len(cand_indexes) >= 1 and token.startswith("##")):
             cand_indexes[-1].append(i)
         else:
             cand_indexes.append([i])
@@ -3210,8 +2979,7 @@ def create_masked_lm_predictions(tokens,
 
     output_tokens = list(tokens)
 
-    num_to_predict = min(max_predictions_per_seq,
-                         max(1, int(round(len(tokens) * masked_lm_prob))))
+    num_to_predict = min(max_predictions_per_seq, max(1, int(round(len(tokens) * masked_lm_prob))))
 
     masked_lms = []
     covered_indexes = set()
@@ -3242,8 +3010,7 @@ def create_masked_lm_predictions(tokens,
                     masked_token = tokens[index]
                 # 10% of the time, replace with random word
                 else:
-                    masked_token = vocab_words[
-                        random.randint(0, len(vocab_words) - 1)]
+                    masked_token = vocab_words[random.randint(0, len(vocab_words) - 1)]
 
             output_tokens[index] = masked_token
 
@@ -3266,7 +3033,8 @@ def get_bert_config(config_file=None):
             "Can\"t find config_file \"%s\". "
             "Please pass the correct path of configuration file, "
             "e.g.`bert_config.json`. An example can be downloaded from "
-            "https://github.com/google-research/bert." % config_file)
+            "https://github.com/google-research/bert." % config_file
+        )
     return BERTConfig.from_json_file(config_file)
 
 
@@ -3275,8 +3043,8 @@ def get_key_to_depths(num_hidden_layers):
         "/embeddings": num_hidden_layers + 2,
         "/pooler/": 1,
         "cls/": 0,
-        "mrc/": 0}
+        "mrc/": 0,
+    }
     for layer_idx in range(num_hidden_layers):
-        key_to_depths["/layer_%d/" % layer_idx] = \
-            num_hidden_layers - layer_idx + 1
+        key_to_depths["/layer_%d/" % layer_idx] = num_hidden_layers - layer_idx + 1
     return key_to_depths

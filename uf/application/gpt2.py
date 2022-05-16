@@ -14,20 +14,21 @@ class GPT2LM(LMModule):
         "init_checkpoint": "A string that directs to the checkpoint file used for initialization",
     }
 
-    def __init__(self,
-                 vocab_file,
-                 max_seq_length=128,
-                 init_checkpoint=None,
-                 output_dir=None,
-                 gpu_ids=None,
-                 hidden_size=768,
-                 num_hidden_layers=12,
-                 num_attention_heads=12,
-                 max_position_embeddings=1024,
-                 do_lower_case=True,
-                 truncate_method="LIFO"):
-        super(LMModule, self).__init__(
-            init_checkpoint, output_dir, gpu_ids)
+    def __init__(
+        self,
+        vocab_file,
+        max_seq_length=128,
+        init_checkpoint=None,
+        output_dir=None,
+        gpu_ids=None,
+        hidden_size=768,
+        num_hidden_layers=12,
+        num_attention_heads=12,
+        max_position_embeddings=1024,
+        do_lower_case=True,
+        truncate_method="LIFO",
+    ):
+        super(LMModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.batch_size = 0
         self.max_seq_length = max_seq_length
@@ -42,7 +43,8 @@ class GPT2LM(LMModule):
             n_ctx=max_position_embeddings,
             n_embed=hidden_size,
             n_head=num_attention_heads,
-            n_layer=num_hidden_layers)
+            n_layer=num_hidden_layers,
+        )
         self._key_to_depths = get_key_to_depths(num_hidden_layers)
 
         if "<eos>" not in self.tokenizer.vocab:
@@ -51,8 +53,7 @@ class GPT2LM(LMModule):
             tf.logging.info("Add necessary token `<eos>` into vocabulary.")
         self._eos_id = self.tokenizer.convert_tokens_to_ids(["<eos>"])[0]
 
-    def predict(self, X=None, X_tokenized=None,
-                batch_size=8, given=1):
+    def predict(self, X=None, X_tokenized=None, batch_size=8, given=1):
         """ Inference on the model.
 
         Args:
@@ -69,11 +70,9 @@ class GPT2LM(LMModule):
             self._given = given
             self._session_mode = None
 
-        return super(LMModule, self).predict(
-            X, X_tokenized, batch_size)
+        return super(LMModule, self).predict(X, X_tokenized, batch_size)
 
-    def export(self, export_dir, given=1,
-               rename_inputs=None, rename_outputs=None, ignore_outputs=None):
+    def export(self, export_dir, given=1, rename_inputs=None, rename_outputs=None, ignore_outputs=None):
         """ Export model into SavedModel files.
 
         Args:
@@ -90,16 +89,12 @@ class GPT2LM(LMModule):
             self._given = given
             self._session_mode = None
 
-        return super(LMModule, self).export(
-            export_dir, rename_inputs, rename_outputs, ignore_outputs)
+        return super(LMModule, self).export(export_dir, rename_inputs, rename_outputs, ignore_outputs)
 
-    def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
-                is_training=False, is_parallel=False):
+    def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None, is_training=False, is_parallel=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
 
-        assert y is None, (
-            "Training of %s is unsupervised. `y` should be None."
-            % self.__class__.__name__)
+        assert y is None, "Training of %s is unsupervised. `y` should be None." % self.__class__.__name__
 
         n_inputs = None
         data = {}
@@ -107,8 +102,7 @@ class GPT2LM(LMModule):
         # convert X
         if X or X_tokenized:
             tokenized = False if X else X_tokenized
-            input_ids = self._convert_X(
-                X_tokenized if tokenized else X, tokenized=tokenized)
+            input_ids = self._convert_X(X_tokenized if tokenized else X, tokenized=tokenized)
             data["input_ids"] = np.array(input_ids, dtype=np.int32)
             n_inputs = len(input_ids)
 
@@ -117,8 +111,7 @@ class GPT2LM(LMModule):
 
         # convert sample_weight
         if is_training or y:
-            sample_weight = self._convert_sample_weight(
-                sample_weight, n_inputs)
+            sample_weight = self._convert_sample_weight(sample_weight, n_inputs)
             data["sample_weight"] = np.array(sample_weight, dtype=np.float32)
 
         return data
@@ -130,20 +123,15 @@ class GPT2LM(LMModule):
             try:
                 _input_tokens = self._convert_x(example, tokenized)
             except Exception:
-                raise ValueError(
-                    "Wrong input format (line %d): \"%s\". "
-                    % (ex_id, example))
+                raise ValueError("Wrong input format (line %d): \"%s\". " % (ex_id, example))
                 continue
             _input_ids = self.tokenizer.convert_tokens_to_ids(_input_tokens)
 
-            common.truncate_segments(
-                [_input_ids], self.max_seq_length - 1,
-                truncate_method=self.truncate_method)
+            common.truncate_segments([_input_ids], self.max_seq_length - 1, truncate_method=self.truncate_method)
             _input_ids.append(self._eos_id)
 
             if len(_input_ids) < self.max_seq_length:
-                _input_ids.extend([0 for _ in range(
-                    self.max_seq_length - len(_input_ids))])
+                _input_ids.extend([0 for _ in range(self.max_seq_length - len(_input_ids))])
             input_ids.append(_input_ids)
 
         return input_ids
@@ -159,20 +147,14 @@ class GPT2LM(LMModule):
             return x
 
         # deal with tokenized and multiple inputs
-        raise ValueError(
-            "GPT2 only supports single sentence inputs.")
+        raise ValueError("GPT2 only supports single sentence inputs.")
 
     def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
-            "input_ids": common.get_placeholder(
-                target, "input_ids",
-                [None, self.max_seq_length], tf.int32),
+            "input_ids": common.get_placeholder(target, "input_ids", [None, self.max_seq_length], tf.int32),
         }
         if not on_export:
-            self.placeholders["sample_weight"] = \
-                common.get_placeholder(
-                    target, "sample_weight",
-                    [None], tf.float32)
+            self.placeholders["sample_weight"] = common.get_placeholder(target, "sample_weight", [None], tf.float32)
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
@@ -183,7 +165,8 @@ class GPT2LM(LMModule):
             input_ids=split_placeholders["input_ids"],
             sample_weight=split_placeholders.get("sample_weight"),
             given=self._given,
-            **kwargs)
+            **kwargs,
+        )
         return model.get_forward_outputs()
 
     def _get_fit_ops(self, as_feature=False):
@@ -201,11 +184,9 @@ class GPT2LM(LMModule):
 
         # accuracy
         batch_preds = output_arrays[0]
-        batch_labels = np.hstack(
-            (batch_target[:, 1:], np.zeros((self.batch_size, 1))))
+        batch_labels = np.hstack((batch_target[:, 1:], np.zeros((self.batch_size, 1))))
         batch_mask = (batch_labels > 0)
-        accuracy = np.sum((batch_preds == batch_labels) * batch_mask) / \
-            np.sum(batch_mask)
+        accuracy = np.sum((batch_preds == batch_labels) * batch_mask) / np.sum(batch_mask)
 
         # loss
         batch_losses = output_arrays[1]
@@ -256,8 +237,8 @@ def get_key_to_depths(num_hidden_layers):
     key_to_depths = {
         "/word_embeddings": num_hidden_layers + 2,
         "/wpe": num_hidden_layers + 2,
-        "ln_f/": 0}
+        "ln_f/": 0,
+    }
     for layer_idx in range(num_hidden_layers):
-        key_to_depths["/h%d/" % layer_idx] = \
-            num_hidden_layers - layer_idx + 1
+        key_to_depths["/h%d/" % layer_idx] = num_hidden_layers - layer_idx + 1
     return key_to_depths

@@ -25,11 +25,9 @@ def load(code, cache_file="./.cache", **kwargs):
     cache_fp.close()
 
     if code not in cache_json.keys():
-        raise ValueError(
-            "No cached configs found with code `%s`." % code)
+        raise ValueError("No cached configs found with code `%s`." % code)
     if "model" not in cache_json[code]:
-        raise ValueError(
-            "No model assigned. Try `uf.XXX.load()` instead.")
+        raise ValueError("No model assigned. Try `uf.XXX.load()` instead.")
     model = cache_json[code]["model"]
     args = collections.OrderedDict()
 
@@ -48,11 +46,9 @@ def load(code, cache_file="./.cache", **kwargs):
     for key, value in zips:
 
         # convert from relative path
-        if key == "init_checkpoint" or key.endswith("_dir") or \
-                key.endswith("_file"):
+        if key == "init_checkpoint" or key.endswith("_dir") or key.endswith("_file"):
             if isinstance(value, str) and not value.startswith("/"):
-                value = get_simplified_path(
-                    cache_dir + "/" + value)
+                value = get_simplified_path(cache_dir + "/" + value)
 
         if key in kwargs:
             value = kwargs[key]

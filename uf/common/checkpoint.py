@@ -52,10 +52,7 @@ def get_checkpoint_path(ckpt_dir):
     return None
 
 
-def get_assignment_map(checkpoint_file,
-                       variables,
-                       continual=False,
-                       show_matched=False):
+def get_assignment_map(checkpoint_file, variables, continual=False, show_matched=False):
     """ Carefully designed so as to fulfil any personalized needs. """
     assignment_map = {}
 
@@ -106,7 +103,9 @@ def get_assignment_map(checkpoint_file,
 def list_variables(checkpoint):
     checkpoint_path = get_checkpoint_path(checkpoint)
     if not checkpoint_path:
-        raise ValueError("Checkpoint file \"%s\" does not exist. "
-                         "Make sure you pass correct value to "
-                         "`checkpoint`." % checkpoint)
+        raise ValueError(
+            "Checkpoint file \"%s\" does not exist. "
+            "Make sure you pass correct value to "
+            "`checkpoint`." % checkpoint
+        )
     return tf.train.list_variables(checkpoint_path)

@@ -99,8 +99,7 @@ def list_resources():
 def download(key):
     resources = {item[0]: item for item in RESOURCES}
     if key not in resources:
-        raise ValueError("Invalid key: %s. Check available resources "
-                         "through `uf.list_resources()`." % key)
+        raise ValueError("Invalid key: %s. Check available resources through `uf.list_resources()`." % key)
     url = resources[key][-1]
 
     # download files
@@ -172,24 +171,20 @@ def download_from_google_drive(url, path):
                 speed = "%.2fMB/s" % (cur_size / span / (1024 ** 2))
                 last_tic = tic
                 cur_size = 0
-            stdout.write(
-                "Downloading ... %.2fMB [%s] \r"
-                % (acc_size / (1024 ** 2), speed))
+            stdout.write("Downloading ... %.2fMB [%s] \r" % (acc_size / (1024 ** 2), speed))
 
         # extract files
         # extract_dir = path.replace(".tar.gz", "")
         # with tarfile.open(path) as tar_file:
         #     tar_file.extractall(extract_dir)
         # os.remove(path)
-        tf.logging.info(
-            "Succesfully downloaded. Saved into ./%s" % path)
+        tf.logging.info("Succesfully downloaded. Saved into ./%s" % path)
 
 
 def download_from_google_apis(url, path):
     with requests.get(url, stream=True) as r, open(path, "wb") as writer:
         file_size = int(r.headers["Content-Length"])
-        tf.logging.info("Downloading files from %s (%dMB)"
-                        % (url, file_size // (1024 ** 2)))
+        tf.logging.info("Downloading files from %s (%dMB)" % (url, file_size // (1024 ** 2)))
 
         chunk_size = 10240
         percentage = 0
@@ -212,8 +207,7 @@ def download_from_google_apis(url, path):
                 speed = "%.2fMB/s" % (cur_size / span / (1024 ** 2))
                 last_tic = tic
                 cur_size = 0
-            stdout.write(
-                "Downloading ... %.2f%% [%s] \r" % (percentage * 100, speed))
+            stdout.write("Downloading ... %.2f%% [%s] \r" % (percentage * 100, speed))
 
         # extract files
         # extract_dir = path.replace(".zip", "")
@@ -221,8 +215,7 @@ def download_from_google_apis(url, path):
         # with zipfile.ZipFile(path) as zip_file:
         #     zip_file.extractall(extract_dir)
         # os.remove(path)
-        tf.logging.info(
-            "Succesfully downloaded. Saved into ./%s" % path)
+        tf.logging.info("Succesfully downloaded. Saved into ./%s" % path)
 
 
 def get_download_path(key, suffix=".zip"):

@@ -15,21 +15,22 @@ class VAELM(BERTClassifier, LMModule):
         "init_checkpoint": "A string that directs to the checkpoint file used for initialization",
     }
 
-    def __init__(self,
-                 vocab_file,
-                 max_seq_length=128,
-                 init_checkpoint=None,
-                 output_dir=None,
-                 gpu_ids=None,
-                 reduced_size=64,
-                 topic_size=1024,
-                 hidden_size=256,
-                 num_hidden_layers=6,
-                 num_attention_heads=8,
-                 do_lower_case=True,
-                 truncate_method="LIFO"):
-        super(LMModule, self).__init__(
-            init_checkpoint, output_dir, gpu_ids)
+    def __init__(
+        self,
+        vocab_file,
+        max_seq_length=128,
+        init_checkpoint=None,
+        output_dir=None,
+        gpu_ids=None,
+        reduced_size=64,
+        topic_size=1024,
+        hidden_size=256,
+        num_hidden_layers=6,
+        num_attention_heads=8,
+        do_lower_case=True,
+        truncate_method="LIFO",
+    ):
+        super(LMModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.batch_size = 0
         self.max_seq_length = max_seq_length
@@ -49,8 +50,7 @@ class VAELM(BERTClassifier, LMModule):
             self.tokenizer.add("[SEP]")
             tf.logging.info("Add necessary token `[SEP]` into vocabulary.")
 
-    def predict(self, X=None, X_tokenized=None,
-                batch_size=8, bias=0):
+    def predict(self, X=None, X_tokenized=None, batch_size=8, bias=0):
         """ Inference on the model.
 
         Args:
@@ -68,11 +68,9 @@ class VAELM(BERTClassifier, LMModule):
             self._bias = bias
             self._session_mode = None
 
-        return super(LMModule, self).predict(
-            X, X_tokenized, batch_size)
+        return super(LMModule, self).predict(X, X_tokenized, batch_size)
 
-    def export(self, export_dir, bias=0,
-               rename_inputs=None, rename_outputs=None, ignore_outputs=None):
+    def export(self, export_dir, bias=0, rename_inputs=None, rename_outputs=None, ignore_outputs=None):
         """ Export model into SavedModel files.
 
         Args:
@@ -90,16 +88,12 @@ class VAELM(BERTClassifier, LMModule):
             self._bias = bias
             self._session_mode = None
 
-        return super(LMModule, self).export(
-            export_dir, rename_inputs, rename_outputs, ignore_outputs)
+        return super(LMModule, self).export(export_dir, rename_inputs, rename_outputs, ignore_outputs)
 
-    def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
-                is_training=False, is_parallel=False):
+    def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None, is_training=False, is_parallel=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
 
-        assert y is None, (
-            "Training of %s is unsupervised. `y` should be None."
-            % self.__class__.__name__)
+        assert y is None, "Training of %s is unsupervised. `y` should be None." % self.__class__.__name__
 
         n_inputs = None
         data = {}
@@ -107,8 +101,7 @@ class VAELM(BERTClassifier, LMModule):
         # convert X
         if X or X_tokenized:
             tokenized = False if X else X_tokenized
-            input_ids, input_mask, segment_ids = self._convert_X(
-                X_tokenized if tokenized else X, tokenized=tokenized)
+            input_ids, input_mask, segment_ids = self._convert_X(X_tokenized if tokenized else X, tokenized=tokenized)
             data["input_ids"] = np.array(input_ids, dtype=np.int32)
             data["input_mask"] = np.array(input_mask, dtype=np.int32)
             data["segment_ids"] = np.array(segment_ids, dtype=np.int32)
@@ -119,8 +112,7 @@ class VAELM(BERTClassifier, LMModule):
 
         # convert sample_weight
         if is_training or y:
-            sample_weight = self._convert_sample_weight(
-                sample_weight, n_inputs)
+            sample_weight = self._convert_sample_weight(sample_weight, n_inputs)
             data["sample_weight"] = np.array(sample_weight, dtype=np.float32)
 
         return data
@@ -131,12 +123,9 @@ class VAELM(BERTClassifier, LMModule):
         segment_input_tokens = []
         for ex_id, example in enumerate(X_target):
             try:
-                segment_input_tokens.append(
-                    self._convert_x(example, tokenized))
+                segment_input_tokens.append(self._convert_x(example, tokenized))
             except Exception:
-                raise ValueError(
-                    "Wrong input format (line %d): \"%s\". "
-                    % (ex_id, example))
+                raise ValueError("Wrong input format (line %d): \"%s\". " % (ex_id, example))
 
         input_ids = []
         input_mask = []
@@ -147,9 +136,7 @@ class VAELM(BERTClassifier, LMModule):
             _input_mask = []
             _segment_ids = []
 
-            common.truncate_segments(
-                segments, self.max_seq_length - len(segments),
-                truncate_method=self.truncate_method)
+            common.truncate_segments(segments, self.max_seq_length - len(segments), truncate_method=self.truncate_method)
             for s_id, segment in enumerate(segments):
                 _segment_id = min(s_id, 1)
                 _input_tokens.extend(segment + ["[SEP]"])
@@ -172,21 +159,12 @@ class VAELM(BERTClassifier, LMModule):
 
     def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
-            "input_ids": common.get_placeholder(
-                target, "input_ids",
-                [None, self.max_seq_length], tf.int32),
-            "input_mask": common.get_placeholder(
-                target, "input_mask",
-                [None, self.max_seq_length], tf.int32),
-            "segment_ids": common.get_placeholder(
-                target, "segment_ids",
-                [None, self.max_seq_length], tf.int32),
+            "input_ids": common.get_placeholder(target, "input_ids", [None, self.max_seq_length], tf.int32),
+            "input_mask": common.get_placeholder(target, "input_mask", [None, self.max_seq_length], tf.int32),
+            "segment_ids": common.get_placeholder(target, "segment_ids", [None, self.max_seq_length], tf.int32),
         }
         if not on_export:
-            self.placeholders["sample_weight"] = \
-                common.get_placeholder(
-                    target, "sample_weight",
-                    [None], tf.float32)
+            self.placeholders["sample_weight"] = common.get_placeholder(target, "sample_weight", [None], tf.float32)
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
@@ -203,14 +181,14 @@ class VAELM(BERTClassifier, LMModule):
             num_hidden_layers=self._num_hidden_layers,
             num_attention_heads=self._num_attention_heads,
             bias=self._bias,
-            **kwargs)
+            **kwargs,
+        )
         return model.get_forward_outputs()
 
     def _get_fit_ops(self, as_feature=False):
         ops = [self._tensors["preds"], self._tensors["losses"]]
         if as_feature:
-            ops.extend([self.placeholders["input_ids"],
-                        self.placeholders["input_mask"]])
+            ops.extend([self.placeholders["input_ids"], self.placeholders["input_mask"]])
         return ops
 
     def _get_fit_info(self, output_arrays, feed_dict, as_feature=False):
@@ -224,9 +202,7 @@ class VAELM(BERTClassifier, LMModule):
 
         # accuracy
         batch_preds = output_arrays[0]
-        accuracy = (
-            np.sum((batch_preds == batch_labels) * batch_mask) /
-            batch_mask.sum())
+        accuracy = np.sum((batch_preds == batch_labels) * batch_mask) / batch_mask.sum()
 
         # loss
         batch_losses = output_arrays[1]
@@ -239,8 +215,7 @@ class VAELM(BERTClassifier, LMModule):
         return info
 
     def _get_predict_ops(self):
-        return [self._tensors["miu"], self._tensors["sigma"],
-                self._tensors["preds"]]
+        return [self._tensors["miu"], self._tensors["sigma"], self._tensors["preds"]]
 
     def _get_predict_outputs(self, batch_outputs):
         n_inputs = len(list(self.data.values())[0])
@@ -276,8 +251,8 @@ def get_key_to_depths(num_hidden_layers):
         "/embeddings": num_hidden_layers + 3,
         "/encoder/projection": 2,
         "/decoder": 1,
-        "cls/": 0}
+        "cls/": 0,
+    }
     for layer_idx in range(num_hidden_layers):
-        key_to_depths["/layer_%d/" % layer_idx] = \
-            num_hidden_layers - layer_idx + 2
+        key_to_depths["/layer_%d/" % layer_idx] = num_hidden_layers - layer_idx + 2
     return key_to_depths

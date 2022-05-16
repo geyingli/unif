@@ -38,8 +38,7 @@ class PerformerClassifier(BERTClassifier, ClassifierModule):
 
         self.bert_config = get_bert_config(config_file)
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
-        self._key_to_depths = get_key_to_depths(
-            self.bert_config.num_hidden_layers)
+        self._key_to_depths = get_key_to_depths(self.bert_config.num_hidden_layers)
 
         if "[CLS]" not in self.tokenizer.vocab:
             self.tokenizer.add("[CLS]")
@@ -61,7 +60,8 @@ class PerformerClassifier(BERTClassifier, ClassifierModule):
             kernel_transformation=self._kernel_transformation,
             nb_random_features=self._nb_random_features,
             drop_pooler=self._drop_pooler,
-            **kwargs)
+            **kwargs,
+        )
         encoder_output = encoder.get_pooled_output()
         decoder = CLSDecoder(
             is_training=is_training,
@@ -70,5 +70,6 @@ class PerformerClassifier(BERTClassifier, ClassifierModule):
             label_size=self.label_size,
             sample_weight=split_placeholders.get("sample_weight"),
             scope="cls/seq_relationship",
-            **kwargs)
+            **kwargs,
+        )
         return decoder.get_forward_outputs()

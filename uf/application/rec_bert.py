@@ -16,19 +16,20 @@ class RecBERTLM(LMModule):
         "init_checkpoint": "A string that directs to the checkpoint file used for initialization",
     }
 
-    def __init__(self,
-                 config_file,
-                 vocab_file,
-                 max_seq_length=128,
-                 init_checkpoint=None,
-                 output_dir=None,
-                 gpu_ids=None,
-                 add_prob=0.1,
-                 del_prob=0.1,
-                 do_lower_case=True,
-                 truncate_method="LIFO"):
-        super(LMModule, self).__init__(
-            init_checkpoint, output_dir, gpu_ids)
+    def __init__(
+        self,
+        config_file,
+        vocab_file,
+        max_seq_length=128,
+        init_checkpoint=None,
+        output_dir=None,
+        gpu_ids=None,
+        add_prob=0.1,
+        del_prob=0.1,
+        do_lower_case=True,
+        truncate_method="LIFO",
+    ):
+        super(LMModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.batch_size = 0
         self.max_seq_length = max_seq_length
@@ -39,16 +40,12 @@ class RecBERTLM(LMModule):
         self._del_prob = del_prob
         self.__init_args__ = locals()
 
-        assert add_prob <= 0.5, (
-            "The value of `add_prob` should be larger than 0 "
-            "and smaller than 1/2.")
+        assert add_prob <= 0.5, "The value of `add_prob` should be larger than 0 and smaller than 1/2."
         self.bert_config = get_bert_config(config_file)
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
-        self._key_to_depths = get_key_to_depths(
-            self.bert_config.num_hidden_layers)
+        self._key_to_depths = get_key_to_depths(self.bert_config.num_hidden_layers)
 
-    def predict(self, X=None, X_tokenized=None,
-                batch_size=8):
+    def predict(self, X=None, X_tokenized=None, batch_size=8):
         """ Inference on the model.
 
         Args:
@@ -61,18 +58,15 @@ class RecBERTLM(LMModule):
         """
 
         self._on_predict = True
-        ret = super(LMModule, self).predict(
-            X, X_tokenized, batch_size)
+        ret = super(LMModule, self).predict(X, X_tokenized, batch_size)
         self._on_predict = False
 
         return ret
 
-    def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
-                is_training=False, is_parallel=False):
+    def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None, is_training=False, is_parallel=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
 
-        assert y is None, ("%s is unsupervised. `y` should be None."
-                           % self.__class__.__name__)
+        assert y is None, ("%s is unsupervised. `y` should be None." % self.__class__.__name__)
 
         n_inputs = None
         data = {}
@@ -81,16 +75,12 @@ class RecBERTLM(LMModule):
         if X or X_tokenized:
             tokenized = False if X else X_tokenized
             X_target = X_tokenized if tokenized else X
-            (input_tokens, input_ids, add_label_ids, del_label_ids) = \
-                self._convert_X(
-                    X_target, tokenized=tokenized, is_training=is_training)
+            (input_tokens, input_ids, add_label_ids, del_label_ids) = self._convert_X(X_target, tokenized=tokenized, is_training=is_training)
             data["input_ids"] = np.array(input_ids, dtype=np.int32)
 
             if is_training:
-                data["add_label_ids"] = np.array(
-                    add_label_ids, dtype=np.int32)
-                data["del_label_ids"] = np.array(
-                    del_label_ids, dtype=np.int32)
+                data["add_label_ids"] = np.array(add_label_ids, dtype=np.int32)
+                data["del_label_ids"] = np.array(del_label_ids, dtype=np.int32)
 
             # backup for answer mapping
             data[common.BACKUP_DATA + "input_tokens"] = input_tokens
@@ -103,8 +93,7 @@ class RecBERTLM(LMModule):
 
         # convert sample_weight
         if is_training or y:
-            sample_weight = self._convert_sample_weight(
-                sample_weight, n_inputs)
+            sample_weight = self._convert_sample_weight(sample_weight, n_inputs)
             data["sample_weight"] = np.array(sample_weight, dtype=np.float32)
 
         return data
@@ -122,13 +111,10 @@ class RecBERTLM(LMModule):
 
             # skip noise training data
             if is_training:
-                if len(_input_tokens) == 0 or \
-                        len(_input_tokens) > self.max_seq_length:
+                if len(_input_tokens) == 0 or len(_input_tokens) > self.max_seq_length:
                     continue
             else:
-                common.truncate_segments(
-                    [_input_tokens], self.max_seq_length,
-                    truncate_method=self.truncate_method)
+                common.truncate_segments([_input_tokens], self.max_seq_length, truncate_method=self.truncate_method)
 
             # count char
             _input_ids = self.tokenizer.convert_tokens_to_ids(_input_tokens)
@@ -158,16 +144,13 @@ class RecBERTLM(LMModule):
             # add/del
             if is_training:
                 if (ex_id + 1) % 10000 == 0:
-                    tf.logging.info(
-                        "Sampling wrong tokens of input %d" % (ex_id + 1))
+                    tf.logging.info("Sampling wrong tokens of input %d" % (ex_id + 1))
 
                 _add_label_ids = [0] * self.max_seq_length
                 _del_label_ids = [0] * self.max_seq_length
 
-                max_add = np.sum(
-                    np.random.random(nonpad_seq_length) < self._add_prob)
-                max_del = np.sum(
-                    np.random.random(nonpad_seq_length) < self._del_prob)
+                max_add = np.sum(np.random.random(nonpad_seq_length) < self._add_prob)
+                max_del = np.sum(np.random.random(nonpad_seq_length) < self._del_prob)
 
                 sample_wrong_tokens(
                     _input_ids, _add_label_ids, _del_label_ids,
@@ -175,7 +158,8 @@ class RecBERTLM(LMModule):
                     nonpad_seq_length=nonpad_seq_length,
                     vocab_size=vocab_size,
                     vocab_ind=vocab_ind,
-                    vocab_p=vocab_p)
+                    vocab_p=vocab_p,
+                )
 
             input_ids.append(_input_ids)
             add_label_ids.append(_add_label_ids)
@@ -194,31 +178,19 @@ class RecBERTLM(LMModule):
             elif isinstance(x[0], str):
                 return x
         except Exception:
-            raise ValueError(
-                "Wrong input format: \"%s\". " % (x))
+            raise ValueError("Wrong input format: \"%s\". " % (x))
 
         # deal with tokenized and multiple inputs
-        raise ValueError(
-            "%s only supports single sentence inputs."
-            % self.__class__.__name__)
+        raise ValueError("%s only supports single sentence inputs." % self.__class__.__name__)
 
     def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
-            "input_ids": common.get_placeholder(
-                target, "input_ids",
-                [None, self.max_seq_length], tf.int32),
-            "add_label_ids": common.get_placeholder(
-                target, "add_label_ids",
-                [None, self.max_seq_length], tf.int32),
-            "del_label_ids": common.get_placeholder(
-                target, "del_label_ids",
-                [None, self.max_seq_length], tf.int32),
+            "input_ids": common.get_placeholder(target, "input_ids", [None, self.max_seq_length], tf.int32),
+            "add_label_ids": common.get_placeholder(target, "add_label_ids", [None, self.max_seq_length], tf.int32),
+            "del_label_ids": common.get_placeholder(target, "del_label_ids", [None, self.max_seq_length], tf.int32),
         }
         if not on_export:
-            self.placeholders["sample_weight"] = \
-                common.get_placeholder(
-                    target, "sample_weight",
-                    [None], tf.float32)
+            self.placeholders["sample_weight"] = common.get_placeholder(target, "sample_weight", [None], tf.float32)
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
@@ -231,18 +203,23 @@ class RecBERTLM(LMModule):
             sample_weight=split_placeholders.get("sample_weight"),
             add_prob=self._add_prob,
             del_prob=self._del_prob,
-            **kwargs)
+            **kwargs,
+        )
         return model.get_forward_outputs()
 
     def _get_fit_ops(self, as_feature=False):
-        ops = [self._tensors["add_preds"],
-               self._tensors["del_preds"],
-               self._tensors["add_loss"],
-               self._tensors["del_loss"]]
+        ops = [
+            self._tensors["add_preds"],
+            self._tensors["del_preds"],
+            self._tensors["add_loss"],
+            self._tensors["del_loss"],
+        ]
         if as_feature:
-            ops.extend([self.placeholders["input_ids"],
-                        self.placeholders["add_label_ids"],
-                        self.placeholders["del_label_ids"]])
+            ops.extend([
+                self.placeholders["input_ids"],
+                self.placeholders["add_label_ids"],
+                self.placeholders["del_label_ids"],
+            ])
         return ops
 
     def _get_fit_info(self, output_arrays, feed_dict, as_feature=False):
@@ -253,10 +230,8 @@ class RecBERTLM(LMModule):
             batch_del_labels = output_arrays[-1]
         else:
             batch_inputs = feed_dict[self.placeholders["input_ids"]]
-            batch_add_labels = \
-                feed_dict[self.placeholders["add_label_ids"]]
-            batch_del_labels = \
-                feed_dict[self.placeholders["del_label_ids"]]
+            batch_add_labels = feed_dict[self.placeholders["add_label_ids"]]
+            batch_del_labels = feed_dict[self.placeholders["del_label_ids"]]
         batch_mask = (batch_inputs != 0)
 
         # add accuracy
@@ -286,8 +261,7 @@ class RecBERTLM(LMModule):
         return info
 
     def _get_predict_ops(self):
-        return [self._tensors["add_preds"],
-                self._tensors["del_preds"]]
+        return [self._tensors["add_preds"], self._tensors["del_preds"]]
 
     def _get_predict_outputs(self, batch_outputs):
         n_inputs = len(list(self.data.values())[0])
@@ -317,16 +291,14 @@ class RecBERTLM(LMModule):
                         _token = "{del:%s}" % _output_tokens[i + n]
                         _output_tokens[i + n] = _token
                     if self._add_prob > 0 and _add_preds[i] != 0:
-                        _token = self.tokenizer.convert_ids_to_tokens(
-                            [_add_preds[i]])[0]
+                        _token = self.tokenizer.convert_ids_to_tokens([_add_preds[i]])[0]
                         _token = "{add:%s}" % _token
                         _output_tokens.insert(i + 1 + n, _token)
                         n += 1
                 preds.append(_output_tokens)
             else:
                 _text = text[ex_id]
-                _mapping_start, _mapping_end = common.align_tokens_with_text(
-                    _input_tokens, _text, self._do_lower_case)
+                _mapping_start, _mapping_end = common.align_tokens_with_text(_input_tokens, _text, self._do_lower_case)
 
                 n = 0
                 for i in range(_input_length):
@@ -339,8 +311,7 @@ class RecBERTLM(LMModule):
                         _text = _text[:_start_ptr] + _token + _text[_end_ptr:]
                         n += len(_token) - len(_del_token)
                     if self._add_prob > 0 and _add_preds[i] != 0:
-                        _token = self.tokenizer.convert_ids_to_tokens(
-                            [_add_preds[i]])[0]
+                        _token = self.tokenizer.convert_ids_to_tokens([_add_preds[i]])[0]
                         _token = "{add:%s}" % _token
                         _ptr = _mapping_end[i] + n
                         _text = _text[:_ptr] + _token + _text[_ptr:]
@@ -353,17 +324,15 @@ class RecBERTLM(LMModule):
         return outputs
 
 
-def sample_wrong_tokens(_input_ids, _add_label_ids, _del_label_ids,
-                        max_add, max_del, nonpad_seq_length,
-                        vocab_size, vocab_ind, vocab_p):
+def sample_wrong_tokens(_input_ids, _add_label_ids, _del_label_ids, max_add, max_del, nonpad_seq_length, vocab_size, vocab_ind, vocab_p):
 
     # `add`, remove padding for prediction of adding tokens
     # e.g. 124 591 9521 -> 124 9521
     for _ in range(max_add):
-        cand_indicies = [i for i in range(0, len(_input_ids) - 1)
-                         if _input_ids[i + 1] != 0 and
-                         _add_label_ids[i] == 0 and
-                         _add_label_ids[i + 1] == 0]
+        cand_indicies = [
+            i for i in range(0, len(_input_ids) - 1)
+            if _input_ids[i + 1] != 0 and _add_label_ids[i] == 0 and _add_label_ids[i + 1] == 0
+        ]
         if not cand_indicies:
             break
 
@@ -390,8 +359,7 @@ def sample_wrong_tokens(_input_ids, _add_label_ids, _del_label_ids,
         _add_label_ids.insert(index, 0)
         _del_label_ids.insert(index, 1)
         if rand == _input_ids[index + 1]:
-            _del_label_ids[index + 1], _del_label_ids[index] = \
-                _del_label_ids[index], _del_label_ids[index + 1]
+            _del_label_ids[index + 1], _del_label_ids[index] = _del_label_ids[index], _del_label_ids[index + 1]
 
         _input_ids.pop()
         _add_label_ids.pop()

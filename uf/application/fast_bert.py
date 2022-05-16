@@ -12,20 +12,21 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
     """ Single-label classifier on FastBERT, a distillation model. """
     _INFER_ATTRIBUTES = BERTClassifier._INFER_ATTRIBUTES
 
-    def __init__(self,
-                 config_file,
-                 vocab_file,
-                 max_seq_length=128,
-                 label_size=None,
-                 init_checkpoint=None,
-                 output_dir=None,
-                 gpu_ids=None,
-                 drop_pooler=False,
-                 cls_model="self-attention",
-                 do_lower_case=True,
-                 truncate_method="LIFO"):
-        super(ClassifierModule, self).__init__(
-            init_checkpoint, output_dir, gpu_ids)
+    def __init__(
+        self,
+        config_file,
+        vocab_file,
+        max_seq_length=128,
+        label_size=None,
+        init_checkpoint=None,
+        output_dir=None,
+        gpu_ids=None,
+        drop_pooler=False,
+        cls_model="self-attention",
+        do_lower_case=True,
+        truncate_method="LIFO",
+    ):
+        super(ClassifierModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.batch_size = 0
         self.max_seq_length = max_seq_length
@@ -52,8 +53,7 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
             self.bert_config.vocab_size += 1
             tf.logging.info("Add necessary token `[SEP]` into vocabulary.")
 
-    def predict(self, X=None, X_tokenized=None,
-                batch_size=8, speed=0.1, ignore_cls="0"):
+    def predict(self, X=None, X_tokenized=None, batch_size=8, speed=0.1, ignore_cls="0"):
         """ Inference on the model.
 
         Args:
@@ -79,11 +79,9 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
             self._speed = speed
             self._session_mode = None
 
-        return super(ClassifierModule, self).predict(
-            X, X_tokenized, batch_size)
+        return super(ClassifierModule, self).predict(X, X_tokenized, batch_size)
 
-    def score(self, X=None, y=None, sample_weight=None, X_tokenized=None,
-              batch_size=8, speed=0.1, ignore_cls="0"):
+    def score(self, X=None, y=None, sample_weight=None, X_tokenized=None, batch_size=8, speed=0.1, ignore_cls="0"):
         """ Inference on the model with scoring.
 
         Args:
@@ -114,8 +112,7 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
         return super(ClassifierModule, self).score(
             X, y, sample_weight, X_tokenized, batch_size)
 
-    def export(self, export_dir, speed=0.1, ignore_cls="0",
-               rename_inputs=None, rename_outputs=None, ignore_outputs=None):
+    def export(self, export_dir, speed=0.1, ignore_cls="0", rename_inputs=None, rename_outputs=None, ignore_outputs=None):
         """ Export model into SavedModel files.
 
         Args:
@@ -141,17 +138,13 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
             self._speed = speed
             self._session_mode = None
 
-        return super(ClassifierModule, self).export(
-            export_dir, rename_inputs, rename_outputs, ignore_outputs)
+        return super(ClassifierModule, self).export(export_dir, rename_inputs, rename_outputs, ignore_outputs)
 
-    def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
-                is_training=False, is_parallel=False):
+    def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None, is_training=False, is_parallel=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
 
         if is_training:
-            assert y is None, (
-                "Training of %s is unsupervised. `y` should be None."
-                % self.__class__.__name__)
+            assert y is None, "Training of %s is unsupervised. `y` should be None." % self.__class__.__name__
 
         n_inputs = None
         data = {}
@@ -159,8 +152,7 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
         # convert X
         if X or X_tokenized:
             tokenized = False if X else X_tokenized
-            input_ids, input_mask, segment_ids = self._convert_X(
-                X_tokenized if tokenized else X, tokenized=tokenized)
+            input_ids, input_mask, segment_ids = self._convert_X(X_tokenized if tokenized else X, tokenized=tokenized)
             data["input_ids"] = np.array(input_ids, dtype=np.int32)
             data["input_mask"] = np.array(input_mask, dtype=np.int32)
             data["segment_ids"] = np.array(segment_ids, dtype=np.int32)
@@ -176,8 +168,7 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
 
         # convert sample_weight
         if is_training or y:
-            sample_weight = self._convert_sample_weight(
-                sample_weight, n_inputs)
+            sample_weight = self._convert_sample_weight(sample_weight, n_inputs)
             data["sample_weight"] = np.array(sample_weight, dtype=np.float32)
 
         return data
@@ -196,7 +187,8 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
             ignore_cls=[] if is_training else self._ignore_cls,
             cls_model=self._cls_model,
             label_size=self.label_size,
-            **kwargs)
+            **kwargs,
+        )
         return model.get_forward_outputs()
 
     def _get_fit_ops(self, as_feature=False):
@@ -223,20 +215,18 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
         def _uncertainty(prob):
             if prob < 1e-20 or 1 - prob < 1e-20:
                 prob = 1e-20
-            return (prob * np.log(prob) + (1 - prob) * np.log(1 - prob)) / \
-                np.log(1 / self.label_size)
+            return (prob * np.log(prob) + (1 - prob) * np.log(1 - prob)) / np.log(1 / self.label_size)
 
         def _permutate(batch_probs):
             n_device = max(len(self._gpu_ids), 1)
             d_batch_size = self.batch_size // n_device
             probs = np.zeros((self.batch_size, self.label_size))
             sources = np.zeros((self.batch_size), dtype=np.int32)
-            max_loop = \
-                self.bert_config.num_hidden_layers + 1 - len(self._ignore_cls)
+            max_loop = self.bert_config.num_hidden_layers + 1 - len(self._ignore_cls)
             keep_cls = [
-                cls_idx for cls_idx
-                in list(range(self.bert_config.num_hidden_layers + 1))
-                if cls_idx not in self._ignore_cls]
+                cls_idx for cls_idx in list(range(self.bert_config.num_hidden_layers + 1))
+                if cls_idx not in self._ignore_cls
+            ]
             i = 0
 
             for d in range(n_device):
@@ -247,8 +237,7 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
                     next_unfinished = []
 
                     for k in range(len(unfinished)):
-                        if _uncertainty(batch_probs[i][0]) < self._speed or \
-                                loop == max_loop - 1:
+                        if _uncertainty(batch_probs[i][0]) < self._speed or loop == max_loop - 1:
                             probs[unfinished[k]] = batch_probs[i]
                             sources[unfinished[k]] = source
                         else:
@@ -290,20 +279,18 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
         def _uncertainty(prob):
             if prob < 1e-20 or 1 - prob < 1e-20:
                 prob = 1e-20
-            return (prob * np.log(prob) + (1 - prob) * np.log(1 - prob)) / \
-                np.log(1 / self.label_size)
+            return (prob * np.log(prob) + (1 - prob) * np.log(1 - prob)) / np.log(1 / self.label_size)
 
         def _permutate(batch_probs):
             n_device = max(len(self._gpu_ids), 1)
             d_batch_size = self.batch_size // n_device
             probs = np.zeros((self.batch_size, self.label_size))
             sources = np.zeros((self.batch_size), dtype=np.int32)
-            max_loop = \
-                self.bert_config.num_hidden_layers + 1 - len(self._ignore_cls)
+            max_loop = self.bert_config.num_hidden_layers + 1 - len(self._ignore_cls)
             keep_cls = [
-                cls_idx for cls_idx
-                in list(range(self.bert_config.num_hidden_layers + 1))
-                if cls_idx not in self._ignore_cls]
+                cls_idx for cls_idx in list(range(self.bert_config.num_hidden_layers + 1))
+                if cls_idx not in self._ignore_cls
+            ]
             i = 0
 
             for d in range(n_device):
@@ -314,8 +301,7 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
                     next_unfinished = []
 
                     for k in range(len(unfinished)):
-                        if _uncertainty(batch_probs[i][0]) < self._speed or \
-                                loop == max_loop - 1:
+                        if _uncertainty(batch_probs[i][0]) < self._speed or loop == max_loop - 1:
                             probs[unfinished[k]] = batch_probs[i]
                             sources[unfinished[k]] = source
                         else:

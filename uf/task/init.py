@@ -33,9 +33,7 @@ class Initialization(Task):
             if variables:
                 self._init_variables(variables, ignore_checkpoint)
             else:
-                tf.logging.info(
-                    "Global variables already initialized. "
-                    "To re-initialize all, pass `reinit_all` to True.")
+                tf.logging.info("Global variables already initialized. To re-initialize all, pass `reinit_all` to True.")
         self.module._session_mode = "infer"
 
     def _init_session(self, ignore_checkpoint):

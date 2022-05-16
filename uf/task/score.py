@@ -39,8 +39,7 @@ class Scoring(Task):
 
         return self.module._get_score_outputs(batch_outputs)
 
-    def _score_one_batch(self, step, last_tic,
-                         total_steps, batch_outputs):
+    def _score_one_batch(self, step, last_tic, total_steps, batch_outputs):
         feed_dict = self._build_feed_dict()
         score_ops = self.module._get_score_ops()
         output_arrays = self.module.sess.run(score_ops, feed_dict=feed_dict)

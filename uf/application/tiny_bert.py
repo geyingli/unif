@@ -13,21 +13,22 @@ class TinyBERTClassifier(BERTClassifier, ClassifierModule):
     """ Single-label classifier on TinyBERT, a distillation model. """
     _INFER_ATTRIBUTES = BERTClassifier._INFER_ATTRIBUTES
 
-    def __init__(self,
-                 config_file,
-                 vocab_file,
-                 max_seq_length=128,
-                 label_size=None,
-                 init_checkpoint=None,
-                 output_dir=None,
-                 gpu_ids=None,
-                 drop_pooler=False,
-                 hidden_size=384,
-                 num_hidden_layers=4,
-                 do_lower_case=True,
-                 truncate_method="LIFO"):
-        super(ClassifierModule, self).__init__(
-            init_checkpoint, output_dir, gpu_ids)
+    def __init__(
+        self,
+        config_file,
+        vocab_file,
+        max_seq_length=128,
+        label_size=None,
+        init_checkpoint=None,
+        output_dir=None,
+        gpu_ids=None,
+        drop_pooler=False,
+        hidden_size=384,
+        num_hidden_layers=4,
+        do_lower_case=True,
+        truncate_method="LIFO",
+    ):
+        super(ClassifierModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.batch_size = 0
         self.max_seq_length = max_seq_length
@@ -61,16 +62,12 @@ class TinyBERTClassifier(BERTClassifier, ClassifierModule):
     def to_bert(self, save_dir):
         """ Isolate student tiny_bert out of traing graph. """
         if not self._session_built:
-            raise ValueError(
-                "Init, fit, predict or score before saving checkpoint.")
+            raise ValueError("Init, fit, predict or score before saving checkpoint.")
 
         tf.gfile.MakeDirs(save_dir)
 
-        tf.logging.info(
-            "Saving checkpoint into %s/bert_model.ckpt"
-            % (save_dir))
-        self.init_checkpoint = (
-            save_dir + "/bert_model.ckpt")
+        tf.logging.info("Saving checkpoint into %s/bert_model.ckpt" % save_dir)
+        self.init_checkpoint = save_dir + "/bert_model.ckpt"
 
         assignment_map = {}
         for var in self.global_variables:
@@ -79,17 +76,13 @@ class TinyBERTClassifier(BERTClassifier, ClassifierModule):
         saver = tf.train.Saver(assignment_map, max_to_keep=1000000)
         saver.save(self.sess, self.init_checkpoint)
 
-        self.student_config.to_json_file(
-            os.path.join(save_dir, "bert_config.json"))
+        self.student_config.to_json_file(os.path.join(save_dir, "bert_config.json"))
 
-    def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
-                is_training=False, is_parallel=False):
+    def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None, is_training=False, is_parallel=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
 
         if is_training:
-            assert y is None, (
-                "Training of %s is unsupervised. `y` should be None."
-                % self.__class__.__name__)
+            assert y is None, "Training of %s is unsupervised. `y` should be None." % self.__class__.__name__
 
         n_inputs = None
         data = {}
@@ -97,8 +90,7 @@ class TinyBERTClassifier(BERTClassifier, ClassifierModule):
         # convert X
         if X or X_tokenized:
             tokenized = False if X else X_tokenized
-            input_ids, input_mask, segment_ids = self._convert_X(
-                X_tokenized if tokenized else X, tokenized=tokenized)
+            input_ids, input_mask, segment_ids = self._convert_X(X_tokenized if tokenized else X, tokenized=tokenized)
             data["input_ids"] = np.array(input_ids, dtype=np.int32)
             data["input_mask"] = np.array(input_mask, dtype=np.int32)
             data["segment_ids"] = np.array(segment_ids, dtype=np.int32)
@@ -114,8 +106,7 @@ class TinyBERTClassifier(BERTClassifier, ClassifierModule):
 
         # convert sample_weight
         if is_training or y:
-            sample_weight = self._convert_sample_weight(
-                sample_weight, n_inputs)
+            sample_weight = self._convert_sample_weight(sample_weight, n_inputs)
             data["sample_weight"] = np.array(sample_weight, dtype=np.float32)
 
         return data
@@ -133,7 +124,8 @@ class TinyBERTClassifier(BERTClassifier, ClassifierModule):
             sample_weight=split_placeholders.get("sample_weight"),
             drop_pooler=self._drop_pooler,
             label_size=self.label_size,
-            **kwargs)
+            **kwargs,
+        )
         return model.get_forward_outputs()
 
     def _get_fit_ops(self, as_feature=False):
@@ -155,21 +147,22 @@ class TinyBERTBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
     """ Multi-label classifier on TinyBERT, a distillation model. """
     _INFER_ATTRIBUTES = BERTBinaryClassifier._INFER_ATTRIBUTES
 
-    def __init__(self,
-                 config_file,
-                 vocab_file,
-                 max_seq_length=128,
-                 label_size=None,
-                 init_checkpoint=None,
-                 output_dir=None,
-                 gpu_ids=None,
-                 drop_pooler=False,
-                 hidden_size=384,
-                 num_hidden_layers=4,
-                 do_lower_case=True,
-                 truncate_method="LIFO"):
-        super(ClassifierModule, self).__init__(
-            init_checkpoint, output_dir, gpu_ids)
+    def __init__(
+        self,
+        config_file,
+        vocab_file,
+        max_seq_length=128,
+        label_size=None,
+        init_checkpoint=None,
+        output_dir=None,
+        gpu_ids=None,
+        drop_pooler=False,
+        hidden_size=384,
+        num_hidden_layers=4,
+        do_lower_case=True,
+        truncate_method="LIFO",
+    ):
+        super(ClassifierModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.batch_size = 0
         self.max_seq_length = max_seq_length
@@ -203,14 +196,11 @@ class TinyBERTBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
     def to_bert(self, save_dir):
         """ Isolate student tiny_bert out of traing graph. """
         if not self._session_built:
-            raise ValueError(
-                "Init, fit, predict or score before saving checkpoint.")
+            raise ValueError("Init, fit, predict or score before saving checkpoint.")
 
         tf.gfile.MakeDirs(save_dir)
 
-        tf.logging.info(
-            "Saving checkpoint into %s/bert_model.ckpt"
-            % (save_dir))
+        tf.logging.info("Saving checkpoint into %s/bert_model.ckpt" % (save_dir))
         self.init_checkpoint = (
             save_dir + "/bert_model.ckpt")
 
@@ -221,17 +211,13 @@ class TinyBERTBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
         saver = tf.train.Saver(assignment_map, max_to_keep=1000000)
         saver.save(self.sess, self.init_checkpoint)
 
-        self.student_config.to_json_file(
-            os.path.join(save_dir, "bert_config.json"))
+        self.student_config.to_json_file(os.path.join(save_dir, "bert_config.json"))
 
-    def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
-                is_training=False, is_parallel=False):
+    def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None, is_training=False, is_parallel=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
 
         if is_training:
-            assert y is None, (
-                "Training of %s is unsupervised. `y` should be None."
-                % self.__class__.__name__)
+            assert y is None, "Training of %s is unsupervised. `y` should be None." % self.__class__.__name__
 
         n_inputs = None
         data = {}
@@ -239,8 +225,7 @@ class TinyBERTBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
         # convert X
         if X or X_tokenized:
             tokenized = False if X else X_tokenized
-            input_ids, input_mask, segment_ids = self._convert_X(
-                X_tokenized if tokenized else X, tokenized=tokenized)
+            input_ids, input_mask, segment_ids = self._convert_X(X_tokenized if tokenized else X, tokenized=tokenized)
             data["input_ids"] = np.array(input_ids, dtype=np.int32)
             data["input_mask"] = np.array(input_mask, dtype=np.int32)
             data["segment_ids"] = np.array(segment_ids, dtype=np.int32)
@@ -256,8 +241,7 @@ class TinyBERTBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
 
         # convert sample_weight
         if is_training or y:
-            sample_weight = self._convert_sample_weight(
-                sample_weight, n_inputs)
+            sample_weight = self._convert_sample_weight(sample_weight, n_inputs)
             data["sample_weight"] = np.array(sample_weight, dtype=np.float32)
 
         return data
@@ -275,7 +259,8 @@ class TinyBERTBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
             sample_weight=split_placeholders.get("sample_weight"),
             drop_pooler=self._drop_pooler,
             label_size=self.label_size,
-            **kwargs)
+            **kwargs,
+        )
         return model.get_forward_outputs()
 
     def _get_fit_ops(self, as_feature=False):

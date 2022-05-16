@@ -83,8 +83,7 @@ class BaseModule:
         except Exception:
             pass
 
-    def to_tfrecords(self, X=None, y=None, sample_weight=None,
-                     X_tokenized=None, tfrecords_file=None):
+    def to_tfrecords(self, X=None, y=None, sample_weight=None, X_tokenized=None, tfrecords_file=None):
         """ Transform raw data and serialize into TFRecords.
 
         Args:
@@ -110,7 +109,8 @@ class BaseModule:
         common.write_tfrecords(data, tfrecords_file)
 
     def fit_from_tfrecords(
-            self, batch_size=32,
+            self,
+            batch_size=32,
             learning_rate=5e-5,
             target_steps=None,
             total_steps=-3,
@@ -119,7 +119,8 @@ class BaseModule:
             save_per_steps=1000,
             tfrecords_files=None,
             n_jobs=None,
-            **kwargs):
+            **kwargs,
+        ):
         """ Training the model using TFRecords.
 
         Args:
@@ -198,7 +199,8 @@ class BaseModule:
                 num_train_steps=self.total_steps,
                 num_warmup_steps=self.num_warmup_steps,
                 key_to_depths=self._key_to_depths,
-                **kwargs)
+                **kwargs,
+            )
             kwargs.update(tfrecords_files=tfrecords_files, n_jobs=n_jobs)
 
             if kwargs.get("adversarial"):
@@ -208,17 +210,21 @@ class BaseModule:
             return t.run(
                 target_steps,
                 print_per_secs=print_per_secs,
-                save_per_steps=save_per_steps)
+                save_per_steps=save_per_steps,
+            )
 
-    def fit(self, X=None, y=None, sample_weight=None, X_tokenized=None,
-            batch_size=32,
-            learning_rate=5e-5,
-            target_steps=None,
-            total_steps=-3,
-            warmup_ratio=0.1,
-            print_per_secs=0.1,
-            save_per_steps=1000,
-            **kwargs):
+    def fit(
+        self,
+        X=None, y=None, sample_weight=None, X_tokenized=None,
+        batch_size=32,
+        learning_rate=5e-5,
+        target_steps=None,
+        total_steps=-3,
+        warmup_ratio=0.1,
+        print_per_secs=0.1,
+        save_per_steps=1000,
+        **kwargs,
+    ):
         """ Training the model.
 
         Args:
@@ -259,8 +265,8 @@ class BaseModule:
         if self._gpu_ids:
             assert batch_size % len(self._gpu_ids) == 0, (
                 "`batch_size` should be evenly divided by the number of GPUs, "
-                "but got %d and %d."
-                % (batch_size, len(self._gpu_ids)))
+                "but got %d and %d." % (batch_size, len(self._gpu_ids))
+            )
 
         # Convert raw data to structed data. This method
         # should be specifically implemented by child classes.
@@ -293,7 +299,8 @@ class BaseModule:
                 num_train_steps=self.total_steps,
                 num_warmup_steps=self.num_warmup_steps,
                 key_to_depths=self._key_to_depths,
-                **kwargs)
+                **kwargs,
+            )
 
             if kwargs.get("adversarial"):
                 t = task.AdversarialTraining(self, **kwargs)
@@ -302,7 +309,8 @@ class BaseModule:
             return t.run(
                 target_steps,
                 print_per_secs=print_per_secs,
-                save_per_steps=save_per_steps)
+                save_per_steps=save_per_steps,
+            )
 
     def predict(self, X=None, X_tokenized=None, batch_size=8):
         """ Inference on the model.
@@ -323,8 +331,8 @@ class BaseModule:
         if self._gpu_ids:
             assert batch_size % len(self._gpu_ids) == 0, (
                 "`batch_size` should be evenly divided by the number of GPUs, "
-                "but got %d and %d."
-                % (batch_size, len(self._gpu_ids)))
+                "but got %d and %d." % (batch_size, len(self._gpu_ids))
+            )
 
         # Make sure necessary arguments are on spot.
         if not self._session_built:
@@ -340,8 +348,8 @@ class BaseModule:
                 raise ValueError(
                     "Intialize or train the model first, or feed value for "
                     "the following necessary arguments (%s), before running "
-                    "inference."
-                    % "; ".join(_miss_info))
+                    "inference." % "; ".join(_miss_info)
+                )
 
         # Convert raw data to structed data. This method
         # should be specifically implemented by child classes.
@@ -352,8 +360,7 @@ class BaseModule:
             t = task.Inference(self)
             return t.run()
 
-    def score(self, X=None, y=None, sample_weight=None, X_tokenized=None,
-              batch_size=8):
+    def score(self, X=None, y=None, sample_weight=None, X_tokenized=None, batch_size=8):
         """ Inference on the model with scoring.
 
         Args:
@@ -375,8 +382,8 @@ class BaseModule:
         if self._gpu_ids:
             assert batch_size % len(self._gpu_ids) == 0, (
                 "`batch_size` should be evenly divided by the number of GPUs, "
-                "but got %d and %d."
-                % (batch_size, len(self._gpu_ids)))
+                "but got %d and %d." % (batch_size, len(self._gpu_ids))
+            )
 
         # Make sure necessary arguments are on spot.
         if not self._session_built:
@@ -392,8 +399,8 @@ class BaseModule:
                 raise ValueError(
                     "Intialize or train the model first, or feed value for "
                     "the following necessary arguments (%s), before running "
-                    "inference."
-                    % "; ".join(_miss_info))
+                    "inference." % "; ".join(_miss_info)
+                )
 
         # Convert raw data to structed data. This method
         # should be specifically implemented by child classes.
@@ -415,18 +422,13 @@ class BaseModule:
             max_to_keep: int. Max number of checkpoints to save.
         """
         if not self._session_built:
-            raise ValueError(
-                "Randomly initialize, fit, predict or score before saving "
-                "checkpoint.")
+            raise ValueError("Randomly initialize, fit, predict or score before saving checkpoint.")
 
         if not self.output_dir:
             raise ValueError("Attribute `output_dir` is None.")
 
-        tf.logging.info(
-            "Saving checkpoint for %d into %s/model.ckpt"
-            % (self.step, self.output_dir))
-        self.init_checkpoint = (
-            self.output_dir + "/model.ckpt-%d" % self.step)
+        tf.logging.info("Saving checkpoint for %d into %s/model.ckpt" % (self.step, self.output_dir))
+        self.init_checkpoint = self.output_dir + "/model.ckpt-%d" % self.step
 
         with self.graph.as_default():
             saver = tf.train.Saver(max_to_keep=max_to_keep)
@@ -449,8 +451,7 @@ class BaseModule:
         """
         if self.output_dir and self._session_built:
             self.save(max_to_keep)
-        tf.logging.info("Saving model configuration `%s` into %s"
-                        % (code, cache_file))
+        tf.logging.info("Saving model configuration `%s` into %s" % (code, cache_file))
 
         if os.path.exists(cache_file):
             cache_fp = open(cache_file, encoding="utf-8")
@@ -461,7 +462,8 @@ class BaseModule:
 
         _cache_json = {
             "model": self.__class__.__name__,
-            "__init__": {}}
+            "__init__": {},
+        }
         if note:
             _cache_json["note"] = note
 
@@ -474,9 +476,7 @@ class BaseModule:
             # convert to relative path
             if key == "init_checkpoint" or key.endswith("_dir") or key.endswith("_file"):
                 if isinstance(value, str) and not value.startswith("/"):
-                    value = common.get_relative_path(
-                        source=cache_file,
-                        target=value)
+                    value = common.get_relative_path(source=cache_file, target=value)
 
             _cache_json["__init__"][key] = value
         cache_json[code] = _cache_json
@@ -508,17 +508,18 @@ class BaseModule:
                     _miss_info += ["`%s`: %s" % (attr, _attr_dict[attr])]
                 raise ValueError(
                     "Feed value for the following necessary arguments "
-                    "before initialization. (%s)" % "; ".join(_miss_info))
+                    "before initialization. (%s)" % "; ".join(_miss_info)
+                )
 
         # Register the task, and then run.
         with self.graph.as_default(), tf.variable_scope("", reuse=tf.AUTO_REUSE):
             t = task.Initialization(self)
             return t.run(
                 reinit_all=reinit_all,
-                ignore_checkpoint=(self.init_checkpoint is None))
+                ignore_checkpoint=(self.init_checkpoint is None),
+            )
 
-    def reinit_from_checkpoint(self, init_checkpoint=None,
-                               assignment_map=None):
+    def reinit_from_checkpoint(self, init_checkpoint=None, assignment_map=None):
         """ Reinitialize variables from checkpoint file.
 
         Args:
@@ -535,9 +536,11 @@ class BaseModule:
             init_checkpoint = self.init_checkpoint
         checkpoint_path = common.get_checkpoint_path(init_checkpoint)
         if not checkpoint_path:
-            raise ValueError("Checkpoint file \"%s\" does not exist. "
-                             "Make sure you pass correct value to "
-                             "`init_checkpoint`." % init_checkpoint)
+            raise ValueError(
+                "Checkpoint file \"%s\" does not exist. "
+                "Make sure you pass correct value to "
+                "`init_checkpoint`." % init_checkpoint
+            )
         self.init_checkpoint = checkpoint_path
 
         continual = os.path.dirname(checkpoint_path) == self.output_dir
@@ -548,8 +551,7 @@ class BaseModule:
         if "assignment_map" not in self.__dict__:
             self.assignment_map = {}
         if not assignment_map:
-            (assignment_map, _) = common.get_assignment_map(
-                checkpoint_path, self.global_variables, continual=False)
+            (assignment_map, _) = common.get_assignment_map(checkpoint_path, self.global_variables, continual=False)
             for key in assignment_map:
                 if key not in self.assignment_map:
                     self.assignment_map[key] = assignment_map[key]
@@ -578,8 +580,7 @@ class BaseModule:
     def global_variables(self):
         return self.graph._collections.get("variables", [])
 
-    def export(self, export_dir, rename_inputs=None, rename_outputs=None,
-               ignore_inputs=None, ignore_outputs=None):
+    def export(self, export_dir, rename_inputs=None, rename_outputs=None, ignore_inputs=None, ignore_outputs=None):
         """ Export model into SavedModel files.
 
         Args:
@@ -609,34 +610,32 @@ class BaseModule:
                 raise ValueError(
                     "Feed value for the following necessary arguments "
                     "before exportation of PB files. (%s)"
-                    % "; ".join(_miss_info))
+                    % "; ".join(_miss_info)
+                )
 
         # Register the task, and then run.
         with self.graph.as_default(), tf.variable_scope("", reuse=tf.AUTO_REUSE):
             t = task.Exportation(self)
-            t.run(
-                export_dir, rename_inputs, rename_outputs,
-                ignore_inputs, ignore_outputs)
+            t.run(export_dir, rename_inputs, rename_outputs, ignore_inputs, ignore_outputs)
 
-    def _parallel_convert(self, X=None, y=None, sample_weight=None,
-                          X_tokenized=None, is_training=False):
+    def _parallel_convert(self, X=None, y=None, sample_weight=None, X_tokenized=None, is_training=False):
         """ Parallel data conversion in multi processes, a general method. """
 
         if common.NUM_PROCESSES <= 1:
             return self.convert(X, y, sample_weight, X_tokenized, is_training)
 
-        tf.logging.info("Parsing input data on %d parallel processes"
-                        % common.NUM_PROCESSES)
+        tf.logging.info("Parsing input data on %d parallel processes" % common.NUM_PROCESSES)
 
         n_inputs = len(X if X else X_tokenized)
         n_buckets = max(min(n_inputs, common.NUM_PROCESSES), 1)
         bucket_size = (n_inputs - 1) // n_buckets + 1
 
-        buckets = [{"X": [] if X else None,
-                    "y": [] if y else None,
-                    "sample_weight": [] if sample_weight else None,
-                    "X_tokenized": [] if X_tokenized else None}
-                   for _ in range(n_buckets)]
+        buckets = [{
+            "X": [] if X else None,
+            "y": [] if y else None,
+            "sample_weight": [] if sample_weight else None,
+            "X_tokenized": [] if X_tokenized else None,
+        } for _ in range(n_buckets)]
         for i in range(n_inputs):
             index = i // bucket_size
             if X:
@@ -649,13 +648,14 @@ class BaseModule:
                 buckets[index]["X_tokenized"].append(X_tokenized[i])
 
         values = common.get_init_values(self)
-        args = zip(list(range(n_buckets)),
-                   [self.__class__ for _ in range(n_buckets)],
-                   [values for _ in range(n_buckets)],
-                   buckets,
-                   [is_training for _ in range(n_buckets)])
-        data_buckets = common.pool.map(
-            common.parallel_convert_single_process, args)
+        args = zip(
+            list(range(n_buckets)),
+            [self.__class__ for _ in range(n_buckets)],
+            [values for _ in range(n_buckets)],
+            buckets,
+            [is_training for _ in range(n_buckets)],
+        )
+        data_buckets = common.pool.map(common.parallel_convert_single_process, args)
 
         data = {}
         data_buckets.sort(key=lambda x: x[0])    # re-order inputs
@@ -675,9 +675,7 @@ class BaseModule:
             try:
                 return [float(item) for item in sample_weight]
             except ValueError:
-                raise ValueError(
-                    "`sample_weight` must be a list of float-"
-                    "convertable values.")
+                raise ValueError("`sample_weight` must be a list of float-convertable values.")
         return [1.0 for _ in range(n_inputs)]
 
     @staticmethod
@@ -691,22 +689,22 @@ class BaseModule:
         else:
             if not X_tokenized:
                 raise ValueError("Must pass value to `X` or `X_tokenized`.")
-            assert isinstance(X_tokenized, list), (
-                "`X_tokenized` should be a list object.")
+            assert isinstance(X_tokenized, list), "`X_tokenized` should be a list object."
             X = X_tokenized
 
         if y:
             assert isinstance(y, list), "`y` should be a list object."
             assert len(X) == len(y), (
                 "Length of `y` should be the same with `X/X_tokenized`. "
-                "(%d vs. %d)" % (len(y), len(X)))
+                "(%d vs. %d)" % (len(y), len(X))
+            )
 
         if sample_weight:
-            assert isinstance(sample_weight, list), (
-                "`sample_weight` should be a list object.")
+            assert isinstance(sample_weight, list), "`sample_weight` should be a list object."
             assert len(X) == len(sample_weight), (
                 "Length of `sample_weight` should be the "
-                "same with `X/X_tokenized`. (%d vs. %d)" % (len(y), len(X)))
+                "same with `X/X_tokenized`. (%d vs. %d)" % (len(y), len(X))
+            )
 
     def assign(self, variable, value):
         """ Manually assign values for a parameter. """
@@ -743,12 +741,12 @@ class BaseModule:
                 total_loss, d_tensors = self._forward(
                     is_training=is_training,
                     split_placeholders=split_placeholders[idx],
-                    **kwargs)
+                    **kwargs,
+                )
 
                 if is_training:
                     # This is the so-called "backward" process
-                    d_grads = tf.gradients(
-                        total_loss, self.trainable_variables)
+                    d_grads = tf.gradients(total_loss, self.trainable_variables)
                     all_grads.append(d_grads)
 
                 all_tensors.append(d_tensors)

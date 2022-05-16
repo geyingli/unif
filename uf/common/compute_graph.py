@@ -37,10 +37,10 @@ def count_params(global_variables, trainable_variables):
     n_trainable = 0
     for variable in trainable_variables:
         n_trainable += get_params(variable)
-    tf.logging.info("Build graph with %s parameters "
-                    "(among which %s are trainable)"
-                    % (format(int(n_global), ","),
-                       format(int(n_trainable), ",")))
+    tf.logging.info(
+        "Build graph with %s parameters (among which %s are trainable)"
+        % (format(int(n_global), ","), format(int(n_trainable), ","))
+    )
 
 
 def scale_grad(grad, scalar):
@@ -48,10 +48,7 @@ def scale_grad(grad, scalar):
         return None
 
     if grad.__str__().startswith("IndexedSlices"):
-        return tf.IndexedSlices(
-            values=grad.values * scalar,
-            indices=grad.indices,
-            dense_shape=grad.dense_shape)
+        return tf.IndexedSlices(values=grad.values * scalar, indices=grad.indices, dense_shape=grad.dense_shape)
     else:
         return grad * scalar
 
@@ -71,10 +68,7 @@ def add_n_grads(split_grads):
         indices = tf.concat([grad.indices for grad in split_grads], axis=0)
         dense_shape = split_grads[0].dense_shape
 
-        return tf.IndexedSlices(
-            values=values,
-            indices=indices,
-            dense_shape=dense_shape)
+        return tf.IndexedSlices(values=values, indices=indices, dense_shape=dense_shape)
 
     return tf.add_n(split_grads)
 
@@ -94,16 +88,12 @@ def average_n_grads(split_grads):
         indices = tf.concat([grad.indices for grad in split_grads], axis=0)
         dense_shape = split_grads[0].dense_shape
 
-        return tf.IndexedSlices(
-            values=values,
-            indices=indices,
-            dense_shape=dense_shape)
+        return tf.IndexedSlices(values=values, indices=indices, dense_shape=dense_shape)
 
     return tf.divide(tf.add_n(split_grads), len(split_grads))
 
 
 def update_global_params(variables, global_step, optimizer, grads):
     assert len(grads) == len(variables)
-    update_op = optimizer.apply_gradients(
-        zip(grads, variables), global_step=global_step)
+    update_op = optimizer.apply_gradients(zip(grads, variables), global_step=global_step)
     return tf.group(update_op)

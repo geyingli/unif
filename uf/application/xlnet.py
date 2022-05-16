@@ -41,18 +41,19 @@ class XLNetClassifier(BERTClassifier, ClassifierModule):
     """ Single-label classifier on XLNet. """
     _INFER_ATTRIBUTES = BERTClassifier._INFER_ATTRIBUTES
 
-    def __init__(self,
-                 config_file,
-                 spm_file,
-                 max_seq_length=128,
-                 label_size=None,
-                 init_checkpoint=None,
-                 output_dir=None,
-                 gpu_ids=None,
-                 do_lower_case=True,
-                 truncate_method="LIFO"):
-        super(ClassifierModule, self).__init__(
-            init_checkpoint, output_dir, gpu_ids)
+    def __init__(
+        self,
+        config_file,
+        spm_file,
+        max_seq_length=128,
+        label_size=None,
+        init_checkpoint=None,
+        output_dir=None,
+        gpu_ids=None,
+        do_lower_case=True,
+        truncate_method="LIFO",
+    ):
+        super(ClassifierModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.batch_size = 0
         self.max_seq_length = max_seq_length
@@ -73,9 +74,7 @@ class XLNetClassifier(BERTClassifier, ClassifierModule):
             try:
                 segment_input_tokens.append(self._convert_x(example, tokenized))
             except Exception:
-                raise ValueError(
-                    "Wrong input format (line %d): \"%s\". "
-                    % (ex_id, example))
+                raise ValueError("Wrong input format (line %d): \"%s\". " % (ex_id, example))
 
         input_ids = []
         input_mask = []
@@ -85,14 +84,11 @@ class XLNetClassifier(BERTClassifier, ClassifierModule):
             _input_mask = []
             _segment_ids = []
 
-            common.truncate_segments(
-                segments, self.max_seq_length - len(segments) - 1,
-                truncate_method=self.truncate_method)
+            common.truncate_segments(segments, self.max_seq_length - len(segments) - 1, truncate_method=self.truncate_method)
 
             for s_id, segment in enumerate(segments):
                 _segment_id = min(s_id, 1)
-                _input_ids.extend(self.tokenizer.convert_tokens_to_ids(
-                    segment) + [SEP_ID])
+                _input_ids.extend(self.tokenizer.convert_tokens_to_ids(segment) + [SEP_ID])
                 _input_mask.extend([0] * (len(segment) + 1))
                 _segment_ids.extend([_segment_id] * (len(segment) + 1))
 
@@ -125,7 +121,8 @@ class XLNetClassifier(BERTClassifier, ClassifierModule):
             input_ids=input_ids,
             seg_ids=segment_ids,
             input_mask=input_mask,
-            **kwargs)
+            **kwargs,
+        )
         encoder_output = encoder.get_pooled_output()
         decoder = CLSDecoder(
             is_training=is_training,
@@ -134,7 +131,8 @@ class XLNetClassifier(BERTClassifier, ClassifierModule):
             label_size=self.label_size,
             sample_weight=split_placeholders.get("sample_weight"),
             scope="cls/seq_relationship",
-            **kwargs)
+            **kwargs,
+        )
         return decoder.get_forward_outputs()
 
 
@@ -142,19 +140,20 @@ class XLNetBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
     """ Multi-label classifier on XLNet. """
     _INFER_ATTRIBUTES = BERTBinaryClassifier._INFER_ATTRIBUTES
 
-    def __init__(self,
-                 config_file,
-                 spm_file,
-                 max_seq_length=128,
-                 label_size=None,
-                 label_weight=None,
-                 init_checkpoint=None,
-                 output_dir=None,
-                 gpu_ids=None,
-                 do_lower_case=True,
-                 truncate_method="LIFO"):
-        super(ClassifierModule, self).__init__(
-            init_checkpoint, output_dir, gpu_ids)
+    def __init__(
+        self,
+        config_file,
+        spm_file,
+        max_seq_length=128,
+        label_size=None,
+        label_weight=None,
+        init_checkpoint=None,
+        output_dir=None,
+        gpu_ids=None,
+        do_lower_case=True,
+        truncate_method="LIFO",
+    ):
+        super(ClassifierModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.batch_size = 0
         self.max_seq_length = max_seq_length
@@ -176,9 +175,7 @@ class XLNetBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
             try:
                 segment_input_tokens.append(self._convert_x(example, tokenized))
             except Exception:
-                raise ValueError(
-                    "Wrong input format (line %d): \"%s\". "
-                    % (ex_id, example))
+                raise ValueError("Wrong input format (line %d): \"%s\". " % (ex_id, example))
 
         input_ids = []
         input_mask = []
@@ -188,14 +185,11 @@ class XLNetBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
             _input_mask = []
             _segment_ids = []
 
-            common.truncate_segments(
-                segments, self.max_seq_length - len(segments) - 1,
-                truncate_method=self.truncate_method)
+            common.truncate_segments(segments, self.max_seq_length - len(segments) - 1, truncate_method=self.truncate_method)
 
             for s_id, segment in enumerate(segments):
                 _segment_id = min(s_id, 1)
-                _input_ids.extend(self.tokenizer.convert_tokens_to_ids(
-                    segment) + [SEP_ID])
+                _input_ids.extend(self.tokenizer.convert_tokens_to_ids(segment) + [SEP_ID])
                 _input_mask.extend([0] * (len(segment) + 1))
                 _segment_ids.extend([_segment_id] * (len(segment) + 1))
 
@@ -228,7 +222,8 @@ class XLNetBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
             input_ids=input_ids,
             seg_ids=segment_ids,
             input_mask=input_mask,
-            **kwargs)
+            **kwargs,
+        )
         encoder_output = encoder.get_pooled_output()
         decoder = BinaryCLSDecoder(
             is_training=is_training,
@@ -238,7 +233,8 @@ class XLNetBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
             sample_weight=split_placeholders.get("sample_weight"),
             label_weight=self.label_weight,
             scope="cls/seq_relationship",
-            **kwargs)
+            **kwargs,
+        )
         return decoder.get_forward_outputs()
 
 
@@ -246,18 +242,19 @@ class XLNetSeqClassifier(BERTSeqClassifier, ClassifierModule):
     """ Sequence labeling classifier on XLNet. """
     _INFER_ATTRIBUTES = BERTSeqClassifier._INFER_ATTRIBUTES
 
-    def __init__(self,
-                 config_file,
-                 spm_file,
-                 max_seq_length=128,
-                 label_size=None,
-                 init_checkpoint=None,
-                 output_dir=None,
-                 gpu_ids=None,
-                 do_lower_case=True,
-                 truncate_method="LIFO"):
-        super(ClassifierModule, self).__init__(
-            init_checkpoint, output_dir, gpu_ids)
+    def __init__(
+        self,
+        config_file,
+        spm_file,
+        max_seq_length=128,
+        label_size=None,
+        init_checkpoint=None,
+        output_dir=None,
+        gpu_ids=None,
+        do_lower_case=True,
+        truncate_method="LIFO",
+    ):
+        super(ClassifierModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.batch_size = 0
         self.max_seq_length = max_seq_length
@@ -276,12 +273,9 @@ class XLNetSeqClassifier(BERTSeqClassifier, ClassifierModule):
         segment_input_tokens = []
         for ex_id, example in enumerate(X_target):
             try:
-                segment_input_tokens.append(
-                    self._convert_x(example, tokenized))
+                segment_input_tokens.append(self._convert_x(example, tokenized))
             except Exception:
-                raise ValueError(
-                    "Wrong input format (line %d): \"%s\". "
-                    % (ex_id, example))
+                raise ValueError("Wrong input format (line %d): \"%s\". " % (ex_id, example))
 
         input_ids = []
         input_mask = []
@@ -291,14 +285,11 @@ class XLNetSeqClassifier(BERTSeqClassifier, ClassifierModule):
             _input_mask = []
             _segment_ids = []
 
-            common.truncate_segments(
-                segments, self.max_seq_length - len(segments) - 1,
-                truncate_method=self.truncate_method)
+            common.truncate_segments(segments, self.max_seq_length - len(segments) - 1, truncate_method=self.truncate_method)
 
             for s_id, segment in enumerate(segments):
                 _segment_id = min(s_id, 1)
-                _input_ids.extend(self.tokenizer.convert_tokens_to_ids(
-                    segment) + [SEP_ID])
+                _input_ids.extend(self.tokenizer.convert_tokens_to_ids(segment) + [SEP_ID])
                 _input_mask.extend([1] * (len(segment) + 1))
                 _segment_ids.extend([_segment_id] * (len(segment) + 1))
 
@@ -331,7 +322,8 @@ class XLNetSeqClassifier(BERTSeqClassifier, ClassifierModule):
             input_ids=input_ids,
             seg_ids=segment_ids,
             input_mask=input_mask,
-            **kwargs)
+            **kwargs,
+        )
         encoder_output = encoder.get_sequence_output()
         decoder = SeqCLSDecoder(
             is_training=is_training,
@@ -341,7 +333,8 @@ class XLNetSeqClassifier(BERTSeqClassifier, ClassifierModule):
             label_size=self.label_size,
             sample_weight=split_placeholders.get("sample_weight"),
             scope="cls/sequence",
-            **kwargs)
+            **kwargs,
+        )
         return decoder.get_forward_outputs()
 
 
@@ -349,32 +342,29 @@ class XLNetLM(BERTLM, LMModule):
     """ Language modeling on XLNet. """
     _INFER_ATTRIBUTES = BERTLM._INFER_ATTRIBUTES
 
-    def __init__(self,
-                 config_file,
-                 spm_file,
-                 max_seq_length=128,
-                 init_checkpoint=None,
-                 output_dir=None,
-                 gpu_ids=None,
-                 reuse_seq_length=None,
-                 perm_size=None,
-                 mask_alpha=6,
-                 mask_beta=1,
-                 do_lower_case=True,
-                 truncate_method="LIFO"):
-        raise Exception(
-            "We are faced with some problems in XLNetLM. "
-            "It will soon be fixed in the future.")
+    def __init__(
+        self,
+        config_file,
+        spm_file,
+        max_seq_length=128,
+        init_checkpoint=None,
+        output_dir=None,
+        gpu_ids=None,
+        reuse_seq_length=None,
+        perm_size=None,
+        mask_alpha=6,
+        mask_beta=1,
+        do_lower_case=True,
+        truncate_method="LIFO",
+    ):
+        raise Exception("We are faced with some problems in XLNetLM. It will soon be fixed in the future.")
 
-        super(LMModule, self).__init__(
-            init_checkpoint, output_dir, gpu_ids)
+        super(LMModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.batch_size = 64
         self.max_seq_length = max_seq_length
-        self.reuse_seq_length = \
-            reuse_seq_length if reuse_seq_length else max_seq_length // 2
-        self.perm_size = \
-            perm_size if perm_size else max_seq_length // 2
+        self.reuse_seq_length = reuse_seq_length if reuse_seq_length else max_seq_length // 2
+        self.perm_size = perm_size if perm_size else max_seq_length // 2
         self.truncate_method = truncate_method
         self._mems = None
         self._mask_alpha = mask_alpha
@@ -388,18 +378,13 @@ class XLNetLM(BERTLM, LMModule):
         self._key_to_depths = get_key_to_depths(self.xlnet_config.n_layer)
 
     def predict(self, *args, **kwargs):
-        raise AttributeError(
-            "`predict` method is temporarily not supported for XLNetLM. "
-            "We will try to implement in the future.")
+        raise AttributeError("`predict` method is temporarily not supported for XLNetLM. We will try to implement in the future.")
 
-    def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None,
-                is_training=False, is_parallel=False):
+    def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None, is_training=False, is_parallel=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
 
         if is_training:
-            assert y is None, (
-                "Training of %s is unsupervised. `y` should be None."
-                % self.__class__.__name__)
+            assert y is None, "Training of %s is unsupervised. `y` should be None." % self.__class__.__name__
 
         n_inputs = None
         data = {}
@@ -407,10 +392,7 @@ class XLNetLM(BERTLM, LMModule):
         # convert X
         if X or X_tokenized:
             tokenized = False if X else X_tokenized
-            (inputs, targets, seg_ids, labels, is_masked) = \
-                self._convert_X(
-                    X_tokenized if tokenized else X,
-                    is_training, tokenized=tokenized)
+            inputs, targets, seg_ids, labels, is_masked = self._convert_X(X_tokenized if tokenized else X, is_training, tokenized=tokenized)
             data["input"] = np.array(inputs, dtype=np.int32)
             data["target"] = np.array(targets, dtype=np.int32)
             data["seg_id"] = np.array(seg_ids, dtype=np.int32)
@@ -423,8 +405,7 @@ class XLNetLM(BERTLM, LMModule):
 
         # convert sample_weight
         if is_training or y:
-            sample_weight = self._convert_sample_weight(
-                sample_weight, n_inputs)
+            sample_weight = self._convert_sample_weight(sample_weight, n_inputs)
             data["sample_weight"] = np.array(sample_weight, dtype=np.float32)
 
         return data
@@ -435,12 +416,9 @@ class XLNetLM(BERTLM, LMModule):
         segment_input_tokens = []
         for ex_id, example in enumerate(X_target):
             try:
-                segment_input_tokens.append(
-                    self._convert_x(example, tokenized))
+                segment_input_tokens.append(self._convert_x(example, tokenized))
             except Exception:
-                raise ValueError(
-                    "Wrong input format (line %d): \"%s\". "
-                    % (ex_id, example))
+                raise ValueError("Wrong input format (line %d): \"%s\". " % (ex_id, example))
 
         # assign sentence id
         token_ids = []
@@ -468,7 +446,8 @@ class XLNetLM(BERTLM, LMModule):
             num_predict=self._num_predict,
             mask_alpha=self._mask_alpha,
             mask_beta=self._mask_beta,
-            n_device=max(1, len(self._gpu_ids)))
+            n_device=max(1, len(self._gpu_ids)),
+        )
 
         # aggregate
         inputs = []
@@ -487,32 +466,18 @@ class XLNetLM(BERTLM, LMModule):
 
     def _set_placeholders(self, target, on_export=False, **kwargs):
         self.placeholders = {
-            "input": common.get_placeholder(
-                target, "input",
-                [None, self.max_seq_length], tf.int32),
-            "target": common.get_placeholder(
-                target, "target",
-                [None, self.max_seq_length], tf.int32),
-            "seg_id": common.get_placeholder(
-                target, "seg_id",
-                [None, self.max_seq_length], tf.int32),
-            "label": common.get_placeholder(
-                target, "label",
-                [None], tf.int32),
-            "is_masked": common.get_placeholder(
-                target, "is_masked",
-                [None, self.max_seq_length], tf.int32),
+            "input": common.get_placeholder(target, "input", [None, self.max_seq_length], tf.int32),
+            "target": common.get_placeholder(target, "target", [None, self.max_seq_length], tf.int32),
+            "seg_id": common.get_placeholder(target, "seg_id", [None, self.max_seq_length], tf.int32),
+            "label": common.get_placeholder(target, "label", [None], tf.int32),
+            "is_masked": common.get_placeholder(target, "is_masked", [None, self.max_seq_length], tf.int32),
         }
         if not on_export:
-            self.placeholders["sample_weight"] = \
-                common.get_placeholder(
-                    target, "sample_weight",
-                    [None], tf.float32)
+            self.placeholders["sample_weight"] = common.get_placeholder(target, "sample_weight", [None], tf.float32)
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
-        split_placeholders = _expand_features(
-            self, split_placeholders)
+        split_placeholders = _expand_features(self, split_placeholders)
 
         input_k = tf.transpose(split_placeholders["input_k"], [1, 0])
         input_q = tf.transpose(split_placeholders["input_q"], [1, 0])
@@ -523,8 +488,7 @@ class XLNetLM(BERTLM, LMModule):
 
         target_mapping = None
         if "target_mapping" in split_placeholders:
-            target_mapping = tf.transpose(
-                split_placeholders["target_mapping"], [1, 2, 0])
+            target_mapping = tf.transpose(split_placeholders["target_mapping"], [1, 2, 0])
 
         model = XLNet(
             xlnet_config=self.xlnet_config,
@@ -539,15 +503,14 @@ class XLNetLM(BERTLM, LMModule):
             target_mapping=target_mapping,
             inp_q=input_q,
             sample_weight=split_placeholders.get("sample_weight"),
-            **kwargs)
+            **kwargs,
+        )
         return model.get_forward_outputs()
 
     def _get_fit_ops(self, as_feature=False):
-        ops = [self._tensors["preds"], self._tensors["mask"],
-               self._tensors["losses"]]
+        ops = [self._tensors["preds"], self._tensors["mask"], self._tensors["losses"]]
         if as_feature:
-            ops.extend(
-                [self.placeholders["target"]])
+            ops.extend([self.placeholders["target"]])
         return ops
 
     def _get_fit_info(self, output_arrays, feed_dict, as_feature=False):
@@ -560,9 +523,7 @@ class XLNetLM(BERTLM, LMModule):
         # PLM accuracy
         batch_plm_preds = output_arrays[0]
         batch_plm_mask = output_arrays[1]
-        plm_accuracy = (
-            np.sum((batch_plm_preds == batch_plm_labels) * batch_plm_mask) /
-            batch_plm_mask.sum())
+        plm_accuracy = np.sum((batch_plm_preds == batch_plm_labels) * batch_plm_mask) / batch_plm_mask.sum()
         print(batch_plm_preds[0], batch_plm_preds.shape)
         print(batch_plm_labels[0], batch_plm_labels.shape)
         print(batch_plm_mask[0], batch_plm_mask.shape)
@@ -586,8 +547,7 @@ class XLNetLM(BERTLM, LMModule):
 
         # PLM preds
         plm_preds = common.transform(output_arrays[0], n_inputs).tolist()
-        plm_preds = [
-            self.tokenizer.convert_ids_to_tokens(line) for line in plm_preds]
+        plm_preds = [self.tokenizer.convert_ids_to_tokens(line) for line in plm_preds]
 
         outputs = {}
         outputs["plm_preds"] = plm_preds
@@ -601,7 +561,8 @@ def get_xlnet_config(config_file=None):
             "Can\"t find config_file \"%s\". "
             "Please pass the correct path of configuration file, "
             "e.g.`xlnet_config.json`. An example can be downloaded from "
-            "https://github.com/zihangdai/xlnet." % config_file)
+            "https://github.com/zihangdai/xlnet." % config_file
+        )
     return XLNetConfig(json_path=config_file)
 
 
@@ -614,25 +575,22 @@ def get_key_to_depths(n_layer):
         "/seg_embed": n_layer + 1,
         "/mask_emb": n_layer + 1,
         "lm_loss/": 0,
-        "cls/": 0}
+        "cls/": 0,
+    }
     for layer_idx in range(n_layer):
         key_to_depths["/layer_%d/" % layer_idx] = n_layer - layer_idx
     return key_to_depths
 
 
-def create_instances_from_document(sp, token_ids, sent_ids,
-                                   max_seq_length, reuse_seq_length,
-                                   batch_size, num_predict,
-                                   mask_alpha=6, mask_beta=1,
-                                   n_device=1,
-                                   bi_directional=True):
+def create_instances_from_document(
+    sp, token_ids, sent_ids, max_seq_length, reuse_seq_length, batch_size, num_predict,
+    mask_alpha=6, mask_beta=1, n_device=1, bi_directional=True,
+):
 
     bsz_per_core = batch_size // n_device
 
     if bi_directional:
-        assert batch_size % (2 * n_device) == 0, (
-            "XLNetLM requires `batch_size` evenly divided by "
-            "(2 * num of CPU/GPUs).")
+        assert batch_size % (2 * n_device) == 0, "XLNetLM requires `batch_size` evenly divided by (2 * num of CPU/GPUs)."
         fwd_data, fwd_sent_ids = batchify(token_ids, batch_size // 2, sent_ids)
 
         fwd_data = fwd_data.reshape(n_device, 1, bsz_per_core // 2, -1)
@@ -641,10 +599,8 @@ def create_instances_from_document(sp, token_ids, sent_ids,
         bwd_data = fwd_data[:, :, :, ::-1]
         bwd_sent_ids = fwd_sent_ids[:, :, :, ::-1]
 
-        token_ids = np.concatenate(
-            [fwd_data, bwd_data], 1).reshape(batch_size, -1)
-        sent_ids = np.concatenate(
-            [fwd_sent_ids, bwd_sent_ids], 1).reshape(batch_size, -1)
+        token_ids = np.concatenate([fwd_data, bwd_data], 1).reshape(batch_size, -1)
+        sent_ids = np.concatenate([fwd_sent_ids, bwd_sent_ids], 1).reshape(batch_size, -1)
     else:
         token_ids, sent_ids = batchify(token_ids, batch_size, sent_ids)
 
@@ -668,7 +624,8 @@ def create_instances_from_document(sp, token_ids, sent_ids,
                 sent_ids[idx],
                 begin_idx=i + reuse_seq_length,
                 tot_len=max_seq_length - reuse_seq_length - 3,
-                extend_target=True)
+                extend_target=True,
+            )
             if results is None:
                 break
 
@@ -684,18 +641,17 @@ def create_instances_from_document(sp, token_ids, sent_ids,
                 num_predict_0 = num_predict - num_predict_1
             mask_0 = _sample_mask(
                 sp, inp, mask_alpha, mask_beta,
-                reverse=reverse, goal_num_predict=num_predict_0)
+                reverse=reverse, goal_num_predict=num_predict_0,
+            )
             mask_1 = _sample_mask(
-                sp, np.concatenate(
-                    [a_data, sep_array, b_data, sep_array, cls_array]),
+                sp, np.concatenate([a_data, sep_array, b_data, sep_array, cls_array]),
                 mask_alpha, mask_beta,
-                reverse=reverse, goal_num_predict=num_predict_1)
+                reverse=reverse, goal_num_predict=num_predict_1,
+            )
 
             # concatenate data
-            cat_data = np.concatenate([inp, a_data, sep_array, b_data,
-                                       sep_array, cls_array])
-            seg_id = ([0] * (reuse_seq_length + a_data.shape[0]) + [0] +
-                      [1] * b_data.shape[0] + [1] + [2])
+            cat_data = np.concatenate([inp, a_data, sep_array, b_data, sep_array, cls_array])
+            seg_id = ([0] * (reuse_seq_length + a_data.shape[0]) + [0] + [1] * b_data.shape[0] + [1] + [2])
             assert cat_data.shape[0] == max_seq_length
             assert mask_0.shape[0] == max_seq_length // 2
             assert mask_1.shape[0] == max_seq_length // 2
@@ -784,8 +740,7 @@ def _split_a_and_b(data, sent_ids, begin_idx, tot_len, extend_target=False):
     return ret
 
 
-def _sample_mask(sp, seg, mask_alpha, mask_beta,
-                 reverse=False, max_gram=5, goal_num_predict=None):
+def _sample_mask(sp, seg, mask_alpha, mask_beta, reverse=False, max_gram=5, goal_num_predict=None):
     """Sample `goal_num_predict` tokens for partial prediction.
     About `mask_beta` tokens are chosen in a context of `mask_alpha` tokens."""
 
@@ -815,8 +770,7 @@ def _sample_mask(sp, seg, mask_alpha, mask_beta,
 
         # Find the start position of a complete token
         beg = cur_len + l_ctx
-        while beg < seg_len and \
-                not _is_start_piece(sp.processor.IdToPiece(seg[beg].item())):
+        while beg < seg_len and not _is_start_piece(sp.processor.IdToPiece(seg[beg].item())):
             beg += 1
         if beg >= seg_len:
             break
@@ -899,9 +853,7 @@ def _local_perm(inputs, targets, is_masked, perm_size, seq_len):
 
     # `perm_mask` and `target_mask`
     # non-functional tokens
-    non_func_tokens = tf.logical_not(tf.logical_or(
-            tf.equal(inputs, SEP_ID),
-            tf.equal(inputs, CLS_ID)))
+    non_func_tokens = tf.logical_not(tf.logical_or(tf.equal(inputs, SEP_ID), tf.equal(inputs, CLS_ID)))
 
     non_mask_tokens = tf.logical_and(tf.logical_not(is_masked), non_func_tokens)
     masked_or_func_tokens = tf.logical_not(non_mask_tokens)
@@ -925,9 +877,7 @@ def _local_perm(inputs, targets, is_masked, perm_size, seq_len):
 
     # 1: cannot attend if i <= j and j is not non-masked (masked_or_func_tokens)
     # 0: can attend if i > j or j is non-masked
-    perm_mask = tf.logical_and(
-            self_rev_index[:, :, None] <= rev_index[:, None, :],
-            tf.expand_dims(masked_or_func_tokens, axis=-1))
+    perm_mask = tf.logical_and(self_rev_index[:, :, None] <= rev_index[:, None, :], tf.expand_dims(masked_or_func_tokens, axis=-1))
 
     # new target: [next token] for LM and [curr token] (self) for PLM
     new_targets = tf.concat([inputs[:, 0: 1], targets[:, :-1]], axis=1)
@@ -949,33 +899,34 @@ def _expand_features(module, split_placeholders):
     batch_size = tf.shape(inputs)[0]
 
     non_reuse_len = module.max_seq_length - module.reuse_seq_length
-    assert (module.perm_size <= module.reuse_seq_length and
-            module.perm_size <= non_reuse_len)
+    assert (module.perm_size <= module.reuse_seq_length and module.perm_size <= non_reuse_len)
 
-    (perm_mask_0, target_0, target_mask_0, input_k_0, input_q_0) = \
-        _local_perm(
-            inputs[:, :module.reuse_seq_length],
-            target[:, :module.reuse_seq_length],
-            is_masked[:, :module.reuse_seq_length],
-            module.perm_size,
-            module.reuse_seq_length)
+    (perm_mask_0, target_0, target_mask_0, input_k_0, input_q_0) = _local_perm(
+        inputs[:, :module.reuse_seq_length],
+        target[:, :module.reuse_seq_length],
+        is_masked[:, :module.reuse_seq_length],
+        module.perm_size,
+        module.reuse_seq_length,
+    )
 
-    (perm_mask_1, target_1, target_mask_1, input_k_1, input_q_1) = \
-        _local_perm(
-            inputs[:, module.reuse_seq_length:],
-            target[:, module.reuse_seq_length:],
-            is_masked[:, module.reuse_seq_length:],
-            module.perm_size,
-            non_reuse_len)
+    (perm_mask_1, target_1, target_mask_1, input_k_1, input_q_1) = _local_perm(
+        inputs[:, module.reuse_seq_length:],
+        target[:, module.reuse_seq_length:],
+        is_masked[:, module.reuse_seq_length:],
+        module.perm_size,
+        non_reuse_len,
+    )
 
     perm_mask_0 = tf.concat(
         [tf.cast(perm_mask_0, dtype=tf.float32),
          tf.ones([batch_size, module.reuse_seq_length, non_reuse_len])],
-        axis=2)
+        axis=2,
+    )
     perm_mask_1 = tf.concat(
         [tf.zeros([batch_size, non_reuse_len, module.reuse_seq_length]),
          tf.cast(perm_mask_1, dtype=tf.float32)],
-        axis=2)
+        axis=2,
+    )
     perm_mask = tf.concat([perm_mask_0, perm_mask_1], axis=1)
     target = tf.concat([target_0, target_1], axis=1)
     target_mask = tf.concat([target_mask_0, target_mask_1], axis=1)
@@ -996,40 +947,30 @@ def _expand_features(module, split_placeholders):
         pad_len = module._num_predict - actual_num_predict
 
         # target_mapping
-        target_mapping = tf.one_hot(
-            indices, module.max_seq_length, dtype=tf.float32)
-        paddings = tf.zeros([pad_len, module.max_seq_length],
-                            dtype=target_mapping.dtype)
+        target_mapping = tf.one_hot(indices, module.max_seq_length, dtype=tf.float32)
+        paddings = tf.zeros([pad_len, module.max_seq_length], dtype=target_mapping.dtype)
         target_mapping = tf.concat([target_mapping, paddings], axis=0)
-        split_placeholders["target_mapping"] = tf.reshape(
-            target_mapping, [-1, module._num_predict, module.max_seq_length])
+        split_placeholders["target_mapping"] = tf.reshape(target_mapping, [-1, module._num_predict, module.max_seq_length])
 
         # target
         target = tf.boolean_mask(target, bool_target_mask)
         paddings = tf.zeros([pad_len], dtype=target.dtype)
         target = tf.concat([target, paddings], axis=0)
-        split_placeholders["target"] = tf.reshape(
-            target, [-1, module._num_predict])
+        split_placeholders["target"] = tf.reshape(target, [-1, module._num_predict])
 
         # target mask
-        target_mask = tf.concat(
-            [tf.ones([batch_size, actual_num_predict], dtype=tf.float32),
-             tf.zeros([batch_size, pad_len], dtype=tf.float32)],
-            axis=1)
-        split_placeholders["target_mask"] = tf.reshape(
-            target_mask, [-1, module._num_predict])
+        target_mask = tf.concat([
+            tf.ones([batch_size, actual_num_predict], dtype=tf.float32),
+            tf.zeros([batch_size, pad_len], dtype=tf.float32)
+        ], axis=1)
+        split_placeholders["target_mask"] = tf.reshape(target_mask, [-1, module._num_predict])
     else:
-        split_placeholders["target"] = tf.reshape(
-            target, [-1, module.max_seq_length])
-        split_placeholders["target_mask"] = tf.reshape(
-            target_mask, [-1, module.max_seq_length])
+        split_placeholders["target"] = tf.reshape(target, [-1, module.max_seq_length])
+        split_placeholders["target_mask"] = tf.reshape(target_mask, [-1, module.max_seq_length])
 
     # reshape back to fixed shape
-    split_placeholders["perm_mask"] = tf.reshape(
-        perm_mask, [-1, module.max_seq_length, module.max_seq_length])
-    split_placeholders["input_k"] = tf.reshape(
-        input_k, [-1, module.max_seq_length])
-    split_placeholders["input_q"] = tf.reshape(
-        input_q, [-1, module.max_seq_length])
+    split_placeholders["perm_mask"] = tf.reshape(perm_mask, [-1, module.max_seq_length, module.max_seq_length])
+    split_placeholders["input_k"] = tf.reshape(input_k, [-1, module.max_seq_length])
+    split_placeholders["input_q"] = tf.reshape(input_q, [-1, module.max_seq_length])
 
     return split_placeholders

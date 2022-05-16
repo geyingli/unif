@@ -1,7 +1,7 @@
 import time
 
-from ..thirdparty import tf
-from .. import common
+from ..third import tf
+from .. import com
 from .base import Task
 
 
@@ -26,7 +26,7 @@ class Scoring(Task):
 
         # init session
         if not self.module._session_built:
-            common.count_params(self.module.global_variables, self.module.trainable_variables)
+            com.count_params(self.module.global_variables, self.module.trainable_variables)
             self._init_session()
         self.module._session_mode = "infer"
 

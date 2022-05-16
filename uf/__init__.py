@@ -1,19 +1,19 @@
 
-__version__ = "v2.3.4"
+__version__ = "v2.4.0"
 
 # loading models
-from .application import *
+from .apps import *
 
-from .common import MultiProcess
-from .common import load
-from .common import download
-from .common import download_all
-from .common import get_checkpoint_path
-from .common import get_assignment_map
-from .common import list_variables
-from .common import list_resources
-from .common import set_verbosity
-from .common import set_log
+from .com import MultiProcess
+from .com import load
+from .com import download
+from .com import download_all
+from .com import get_checkpoint_path
+from .com import get_assignment_map
+from .com import list_variables
+from .com import list_resources
+from .com import set_verbosity
+from .com import set_log
 
 set_verbosity()
 

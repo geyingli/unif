@@ -1,7 +1,7 @@
 import os
 
-from ..thirdparty import tf
-from .. import common
+from ..third import tf
+from .. import com
 from .base import Task
 
 
@@ -21,7 +21,7 @@ class Initialization(Task):
 
         # init session
         if not self.module._session_built:
-            common.count_params(self.module.global_variables, self.module.trainable_variables)
+            com.count_params(self.module.global_variables, self.module.trainable_variables)
             self._init_session(ignore_checkpoint)
         elif reinit_all:
             self._init_session(ignore_checkpoint)

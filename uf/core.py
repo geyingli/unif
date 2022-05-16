@@ -5,10 +5,10 @@ import json
 import collections
 from abc import abstractmethod
 
-from .thirdparty import tf
+from .third import tf
 from . import task
-from . import optimization
-from . import common
+from . import opt
+from . import com
 
 
 class BaseModule:
@@ -106,7 +106,7 @@ class BaseModule:
         data = self._parallel_convert(X, y, sample_weight, X_tokenized, is_training=True)
 
         tf.logging.info("Serializing data into %s" % tfrecords_file)
-        common.write_tfrecords(data, tfrecords_file)
+        com.write_tfrecords(data, tfrecords_file)
 
     def fit_from_tfrecords(
             self,
@@ -176,7 +176,7 @@ class BaseModule:
         # steps. In reality, we use a slanted learning rate
         # that starts to decay after gradually climing to
         # the pre-assigned peak level.
-        n_inputs = common.get_tfrecords_length(tfrecords_files)
+        n_inputs = com.get_tfrecords_length(tfrecords_files)
         self.steps_per_epoch = (n_inputs - 1) // batch_size + 1
         if total_steps < 0:
             total_steps = -total_steps * self.steps_per_epoch
@@ -192,8 +192,8 @@ class BaseModule:
 
         # Define optimization process, register the task, and then run.
         with self.graph.as_default(), tf.variable_scope("", reuse=tf.AUTO_REUSE):
-            self._global_step = optimization.get_global_step()
-            self._optimizer = optimization.get_optimizer(
+            self._global_step = opt.get_global_step()
+            self._optimizer = opt.get_optimizer(
                 init_lr=learning_rate,
                 global_step=self._global_step,
                 num_train_steps=self.total_steps,
@@ -292,8 +292,8 @@ class BaseModule:
 
         # Define optimization process, register the task, and then run.
         with self.graph.as_default(), tf.variable_scope("", reuse=tf.AUTO_REUSE):
-            self._global_step = optimization.get_global_step()
-            self._optimizer = optimization.get_optimizer(
+            self._global_step = opt.get_global_step()
+            self._optimizer = opt.get_optimizer(
                 init_lr=learning_rate,
                 global_step=self._global_step,
                 num_train_steps=self.total_steps,
@@ -476,7 +476,7 @@ class BaseModule:
             # convert to relative path
             if key == "init_checkpoint" or key.endswith("_dir") or key.endswith("_file"):
                 if isinstance(value, str) and not value.startswith("/"):
-                    value = common.get_relative_path(source=cache_file, target=value)
+                    value = com.get_relative_path(source=cache_file, target=value)
 
             _cache_json["__init__"][key] = value
         cache_json[code] = _cache_json
@@ -534,7 +534,7 @@ class BaseModule:
             if not self.init_checkpoint:
                 raise ValueError("No checkpoint file assigned for the module.")
             init_checkpoint = self.init_checkpoint
-        checkpoint_path = common.get_checkpoint_path(init_checkpoint)
+        checkpoint_path = com.get_checkpoint_path(init_checkpoint)
         if not checkpoint_path:
             raise ValueError(
                 "Checkpoint file \"%s\" does not exist. "
@@ -551,7 +551,7 @@ class BaseModule:
         if "assignment_map" not in self.__dict__:
             self.assignment_map = {}
         if not assignment_map:
-            (assignment_map, _) = common.get_assignment_map(checkpoint_path, self.global_variables, continual=False)
+            (assignment_map, _) = com.get_assignment_map(checkpoint_path, self.global_variables, continual=False)
             for key in assignment_map:
                 if key not in self.assignment_map:
                     self.assignment_map[key] = assignment_map[key]
@@ -621,13 +621,13 @@ class BaseModule:
     def _parallel_convert(self, X=None, y=None, sample_weight=None, X_tokenized=None, is_training=False):
         """ Parallel data conversion in multi processes, a general method. """
 
-        if common.NUM_PROCESSES <= 1:
+        if com.NUM_PROCESSES <= 1:
             return self.convert(X, y, sample_weight, X_tokenized, is_training)
 
-        tf.logging.info("Parsing input data on %d parallel processes" % common.NUM_PROCESSES)
+        tf.logging.info("Parsing input data on %d parallel processes" % com.NUM_PROCESSES)
 
         n_inputs = len(X if X else X_tokenized)
-        n_buckets = max(min(n_inputs, common.NUM_PROCESSES), 1)
+        n_buckets = max(min(n_inputs, com.NUM_PROCESSES), 1)
         bucket_size = (n_inputs - 1) // n_buckets + 1
 
         buckets = [{
@@ -647,7 +647,7 @@ class BaseModule:
             if X_tokenized:
                 buckets[index]["X_tokenized"].append(X_tokenized[i])
 
-        values = common.get_init_values(self)
+        values = com.get_init_values(self)
         args = zip(
             list(range(n_buckets)),
             [self.__class__ for _ in range(n_buckets)],
@@ -655,13 +655,13 @@ class BaseModule:
             buckets,
             [is_training for _ in range(n_buckets)],
         )
-        data_buckets = common.pool.map(common.parallel_convert_single_process, args)
+        data_buckets = com.pool.map(com.parallel_convert_single_process, args)
 
         data = {}
         data_buckets.sort(key=lambda x: x[0])    # re-order inputs
 
         for key in data_buckets[0][1].keys():
-            data[key] = common.transform([_data[key] for _bucket_id, _data in data_buckets])
+            data[key] = com.transform([_data[key] for _bucket_id, _data in data_buckets])
         return data
 
     @abstractmethod
@@ -734,7 +734,7 @@ class BaseModule:
         # map
         # The `Null` class makes the following codes about running on GPUs
         # compatible with running on CPU.
-        device = common.Null if n_device <= 1 else tf.device
+        device = com.Null if n_device <= 1 else tf.device
         for idx in range(n_device):
             _gpu_id = self._gpu_ids[idx] if self._gpu_ids else ""
             with device("gpu:%s" % _gpu_id):
@@ -771,7 +771,7 @@ class BaseModule:
                     if d_grads[i] is not None:
                         split_grads.append(d_grads[i])
                 if split_grads:
-                    average_grad = common.average_n_grads(split_grads)
+                    average_grad = com.average_n_grads(split_grads)
                     average_grads.append(average_grad)
                 else:
                     average_grads.append(None)

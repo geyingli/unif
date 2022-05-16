@@ -2,8 +2,8 @@ import os
 import numpy as np
 from abc import abstractmethod
 
-from ..thirdparty import tf
-from .. import common
+from ..third import tf
+from .. import com
 
 
 class Task:
@@ -36,7 +36,7 @@ class Task:
         tf.logging.info("Done running local_init_op")
 
         if not ignore_checkpoint and self.module.init_checkpoint:
-            checkpoint_path = common.get_checkpoint_path(self.module.init_checkpoint)
+            checkpoint_path = com.get_checkpoint_path(self.module.init_checkpoint)
             if not checkpoint_path:
                 raise ValueError(
                     "Checkpoint file \"%s\" does not exist. "
@@ -52,7 +52,7 @@ class Task:
             if continual:
                 self.module.step = int(checkpoint_path.split("-")[-1])
 
-            (assignment_map, uninited_vars) = common.get_assignment_map(checkpoint_path, variables, continual=continual)
+            (assignment_map, uninited_vars) = com.get_assignment_map(checkpoint_path, variables, continual=continual)
             self.module.assignment_map = assignment_map
             self.module.uninited_vars = uninited_vars
 
@@ -74,7 +74,7 @@ class Task:
     def _build_feed_dict(self):
         feed_dict = {}
         for key, data in self.module.data.items():
-            if key.startswith(common.BACKUP_DATA):
+            if key.startswith(com.BACKUP_DATA):
                 continue
             ptr = self._ptr
             batch = data[ptr: ptr + self.module.batch_size]

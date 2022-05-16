@@ -8,7 +8,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-v2.3.4-blue">
+        <img src="https://img.shields.io/badge/version-v2.4.0-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-1.x\2.x-yellow">
@@ -202,34 +202,35 @@ model.fit_from_tfrecords(
     warmup_ratio=0.1,
     print_per_secs=1,
     save_per_steps=1000,
-    **kwargs)
+    **kwargs,
+)
 ```
 
 ## 训练技巧/实用方法
 
 ```python
 # 优化器
-model.fit(X, y, ..., optimizer="gd")
-model.fit(X, y, ..., optimizer="adam")
-model.fit(X, y, ..., optimizer="adamw")    # 默认
-model.fit(X, y, ..., optimizer="lamb")
+model.fit(..., optimizer="gd")
+model.fit(..., optimizer="adam")
+model.fit(..., optimizer="adamw")    # 默认
+model.fit(..., optimizer="lamb")
 
 # 分层学习率：应对迁移学习中的 catastrophic forgetting 问题 (少量模型不适用)
-model.fit(X, y, ..., layerwise_lr_decay_ratio=0.85)     # 默认为 None
+model.fit(..., layerwise_lr_decay_ratio=0.85)     # 默认为 None
 print(model._key_to_depths)                             # 衰减比率 (可修改)
 
 # 对抗式训练：在输入中添加扰动，以提高模型的鲁棒性和泛化能力
-model.fit(X, y, ..., adversarial="fgm", epsilon=0.5)                  # FGM
-model.fit(X, y, ..., adversarial="pgd", epsilon=0.05, n_loop=2)       # PGD
-model.fit(X, y, ..., adversarial="freelb", epsilon=0.3, n_loop=3)     # FreeLB
-model.fit(X, y, ..., adversarial="freeat", epsilon=0.001, n_loop=3)   # FreeAT
-model.fit(X, y, ..., adversarial="smart", epsilon=0.01, n_loop=2, prtb_lambda=0.5, breg_miu=0.2, tilda_beta=0.3)    # SMART (仅 Classifier 可用)
+model.fit(..., adversarial="fgm", epsilon=0.5)                  # FGM
+model.fit(..., adversarial="pgd", epsilon=0.05, n_loop=2)       # PGD
+model.fit(..., adversarial="freelb", epsilon=0.3, n_loop=3)     # FreeLB
+model.fit(..., adversarial="freeat", epsilon=0.001, n_loop=3)   # FreeAT
+model.fit(..., adversarial="smart", epsilon=0.01, n_loop=2, prtb_lambda=0.5, breg_miu=0.2, tilda_beta=0.3)    # SMART (仅 Classifier 可用)
 
 # 置信度过滤：样本置信度达到阈值后不再参与训练，避免过拟合 (仅 Classifier 可用)
-model.fit(X, y, ..., conf_thresh=0.99)    # 默认为 None
+model.fit(..., conf_thresh=0.99)    # 默认为 None
 
 # 梯度累积：当 batch_size 过小以至于模型拟合困难时，梯度累积可以显著提高拟合表现 (功能尚在测试中)
-model.fit(X, y, ..., grad_acc_steps=5)    # 默认为 1，即不累积梯度
+model.fit(..., grad_acc_steps=5)    # 默认为 1，即不累积梯度
 ```
 
 ## 迁移学习
@@ -275,7 +276,8 @@ model.export(
     rename_inputs={},     # 重命名输入
     rename_outputs={},    # 重命名输出
     ignore_inputs=[],     # 剪裁输入
-    ignore_outputs=[])    # 裁剪输出
+    ignore_outputs=[],    # 裁剪输出
+)
 ```
 
 ## 开发需知

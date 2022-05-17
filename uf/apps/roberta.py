@@ -47,6 +47,7 @@ class RoBERTaLM(BERTLM, LMModule):
         do_lower_case=True,
         truncate_method="LIFO",
     ):
+        self.__init_args__ = locals()
         super(LMModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.batch_size = 0
@@ -57,7 +58,6 @@ class RoBERTaLM(BERTLM, LMModule):
         self.truncate_method = truncate_method
         self._drop_pooler = drop_pooler
         self._max_predictions_per_seq = max_predictions_per_seq
-        self.__init_args__ = locals()
 
         self.bert_config = BERTConfig.from_json_file(config_file)
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)

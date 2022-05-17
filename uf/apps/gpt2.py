@@ -28,16 +28,16 @@ class GPT2LM(LMModule):
         do_lower_case=True,
         truncate_method="LIFO",
     ):
+        self.__init_args__ = locals()
         super(LMModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.batch_size = 0
         self.max_seq_length = max_seq_length
         self.truncate_method = truncate_method
         self._given = 1
-        self.__init_args__ = locals()
 
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
-        self.gpt2_config = get_gpt2_config(
+        self.gpt2_config = GPT2Config(
             n_vocab=len(self.tokenizer.vocab),
             n_predict=max_seq_length,
             n_ctx=max_position_embeddings,
@@ -227,10 +227,6 @@ class GPT2Config:
     def __init__(self, **kwargs):
         for key, value in kwargs.items():
             self.__setattr__(key, value)
-
-
-def get_gpt2_config(**kwargs):
-    return GPT2Config(**kwargs)
 
 
 def get_decay_power(num_hidden_layers):

@@ -30,6 +30,7 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
         threshold=1.0,
         truncate_method="longer-FO",
     ):
+        self.__init_args__ = locals()
         super(MRCModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.batch_size = 0
@@ -42,7 +43,6 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
         self._reading_module = reading_module
         self._matching_mechanism = matching_mechanism
         self._threshold = threshold
-        self.__init_args__ = locals()
 
         if reading_module == "albert":
             self.bert_config = ALBERTConfig.from_json_file(config_file)

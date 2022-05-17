@@ -53,6 +53,7 @@ class XLNetClassifier(BERTClassifier, ClassifierModule):
         do_lower_case=True,
         truncate_method="LIFO",
     ):
+        self.__init_args__ = locals()
         super(ClassifierModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.batch_size = 0
@@ -60,7 +61,6 @@ class XLNetClassifier(BERTClassifier, ClassifierModule):
         self.label_size = label_size
         self.truncate_method = truncate_method
         self._id_to_label = None
-        self.__init_args__ = locals()
 
         self.xlnet_config = XLNetConfig(json_path=config_file)
         self.tokenizer = SentencePieceTokenizer(spm_file, do_lower_case)
@@ -153,6 +153,7 @@ class XLNetBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
         do_lower_case=True,
         truncate_method="LIFO",
     ):
+        self.__init_args__ = locals()
         super(ClassifierModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.batch_size = 0
@@ -161,7 +162,6 @@ class XLNetBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
         self.label_weight = label_weight
         self.truncate_method = truncate_method
         self._id_to_label = None
-        self.__init_args__ = locals()
 
         self.xlnet_config = XLNetConfig(json_path=config_file)
         self.tokenizer = SentencePieceTokenizer(spm_file, do_lower_case)
@@ -254,6 +254,7 @@ class XLNetSeqClassifier(BERTSeqClassifier, ClassifierModule):
         do_lower_case=True,
         truncate_method="LIFO",
     ):
+        self.__init_args__ = locals()
         super(ClassifierModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.batch_size = 0
@@ -261,7 +262,6 @@ class XLNetSeqClassifier(BERTSeqClassifier, ClassifierModule):
         self.label_size = label_size
         self.truncate_method = truncate_method
         self._id_to_label = None
-        self.__init_args__ = locals()
 
         self.xlnet_config = XLNetConfig(json_path=config_file)
         self.tokenizer = SentencePieceTokenizer(spm_file, do_lower_case)
@@ -359,6 +359,7 @@ class XLNetLM(BERTLM, LMModule):
     ):
         raise Exception("We are faced with some problems in XLNetLM. It will soon be fixed in the future.")
 
+        self.__init_args__ = locals()
         super(LMModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.batch_size = 64
@@ -371,7 +372,6 @@ class XLNetLM(BERTLM, LMModule):
         self._mask_beta = mask_beta
         self._num_predict = None
         self._id_to_label = None
-        self.__init_args__ = locals()
 
         self.xlnet_config = XLNetConfig(json_path=config_file)
         self.tokenizer = SentencePieceTokenizer(spm_file, do_lower_case)

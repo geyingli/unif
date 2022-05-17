@@ -33,6 +33,7 @@ class WideAndDeepClassifier(BERTClassifier, ClassifierModule):
         do_lower_case=True,
         truncate_method="LIFO",
     ):
+        self.__init_args__ = locals()
         super(ClassifierModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.batch_size = 0
@@ -42,7 +43,6 @@ class WideAndDeepClassifier(BERTClassifier, ClassifierModule):
         self.wide_features = wide_features
         self._deep_module = deep_module
         self._id_to_label = None
-        self.__init_args__ = locals()
 
         if deep_module == "albert":
             self.bert_config = ALBERTConfig.from_json_file(config_file)
@@ -263,6 +263,7 @@ class WideAndDeepRegressor(WideAndDeepClassifier, RegressorModule):
         do_lower_case=True,
         truncate_method="LIFO",
     ):
+        self.__init_args__ = locals()
         super(RegressorModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.batch_size = 0
@@ -271,7 +272,6 @@ class WideAndDeepRegressor(WideAndDeepClassifier, RegressorModule):
         self.truncate_method = truncate_method
         self.wide_features = wide_features
         self._deep_module = deep_module
-        self.__init_args__ = locals()
 
         if deep_module == "albert":
             self.bert_config = ALBERTConfig.from_json_file(config_file)

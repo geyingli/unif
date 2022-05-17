@@ -27,6 +27,7 @@ class TextCNNClassifier(BERTClassifier, ClassifierModule):
         do_lower_case=True,
         truncate_method="LIFO",
     ):
+        self.__init_args__ = locals()
         super(ClassifierModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.batch_size = 0
@@ -37,7 +38,6 @@ class TextCNNClassifier(BERTClassifier, ClassifierModule):
         self._num_channels = num_channels
         self._hidden_size = hidden_size
         self._id_to_label = None
-        self.__init_args__ = locals()
 
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
         self.decay_power = get_decay_power()

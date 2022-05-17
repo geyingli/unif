@@ -28,6 +28,7 @@ class ELECTRAClassifier(BERTClassifier, ClassifierModule):
         do_lower_case=True,
         truncate_method="LIFO",
     ):
+        self.__init_args__ = locals()
         super(ClassifierModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.batch_size = 0
@@ -35,7 +36,6 @@ class ELECTRAClassifier(BERTClassifier, ClassifierModule):
         self.label_size = label_size
         self.truncate_method = truncate_method
         self._id_to_label = None
-        self.__init_args__ = locals()
 
         self.bert_config = BERTConfig.from_json_file(config_file)
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
@@ -92,6 +92,7 @@ class ELECTRABinaryClassifier(BERTBinaryClassifier, ClassifierModule):
         do_lower_case=True,
         truncate_method="LIFO",
     ):
+        self.__init_args__ = locals()
         super(ClassifierModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.batch_size = 0
@@ -100,7 +101,6 @@ class ELECTRABinaryClassifier(BERTBinaryClassifier, ClassifierModule):
         self.label_weight = label_weight
         self.truncate_method = truncate_method
         self._id_to_label = None
-        self.__init_args__ = locals()
 
         self.bert_config = BERTConfig.from_json_file(config_file)
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
@@ -157,6 +157,7 @@ class ELECTRASeqClassifier(BERTSeqClassifier, ClassifierModule):
         do_lower_case=True,
         truncate_method="LIFO",
     ):
+        self.__init_args__ = locals()
         super(ClassifierModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.batch_size = 0
@@ -164,7 +165,6 @@ class ELECTRASeqClassifier(BERTSeqClassifier, ClassifierModule):
         self.label_size = label_size
         self.truncate_method = truncate_method
         self._id_to_label = None
-        self.__init_args__ = locals()
 
         self.bert_config = BERTConfig.from_json_file(config_file)
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
@@ -220,6 +220,7 @@ class ELECTRAMRC(BERTMRC, MRCModule):
         do_lower_case=True,
         truncate_method="longer-FO",
     ):
+        self.__init_args__ = locals()
         super(MRCModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.batch_size = 0
@@ -228,7 +229,6 @@ class ELECTRAMRC(BERTMRC, MRCModule):
         self._do_lower_case = do_lower_case
         self._on_predict = False
         self._id_to_label = None
-        self.__init_args__ = locals()
 
         self.bert_config = BERTConfig.from_json_file(config_file)
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
@@ -287,6 +287,7 @@ class ELECTRALM(BERTLM, LMModule):
         do_lower_case=True,
         truncate_method="LIFO",
     ):
+        self.__init_args__ = locals()
         super(LMModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.batch_size = 0
@@ -299,7 +300,6 @@ class ELECTRALM(BERTLM, LMModule):
         self._model_size = model_size
         self._max_predictions_per_seq = max_predictions_per_seq
         self._id_to_label = None
-        self.__init_args__ = locals()
 
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
         self.decay_power = "unsupported"

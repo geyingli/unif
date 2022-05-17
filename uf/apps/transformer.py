@@ -29,6 +29,7 @@ class TransformerMT(MTModule):
         do_lower_case=True,
         truncate_method="LIFO",
     ):
+        self.__init_args__ = locals()
         super(MTModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.batch_size = 0
@@ -38,7 +39,6 @@ class TransformerMT(MTModule):
         self._hidden_size = hidden_size
         self._num_hidden_layers = num_hidden_layers
         self._num_attention_heads = num_attention_heads
-        self.__init_args__ = locals()
 
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
         self.decay_power = get_decay_power(num_hidden_layers)

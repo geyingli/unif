@@ -37,6 +37,7 @@ class UniLM(BERTLM, LMModule):
         do_lower_case=True,
         truncate_method="LIFO",
     ):
+        self.__init_args__ = locals()
         super(LMModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.batch_size = 0
@@ -51,7 +52,6 @@ class UniLM(BERTLM, LMModule):
         self._max_predictions_per_seq = max_predictions_per_seq
         self.mode = mode
         self._id_to_label = None
-        self.__init_args__ = locals()
 
         assert mode in ("bi", "l2r", "r2l", "s2s"), (
             "Wrong value of `mode`: %s. Pick one from `bi` (bidirectional), "

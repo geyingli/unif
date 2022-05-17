@@ -28,6 +28,7 @@ class SANetMRC(BERTMRC, MRCModule):
         alpha=0.5,
         truncate_method="longer-FO",
     ):
+        self.__init_args__ = locals()
         super(MRCModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.batch_size = 0
@@ -38,7 +39,6 @@ class SANetMRC(BERTMRC, MRCModule):
         self._on_predict = False
         self._reading_module = reading_module
         self._alpha = alpha
-        self.__init_args__ = locals()
 
         if reading_module == "albert":
             self.bert_config = ALBERTConfig.from_json_file(config_file)

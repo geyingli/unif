@@ -30,6 +30,7 @@ class RecBERTLM(LMModule):
         do_lower_case=True,
         truncate_method="LIFO",
     ):
+        self.__init_args__ = locals()
         super(LMModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.batch_size = 0
@@ -39,7 +40,6 @@ class RecBERTLM(LMModule):
         self._on_predict = False
         self._add_prob = add_prob
         self._del_prob = del_prob
-        self.__init_args__ = locals()
 
         assert add_prob <= 0.5, "The value of `add_prob` should be larger than 0 and smaller than 1/2."
         self.bert_config = BERTConfig.from_json_file(config_file)

@@ -11,21 +11,23 @@ class PerformerClassifier(BERTClassifier, ClassifierModule):
     """ Single-label classifier on Performer. """
     _INFER_ATTRIBUTES = BERTClassifier._INFER_ATTRIBUTES
 
-    def __init__(self,
-                 config_file,
-                 vocab_file,
-                 max_seq_length=128,
-                 label_size=None,
-                 init_checkpoint=None,
-                 output_dir=None,
-                 gpu_ids=None,
-                 kernel_transformation="relu",
-                 nb_random_features=1,
-                 drop_pooler=False,
-                 do_lower_case=True,
-                 truncate_method="LIFO"):
-        super(ClassifierModule, self).__init__(
-            init_checkpoint, output_dir, gpu_ids)
+    def __init__(
+        self,
+        config_file,
+        vocab_file,
+        max_seq_length=128,
+        label_size=None,
+        init_checkpoint=None,
+        output_dir=None,
+        gpu_ids=None,
+        kernel_transformation="relu",
+        nb_random_features=1,
+        drop_pooler=False,
+        do_lower_case=True,
+        truncate_method="LIFO",
+    ):
+        self.__init_args__ = locals()
+        super(ClassifierModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.batch_size = 0
         self.max_seq_length = max_seq_length
@@ -35,7 +37,6 @@ class PerformerClassifier(BERTClassifier, ClassifierModule):
         self._id_to_label = None
         self._kernel_transformation = kernel_transformation
         self._nb_random_features = nb_random_features
-        self.__init_args__ = locals()
 
         self.bert_config = BERTConfig.from_json_file(config_file)
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)

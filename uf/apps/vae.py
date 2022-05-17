@@ -30,6 +30,7 @@ class VAELM(BERTClassifier, LMModule):
         do_lower_case=True,
         truncate_method="LIFO",
     ):
+        self.__init_args__ = locals()
         super(LMModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.batch_size = 0
@@ -41,7 +42,6 @@ class VAELM(BERTClassifier, LMModule):
         self._num_hidden_layers = num_hidden_layers
         self._num_attention_heads = num_attention_heads
         self._bias = 0
-        self.__init_args__ = locals()
 
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
         self.decay_power = get_decay_power(num_hidden_layers)

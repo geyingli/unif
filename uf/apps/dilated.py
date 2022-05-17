@@ -31,6 +31,7 @@ class DilatedLM(LMModule):
         do_lower_case=True,
         truncate_method="LIFO",
     ):
+        self.__init_args__ = locals()
         super(LMModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.batch_size = 0
@@ -40,7 +41,6 @@ class DilatedLM(LMModule):
         self._add_prob = add_prob
         self._subtract_prob = subtract_prob
         self._loop = 1
-        self.__init_args__ = locals()
 
         self.bert_config = BERTConfig.from_json_file(config_file)
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)

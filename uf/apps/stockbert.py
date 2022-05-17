@@ -30,6 +30,7 @@ class StockBERTClassifier(BERTClassifier, ClassifierModule):
         do_lower_case=True,
         truncate_method="LIFO",
     ):
+        self.__init_args__ = locals()
         super(ClassifierModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.batch_size = 0
@@ -39,7 +40,6 @@ class StockBERTClassifier(BERTClassifier, ClassifierModule):
         self.truncate_method = truncate_method
         self._drop_pooler = drop_pooler
         self._id_to_label = None
-        self.__init_args__ = locals()
 
         self.bert_config = BERTConfig.from_json_file(config_file)
         self.decay_power = get_decay_power(self.bert_config.num_hidden_layers)

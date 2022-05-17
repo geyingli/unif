@@ -28,6 +28,7 @@ class SemBERTClassifier(BERTClassifier, ClassifierModule):
         do_lower_case=True,
         truncate_method="LIFO",
     ):
+        self.__init_args__ = locals()
         super(ClassifierModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.batch_size = 0
@@ -37,7 +38,6 @@ class SemBERTClassifier(BERTClassifier, ClassifierModule):
         self.sem_features = sem_features
         self._drop_pooler = drop_pooler
         self._id_to_label = None
-        self.__init_args__ = locals()
 
         self.bert_config = BERTConfig.from_json_file(config_file)
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)

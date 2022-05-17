@@ -67,15 +67,16 @@ class BaseModule:
         self._inited_vars = set()
 
     def __repr__(self):
-        info = "uf." + self.__class__.__name__ + "("
+        info = f"uf.{self.__class__.__name__}("
         for key in self.__class__.__init__.__code__.co_varnames[1:]:
             try:
                 value = self.__getattribute__(key)
             except Exception:
                 value = self.__init_args__[key]
-            value = "\"%s\"" % value if isinstance(value, str) else "%s" % value
-            info += "%s=%s, " % (key, value)
-        return info[:-2] + ")"
+            value = f"\"{value}\"" if isinstance(value, str) else f"{value}"
+            info += "\n    %s=%s," % (key, value)
+        info += "\n)"
+        return info
 
     def __del__(self):
         try:

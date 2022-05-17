@@ -3,7 +3,7 @@ import numpy as np
 
 from ..third import tf
 from .base import LMModule
-from .bert import get_key_to_depths
+from .bert import get_decay_power
 from ..model.bert import BERTConfig
 from ..model.recbert import RecBERT
 from ..token import WordPieceTokenizer
@@ -44,7 +44,7 @@ class RecBERTLM(LMModule):
         assert add_prob <= 0.5, "The value of `add_prob` should be larger than 0 and smaller than 1/2."
         self.bert_config = BERTConfig.from_json_file(config_file)
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
-        self._key_to_depths = get_key_to_depths(self.bert_config.num_hidden_layers)
+        self.decay_power = get_decay_power(self.bert_config.num_hidden_layers)
 
     def predict(self, X=None, X_tokenized=None, batch_size=8):
         """ Inference on the model.

@@ -2,7 +2,7 @@ import numpy as np
 
 from ..third import tf
 from .base import ClassifierModule, MRCModule, LMModule
-from .bert import BERTClassifier, BERTBinaryClassifier, BERTSeqClassifier, BERTMRC, BERTLM, get_key_to_depths, create_masked_lm_predictions
+from .bert import BERTClassifier, BERTBinaryClassifier, BERTSeqClassifier, BERTMRC, BERTLM, get_decay_power, create_masked_lm_predictions
 from ..model.bert import BERTEncoder, BERTDecoder, BERTConfig
 from ..token import WordPieceTokenizer
 from .. import com
@@ -61,7 +61,7 @@ class RoBERTaLM(BERTLM, LMModule):
 
         self.bert_config = BERTConfig.from_json_file(config_file)
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
-        self._key_to_depths = get_key_to_depths(self.bert_config.num_hidden_layers)
+        self.decay_power = get_decay_power(self.bert_config.num_hidden_layers)
 
         if "[CLS]" not in self.tokenizer.vocab:
             self.tokenizer.add("[CLS]")
@@ -84,7 +84,7 @@ class RoBERTaLM(BERTLM, LMModule):
         if X or X_tokenized:
             tokenized = False if X else X_tokenized
 
-            (input_ids, input_mask, segment_ids, masked_lm_positions, masked_lm_ids, 
+            (input_ids, input_mask, segment_ids, masked_lm_positions, masked_lm_ids,
              masked_lm_weights) = self._convert_X(X_tokenized if tokenized else X, is_training, tokenized=tokenized)
 
             data["input_ids"] = np.array(input_ids, dtype=np.int32)

@@ -64,7 +64,7 @@ class XLNetClassifier(BERTClassifier, ClassifierModule):
 
         self.xlnet_config = XLNetConfig(json_path=config_file)
         self.tokenizer = SentencePieceTokenizer(spm_file, do_lower_case)
-        self._key_to_depths = get_key_to_depths(self.xlnet_config.n_layer)
+        self.decay_power = get_decay_power(self.xlnet_config.n_layer)
 
     def _convert_X(self, X_target, tokenized):
 
@@ -165,7 +165,7 @@ class XLNetBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
 
         self.xlnet_config = XLNetConfig(json_path=config_file)
         self.tokenizer = SentencePieceTokenizer(spm_file, do_lower_case)
-        self._key_to_depths = get_key_to_depths(self.xlnet_config.n_layer)
+        self.decay_power = get_decay_power(self.xlnet_config.n_layer)
 
     def _convert_X(self, X_target, tokenized):
 
@@ -265,7 +265,7 @@ class XLNetSeqClassifier(BERTSeqClassifier, ClassifierModule):
 
         self.xlnet_config = XLNetConfig(json_path=config_file)
         self.tokenizer = SentencePieceTokenizer(spm_file, do_lower_case)
-        self._key_to_depths = get_key_to_depths(self.xlnet_config.n_layer)
+        self.decay_power = get_decay_power(self.xlnet_config.n_layer)
 
     def _convert_X(self, X_target, tokenized):
 
@@ -375,7 +375,7 @@ class XLNetLM(BERTLM, LMModule):
 
         self.xlnet_config = XLNetConfig(json_path=config_file)
         self.tokenizer = SentencePieceTokenizer(spm_file, do_lower_case)
-        self._key_to_depths = get_key_to_depths(self.xlnet_config.n_layer)
+        self.decay_power = get_decay_power(self.xlnet_config.n_layer)
 
     def predict(self, *args, **kwargs):
         raise AttributeError("`predict` method is temporarily not supported for XLNetLM. We will try to implement in the future.")
@@ -555,8 +555,8 @@ class XLNetLM(BERTLM, LMModule):
         return outputs
 
 
-def get_key_to_depths(n_layer):
-    key_to_depths = {
+def get_decay_power(n_layer):
+    decay_power = {
         "/word_embedding": n_layer + 1,
         "/r_w_bias": n_layer + 1,
         "/r_r_bias": n_layer + 1,
@@ -567,8 +567,8 @@ def get_key_to_depths(n_layer):
         "cls/": 0,
     }
     for layer_idx in range(n_layer):
-        key_to_depths["/layer_%d/" % layer_idx] = n_layer - layer_idx
-    return key_to_depths
+        decay_power["/layer_%d/" % layer_idx] = n_layer - layer_idx
+    return decay_power
 
 
 def create_instances_from_document(

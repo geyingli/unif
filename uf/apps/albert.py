@@ -41,7 +41,7 @@ class ALBERTClassifier(BERTClassifier, ClassifierModule):
 
         self.albert_config = ALBERTConfig.from_json_file(config_file)
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
-        self._key_to_depths = get_key_to_depths(self.albert_config.num_hidden_layers)
+        self.decay_power = get_decay_power(self.albert_config.num_hidden_layers)
 
         if "[CLS]" not in self.tokenizer.vocab:
             self.tokenizer.add("[CLS]")
@@ -107,7 +107,7 @@ class ALBERTBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
 
         self.albert_config = ALBERTConfig.from_json_file(config_file)
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
-        self._key_to_depths = get_key_to_depths(self.albert_config.num_hidden_layers)
+        self.decay_power = get_decay_power(self.albert_config.num_hidden_layers)
 
         if "[CLS]" not in self.tokenizer.vocab:
             self.tokenizer.add("[CLS]")
@@ -170,8 +170,7 @@ class ALBERTSeqClassifier(BERTSeqClassifier, ClassifierModule):
 
         self.albert_config = ALBERTConfig.from_json_file(config_file)
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
-        self._key_to_depths = get_key_to_depths(
-            self.albert_config.num_hidden_layers)
+        self.decay_power = get_decay_power(self.albert_config.num_hidden_layers)
 
         if "[CLS]" not in self.tokenizer.vocab:
             self.tokenizer.add("[CLS]")
@@ -233,7 +232,7 @@ class ALBERTMRC(BERTMRC, MRCModule):
 
         self.albert_config = ALBERTConfig.from_json_file(config_file)
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
-        self._key_to_depths = get_key_to_depths(self.albert_config.num_hidden_layers)
+        self.decay_power = get_decay_power(self.albert_config.num_hidden_layers)
 
         if "[CLS]" not in self.tokenizer.vocab:
             self.tokenizer.add("[CLS]")
@@ -310,7 +309,7 @@ class ALBERTLM(BERTLM, LMModule):
 
         self.albert_config = ALBERTConfig.from_json_file(config_file)
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
-        self._key_to_depths = get_key_to_depths(self.albert_config.num_hidden_layers)
+        self.decay_power = get_decay_power(self.albert_config.num_hidden_layers)
 
         if "[CLS]" not in self.tokenizer.vocab:
             self.tokenizer.add("[CLS]")
@@ -852,12 +851,12 @@ def create_masked_lm_predictions(
     return (output_tokens, masked_lm_positions, masked_lm_labels)
 
 
-def get_key_to_depths(num_hidden_layers):
-    key_to_depths = {
+def get_decay_power(num_hidden_layers):
+    decay_power = {
         "/embeddings": 4,
         "/embedding_hidden_mapping_in": 3,
         "/group_0": 2,
         "/pooler/": 1,
         "cls/": 0,
     }
-    return key_to_depths
+    return decay_power

@@ -8,7 +8,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-v2.4.2-blue">
+        <img src="https://img.shields.io/badge/version-v2.4.3-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-1.x\2.x-yellow">
@@ -77,7 +77,7 @@ print(model.predict(X))
 | :----------- | :----------- | :------------ |
 | [`BERTNER`](./examples/tutorial/BERTNER.ipynb) 		| - | [`bert-base`](https://storage.googleapis.com/bert_models/2018_11_03/chinese_L-12_H-768_A-12.zip),[`roberta-wwm-ext-base`](https://drive.google.com/uc?export=download&id=1jMAKIJmPn7kADgD3yQZhpsqM-IRM1qZt),[`roberta-wwm-ext-large`](https://drive.google.com/uc?export=download&id=1dtad0FFzG11CBsawu8hvwwzU2R0FDI94),[`macbert-base`](https://drive.google.com/uc?export=download&id=1aV69OhYzIwj_hn-kO1RiBa-m8QAusQ5b),[`macbert-large`](https://drive.google.com/uc?export=download&id=1lWYxnk1EqTA2Q20_IShxBrCPc5VSDCkT) |
 | [`BERTCRFNER`](./examples/tutorial/BERTCRFNER.ipynb) 		| 结合 CRF | [`bert-base`](https://storage.googleapis.com/bert_models/2018_11_03/chinese_L-12_H-768_A-12.zip),[`roberta-wwm-ext-base`](https://drive.google.com/uc?export=download&id=1jMAKIJmPn7kADgD3yQZhpsqM-IRM1qZt),[`roberta-wwm-ext-large`](https://drive.google.com/uc?export=download&id=1dtad0FFzG11CBsawu8hvwwzU2R0FDI94),[`macbert-base`](https://drive.google.com/uc?export=download&id=1aV69OhYzIwj_hn-kO1RiBa-m8QAusQ5b),[`macbert-large`](https://drive.google.com/uc?export=download&id=1lWYxnk1EqTA2Q20_IShxBrCPc5VSDCkT) |
-| [`BERTCRFCascadeNER`](./examples/tutorial/BERTCRFCascadeNER.ipynb) | 识别与分类同时进行的级联架构 | [`bert-base`](https://storage.googleapis.com/bert_models/2018_11_03/chinese_L-12_H-768_A-12.zip),[`roberta-wwm-ext-base`](https://drive.google.com/uc?export=download&id=1jMAKIJmPn7kADgD3yQZhpsqM-IRM1qZt),[`roberta-wwm-ext-large`](https://drive.google.com/uc?export=download&id=1dtad0FFzG11CBsawu8hvwwzU2R0FDI94),[`macbert-base`](https://drive.google.com/uc?export=download&id=1aV69OhYzIwj_hn-kO1RiBa-m8QAusQ5b),[`macbert-large`](https://drive.google.com/uc?export=download&id=1lWYxnk1EqTA2Q20_IShxBrCPc5VSDCkT) |
+| [`BERTCRFCascadeNER`](./examples/tutorial/BERTCRFCascadeNER.ipynb) | 实体识别与分类同时进行的级联架构 | [`bert-base`](https://storage.googleapis.com/bert_models/2018_11_03/chinese_L-12_H-768_A-12.zip),[`roberta-wwm-ext-base`](https://drive.google.com/uc?export=download&id=1jMAKIJmPn7kADgD3yQZhpsqM-IRM1qZt),[`roberta-wwm-ext-large`](https://drive.google.com/uc?export=download&id=1dtad0FFzG11CBsawu8hvwwzU2R0FDI94),[`macbert-base`](https://drive.google.com/uc?export=download&id=1aV69OhYzIwj_hn-kO1RiBa-m8QAusQ5b),[`macbert-large`](https://drive.google.com/uc?export=download&id=1lWYxnk1EqTA2Q20_IShxBrCPc5VSDCkT) |
 
 ### 机器翻译
 
@@ -97,7 +97,7 @@ print(model.predict(X))
 | [`BERTVerifierMRC`](./examples/tutorial/BERTVerifierMRC.ipynb) | 抽取 answer span 的同时判断可答性 | [`bert-base`](https://storage.googleapis.com/bert_models/2018_11_03/chinese_L-12_H-768_A-12.zip),[`roberta-wwm-ext-base`](https://drive.google.com/uc?export=download&id=1jMAKIJmPn7kADgD3yQZhpsqM-IRM1qZt),[`roberta-wwm-ext-large`](https://drive.google.com/uc?export=download&id=1dtad0FFzG11CBsawu8hvwwzU2R0FDI94),[`macbert-base`](https://drive.google.com/uc?export=download&id=1aV69OhYzIwj_hn-kO1RiBa-m8QAusQ5b),[`macbert-large`](https://drive.google.com/uc?export=download&id=1lWYxnk1EqTA2Q20_IShxBrCPc5VSDCkT) |
 | [`RetroReaderMRC`](./examples/tutorial/RetroReaderMRC.ipynb) | 抽取 answer span 的同时判断可答性 | [`bert-base`](https://storage.googleapis.com/bert_models/2018_11_03/chinese_L-12_H-768_A-12.zip),[`roberta-wwm-ext-base`](https://drive.google.com/uc?export=download&id=1jMAKIJmPn7kADgD3yQZhpsqM-IRM1qZt),[`roberta-wwm-ext-large`](https://drive.google.com/uc?export=download&id=1dtad0FFzG11CBsawu8hvwwzU2R0FDI94),[`macbert-base`](https://drive.google.com/uc?export=download&id=1aV69OhYzIwj_hn-kO1RiBa-m8QAusQ5b),[`macbert-large`](https://drive.google.com/uc?export=download&id=1lWYxnk1EqTA2Q20_IShxBrCPc5VSDCkT) |
 
-### 单label分类
+### 文本分类 (单label)
 
 | API 				| 说明                                            | 中文预训练参数                                    |
 | :----------- | :----------- | :------------ |
@@ -111,7 +111,7 @@ print(model.predict(X))
 | [`SemBERTClassifier`](./examples/tutorial/SemBERTClassifier.ipynb) 		| 通过 SemBERT 架构融合字级别的特征 | [`bert-base`](https://storage.googleapis.com/bert_models/2018_11_03/chinese_L-12_H-768_A-12.zip),[`roberta-wwm-ext-base`](https://drive.google.com/uc?export=download&id=1jMAKIJmPn7kADgD3yQZhpsqM-IRM1qZt),[`roberta-wwm-ext-large`](https://drive.google.com/uc?export=download&id=1dtad0FFzG11CBsawu8hvwwzU2R0FDI94),[`macbert-base`](https://drive.google.com/uc?export=download&id=1aV69OhYzIwj_hn-kO1RiBa-m8QAusQ5b),[`macbert-large`](https://drive.google.com/uc?export=download&id=1lWYxnk1EqTA2Q20_IShxBrCPc5VSDCkT) |
 | [`UDAClassifier`](./examples/tutorial/UDAClassifier.ipynb) 		| 结合一致性学习的半监督学习算法 | [`bert-base`](https://storage.googleapis.com/bert_models/2018_11_03/chinese_L-12_H-768_A-12.zip),[`roberta-wwm-ext-base`](https://drive.google.com/uc?export=download&id=1jMAKIJmPn7kADgD3yQZhpsqM-IRM1qZt),[`roberta-wwm-ext-large`](https://drive.google.com/uc?export=download&id=1dtad0FFzG11CBsawu8hvwwzU2R0FDI94),[`macbert-base`](https://drive.google.com/uc?export=download&id=1aV69OhYzIwj_hn-kO1RiBa-m8QAusQ5b),[`macbert-large`](https://drive.google.com/uc?export=download&id=1lWYxnk1EqTA2Q20_IShxBrCPc5VSDCkT) |
 
-### 多label分类
+### 文本分类 (多label)
 
 | API 				| 说明                                            | 中文预训练参数                                    |
 | :----------- | :----------- | :------------ |
@@ -121,12 +121,6 @@ print(model.predict(X))
 | [`ALBERTBinaryClassifier`](./examples/tutorial/ALBERTBinaryClassifier.ipynb) 		| - | [`albert-tiny`](https://storage.googleapis.com/albert_zh/albert_tiny_zh_google.zip),[`albert-small`](https://storage.googleapis.com/albert_zh/albert_small_zh_google.zip),[`albert-base`](https://storage.googleapis.com/albert_zh/albert_base_zh_additional_36k_steps.zip),[`albert-large`](https://storage.googleapis.com/albert_zh/albert_large_zh.zip),[`albert-xlarge`](https://storage.googleapis.com/albert_zh/albert_xlarge_zh_183k.zip) |
 | [`ELECTRABinaryClassifier`](./examples/tutorial/ELECTRABinaryClassifier.ipynb) 		| - | [`electra-small`](https://drive.google.com/file/d/1uab-9T1kR9HgD2NB0Kz1JB_TdSKgJIds/view?usp=drive_open),[`electra-small-ex`](https://drive.google.com/file/d/1LluPORc7xtFmCTFR4IF17q77ip82i7__/view),[`electra-base`](https://drive.google.com/file/d/1FMwrs2weFST-iAuZH3umMa6YZVeIP8wD/view),[`electra-large`](https://drive.google.com/file/d/1ny0NMLkEWG6rseDLiF_NujdHxDcIN51m/view) |
 
-### 回归
-
-| API 				| 说明                                            | 中文预训练参数                                    |
-| :----------- | :----------- | :------------ |
-| [`WideAndDeepRegressor`](./examples/tutorial/WideAndDeepRegressor.ipynb) | 通过 Wide & Deep 架构融合句子级别特征 | [`bert-base`](https://storage.googleapis.com/bert_models/2018_11_03/chinese_L-12_H-768_A-12.zip),[`roberta-wwm-ext-base`](https://drive.google.com/uc?export=download&id=1jMAKIJmPn7kADgD3yQZhpsqM-IRM1qZt),[`roberta-wwm-ext-large`](https://drive.google.com/uc?export=download&id=1dtad0FFzG11CBsawu8hvwwzU2R0FDI94),[`macbert-base`](https://drive.google.com/uc?export=download&id=1aV69OhYzIwj_hn-kO1RiBa-m8QAusQ5b),[`macbert-large`](https://drive.google.com/uc?export=download&id=1lWYxnk1EqTA2Q20_IShxBrCPc5VSDCkT) |
-
 ### 序列标注
 
 | API 				| 说明                                            | 中文预训练参数                                    |
@@ -135,7 +129,13 @@ print(model.predict(X))
 | [`RoBERTaSeqClassifier`](./examples/tutorial/RoBERTaSeqClassifier.ipynb) 		| - | [`bert-base`](https://storage.googleapis.com/bert_models/2018_11_03/chinese_L-12_H-768_A-12.zip),[`roberta-wwm-ext-base`](https://drive.google.com/uc?export=download&id=1jMAKIJmPn7kADgD3yQZhpsqM-IRM1qZt),[`roberta-wwm-ext-large`](https://drive.google.com/uc?export=download&id=1dtad0FFzG11CBsawu8hvwwzU2R0FDI94),[`macbert-base`](https://drive.google.com/uc?export=download&id=1aV69OhYzIwj_hn-kO1RiBa-m8QAusQ5b),[`macbert-large`](https://drive.google.com/uc?export=download&id=1lWYxnk1EqTA2Q20_IShxBrCPc5VSDCkT) |
 | [`ALBERTSeqClassifier`](./examples/tutorial/ALBERTSeqClassifier.ipynb) 		| - | [`albert-tiny`](https://storage.googleapis.com/albert_zh/albert_tiny_zh_google.zip),[`albert-small`](https://storage.googleapis.com/albert_zh/albert_small_zh_google.zip),[`albert-base`](https://storage.googleapis.com/albert_zh/albert_base_zh_additional_36k_steps.zip),[`albert-large`](https://storage.googleapis.com/albert_zh/albert_large_zh.zip),[`albert-xlarge`](https://storage.googleapis.com/albert_zh/albert_xlarge_zh_183k.zip) |
 | [`ELECTRASeqClassifier`](./examples/tutorial/ELECTRASeqClassifier.ipynb) 		| - | [`electra-small`](https://drive.google.com/file/d/1uab-9T1kR9HgD2NB0Kz1JB_TdSKgJIds/view?usp=drive_open),[`electra-small-ex`](https://drive.google.com/file/d/1LluPORc7xtFmCTFR4IF17q77ip82i7__/view),[`electra-base`](https://drive.google.com/file/d/1FMwrs2weFST-iAuZH3umMa6YZVeIP8wD/view),[`electra-large`](https://drive.google.com/file/d/1ny0NMLkEWG6rseDLiF_NujdHxDcIN51m/view) |
-| [`BERTSeqMultiTaskClassifier`](./examples/tutorial/BERTSeqMultiTaskClassifier.ipynb) 		| 序列标注与分类结合的多任务学习 | [`bert-base`](https://storage.googleapis.com/bert_models/2018_11_03/chinese_L-12_H-768_A-12.zip),[`roberta-wwm-ext-base`](https://drive.google.com/uc?export=download&id=1jMAKIJmPn7kADgD3yQZhpsqM-IRM1qZt),[`roberta-wwm-ext-large`](https://drive.google.com/uc?export=download&id=1dtad0FFzG11CBsawu8hvwwzU2R0FDI94),[`macbert-base`](https://drive.google.com/uc?export=download&id=1aV69OhYzIwj_hn-kO1RiBa-m8QAusQ5b),[`macbert-large`](https://drive.google.com/uc?export=download&id=1lWYxnk1EqTA2Q20_IShxBrCPc5VSDCkT) |
+| [`BERTSeqMultiTaskClassifier`](./examples/tutorial/BERTSeqMultiTaskClassifier.ipynb) 		| 序列标注与文本分类相结合的多任务学习 | [`bert-base`](https://storage.googleapis.com/bert_models/2018_11_03/chinese_L-12_H-768_A-12.zip),[`roberta-wwm-ext-base`](https://drive.google.com/uc?export=download&id=1jMAKIJmPn7kADgD3yQZhpsqM-IRM1qZt),[`roberta-wwm-ext-large`](https://drive.google.com/uc?export=download&id=1dtad0FFzG11CBsawu8hvwwzU2R0FDI94),[`macbert-base`](https://drive.google.com/uc?export=download&id=1aV69OhYzIwj_hn-kO1RiBa-m8QAusQ5b),[`macbert-large`](https://drive.google.com/uc?export=download&id=1lWYxnk1EqTA2Q20_IShxBrCPc5VSDCkT) |
+
+### 回归
+
+| API 				| 说明                                            | 中文预训练参数                                    |
+| :----------- | :----------- | :------------ |
+| [`WideAndDeepRegressor`](./examples/tutorial/WideAndDeepRegressor.ipynb) | 通过 Wide & Deep 架构融合句子级别特征 | [`bert-base`](https://storage.googleapis.com/bert_models/2018_11_03/chinese_L-12_H-768_A-12.zip),[`roberta-wwm-ext-base`](https://drive.google.com/uc?export=download&id=1jMAKIJmPn7kADgD3yQZhpsqM-IRM1qZt),[`roberta-wwm-ext-large`](https://drive.google.com/uc?export=download&id=1dtad0FFzG11CBsawu8hvwwzU2R0FDI94),[`macbert-base`](https://drive.google.com/uc?export=download&id=1aV69OhYzIwj_hn-kO1RiBa-m8QAusQ5b),[`macbert-large`](https://drive.google.com/uc?export=download&id=1lWYxnk1EqTA2Q20_IShxBrCPc5VSDCkT) |
 
 ### 模型蒸馏
 | API 				| 说明                                            | 对应Teacher                                    |
@@ -250,7 +250,7 @@ model.fit(..., optimizer="adamw")    # 默认
 model.fit(..., optimizer="lamb")
 
 # 分层学习率：应对迁移学习中的 catastrophic forgetting 问题 (少量模型不适用)
-model.fit(..., layerwise_lr_decay_ratio=0.85)     # 默认为 None
+model.fit(..., layerwise_lr_decay_ratio=0.85)
 print(model._key_to_depths)                             # 衰减比率 (可修改)
 
 # 对抗式训练：在输入中添加扰动，以提高模型的鲁棒性和泛化能力

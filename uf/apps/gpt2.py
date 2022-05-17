@@ -45,7 +45,7 @@ class GPT2LM(LMModule):
             n_head=num_attention_heads,
             n_layer=num_hidden_layers,
         )
-        self._key_to_depths = get_key_to_depths(num_hidden_layers)
+        self.decay_power = get_decay_power(num_hidden_layers)
 
         if "<eos>" not in self.tokenizer.vocab:
             self.tokenizer.add("<eos>")
@@ -233,12 +233,12 @@ def get_gpt2_config(**kwargs):
     return GPT2Config(**kwargs)
 
 
-def get_key_to_depths(num_hidden_layers):
-    key_to_depths = {
+def get_decay_power(num_hidden_layers):
+    decay_power = {
         "/word_embeddings": num_hidden_layers + 2,
         "/wpe": num_hidden_layers + 2,
         "ln_f/": 0,
     }
     for layer_idx in range(num_hidden_layers):
-        key_to_depths["/h%d/" % layer_idx] = num_hidden_layers - layer_idx + 1
-    return key_to_depths
+        decay_power["/h%d/" % layer_idx] = num_hidden_layers - layer_idx + 1
+    return decay_power

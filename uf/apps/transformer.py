@@ -41,7 +41,7 @@ class TransformerMT(MTModule):
         self.__init_args__ = locals()
 
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
-        self._key_to_depths = get_key_to_depths(num_hidden_layers)
+        self.decay_power = get_decay_power(num_hidden_layers)
 
         if "<s>" not in self.tokenizer.vocab:
             self.tokenizer.add("<s>")
@@ -243,11 +243,11 @@ class TransformerMT(MTModule):
         return outputs
 
 
-def get_key_to_depths(num_hidden_layers):
-    key_to_depths = {
+def get_decay_power(num_hidden_layers):
+    decay_power = {
         "/embeddings": num_hidden_layers + 1,
         "cls": 0,
     }
     for layer_idx in range(num_hidden_layers):
-        key_to_depths["/block_%d/" % layer_idx] = num_hidden_layers - layer_idx
-    return key_to_depths
+        decay_power["/block_%d/" % layer_idx] = num_hidden_layers - layer_idx
+    return decay_power

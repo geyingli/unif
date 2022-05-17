@@ -2,7 +2,7 @@ import numpy as np
 
 from ..third import tf
 from .base import ClassifierModule
-from .bert import BERTClassifier, get_key_to_depths
+from .bert import BERTClassifier, get_decay_power
 from ..model.bert import BERTConfig
 from ..model.stockbert import StockBERTEncoder
 from ..model.base import CLSDecoder
@@ -42,7 +42,7 @@ class StockBERTClassifier(BERTClassifier, ClassifierModule):
         self.__init_args__ = locals()
 
         self.bert_config = BERTConfig.from_json_file(config_file)
-        self._key_to_depths = get_key_to_depths(self.bert_config.num_hidden_layers)
+        self.decay_power = get_decay_power(self.bert_config.num_hidden_layers)
 
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None, is_training=False, is_parallel=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)

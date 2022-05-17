@@ -40,7 +40,7 @@ class TextCNNClassifier(BERTClassifier, ClassifierModule):
         self.__init_args__ = locals()
 
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
-        self._key_to_depths = get_key_to_depths()
+        self.decay_power = get_decay_power()
 
         if "[CLS]" not in self.tokenizer.vocab:
             self.tokenizer.add("[CLS]")
@@ -114,10 +114,10 @@ class TextCNNClassifier(BERTClassifier, ClassifierModule):
         return decoder.get_forward_outputs()
 
 
-def get_key_to_depths():
-    key_to_depths = {
+def get_decay_power():
+    decay_power = {
         "/embeddings": 2,
         "/conv_": 1,
         "cls/": 0,
     }
-    return key_to_depths
+    return decay_power

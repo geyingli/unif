@@ -2,7 +2,7 @@ import numpy as np
 
 from ..third import tf
 from .base import LMModule
-from .bert import BERTLM, get_key_to_depths, create_masked_lm_predictions
+from .bert import BERTLM, get_decay_power, create_masked_lm_predictions
 from ..model.bert import BERTDecoder, BERTConfig
 from ..model.spe import SPEEncoder
 from ..token import WordPieceTokenizer
@@ -41,7 +41,7 @@ class SPELM(BERTLM, LMModule):
 
         self.bert_config = BERTConfig.from_json_file(config_file)
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
-        self._key_to_depths = get_key_to_depths(self.bert_config.num_hidden_layers)
+        self.decay_power = get_decay_power(self.bert_config.num_hidden_layers)
 
         if "[CLS]" not in self.tokenizer.vocab:
             self.tokenizer.add("[CLS]")

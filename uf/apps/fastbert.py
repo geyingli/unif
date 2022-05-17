@@ -42,7 +42,7 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
 
         self.bert_config = BERTConfig.from_json_file(config_file)
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
-        self._key_to_depths = "unsupported"
+        self.decay_power = "unsupported"
 
         assert label_size, ("`label_size` can't be None.")
         if "[CLS]" not in self.tokenizer.vocab:

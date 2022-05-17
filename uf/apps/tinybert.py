@@ -41,7 +41,7 @@ class TinyBERTClassifier(BERTClassifier, ClassifierModule):
 
         self.bert_config = BERTConfig.from_json_file(config_file)
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
-        self._key_to_depths = "unsupported"
+        self.decay_power = "unsupported"
 
         self.student_config = copy.deepcopy(self.bert_config)
         self.student_config.hidden_size = hidden_size
@@ -175,7 +175,7 @@ class TinyBERTBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
 
         self.bert_config = BERTConfig.from_json_file(config_file)
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
-        self._key_to_depths = "unsupported"
+        self.decay_power = "unsupported"
 
         self.student_config = copy.deepcopy(self.bert_config)
         self.student_config.hidden_size = hidden_size

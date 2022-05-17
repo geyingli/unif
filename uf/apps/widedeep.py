@@ -54,7 +54,7 @@ class WideAndDeepClassifier(BERTClassifier, ClassifierModule):
             "`bert`, `roberta`, `albert` and `electra`."
         )
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
-        self._key_to_depths = get_key_to_depths(self.bert_config.num_hidden_layers)
+        self.decay_power = get_decay_power(self.bert_config.num_hidden_layers)
 
         if "[CLS]" not in self.tokenizer.vocab:
             self.tokenizer.add("[CLS]")
@@ -282,7 +282,7 @@ class WideAndDeepRegressor(WideAndDeepClassifier, RegressorModule):
             "Invalid value of `deep_module`: %s. Pick one from `bert`, `roberta`, `albert` and `electra`."
         )
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
-        self._key_to_depths = get_key_to_depths(self.bert_config.num_hidden_layers)
+        self.decay_power = get_decay_power(self.bert_config.num_hidden_layers)
 
         if "[CLS]" not in self.tokenizer.vocab:
             self.tokenizer.add("[CLS]")
@@ -546,8 +546,8 @@ class WideAndDeepRegressor(WideAndDeepClassifier, RegressorModule):
         return outputs
 
 
-def get_key_to_depths(num_hidden_layers):
-    key_to_depths = {
+def get_decay_power(num_hidden_layers):
+    decay_power = {
         "/embeddings": num_hidden_layers + 2,
         "wide/": 2,
         "wide_and_deep/": 1,
@@ -556,5 +556,5 @@ def get_key_to_depths(num_hidden_layers):
         "reg": 0,
     }
     for layer_idx in range(num_hidden_layers):
-        key_to_depths["/layer_%d/" % layer_idx] = num_hidden_layers - layer_idx + 1
-    return key_to_depths
+        decay_power["/layer_%d/" % layer_idx] = num_hidden_layers - layer_idx + 1
+    return decay_power

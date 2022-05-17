@@ -4,7 +4,7 @@ import numpy as np
 from ..third import tf
 from .base import ClassifierModule, MRCModule, LMModule
 from .bert import BERTClassifier, BERTBinaryClassifier, BERTSeqClassifier, BERTMRC
-from .bert import BERTLM, create_masked_lm_predictions, get_key_to_depths
+from .bert import BERTLM, create_masked_lm_predictions, get_decay_power
 from ..model.bert import BERTEncoder, BERTConfig
 from ..model.electra import ELECTRA
 from ..model.base import CLSDecoder, BinaryCLSDecoder, SeqCLSDecoder, MRCDecoder
@@ -39,7 +39,7 @@ class ELECTRAClassifier(BERTClassifier, ClassifierModule):
 
         self.bert_config = BERTConfig.from_json_file(config_file)
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
-        self._key_to_depths = get_key_to_depths(self.bert_config.num_hidden_layers)
+        self.decay_power = get_decay_power(self.bert_config.num_hidden_layers)
 
         if "[CLS]" not in self.tokenizer.vocab:
             self.tokenizer.add("[CLS]")
@@ -104,7 +104,7 @@ class ELECTRABinaryClassifier(BERTBinaryClassifier, ClassifierModule):
 
         self.bert_config = BERTConfig.from_json_file(config_file)
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
-        self._key_to_depths = get_key_to_depths(self.bert_config.num_hidden_layers)
+        self.decay_power = get_decay_power(self.bert_config.num_hidden_layers)
 
         if "[CLS]" not in self.tokenizer.vocab:
             self.tokenizer.add("[CLS]")
@@ -168,7 +168,7 @@ class ELECTRASeqClassifier(BERTSeqClassifier, ClassifierModule):
 
         self.bert_config = BERTConfig.from_json_file(config_file)
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
-        self._key_to_depths = get_key_to_depths(self.bert_config.num_hidden_layers)
+        self.decay_power = get_decay_power(self.bert_config.num_hidden_layers)
 
         if "[CLS]" not in self.tokenizer.vocab:
             self.tokenizer.add("[CLS]")
@@ -232,7 +232,7 @@ class ELECTRAMRC(BERTMRC, MRCModule):
 
         self.bert_config = BERTConfig.from_json_file(config_file)
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
-        self._key_to_depths = get_key_to_depths(self.bert_config.num_hidden_layers)
+        self.decay_power = get_decay_power(self.bert_config.num_hidden_layers)
 
         if "[CLS]" not in self.tokenizer.vocab:
             self.tokenizer.add("[CLS]")
@@ -302,7 +302,7 @@ class ELECTRALM(BERTLM, LMModule):
         self.__init_args__ = locals()
 
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
-        self._key_to_depths = "unsupported"
+        self.decay_power = "unsupported"
 
         if "[CLS]" not in self.tokenizer.vocab:
             self.tokenizer.add("[CLS]")

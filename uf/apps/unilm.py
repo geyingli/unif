@@ -60,7 +60,7 @@ class UniLM(BERTLM, LMModule):
         tf.logging.info("LM Mode: `%s`. Use method `.to_mode()` to convert it into `bi`, `l2r`, `r2l` or `s2s`." % mode)
         self.bert_config = BERTConfig.from_json_file(config_file)
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
-        self._key_to_depths = get_key_to_depths(self.bert_config.num_hidden_layers)
+        self.decay_power = get_decay_power(self.bert_config.num_hidden_layers)
 
         if "[CLS]" not in self.tokenizer.vocab:
             self.tokenizer.add("[CLS]")
@@ -489,12 +489,12 @@ def create_masked_lm_predictions(tokens, masked_lm_prob, max_predictions_per_seq
     return (output_tokens, masked_lm_positions, masked_lm_labels)
 
 
-def get_key_to_depths(num_hidden_layers):
-    key_to_depths = {
+def get_decay_power(num_hidden_layers):
+    decay_power = {
         "/embeddings": num_hidden_layers + 2,
         "/pooler/": 1,
         "cls/": 0,
     }
     for layer_idx in range(num_hidden_layers):
-        key_to_depths["/layer_%d/" % layer_idx] = num_hidden_layers - layer_idx + 1
-    return key_to_depths
+        decay_power["/layer_%d/" % layer_idx] = num_hidden_layers - layer_idx + 1
+    return decay_power

@@ -2,7 +2,7 @@ import numpy as np
 
 from ..third import tf
 from .base import ClassifierModule
-from .bert import BERTClassifier, get_key_to_depths
+from .bert import BERTClassifier, get_decay_power
 from ..model.bert import BERTEncoder, BERTConfig
 from ..model.uda import UDADecoder
 from ..model import util
@@ -45,7 +45,7 @@ class UDAClassifier(BERTClassifier, ClassifierModule):
 
         self.bert_config = BERTConfig.from_json_file(config_file)
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
-        self._key_to_depths = get_key_to_depths(self.bert_config.num_hidden_layers)
+        self.decay_power = get_decay_power(self.bert_config.num_hidden_layers)
 
         if "[CLS]" not in self.tokenizer.vocab:
             self.tokenizer.add("[CLS]")

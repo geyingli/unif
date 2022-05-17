@@ -125,7 +125,7 @@ print(model.predict(X))
 
 | API 				| 说明                                            | 中文预训练参数                                    |
 | :----------- | :----------- | :------------ |
-| [`WideAndDeepRegressor`](./examples/tutorial/WideAndDeepRegressor.ipynb) | - | [`bert-base`](https://storage.googleapis.com/bert_models/2018_11_03/chinese_L-12_H-768_A-12.zip),[`roberta-wwm-ext-base`](https://drive.google.com/uc?export=download&id=1jMAKIJmPn7kADgD3yQZhpsqM-IRM1qZt),[`roberta-wwm-ext-large`](https://drive.google.com/uc?export=download&id=1dtad0FFzG11CBsawu8hvwwzU2R0FDI94),[`macbert-base`](https://drive.google.com/uc?export=download&id=1aV69OhYzIwj_hn-kO1RiBa-m8QAusQ5b),[`macbert-large`](https://drive.google.com/uc?export=download&id=1lWYxnk1EqTA2Q20_IShxBrCPc5VSDCkT) |
+| [`WideAndDeepRegressor`](./examples/tutorial/WideAndDeepRegressor.ipynb) | 通过 Wide & Deep 架构融合句子级别特征 | [`bert-base`](https://storage.googleapis.com/bert_models/2018_11_03/chinese_L-12_H-768_A-12.zip),[`roberta-wwm-ext-base`](https://drive.google.com/uc?export=download&id=1jMAKIJmPn7kADgD3yQZhpsqM-IRM1qZt),[`roberta-wwm-ext-large`](https://drive.google.com/uc?export=download&id=1dtad0FFzG11CBsawu8hvwwzU2R0FDI94),[`macbert-base`](https://drive.google.com/uc?export=download&id=1aV69OhYzIwj_hn-kO1RiBa-m8QAusQ5b),[`macbert-large`](https://drive.google.com/uc?export=download&id=1lWYxnk1EqTA2Q20_IShxBrCPc5VSDCkT) |
 
 ### 序列标注
 
@@ -138,11 +138,11 @@ print(model.predict(X))
 | [`BERTSeqMultiTaskClassifier`](./examples/tutorial/BERTSeqMultiTaskClassifier.ipynb) 		| 序列标注与分类结合的多任务学习 | [`bert-base`](https://storage.googleapis.com/bert_models/2018_11_03/chinese_L-12_H-768_A-12.zip),[`roberta-wwm-ext-base`](https://drive.google.com/uc?export=download&id=1jMAKIJmPn7kADgD3yQZhpsqM-IRM1qZt),[`roberta-wwm-ext-large`](https://drive.google.com/uc?export=download&id=1dtad0FFzG11CBsawu8hvwwzU2R0FDI94),[`macbert-base`](https://drive.google.com/uc?export=download&id=1aV69OhYzIwj_hn-kO1RiBa-m8QAusQ5b),[`macbert-large`](https://drive.google.com/uc?export=download&id=1lWYxnk1EqTA2Q20_IShxBrCPc5VSDCkT) |
 
 ### 模型蒸馏
-| API 				| 说明                                            | 中文预训练参数                                    |
+| API 				| 说明                                            | 对应Teacher                                    |
 | :----------- | :----------- | :------------ |
-| [`TinyBERTClassifier`](./examples/tutorial/TinyBERTClassifier.ipynb) 		| 大幅压缩模型参数，提速十倍以上 |  |
-| [`TinyBERTBinaryClassifier`](./examples/tutorial/TinyBERTBinaryClassifier.ipynb)     | - |  |
-| [`FastBERTClassifier`](./examples/tutorial/FastBERTClassifier.ipynb) 		| 动态推理，易分样本提前离开模型 |  |
+| [`TinyBERTClassifier`](./examples/tutorial/TinyBERTClassifier.ipynb) 		| 大幅压缩模型参数，提速十倍以上 | `BERTClassifier` |
+| [`TinyBERTBinaryClassifier`](./examples/tutorial/TinyBERTBinaryClassifier.ipynb)     | - | `BERTBinaryClassifier` |
+| [`FastBERTClassifier`](./examples/tutorial/FastBERTClassifier.ipynb) 		| 动态推理，易分样本提前离开模型 | `BERTClassifier` |
 
 点击上方模型名称，查看简要的使用示范。此外，善用 `help(XXX)` 能帮你获得更多 API 的使用细节。
 
@@ -346,17 +346,28 @@ model.export(
 
   答：提前使用自己的工具做好分词，而后在训练和推理时将原先的传入参数由 `X` 改为 `X_tokenized`。例如，原本传入 `model.fit(X=["黎明与夕阳", ...], ...)`，使用自己的分词工具后，改为传入 `model.fit(X_tokenized=[["黎", "##明", "与", "夕", "##阳"], ...], ...)`。此外，还需保证分词在 vocab 文件中存在。
 
-- 问：如何实现 TinyBERT 和 FastBERT 二重蒸馏？
-
-  答：`TinyBERTClassifier` 训练完成后使用 `.to_bert()` 提取子模型为 BERT 重新保存，而后使用 `FastBERTClassifier` 常规读取生成的 checkpoint 和配置文件即可。
-
-- 问：我可以用这个框架做哪些有趣的事情？
-
-  答：可以用 `GPT2LM` 来生成古诗/小说，可以使用 `TransformerMT` 搭建简单的聊天机器人，可以组合 `ELECTRALM` 和 `BERTLM` 进行文本纠错等等。
-
 - 问：无意义的 warning 信息太多，该怎么剔除？
 
   答：这是 tensorflow 一直饱受诟病之处，我也与你一同深受困扰。暂时没有有效的同时，又兼容各个 tf 版本的解决方案。
+
+## Tips
+
+- 经典永不衰：
+
+  模型并非越复杂表现越好，在文本生成以外的应用上，BERT 几乎足够让你一招鲜吃遍天。
+
+- 好用的参数：
+
+  优先使用哈工大训的 `macbert-base`，亲测各项任务上表现都很不错。
+
+- TinyBERT 搭配 FastBERT 进行二重蒸馏：
+
+  `TinyBERTClassifier` 训练完成后使用 `.to_bert()` 提取子模型为 BERT，而后使用 `FastBERTClassifier` 读取，继续进行提速。
+
+- 实现一些有趣的事情：
+
+  用 `GPT2LM` 来生成古诗/小说，用 `TransformerMT` 搭建简单的聊天机器人，或组合 `ELECTRALM` 和 `BERTLM` 进行文本纠错等等。
+
 
 ## 尾声
 

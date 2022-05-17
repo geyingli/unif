@@ -8,7 +8,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-v2.4.3-blue">
+        <img src="https://img.shields.io/badge/version-v2.4.4-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-1.x\2.x-yellow">
@@ -144,92 +144,112 @@ print(model.predict(X))
 | [`TinyBERTBinaryClassifier`](./examples/tutorial/TinyBERTBinaryClassifier.ipynb)     | - | `BERTBinaryClassifier` |
 | [`FastBERTClassifier`](./examples/tutorial/FastBERTClassifier.ipynb) 		| 动态推理，易分样本提前离开模型 | `BERTClassifier` |
 
-点击上方模型名称，查看简要的使用示范。此外，善用 `help(XXX)` 能帮你获得更多 API 的使用细节。
 
 ## 建模
 
-一步创建新模型：
+实际上建模所需的参数不在少数，因模型而异。为了简便起见，大多数设置了默认值，实际应用中了解每一项参数的含义是十分有必要的。参数的命名与原论文保持一致。如果遇到不明白的参数，除了看源代码外，可以前往原论文寻找答案。以 `BERTClassifier` 为例，包含以下参数：
 
 ```python
 model = uf.BERTClassifier(
-    config_file, vocab_file,
-    max_seq_length=128,
-    label_size=2,               # 标签数量 (分类相关)
-    init_checkpoint=None,       # 预训练参数路径
+    config_file,                # json 格式的配置文件，通常可以在预训练参数包里找到
+    vocab_file,                 # 一行一个字/词的 txt 文件
+    max_seq_length=128,         # 切词后的最大序列长度
+    label_size=2,               # label 取值数
+    init_checkpoint=None,       # 预训练参数的路径或目录
     output_dir="./output",      # 输出文件导出目录
-    gpu_ids="0,1,3,5",          # GPU 代号 (为空则不使用 GPU)
-    drop_pooler=False,          # 建模时跳过 pooler 层 (BERT 相关)
-    do_lower_case=True,         # 英文小写化处理
-    truncate_method="LIFO",     # LIFO:尾词先弃, FIFO:首词先弃, longer-FO:长段落先弃
+    gpu_ids="0,1,3,5",          # GPU 代号 (为空代表不使用 GPU)
+    drop_pooler=False,          # 建模时是否跳过 pooler 层
+    do_lower_case=True,         # 英文是否进行小写处理
+    truncate_method="LIFO",     # 输入超出 max_seq_length 时的截断方式 (LIFO:尾词先弃, FIFO:首词先弃, longer-FO:长文本先弃)
 )
 ```
 
-任务后期需要大量的训练，可以通过配置文件，方便地管理模型：
+训练过程中，通常需要设立多个断点进行模型验证，决定是否停止训练。这时可以通过以下方法保存模型配置和模型参数，在需要的时候一键读取：
 
 ``` python
-# 写入配置文件
-assert model.output_dir is not None         # 为空的话模型就白训了
-model.cache("key", cache_file=".cache")     # 缓存模型配置
+# 保存
+assert model.output_dir is not None         # 为空的话只保存配置，不保存参数，等于模型白训了
+model.cache("key", cache_file=".cache")     # 缓存模型配置到指定文件 (模型参数则存放到 `output_dir`)
 
-# 从配置文件读取
+# 读取
 model = uf.load("key", cache_file=".cache")     # 读取模型
 ```
 
-模型使用完毕，想清出内存？试试 `del model` 或重置 `model.reset()`。
+模型使用完毕后，若需要清理内存，可以使用 `del model` 删除模型，或通过 `model.reset()` 对模型进行重置。
 
-## 训练/推理/评分
+## 训练
+
+同样，训练也包含一些可自行调节的参数，有些参数甚至十分关键：
 
 ``` python
-# 开启多进程 (加速数据预处理, 适用于十万级数据处理)
-with uf.MultiProcess():    # 多进程的本质是将当前进程进行复制，因此建议读取数据的代码写在这一步之后，否则容易内存爆炸
-    X, y = load_data()
-
-    # 训练
-    model.fit(
-        X=X,                    # 输入列表
-        y=y,                    # 输出列表
-        sample_weight=None,     # 样本权重列表，放空则默认每条样本权重为 1.0
-        X_tokenized=None,       # 输入列表 (已分词)
-        batch_size=32,          # 每一步使用多少数据
-        learning_rate=5e-05,    # 基础学习率
-        target_steps=None,      # 放空代表直接训练到 `total_steps`，不中途停止；否则为本次训练断点
-        total_steps=-3,         # -3 代表自动计算数据量并循环三轮
-        warmup_ratio=0.1,       # 学习率渐进范围
-        print_per_secs=1,       # 多少秒打印一次信息
-        save_per_steps=1000,    # 多少步保存一次模型参数
-        **kwargs,               # 其他训练相关参数，如分层学习率等，下文将介绍
-    )
-
-    # 推理
-    model.predict(X=X, X_tokenized=None, batch_size=8)
-
-    # 评分
-    model.score(X=X, y=y, sample_weight=None, X_tokenized=None, batch_size=8)
-
-# 常规训练流程示范
-assert model.output_dir is not None     # 非空才能保存模型参数
-for loop_id in range(10):               # 假设训练途中一共跑 10 次验证集，观察模型表现
-    model.fit(X, y, target_steps=((loop_id + 1) * -0.6), total_steps=-6)    # 假设一共训练 6 轮
-    model.cache("dev-%d" % loop_id)     # 保存一次模型
-    print(model.score(X_dev, y_dev))    # 查看模型表现
+  model.fit(
+      X=X,                    # 输入列表
+      y=y,                    # 输出列表
+      sample_weight=None,     # 样本权重列表，放空则默认每条样本权重为 1.0
+      X_tokenized=None,       # 输入列表 (已预先分词处理的 `X`)
+      batch_size=32,          # 每训练一步使用多少数据
+      learning_rate=5e-05,    # 学习率
+      target_steps=None,      # 放空代表直接一口气训练到 `total_steps`；否则为训练停止的位置
+      total_steps=-3,         # 模型计划训练的总步长，决定了学习率的变化曲线；正数，如 1000000，代表训练一百万步；负数，如 -3，代表根据数据量循环三轮的总步长
+      warmup_ratio=0.1,       # 训练初期学习率从零开始，线性增长到 `learning_rate` 的步长范围；0.1 代表在前 10% 的步数里逐渐增长
+      print_per_secs=1,       # 多少秒打印一次训练信息
+      save_per_steps=1000,    # 多少步保存一次模型参数
+      **kwargs,               # 其他训练相关参数，如分层学习率等，下文将介绍
+  )
 ```
 
-数据体量太大，无法全部读入内存？可以尝试先分批将数据写入不同的 TFRecords 文件，训练时同步读取：
+### 断点
 
-```python
+上文中我们提到了，训练过程可以通过设置断点对模型进行验证。`target_steps` 正是为设置断点而存在的。以下是使用示例：
+
+``` python
+num_loops = 10      # 假设训练途中一共设置 10 个断点
+num_epochs = 6      # 假设总共训练 6 轮
+
+for loop_id in range(10):
+    model.fit(
+        X, y,
+        target_steps=-((loop_id + 1) * num_epochs / num_loops),
+        total_steps=-num_epochs,
+    )
+    print(model.score(X_dev, y_dev))    # 验证模型
+```
+
+### 多进程
+
+`fit` 函数内部包含了两个步骤：
+
+- 对输入进行预处理，转换为模型可接受的输入 (e.g. ID矩阵)
+
+- 训练模型
+
+当数据量变得庞大时，例如百万级，数据预处理可能要消耗十几二十分钟，这段期间 GPU 处于闲置状态，无疑是对资源的浪费，可以通过开启多进程处理加速这一过程 (注：对第二步模型训练无效)：
+
+``` python
+with uf.MultiProcess():
+    model.fit(...)
+```
+
+由于 python 中存在 PIL锁，每一个进程只能使用一个 CPU，那么多进程唤醒其他 CPU 的本质是对当前进程进行复制。因此需要注意的是，最好在大批量数据读到程序内存以前开启 `MultiProcess`，而不要在之后，否则每一个复制的进程都会拷贝一份数据，造成不必要的内存占用。
+
+### TFRecords
+
+当数据规模进一步增大，内存可能已经无法存放这样海量的数据，这时可以通过写入本地 TFRecords 文件，减小模型训练过程中的内存压力：
+
+``` python
 with uf.MultiProcess():
 
     # 缓存数据
     model.to_tfrecords(
         X=X, y=y, sample_weight=None, X_tokenized=None,
-        tfrecords_file="./tfrecords",     # 一次只能存一个文件
+        tfrecords_file="train.tfrecords",
     )
 
 # 边读边训
 model.fit_from_tfrecords(
-    tfrecords_files=["./tfrecords", "./tfrecords1", ...],    # 同步从多个 TFRecords 文件读取
+    tfrecords_files=["train.tfrecords", "train.1.tfrecords", ...],    # 支持同步从一个或多个 TFRecords 文件读取
     n_jobs=3,             # 启动三个线程
-    batch_size=32,        # 以下参数的使用规范和 `.fit()` 中参数相同
+    batch_size=32,        # 以下参数和 `fit` 函数中参数相同
     learning_rate=5e-05,
     target_steps=None,
     total_steps=-3,
@@ -240,18 +260,22 @@ model.fit_from_tfrecords(
 )
 ```
 
-## 训练技巧/实用方法
+实际上，也就是把 `fit` 函数中预处理和模型训练的两个步骤给分开。
+
+### Tricks
+
+`fit` 和 `fit_from_tfrecords` 中的 `kwargs` 函数正是用来实现以下训练技巧：
 
 ```python
 # 优化器
 model.fit(..., optimizer="gd")
 model.fit(..., optimizer="adam")
-model.fit(..., optimizer="adamw")    # 默认
+model.fit(..., optimizer="adamw")   # 默认
 model.fit(..., optimizer="lamb")
 
 # 分层学习率：应对迁移学习中的 catastrophic forgetting 问题 (少量模型不适用)
 model.fit(..., layerwise_lr_decay_ratio=0.85)
-print(model._key_to_depths)                             # 衰减比率 (可修改)
+print(model.decay_power)            # 衰减指数 (可修改)
 
 # 对抗式训练：在输入中添加扰动，以提高模型的鲁棒性和泛化能力
 model.fit(..., adversarial="fgm", epsilon=0.5)                  # FGM
@@ -267,56 +291,75 @@ model.fit(..., conf_thresh=0.99)    # 默认为 None
 model.fit(..., grad_acc_steps=5)    # 默认为 1，即不累积梯度
 ```
 
-## 迁移学习
+2020 年流行对抗式训练，2021 年流行对比学习，这些都属于模型训练的 trick。未来还会有更多 trick，都将在这一部分引入。
 
-存在变量命名不同而无法加载，可通过以下步骤解决：
+### 预训练参数
+
+预训练参数的 `ckpt` 文件中，每一个变量都有独立的命名和规格，如 `("layer_1/attention/self/query/kernel", [768, 768])`。在模型列表中，我们已经列示了可以直接读取的公开预训练参数，从这些来源下载的预训练参数可以直接读取，无需处理。但在其他地方获取的预训练参数，可能会存在与本框架中模型命名/规格不一致的情况。
+
+规格不一致时，变量不可读取。但只有命名不一样时，可以通过下面的方法构建映射，将参数读到模型中：
 
 ```python
-# 查看从 `init_checkpoint` 初始化失败的变量
-assert model.init_checkpoint is not None
+# 初始化模型，触发读取 `ckpt` 文件，查看哪些变量初始化失败
 model.init()
 print(model.uninited_vars)
 
-# 人工构建变量名映射规则，重新读取变量
-print(uf.list_variables(model.init_checkpoint))    # 在 `checkpoint` 中寻找对应的参数名
-model.assignment_map["var_name_from_ckpt_file"] = model.uninited_vars["var_name_in_uf_model"]    # 添加映射关系
+# 人工进行变量名映射，并重新读取预训练参数
+print(uf.list_variables(model.init_checkpoint))    # 在打印的结果中找到对应的参数名
+model.assignment_map["layer_1/attention/self/query/kernel"] = model.uninited_vars["bert/encoder/layer_1/attention/self/query/kernel"]    # 添加映射关系
 model.reinit_from_checkpoint()                     # 重新读取预训练参数
-print(model.uninited_vars)                         # 看看变量是否从初始化失败的名单中消失
-
-# 保存参数及配置（避免下次载入预训练参数时，重复上述步骤）
-assert model.output_dir is not None
-model.cache("key")
+print(model.uninited_vars)                         # 在打印的结果中看看初始化失败的变量是否已消失
 ```
 
-直接给参数赋值如何？当然是可以的：
+`ckpt` 是 tensorflow 输出的预训练参数，如果希望读取 pytorch 输出的预训练参数，则稍微繁琐一些，可以通过将参数读到内存中，使用下面的变量赋值的方法实现。
+
+### 变量赋值
+
+将内存中的矩阵直接赋值给模型变量：
 
 ```python
-variable = model.trainable_variables[0]   # 获取参数
-model.assign(variable, value)             # 赋值
-print(model.sess.run(variable))           # 查看参数
+import numpy as np
 
-# 保存赋值后的参数及配置
-assert model.output_dir is not None
-model.cache("key")
+array = np.array([[0, 1, 2], [3, 4, 5]])  # 使用 numpy.Array 格式
+print(model.global_variables)             # 查看所有变量
+variable = model.global_variables[5]      # 获取变量
+model.assign(variable, array)             # 赋值
+print(model.sess.run(variable))           # 查看是否赋值成功
 ```
+
+## 推理/评分
+
+大多数模型的推理/评分只有以下几个参数，非常简单：
+
+``` python
+# 推理
+model.predict(X=X, X_tokenized=None, batch_size=8)
+
+# 评分
+model.score(X=X, y=y, sample_weight=None, X_tokenized=None, batch_size=8)
+```
+
+与训练不同的是，推理/评分暂时不支持多进程加速和写入 TFRecords。如果需要推理海量数据，可以通过分批处理达成目的。
 
 ## TFServing
 
-导出 PB 文件到指定目录下：
+导出供部署上线的 PB 文件到指定目录下：
 
 ``` python
 model.export(
-    "serving",            # 导出目录
-    rename_inputs={},     # 重命名输入
-    rename_outputs={},    # 重命名输出
-    ignore_inputs=[],     # 剪裁输入
-    ignore_outputs=[],    # 裁剪输出
+    "tf_serving/model",     # 导出目录
+    rename_inputs={},       # 重命名输入
+    rename_outputs={},      # 重命名输出
+    ignore_inputs=[],       # 剪裁输入
+    ignore_outputs=[],      # 裁剪输出
 )
 ```
 
+而后的模型服务化步骤在 cpp、go、java 等多种语言上都能实现，涉及到的后端代码以及部署上线已与本框架无关，这里就不再展示了。
+
 ## 开发需知
 
-欢迎一切有效的 pull request。核心的代码架构如下图所示，新的模型开发仅需要在 application 下添加新的类，这些类可以由建模库 modeling 中现有的函数组合而来，也可以自行编写。
+核心的代码架构如下图所示。新的模型类需要在 apps 目录下添加，而建模则在 model 目录下。欢迎一切有效的 pull request。
 
 <p align="center">
     <br>

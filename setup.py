@@ -1,7 +1,7 @@
 """
 Building guideline:
 
-In the current directory, running `python setup.py install` If the
+In the current directory, running `python setup.py install`. If the
 operation is not authorized, try `python setup.py install --user`.
 
 """

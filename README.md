@@ -191,7 +191,7 @@ model = uf.load("breakpoint.7", cache_file=".cache")
 
 ``` python
 with uf.MultiProcess():
-    model.fit(...)
+    model.fit(X, y)
 ```
 
 由于 python 中存在 PIL锁，每一个进程只能使用一个 CPU，那么多进程唤醒其他 CPU 的本质是对当前进程进行复制。因此需要注意的是，最好在大批量数据读到程序内存以前开启 `MultiProcess`，而不要在之后，否则每一个复制的进程都会拷贝一份数据，造成不必要的内存占用。

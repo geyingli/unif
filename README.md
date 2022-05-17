@@ -147,7 +147,7 @@ print(model.predict(X))
 
 ## 建模
 
-实际上建模所需的参数不在少数，因模型而异。为了简便起见，大多数设置了默认值，实际应用中了解每一项参数的含义是十分有必要的。参数的命名与原论文保持一致。如果遇到不明白的参数，除了看源代码外，可以前往原论文寻找答案。以 `BERTClassifier` 为例，包含以下参数：
+实际上建模所需的参数不在少数，因模型而异。为了简便起见，大多数设置了默认值。了解每一项参数的含义是十分有必要的。参数的命名与原论文保持一致，如果遇到不明白的参数，除了看源代码外，可以前往原论文寻找答案。以 `BERTClassifier` 为例，包含以下参数：
 
 ```python
 model = uf.BERTClassifier(
@@ -162,17 +162,6 @@ model = uf.BERTClassifier(
     do_lower_case=True,         # 英文是否进行小写处理
     truncate_method="LIFO",     # 输入超出 max_seq_length 时的截断方式 (LIFO:尾词先弃, FIFO:首词先弃, longer-FO:长文本先弃)
 )
-```
-
-训练过程中，通常需要设立多个断点进行模型验证，决定是否停止训练。这时可以通过以下方法保存模型配置和模型参数，在需要的时候一键读取：
-
-``` python
-# 保存
-assert model.output_dir is not None         # 为空的话只保存配置，不保存参数，等于模型白训了
-model.cache("key", cache_file=".cache")     # 缓存模型配置到指定文件 (模型参数则存放到 `output_dir`)
-
-# 读取
-model = uf.load("key", cache_file=".cache")     # 读取模型
 ```
 
 模型使用完毕后，若需要清理内存，可以使用 `del model` 删除模型，或通过 `model.reset()` 对模型进行重置。
@@ -200,7 +189,7 @@ model = uf.load("key", cache_file=".cache")     # 读取模型
 
 ### 断点
 
-上文中我们提到了，训练过程可以通过设置断点对模型进行验证。`target_steps` 正是为设置断点而存在的。以下是使用示例：
+训练过程中，通常需要设立多个断点进行模型验证，决定是否停止训练。`target_steps` 正是为设置断点而存在的。以下是使用示例：
 
 ``` python
 num_loops = 10      # 假设训练途中一共设置 10 个断点
@@ -209,11 +198,18 @@ num_epochs = 6      # 假设总共训练 6 轮
 for loop_id in range(10):
     model.fit(
         X, y,
-        target_steps=-((loop_id + 1) * num_epochs / num_loops),
+        target_steps=-((loop_id + 1) * num_epochs / num_loops), # 断点
         total_steps=-num_epochs,
     )
-    print(model.score(X_dev, y_dev))    # 验证模型
+    print(model.score(X_dev, y_dev))                            # 验证模型
+    model.cache(f"breakpoint.{loop_id}", cache_file=".cache")   # 缓存模型配置到 `cache_file` (并保存模型参数到 `output_dir`)
 ```
+
+多次验证后表现最佳的断点，可以通过 `load` 函数取用：
+``` python
+model = uf.load("breakpoint.7", cache_file=".cache")     # 读取模型
+```
+
 
 ### 多进程
 

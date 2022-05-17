@@ -1,7 +1,7 @@
 import numpy as np
 
-from ..third import tf
 from .base import LMModule
+from ..third import tf
 from ..model.gpt2 import GPT2
 from ..token import WordPieceTokenizer
 from .. import com

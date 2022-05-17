@@ -1,8 +1,8 @@
 import numpy as np
 
-from ..third import tf
 from .base import ClassifierModule
 from .bert import BERTClassifier, get_decay_power
+from ..third import tf
 from ..model.bert import BERTConfig
 from ..model.stockbert import StockBERTEncoder
 from ..model.base import CLSDecoder

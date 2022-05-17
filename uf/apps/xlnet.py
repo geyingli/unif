@@ -2,9 +2,9 @@ import os
 import random
 import numpy as np
 
-from ..third import tf
 from .base import ClassifierModule, LMModule
 from .bert import BERTClassifier, BERTBinaryClassifier, BERTSeqClassifier, BERTLM
+from ..third import tf
 from ..model.base import CLSDecoder, BinaryCLSDecoder, SeqCLSDecoder
 from ..model.xlnet import XLNetEncoder, XLNet, XLNetConfig
 try:

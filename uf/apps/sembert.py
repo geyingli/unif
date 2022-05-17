@@ -1,9 +1,9 @@
 import copy
 import numpy as np
 
-from ..third import tf
 from .base import ClassifierModule
 from .bert import BERTClassifier
+from ..third import tf
 from ..model.bert import BERTEncoder, BERTConfig
 from ..model.sembert import SemBERTDecoder
 from ..token import WordPieceTokenizer

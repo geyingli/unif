@@ -1,7 +1,7 @@
 import numpy as np
 
-from ..third import tf
 from .base import MTModule
+from ..third import tf
 from ..model.transformer import Transformer
 from ..token import WordPieceTokenizer
 from .. import com

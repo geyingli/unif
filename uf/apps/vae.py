@@ -1,8 +1,8 @@
 import numpy as np
 
-from ..third import tf
 from .base import LMModule
 from .bert import BERTClassifier
+from ..third import tf
 from ..model.vae import VAE
 from ..token import WordPieceTokenizer
 from .. import com

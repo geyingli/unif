@@ -1,8 +1,8 @@
 import numpy as np
 
-from ..third import tf
 from .base import ClassifierModule, RegressorModule
 from .bert import BERTClassifier
+from ..third import tf
 from ..model.bert import BERTEncoder, BERTConfig
 from ..model.albert import ALBERTEncoder, ALBERTConfig
 from ..model.widedeep import WideAndDeepCLSDecoder, WideAndDeepRegDecoder

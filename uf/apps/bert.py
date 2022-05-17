@@ -3,8 +3,8 @@ import random
 import collections
 import numpy as np
 
-from ..third import tf
 from .base import ClassifierModule, LMModule, NERModule, MRCModule
+from ..third import tf
 from ..model.bert import BERTEncoder, BERTDecoder, BERTConfig
 from ..model.base import CLSDecoder, BinaryCLSDecoder, SeqCLSDecoder, SeqCLSMultiTaskDecoder, MRCDecoder
 from ..model.crf import CRFDecoder, viterbi_decode

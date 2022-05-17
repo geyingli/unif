@@ -1,9 +1,9 @@
 import random
 import numpy as np
 
-from ..third import tf
 from .base import LMModule
 from .bert import get_decay_power
+from ..third import tf
 from ..model.bert import BERTConfig
 from ..model.recbert import RecBERT
 from ..token import WordPieceTokenizer

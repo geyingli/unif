@@ -1,8 +1,8 @@
 import numpy as np
 
-from ..third import tf
 from .base import MRCModule
 from .bert import BERTMRC
+from ..third import tf
 from ..model.bert import BERTEncoder, BERTConfig
 from ..model.albert import ALBERTEncoder, ALBERTConfig
 from ..model.sanet import SANetDecoder

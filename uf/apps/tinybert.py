@@ -2,11 +2,11 @@ import os
 import copy
 import numpy as np
 
-from ..third import tf
 from .base import ClassifierModule
+from .bert import BERTClassifier, BERTBinaryClassifier
+from ..third import tf
 from ..model.bert import BERTConfig
 from ..model.tinybert import TinyBERTCLSDistillor, TinyBERTBinaryCLSDistillor
-from .bert import BERTClassifier, BERTBinaryClassifier
 from ..token import WordPieceTokenizer
 
 

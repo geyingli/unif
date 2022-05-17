@@ -1,8 +1,8 @@
 import numpy as np
 
-from ..third import tf
 from .bert import BERTClassifier
 from .base import ClassifierModule
+from ..third import tf
 from ..model.textcnn import TextCNNEncoder
 from ..model.base import CLSDecoder
 from ..token import WordPieceTokenizer

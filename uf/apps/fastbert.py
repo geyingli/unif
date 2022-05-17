@@ -1,10 +1,10 @@
 import numpy as np
 
-from ..third import tf
 from .base import ClassifierModule
+from .bert import BERTClassifier
+from ..third import tf
 from ..model.bert import BERTConfig
 from ..model.fastbert import FastBERTCLSDistillor, convert_ignore_cls
-from .bert import BERTClassifier
 from ..token import WordPieceTokenizer
 from .. import com
 

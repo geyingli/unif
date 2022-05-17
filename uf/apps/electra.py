@@ -1,7 +1,6 @@
 import os
 import numpy as np
 
-from ..third import tf
 from .base import ClassifierModule, MRCModule, LMModule
 from .bert import BERTClassifier, BERTBinaryClassifier, BERTSeqClassifier, BERTMRC
 from .bert import BERTLM, create_masked_lm_predictions, get_decay_power
@@ -9,6 +8,7 @@ from ..model.bert import BERTEncoder, BERTConfig
 from ..model.electra import ELECTRA
 from ..model.base import CLSDecoder, BinaryCLSDecoder, SeqCLSDecoder, MRCDecoder
 from ..token import WordPieceTokenizer
+from ..third import tf
 from .. import com
 
 

@@ -3,9 +3,9 @@ import random
 import collections
 import numpy as np
 
-from ..third import tf
 from .base import LMModule
 from .bert import BERTLM, create_instances_from_document
+from ..third import tf
 from ..model.unilm import UniLMEncoder
 from ..model.bert import BERTDecoder, BERTConfig
 from ..token import WordPieceTokenizer

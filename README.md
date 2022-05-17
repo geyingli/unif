@@ -44,7 +44,7 @@ python3 setup.py install --user
 ``` python
 import uf
 
-# 新建模型（使用 demo 配置文件进行示范）
+# 新建模型（使用demo配置文件进行示范）
 model = uf.BERTClassifier(config_file="./demo/bert_config.json", vocab_file="./demo/vocab.txt")
 
 # 定义训练样本
@@ -151,16 +151,16 @@ print(model.predict(X))
 
 ```python
 model = uf.BERTClassifier(
-    config_file,                # json 格式的配置文件，通常可以在预训练参数包里找到
-    vocab_file,                 # 一行一个字/词的 txt 文件
+    config_file,                # json格式的配置文件，通常可以在预训练参数包里找到
+    vocab_file,                 # 一行一个字/词的txt文件
     max_seq_length=128,         # 切词后的最大序列长度
-    label_size=2,               # label 取值数
+    label_size=2,               # label取值数
     init_checkpoint=None,       # 预训练参数的路径或目录
     output_dir="./output",      # 输出文件导出目录
-    gpu_ids="0,1,3,5",          # GPU 代号 (为空代表不使用 GPU)
+    gpu_ids="0,1,3,5",          # GPU代号 (为空代表不使用GPU)
     drop_pooler=False,          # 建模时是否跳过 pooler 层
     do_lower_case=True,         # 英文是否进行小写处理
-    truncate_method="LIFO",     # 输入超出 max_seq_length 时的截断方式 (LIFO:尾词先弃, FIFO:首词先弃, longer-FO:长文本先弃)
+    truncate_method="LIFO",     # 输入超出`max_seq_length`时的截断方式 (LIFO:尾词先弃, FIFO:首词先弃, longer-FO:长文本先弃)
 )
 ```
 
@@ -174,13 +174,13 @@ model = uf.BERTClassifier(
   model.fit(
       X=X,                    # 输入列表
       y=y,                    # 输出列表
-      sample_weight=None,     # 样本权重列表，放空则默认每条样本权重为 1.0
-      X_tokenized=None,       # 输入列表 (已预先分词处理的 `X`)
+      sample_weight=None,     # 样本权重列表，放空则默认每条样本权重为1.0
+      X_tokenized=None,       # 输入列表 (已预先分词处理的`X`)
       batch_size=32,          # 每训练一步使用多少数据
       learning_rate=5e-05,    # 学习率
-      target_steps=None,      # 放空代表直接一口气训练到 `total_steps`；否则为训练停止的位置
-      total_steps=-3,         # 模型计划训练的总步长，决定了学习率的变化曲线；正数，如 1000000，代表训练一百万步；负数，如 -3，代表根据数据量循环三轮的总步长
-      warmup_ratio=0.1,       # 训练初期学习率从零开始，线性增长到 `learning_rate` 的步长范围；0.1 代表在前 10% 的步数里逐渐增长
+      target_steps=None,      # 放空代表直接一口气训练到`total_steps`；否则为训练停止的位置
+      total_steps=-3,         # 模型计划训练的总步长，决定了学习率的变化曲线；正数，如1000000，代表训练一百万步；负数，如-3，代表根据数据量循环三轮的总步长
+      warmup_ratio=0.1,       # 训练初期学习率从零开始，线性增长到`learning_rate`的步长范围；0.1代表在前10%的步数里逐渐增长
       print_per_secs=1,       # 多少秒打印一次训练信息
       save_per_steps=1000,    # 多少步保存一次模型参数
       **kwargs,               # 其他训练相关参数，如分层学习率等，下文将介绍
@@ -192,8 +192,8 @@ model = uf.BERTClassifier(
 训练过程中，通常需要设立多个断点进行模型验证，决定是否停止训练。`target_steps` 正是为设置断点而存在的。以下是使用示例：
 
 ``` python
-num_loops = 10      # 假设训练途中一共设置 10 个断点
-num_epochs = 6      # 假设总共训练 6 轮
+num_loops = 10      # 假设训练途中一共设置10个断点
+num_epochs = 6      # 假设总共训练6轮
 
 for loop_id in range(10):
     model.fit(
@@ -202,12 +202,12 @@ for loop_id in range(10):
         total_steps=-num_epochs,
     )
     print(model.score(X_dev, y_dev))                            # 验证模型
-    model.cache(f"breakpoint.{loop_id}", cache_file=".cache")   # 缓存模型配置到 `cache_file` (并保存模型参数到 `output_dir`)
+    model.cache(f"breakpoint.{loop_id}", cache_file=".cache")   # 缓存模型配置到`cache_file` (并保存模型参数到`output_dir`)
 ```
 
 多次验证后表现最佳的断点，可以通过 `load` 函数取用：
 ``` python
-model = uf.load("breakpoint.7", cache_file=".cache")     # 读取模型
+model = uf.load("breakpoint.7", cache_file=".cache")
 ```
 
 
@@ -243,9 +243,9 @@ with uf.MultiProcess():
 
 # 边读边训
 model.fit_from_tfrecords(
-    tfrecords_files=["train.tfrecords", "train.1.tfrecords", ...],    # 支持同步从一个或多个 TFRecords 文件读取
+    tfrecords_files=["train.tfrecords", "train.1.tfrecords", ...],    # 支持同步从一个或多个TFRecords文件读取
     n_jobs=3,             # 启动三个线程
-    batch_size=32,        # 以下参数和 `fit` 函数中参数相同
+    batch_size=32,        # 以下参数和`fit`函数中参数相同
     learning_rate=5e-05,
     target_steps=None,
     total_steps=-3,
@@ -269,7 +269,7 @@ model.fit(..., optimizer="adam")
 model.fit(..., optimizer="adamw")   # 默认
 model.fit(..., optimizer="lamb")
 
-# 分层学习率：应对迁移学习中的 catastrophic forgetting 问题 (少量模型不适用)
+# 分层学习率：应对迁移学习中的catastrophic forgetting问题 (少量模型不适用)
 model.fit(..., layerwise_lr_decay_ratio=0.85)
 print(model.decay_power)            # 衰减指数 (可修改)
 
@@ -278,13 +278,13 @@ model.fit(..., adversarial="fgm", epsilon=0.5)                  # FGM
 model.fit(..., adversarial="pgd", epsilon=0.05, n_loop=2)       # PGD
 model.fit(..., adversarial="freelb", epsilon=0.3, n_loop=3)     # FreeLB
 model.fit(..., adversarial="freeat", epsilon=0.001, n_loop=3)   # FreeAT
-model.fit(..., adversarial="smart", epsilon=0.01, n_loop=2, prtb_lambda=0.5, breg_miu=0.2, tilda_beta=0.3)    # SMART (仅 Classifier 可用)
+model.fit(..., adversarial="smart", epsilon=0.01, n_loop=2, prtb_lambda=0.5, breg_miu=0.2, tilda_beta=0.3)    # SMART (仅Classifier可用)
 
-# 置信度过滤：样本置信度达到阈值后不再参与训练，避免过拟合 (仅 Classifier 可用)
-model.fit(..., conf_thresh=0.99)    # 默认为 None
+# 置信度过滤：样本置信度达到阈值后不再参与训练，避免过拟合 (仅Classifier可用)
+model.fit(..., conf_thresh=0.99)    # 默认为None
 
-# 梯度累积：当 batch_size 过小以至于模型拟合困难时，梯度累积可以显著提高拟合表现 (功能尚在测试中)
-model.fit(..., grad_acc_steps=5)    # 默认为 1，即不累积梯度
+# 梯度累积：当`batch_size`过小以至于模型拟合困难时，梯度累积可以显著提高拟合表现 (功能尚在测试中)
+model.fit(..., grad_acc_steps=5)    # 默认为1，即不累积梯度
 ```
 
 2020 年流行对抗式训练，2021 年流行对比学习，这些都属于模型训练的 trick。未来还会有更多 trick，都将在这一部分引入。
@@ -296,7 +296,7 @@ model.fit(..., grad_acc_steps=5)    # 默认为 1，即不累积梯度
 规格不一致时，变量不可读取。但只有命名不一样时，可以通过下面的方法构建映射，将参数读到模型中：
 
 ```python
-# 初始化模型，触发读取 `ckpt` 文件，查看哪些变量初始化失败
+# 初始化模型，触发读取`ckpt`文件，查看哪些变量初始化失败
 model.init()
 print(model.uninited_vars)
 
@@ -316,7 +316,7 @@ print(model.uninited_vars)                         # 在打印的结果中看看
 ```python
 import numpy as np
 
-array = np.array([[0, 1, 2], [3, 4, 5]])  # 使用 numpy.Array 格式
+array = np.array([[0, 1, 2], [3, 4, 5]])  # 使用numpy.Array格式
 print(model.global_variables)             # 查看所有变量
 variable = model.global_variables[5]      # 获取变量
 model.assign(variable, array)             # 赋值

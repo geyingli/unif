@@ -1,9 +1,9 @@
 import numpy as np
 
 from .base import LMModule
-from ..third import tf
-from ..model.gpt2 import GPT2
+from ..model.gpt2 import GPT2, GPT2Config, get_decay_power
 from ..token import WordPieceTokenizer
+from ..third import tf
 from .. import com
 
 
@@ -221,20 +221,3 @@ class GPT2LM(LMModule):
         outputs["preds"] = preds
 
         return outputs
-
-
-class GPT2Config:
-    def __init__(self, **kwargs):
-        for key, value in kwargs.items():
-            self.__setattr__(key, value)
-
-
-def get_decay_power(num_hidden_layers):
-    decay_power = {
-        "/word_embeddings": num_hidden_layers + 2,
-        "/wpe": num_hidden_layers + 2,
-        "ln_f/": 0,
-    }
-    for layer_idx in range(num_hidden_layers):
-        decay_power["/h%d/" % layer_idx] = num_hidden_layers - layer_idx + 1
-    return decay_power

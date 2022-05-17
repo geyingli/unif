@@ -109,6 +109,11 @@ class GPT2(BaseDecoder, BaseEncoder):
             self._tensors["losses"] = per_example_loss
 
 
+class GPT2Config:
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            self.__setattr__(key, value)
+
 
 def shape_list(x):
     """Deal with dynamic shape in tensorflow cleanly."""
@@ -259,3 +264,14 @@ def positions_for(tokens, past_length):
     batch_size = tf.shape(tokens)[0]
     nsteps = tf.shape(tokens)[1]
     return expand_tile(past_length + tf.range(nsteps), batch_size)
+
+
+def get_decay_power(num_hidden_layers):
+    decay_power = {
+        "/word_embeddings": num_hidden_layers + 2,
+        "/wpe": num_hidden_layers + 2,
+        "ln_f/": 0,
+    }
+    for layer_idx in range(num_hidden_layers):
+        decay_power["/h%d/" % layer_idx] = num_hidden_layers - layer_idx + 1
+    return decay_power

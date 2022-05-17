@@ -1,9 +1,9 @@
 import numpy as np
 
 from .base import MTModule
-from ..third import tf
-from ..model.transformer import Transformer
+from ..model.transformer import Transformer, get_decay_power
 from ..token import WordPieceTokenizer
+from ..third import tf
 from .. import com
 
 
@@ -241,13 +241,3 @@ class TransformerMT(MTModule):
         outputs["loss"] = loss
 
         return outputs
-
-
-def get_decay_power(num_hidden_layers):
-    decay_power = {
-        "/embeddings": num_hidden_layers + 1,
-        "cls": 0,
-    }
-    for layer_idx in range(num_hidden_layers):
-        decay_power["/block_%d/" % layer_idx] = num_hidden_layers - layer_idx
-    return decay_power

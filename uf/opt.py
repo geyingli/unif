@@ -14,7 +14,7 @@ def get_optimizer(
     global_step,
     num_train_steps,
     num_warmup_steps=None,
-    key_to_depths=None,
+    decay_power=None,
     **kwargs,
 ):
     learning_rate = tf.constant(value=init_lr, shape=[], dtype=tf.float32)
@@ -43,12 +43,12 @@ def get_optimizer(
     # layer-wise learning rate decay
     layerwise_lr_decay_ratio = kwargs.get("layerwise_lr_decay_ratio")
     if layerwise_lr_decay_ratio:
-        if key_to_depths == "unsupported":
+        if decay_power == "unsupported":
             tf.logging.warning("Layer-wise learning rate decay is not supported in the current module. Ignored.")
         else:
             learning_rate = {
                 key: learning_rate * layerwise_lr_decay_ratio ** depth
-                for (key, depth) in key_to_depths.items()
+                for (key, depth) in decay_power.items()
             }
 
     # optimier

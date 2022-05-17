@@ -5,7 +5,7 @@ from .base import ClassifierModule
 from .bert import BERTClassifier
 from ..third import tf
 from ..model.bert import BERTEncoder, BERTConfig
-from ..model.sembert import SemBERTDecoder
+from ..model.sembert import SemBERTDecoder, get_decay_power
 from ..token import WordPieceTokenizer
 from .. import com
 
@@ -211,15 +211,3 @@ class SemBERTClassifier(BERTClassifier, ClassifierModule):
             **kwargs,
         )
         return decoder.get_forward_outputs()
-
-
-def get_decay_power(num_hidden_layers):
-    decay_power = {
-        "/embeddings": num_hidden_layers + 2,
-        "sem/": 2,
-        "/pooler/": 1,
-        "cls/": 0,
-    }
-    for layer_idx in range(num_hidden_layers):
-        decay_power["/layer_%d/" % layer_idx] = num_hidden_layers - layer_idx + 1
-    return decay_power

@@ -4,10 +4,10 @@ import numpy as np
 
 from .base import ClassifierModule
 from .bert import BERTClassifier, BERTBinaryClassifier
-from ..third import tf
 from ..model.bert import BERTConfig
 from ..model.tinybert import TinyBERTCLSDistillor, TinyBERTBinaryCLSDistillor
 from ..token import WordPieceTokenizer
+from ..third import tf
 
 
 class TinyBERTClassifier(BERTClassifier, ClassifierModule):

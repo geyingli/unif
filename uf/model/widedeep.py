@@ -174,3 +174,18 @@ class WideAndDeepRegDecoder(BaseDecoder):
 
             self._tensors["losses"] = per_example_loss
             self.total_loss = tf.reduce_mean(per_example_loss)
+
+
+def get_decay_power(num_hidden_layers):
+    decay_power = {
+        "/embeddings": num_hidden_layers + 2,
+        "wide/": 2,
+        "wide_and_deep/": 1,
+        "/pooler/": 1,
+        "cls/": 0,
+        "reg": 0,
+    }
+    for layer_idx in range(num_hidden_layers):
+        decay_power["/layer_%d/" % layer_idx] = num_hidden_layers - layer_idx + 1
+    return decay_power
+

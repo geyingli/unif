@@ -2,9 +2,9 @@ import numpy as np
 
 from .base import LMModule
 from .bert import BERTClassifier
-from ..third import tf
-from ..model.vae import VAE
+from ..model.vae import VAE, get_decay_power
 from ..token import WordPieceTokenizer
+from ..third import tf
 from .. import com
 
 
@@ -244,15 +244,3 @@ class VAELM(BERTClassifier, LMModule):
         outputs["preds"] = preds
 
         return outputs
-
-
-def get_decay_power(num_hidden_layers):
-    decay_power = {
-        "/embeddings": num_hidden_layers + 3,
-        "/encoder/projection": 2,
-        "/decoder": 1,
-        "cls/": 0,
-    }
-    for layer_idx in range(num_hidden_layers):
-        decay_power["/layer_%d/" % layer_idx] = num_hidden_layers - layer_idx + 2
-    return decay_power

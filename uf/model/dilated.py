@@ -1,9 +1,11 @@
 """ Dilated language modeling. """
 
-from ..third import tf
+import random
+
 from .base import BaseDecoder
 from .bert import BERTEncoder
 from . import util
+from ..third import tf
 
 
 class DLM(BaseDecoder, BERTEncoder):
@@ -221,3 +223,66 @@ class DLM(BaseDecoder, BERTEncoder):
         mask += broadcast_eye
         mask = tf.cast(tf.greater(mask, 0), dtype)
         return mask
+
+
+def sample_wrong_tokens(_dilated_ids, _label_ids, max_replace, max_add, max_subtract, nonpad_seq_length, vocab_size):
+
+    # The sampling follows the order `add -> replace -> subtract`
+
+    # `add`, remove padding for prediction of adding tokens
+    # e.g. 124 0 591 0 9521 -> 124 591 9521 0 0
+    for _ in range(max_add):
+        cand_indicies = [
+            i for i in range(1, len(_dilated_ids) - 1)
+            if _dilated_ids[i] != 0 and _dilated_ids[i - 1] == 0 and _dilated_ids[i + 1] == 0
+        ]
+        if not cand_indicies:
+            break
+
+        def mod_add(list_obj, index):
+            list_obj.pop(index + 1)
+            list_obj.pop(index - 1)
+            list_obj.extend([0, 0])
+        index = random.choice(cand_indicies)
+        mod_add(_dilated_ids, index)
+        mod_add(_label_ids, index)
+        _dilated_ids[index - 1] = 0
+
+    # `replace`, replace tokens for prediction of replacing tokens
+    # e.g. 124 0 591 0 9521 -> 124 0 789 0 9521
+    for _ in range(max_replace):
+        cand_indicies = [
+            i for i in range(1, len(_dilated_ids) - 1)
+            if _dilated_ids[i] != 0 and _dilated_ids[i - 1] == 0 and _dilated_ids[i + 1] == 0 and _dilated_ids[i] == _label_ids[i]
+        ]
+        if not cand_indicies:
+            break
+
+        index = random.choice(cand_indicies)
+        _dilated_ids[index] = random.randint(1, vocab_size - 1)
+
+    # `subtract`, add wrong tokens for prediction of subtraction
+    # e.g. 124 0 591 0 9521 -> 124 0 92 0 591
+    for _ in range(max_subtract):
+        if _dilated_ids[-2] != 0:  # no more space
+            break
+        cand_indicies = [
+            i for i in range(1, len(_dilated_ids) - 1)
+            if _dilated_ids[i] == 0
+            and _dilated_ids[i - 1] != 0
+            and _dilated_ids[i + 1] != 0
+            and _dilated_ids[i - 1] == _label_ids[i - 1]
+            and _dilated_ids[i + 1] == _label_ids[i + 1]
+        ]
+        if not cand_indicies:
+            break
+
+        index = random.choice(cand_indicies)
+        _dilated_ids.insert(index, random.randint(1, vocab_size - 1))
+        _dilated_ids.insert(index, 0)
+        _dilated_ids.pop()
+        _dilated_ids.pop()
+        _label_ids.insert(index, 0)
+        _label_ids.insert(index, 0)
+        _label_ids.pop()
+        _label_ids.pop()

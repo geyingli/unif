@@ -102,3 +102,12 @@ class TextCNNEncoder(BaseEncoder):
     def get_pooled_output(self):
         """ Returns a tensor with shape [batch_size, hidden_size]. """
         return self.pooled_output
+
+
+def get_decay_power():
+    decay_power = {
+        "/embeddings": 2,
+        "/conv_": 1,
+        "cls/": 0,
+    }
+    return decay_power

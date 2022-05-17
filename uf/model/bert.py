@@ -6,10 +6,12 @@
 import math
 import copy
 import json
+import random
+import collections
 
-from ..third import tf
 from .base import BaseEncoder, BaseDecoder
 from . import util
+from ..third import tf
 
 
 class BERTEncoder(BaseEncoder):
@@ -503,7 +505,7 @@ class BERTDecoder(BaseDecoder):
                 )
                 input_tensor = util.layer_norm(input_tensor)
             output_bias = tf.get_variable(
-                "output_bias", 
+                "output_bias",
                 shape=[bert_config.vocab_size],
                 initializer=tf.zeros_initializer(),
                 trainable=trainable,
@@ -541,7 +543,7 @@ class BERTDecoder(BaseDecoder):
                     trainable=trainable,
                 )
                 output_bias = tf.get_variable(
-                    "output_bias", 
+                    "output_bias",
                     shape=[2],
                     initializer=tf.zeros_initializer(),
                     trainable=trainable,
@@ -611,3 +613,174 @@ class BERTConfig:
         """ Write into json file. """
         with open(json_file, "w") as json_fp:
             return json.dump(self.__dict__, json_fp, indent=2)
+
+
+def create_instances_from_document(all_documents, document_index, max_seq_length, masked_lm_prob, max_predictions_per_seq, short_seq_prob, vocab_words):
+    document = all_documents[document_index]
+
+    # We *usually* want to fill up the entire sequence since we are padding
+    # to `max_seq_length` anyways, so short sequences are generally wasted
+    # computation. However, we *sometimes*
+    # (i.e., short_seq_prob == 0.1 == 10% of the time) want to use shorter
+    # sequences to minimize the mismatch between pre-training and fine-tuning.
+    # The `target_seq_length` is just a rough target however, whereas
+    # `max_seq_length` is a hard limit.
+    target_seq_length = max_seq_length
+    if random.random() < short_seq_prob:
+        target_seq_length = random.randint(2, max_seq_length)
+
+    # We DON"T just concatenate all of the tokens from a document into a long
+    # sequence and choose an arbitrary split point because this would make the
+    # next sentence prediction task too easy. Instead, we split the input into
+    # segments "A" and "B" based on the actual "sentences" provided by the user
+    # input.
+    instances = []
+    current_chunk = []
+    current_length = 0
+    i = 0
+    while i < len(document):
+        segment = document[i]
+        current_chunk.append(segment)
+        current_length += len(segment)
+        if i == len(document) - 1 or current_length >= target_seq_length:
+            if current_chunk:
+                # `a_end` is how many segments from `current_chunk` go into
+                # the `A` (first) sentence.
+                a_end = 1
+                if len(current_chunk) >= 2:
+                    a_end = random.randint(1, len(current_chunk) - 1)
+
+                tokens_a = []
+                for j in range(a_end):
+                    tokens_a.extend(current_chunk[j])
+
+                tokens_b = []
+                # Random next
+                is_random_next = False
+                if len(current_chunk) == 1 or random.random() < 0.5:
+                    is_random_next = True
+                    target_b_length = target_seq_length - len(tokens_a)
+
+                    # This should rarely go for more than one iteration for
+                    # large corpora. However, just to be careful, we try to
+                    # make sure that the random document is not the same as
+                    # the document we"re processing.
+                    for _ in range(10):
+                        random_document_index = random.randint(0, len(all_documents) - 1)
+                        if random_document_index != document_index:
+                            break
+
+                    random_document = all_documents[random_document_index]
+                    random_start = random.randint(0, len(random_document) - 1)
+                    for j in range(random_start, len(random_document)):
+                        tokens_b.extend(random_document[j])
+                        if len(tokens_b) >= target_b_length:
+                            break
+                    # We didn't actually use these segments so we "put them
+                    # back" so they don't go to waste.
+                    num_unused_segments = len(current_chunk) - a_end
+                    i -= num_unused_segments
+                # Actual next
+                else:
+                    is_random_next = False
+                    for j in range(a_end, len(current_chunk)):
+                        tokens_b.extend(current_chunk[j])
+
+                assert len(tokens_a) >= 1
+                assert len(tokens_b) >= 1
+
+                instances.append(([tokens_a, tokens_b], is_random_next))
+            current_chunk = []
+            current_length = 0
+        i += 1
+
+    return instances
+
+
+MaskedLmInstance = collections.namedtuple("MaskedLmInstance", ["index", "label"])
+
+
+def create_masked_lm_predictions(tokens, masked_lm_prob, max_predictions_per_seq, vocab_words, do_whole_word_mask=False):
+    """ Creates the predictions for the masked LM objective. """
+
+    cand_indexes = []
+    for (i, token) in enumerate(tokens):
+        if token == "[CLS]" or token == "[SEP]":
+            continue
+        # Whole Word Masking means that if we mask all of the wordpieces
+        # corresponding to an original word. When a word has been split into
+        # WordPieces, the first token does not have any marker and any
+        # subsequence tokens are prefixed with ##. So whenever we see the
+        # `##` token, we append it to the previous set of word indexes.
+        #
+        # Note that Whole Word Masking does *not* change the training code
+        # at all -- we still predict each WordPiece independently, softmaxed
+        # over the entire vocabulary.
+        if (do_whole_word_mask and len(cand_indexes) >= 1 and token.startswith("##")):
+            cand_indexes[-1].append(i)
+        else:
+            cand_indexes.append([i])
+
+    random.shuffle(cand_indexes)
+
+    output_tokens = list(tokens)
+
+    num_to_predict = min(max_predictions_per_seq, max(1, int(round(len(tokens) * masked_lm_prob))))
+
+    masked_lms = []
+    covered_indexes = set()
+    for index_set in cand_indexes:
+        if len(masked_lms) >= num_to_predict:
+            break
+        # If adding a whole-word mask would exceed the maximum number of
+        # predictions, then just skip this candidate.
+        if len(masked_lms) + len(index_set) > num_to_predict:
+            continue
+        is_any_index_covered = False
+        for index in index_set:
+            if index in covered_indexes:
+                is_any_index_covered = True
+                break
+        if is_any_index_covered:
+            continue
+        for index in index_set:
+            covered_indexes.add(index)
+
+            masked_token = None
+            # 80% of the time, replace with [MASK]
+            if random.random() < 0.8:
+                masked_token = "[MASK]"
+            else:
+                # 10% of the time, keep original
+                if random.random() < 0.5:
+                    masked_token = tokens[index]
+                # 10% of the time, replace with random word
+                else:
+                    masked_token = vocab_words[random.randint(0, len(vocab_words) - 1)]
+
+            output_tokens[index] = masked_token
+
+            masked_lms.append(MaskedLmInstance(index=index, label=tokens[index]))
+    assert len(masked_lms) <= num_to_predict
+    masked_lms = sorted(masked_lms, key=lambda x: x.index)
+
+    masked_lm_positions = []
+    masked_lm_labels = []
+    for p in masked_lms:
+        masked_lm_positions.append(p.index)
+        masked_lm_labels.append(p.label)
+
+    return (output_tokens, masked_lm_positions, masked_lm_labels)
+
+
+def get_decay_power(num_hidden_layers):
+    decay_power = {
+        "/embeddings": num_hidden_layers + 2,
+        "/pooler/": 1,
+        "cls/": 0,
+        "mrc/": 0,
+    }
+    for layer_idx in range(num_hidden_layers):
+        decay_power["/layer_%d/" % layer_idx] = num_hidden_layers - layer_idx + 1
+    return decay_power
+

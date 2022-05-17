@@ -1,10 +1,11 @@
 import numpy as np
 
 from .base import ClassifierModule, MRCModule, LMModule
-from .bert import BERTClassifier, BERTBinaryClassifier, BERTSeqClassifier, BERTMRC, BERTLM, get_decay_power, create_masked_lm_predictions
-from ..third import tf
-from ..model.bert import BERTEncoder, BERTDecoder, BERTConfig
+from .bert import BERTClassifier, BERTBinaryClassifier, BERTSeqClassifier, BERTMRC, BERTLM
+from ..model.bert import BERTEncoder, BERTDecoder, BERTConfig, get_decay_power, create_masked_lm_predictions
+from ..model.roberta import create_instances_from_document
 from ..token import WordPieceTokenizer
+from ..third import tf
 from .. import com
 
 
@@ -290,25 +291,3 @@ class RoBERTaLM(BERTLM, LMModule):
         outputs["mlm_preds"] = mlm_preds
 
         return outputs
-
-
-def create_instances_from_document(all_documents, document_index, max_seq_length):
-    document = all_documents[document_index]
-    instances = []
-
-    current_chunk = []
-    current_length = 0
-    i = 0
-    while i < len(document):
-        segment = document[i]
-        current_chunk.extend(segment)
-        current_length += len(segment)
-        i += 1
-        if current_length >= max_seq_length:
-            instances.append([current_chunk])
-            current_chunk = []
-            current_length = 0
-    if current_chunk:
-        instances.append([current_chunk])
-
-    return instances

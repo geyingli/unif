@@ -1,12 +1,10 @@
-import random
 import numpy as np
 
 from .base import LMModule
-from .bert import get_decay_power
-from ..third import tf
-from ..model.bert import BERTConfig
-from ..model.recbert import RecBERT
+from ..model.bert import BERTConfig, get_decay_power
+from ..model.recbert import RecBERT, sample_wrong_tokens
 from ..token import WordPieceTokenizer
+from ..third import tf
 from .. import com
 
 
@@ -323,46 +321,3 @@ class RecBERTLM(LMModule):
         outputs["preds"] = preds
 
         return outputs
-
-
-def sample_wrong_tokens(_input_ids, _add_label_ids, _del_label_ids, max_add, max_del, nonpad_seq_length, vocab_size, vocab_ind, vocab_p):
-
-    # `add`, remove padding for prediction of adding tokens
-    # e.g. 124 591 9521 -> 124 9521
-    for _ in range(max_add):
-        cand_indicies = [
-            i for i in range(0, len(_input_ids) - 1)
-            if _input_ids[i + 1] != 0 and _add_label_ids[i] == 0 and _add_label_ids[i + 1] == 0
-        ]
-        if not cand_indicies:
-            break
-
-        index = random.choice(cand_indicies)
-        _add_label_ids[index] = _input_ids.pop(index + 1)
-        _add_label_ids.pop(index + 1)
-        _del_label_ids.pop(index + 1)
-        _input_ids.append(0)
-        _add_label_ids.append(0)
-        _del_label_ids.append(0)
-        nonpad_seq_length -= 1
-
-    # `del`, add wrong tokens for prediction of deleted tokens
-    # e.g. 124 591 -> 124 92 591
-    for _ in range(max_del):
-        if _input_ids[-1] != 0:  # no more space
-            break
-
-        index = random.randint(0, nonpad_seq_length)
-        rand = np.random.choice(vocab_ind, p=vocab_p)  # sample from vocabulary
-
-        # always delete the right one
-        _input_ids.insert(index, rand)
-        _add_label_ids.insert(index, 0)
-        _del_label_ids.insert(index, 1)
-        if rand == _input_ids[index + 1]:
-            _del_label_ids[index + 1], _del_label_ids[index] = _del_label_ids[index], _del_label_ids[index + 1]
-
-        _input_ids.pop()
-        _add_label_ids.pop()
-        _del_label_ids.pop()
-        nonpad_seq_length += 1

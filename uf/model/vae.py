@@ -34,7 +34,7 @@ class VAE(BaseDecoder, BERTEncoder):
                 tilda_embeddings = tf.get_variable("tilda_embeddings")
 
         # freeze parameters
-        config = Config(
+        config = VAEConfig(
             vocab_size,
             hidden_size=hidden_size,
             num_hidden_layers=num_hidden_layers,
@@ -236,7 +236,7 @@ class VAE(BaseDecoder, BERTEncoder):
             self._tensors["losses"] = per_example_loss
 
 
-class Config:
+class VAEConfig:
     def __init__(self,
                  vocab_size,
                  hidden_size=768,
@@ -260,3 +260,15 @@ class Config:
         self.max_position_embeddings = max_position_embeddings
         self.type_vocab_size = type_vocab_size
         self.initializer_range = initializer_range
+
+
+def get_decay_power(num_hidden_layers):
+    decay_power = {
+        "/embeddings": num_hidden_layers + 3,
+        "/encoder/projection": 2,
+        "/decoder": 1,
+        "cls/": 0,
+    }
+    for layer_idx in range(num_hidden_layers):
+        decay_power["/layer_%d/" % layer_idx] = num_hidden_layers - layer_idx + 2
+    return decay_power

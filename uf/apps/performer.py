@@ -1,10 +1,10 @@
 from .base import ClassifierModule
-from .bert import BERTClassifier, get_decay_power
-from ..third import tf
-from ..model.bert import BERTConfig
-from ..model.performer import PerformerEncoder
+from .bert import BERTClassifier
 from ..model.base import CLSDecoder
+from ..model.bert import BERTConfig, get_decay_power
+from ..model.performer import PerformerEncoder
 from ..token import WordPieceTokenizer
+from ..third import tf
 
 
 class PerformerClassifier(BERTClassifier, ClassifierModule):

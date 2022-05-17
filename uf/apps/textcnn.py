@@ -1,11 +1,11 @@
 import numpy as np
 
-from .bert import BERTClassifier
 from .base import ClassifierModule
-from ..third import tf
-from ..model.textcnn import TextCNNEncoder
+from .bert import BERTClassifier
 from ..model.base import CLSDecoder
+from ..model.textcnn import TextCNNEncoder, get_decay_power
 from ..token import WordPieceTokenizer
+from ..third import tf
 from .. import com
 
 
@@ -112,12 +112,3 @@ class TextCNNClassifier(BERTClassifier, ClassifierModule):
             **kwargs,
         )
         return decoder.get_forward_outputs()
-
-
-def get_decay_power():
-    decay_power = {
-        "/embeddings": 2,
-        "/conv_": 1,
-        "cls/": 0,
-    }
-    return decay_power

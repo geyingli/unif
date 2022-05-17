@@ -199,7 +199,7 @@ class BaseModule:
                 global_step=self._global_step,
                 num_train_steps=self.total_steps,
                 num_warmup_steps=self.num_warmup_steps,
-                key_to_depths=self._key_to_depths,
+                decay_power=self.decay_power,
                 **kwargs,
             )
             kwargs.update(tfrecords_files=tfrecords_files, n_jobs=n_jobs)
@@ -299,7 +299,7 @@ class BaseModule:
                 global_step=self._global_step,
                 num_train_steps=self.total_steps,
                 num_warmup_steps=self.num_warmup_steps,
-                key_to_depths=self._key_to_depths,
+                decay_power=self.decay_power,
                 **kwargs,
             )
 

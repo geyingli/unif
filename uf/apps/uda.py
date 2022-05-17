@@ -1,12 +1,12 @@
 import numpy as np
 
 from .base import ClassifierModule
-from .bert import BERTClassifier, get_decay_power
-from ..third import tf
-from ..model.bert import BERTEncoder, BERTConfig
+from .bert import BERTClassifier
+from ..model.bert import BERTEncoder, BERTConfig, get_decay_power
 from ..model.uda import UDADecoder
 from ..model import util
 from ..token import WordPieceTokenizer
+from ..third import tf
 from .. import com
 
 

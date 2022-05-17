@@ -1,9 +1,9 @@
 import numpy as np
 
 from .base import LMModule
-from .bert import BERTLM, get_decay_power, create_masked_lm_predictions
+from .bert import BERTLM
 from ..third import tf
-from ..model.bert import BERTDecoder, BERTConfig
+from ..model.bert import BERTDecoder, BERTConfig, get_decay_power, create_masked_lm_predictions
 from ..model.spe import SPEEncoder
 from ..token import WordPieceTokenizer
 from .. import com

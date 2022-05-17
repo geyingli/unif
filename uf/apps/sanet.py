@@ -2,11 +2,11 @@ import numpy as np
 
 from .base import MRCModule
 from .bert import BERTMRC
-from ..third import tf
 from ..model.bert import BERTEncoder, BERTConfig
 from ..model.albert import ALBERTEncoder, ALBERTConfig
-from ..model.sanet import SANetDecoder
+from ..model.sanet import SANetDecoder, get_decay_power
 from ..token import WordPieceTokenizer
+from ..third import tf
 from .. import com
 
 
@@ -281,14 +281,3 @@ class SANetMRC(BERTMRC, MRCModule):
             **kwargs,
         )
         return decoder.get_forward_outputs()
-
-
-def get_decay_power(num_hidden_layers):
-    decay_power = {
-        "/embeddings": num_hidden_layers + 2,
-        "/sentence_attention/": 1,
-        "/cls/mrc/": 0,
-    }
-    for layer_idx in range(num_hidden_layers):
-        decay_power["/layer_%d/" % layer_idx] = num_hidden_layers - layer_idx + 1
-    return decay_power

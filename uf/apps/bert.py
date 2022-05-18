@@ -3,7 +3,7 @@ import collections
 import numpy as np
 
 from .base import ClassifierModule, LMModule, NERModule, MRCModule
-from ..model.base import CLSDecoder, BinaryCLSDecoder, SeqCLSDecoder, SeqCLSMultiTaskDecoder, MRCDecoder
+from ..model.base import ClsDecoder, BinaryClsDecoder, SeqClsDecoder, SeqClsCrossDecoder, MRCDecoder
 from ..model.bert import BERTEncoder, BERTDecoder, BERTConfig, create_instances_from_document, create_masked_lm_predictions, get_decay_power
 from ..model.crf import CRFDecoder, viterbi_decode
 from ..token import WordPieceTokenizer
@@ -195,7 +195,7 @@ class BERTClassifier(ClassifierModule):
             **kwargs,
         )
         encoder_output = encoder.get_pooled_output()
-        decoder = CLSDecoder(
+        decoder = ClsDecoder(
             is_training=is_training,
             input_tensor=encoder_output,
             label_ids=split_placeholders["label_ids"],
@@ -377,7 +377,7 @@ class BERTBinaryClassifier(BERTClassifier, ClassifierModule):
             **kwargs,
         )
         encoder_output = encoder.get_pooled_output()
-        decoder = BinaryCLSDecoder(
+        decoder = BinaryClsDecoder(
             is_training=is_training,
             input_tensor=encoder_output,
             label_ids=split_placeholders["label_ids"],
@@ -581,7 +581,7 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
             **kwargs,
         )
         encoder_output = encoder.get_sequence_output()
-        decoder = SeqCLSDecoder(
+        decoder = SeqClsDecoder(
             is_training=is_training,
             input_tensor=encoder_output,
             input_mask=split_placeholders["input_mask"],
@@ -673,7 +673,7 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
         return outputs
 
 
-class BERTSeqMultiTaskClassifier(BERTClassifier, ClassifierModule):
+class BERTSeqCrossClassifier(BERTClassifier, ClassifierModule):
     """ Sequence labeling and single-label (multi-task) classifier on BERT. """
     _INFER_ATTRIBUTES = {
         "max_seq_length": "An integer that defines max sequence length of input tokens",
@@ -872,7 +872,7 @@ class BERTSeqMultiTaskClassifier(BERTClassifier, ClassifierModule):
             **kwargs,
         )
         encoder_output = encoder.get_sequence_output()
-        decoder = SeqCLSMultiTaskDecoder(
+        decoder = SeqClsCrossDecoder(
             is_training=is_training,
             input_tensor=encoder_output,
             input_mask=split_placeholders["input_mask"],
@@ -1206,7 +1206,7 @@ class BERTNER(BERTClassifier, NERModule):
             **kwargs,
         )
         encoder_output = encoder.get_sequence_output()
-        decoder = SeqCLSDecoder(
+        decoder = SeqClsDecoder(
             is_training=is_training,
             input_tensor=encoder_output,
             input_mask=split_placeholders["input_mask"],
@@ -2317,7 +2317,7 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
             drop_pooler=self._drop_pooler,
             **kwargs,
         )
-        verifier = CLSDecoder(
+        verifier = ClsDecoder(
             is_training=is_training,
             input_tensor=encoder.get_pooled_output(),
             label_ids=split_placeholders["has_answer"],

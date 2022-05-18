@@ -4,13 +4,13 @@ from .base import ClassifierModule, RegressorModule
 from .bert import BERTClassifier
 from ..model.bert import BERTEncoder, BERTConfig
 from ..model.albert import ALBERTEncoder, ALBERTConfig
-from ..model.widedeep import WideAndDeepCLSDecoder, WideAndDeepRegDecoder, get_decay_power
+from ..model.widedeep import WideDeepClsDecoder, WideDeepRegDecoder, get_decay_power
 from ..token import WordPieceTokenizer
 from ..third import tf
 from .. import com
 
 
-class WideAndDeepClassifier(BERTClassifier, ClassifierModule):
+class WideDeepClassifier(BERTClassifier, ClassifierModule):
     """ Single-label classifier on Wide & Deep model with BERT. """
     _INFER_ATTRIBUTES = {
         "max_seq_length": "An integer that defines max sequence length of input tokens",
@@ -227,7 +227,7 @@ class WideAndDeepClassifier(BERTClassifier, ClassifierModule):
 
         encoder = _get_encoder(self._deep_module)
         encoder_output = encoder.get_pooled_output()
-        decoder = WideAndDeepCLSDecoder(
+        decoder = WideDeepClsDecoder(
             is_training=is_training,
             input_tensor=encoder_output,
             n_wide_features=split_placeholders["n_wide_features"],
@@ -241,7 +241,7 @@ class WideAndDeepClassifier(BERTClassifier, ClassifierModule):
         return decoder.get_forward_outputs()
 
 
-class WideAndDeepRegressor(WideAndDeepClassifier, RegressorModule):
+class WideDeepRegressor(WideDeepClassifier, RegressorModule):
     """ Single-label classifier on Wide & Deep model with BERT. """
     _INFER_ATTRIBUTES = {
         "max_seq_length": "An integer that defines max sequence length of input tokens",
@@ -478,7 +478,7 @@ class WideAndDeepRegressor(WideAndDeepClassifier, RegressorModule):
 
         encoder = _get_encoder(self._deep_module)
         encoder_output = encoder.get_pooled_output()
-        decoder = WideAndDeepRegDecoder(
+        decoder = WideDeepRegDecoder(
             is_training=is_training,
             input_tensor=encoder_output,
             n_wide_features=split_placeholders["n_wide_features"],

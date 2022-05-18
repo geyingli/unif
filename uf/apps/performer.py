@@ -1,6 +1,6 @@
 from .base import ClassifierModule
 from .bert import BERTClassifier
-from ..model.base import CLSDecoder
+from ..model.base import ClsDecoder
 from ..model.bert import BERTConfig, get_decay_power
 from ..model.performer import PerformerEncoder
 from ..token import WordPieceTokenizer
@@ -65,7 +65,7 @@ class PerformerClassifier(BERTClassifier, ClassifierModule):
             **kwargs,
         )
         encoder_output = encoder.get_pooled_output()
-        decoder = CLSDecoder(
+        decoder = ClsDecoder(
             is_training=is_training,
             input_tensor=encoder_output,
             label_ids=split_placeholders["label_ids"],

@@ -12,7 +12,7 @@ from .base import BaseDecoder
 from . import util
 
 
-class FastBERTCLSDistillor(BaseDecoder, BERTEncoder):
+class FastBERTClsDistillor(BaseDecoder, BERTEncoder):
     def __init__(self,
                  bert_config,
                  is_training,
@@ -28,7 +28,7 @@ class FastBERTCLSDistillor(BaseDecoder, BERTEncoder):
                  speed=0.1,
                  ignore_cls=[0],
                  **kwargs):
-        super(FastBERTCLSDistillor, self).__init__()
+        super(FastBERTClsDistillor, self).__init__()
 
         if not speed:
             raise ValueError(

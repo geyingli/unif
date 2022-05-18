@@ -8,7 +8,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-v2.4.5-blue">
+        <img src="https://img.shields.io/badge/version-v2.4.6-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-1.x\2.x-yellow">
@@ -85,7 +85,7 @@ print(model.predict(X))
 || [`RoBERTaClassifier`](./examples/tutorial/RoBERTaClassifier.ipynb) 		| - |
 || [`ALBERTClassifier`](./examples/tutorial/ALBERTClassifier.ipynb) 		| - |
 | |[`ELECTRAClassifier`](./examples/tutorial/ELECTRAClassifier.ipynb) 		| - |
-| |[`WideAndDeepClassifier`](./examples/tutorial/WideAndDeepClassifier.ipynb) | 通过 Wide & Deep 架构融合句子级别特征 |
+| |[`WideDeepClassifier`](./examples/tutorial/WideDeepClassifier.ipynb) | 通过 Wide & Deep 架构融合句子级别特征 |
 | |[`SemBERTClassifier`](./examples/tutorial/SemBERTClassifier.ipynb) 		| 通过 SemBERT 架构融合字级别的特征 |
 | |[`UDAClassifier`](./examples/tutorial/UDAClassifier.ipynb) 		| 结合一致性学习的半监督学习算法 |
 |文本分类 / 多label| [`BERTBinaryClassifier`](./examples/tutorial/BERTBinaryClassifier.ipynb) 		| -  |
@@ -97,8 +97,8 @@ print(model.predict(X))
 || [`RoBERTaSeqClassifier`](./examples/tutorial/RoBERTaSeqClassifier.ipynb) 		| - |
 || [`ALBERTSeqClassifier`](./examples/tutorial/ALBERTSeqClassifier.ipynb) 		| - |
 || [`ELECTRASeqClassifier`](./examples/tutorial/ELECTRASeqClassifier.ipynb) 		| - |
-|| [`BERTSeqMultiTaskClassifier`](./examples/tutorial/BERTSeqMultiTaskClassifier.ipynb) 		| 序列标注与文本分类相结合的多任务学习 |
-|回归| [`WideAndDeepRegressor`](./examples/tutorial/WideAndDeepRegressor.ipynb) | 通过 Wide & Deep 架构融合句子级别特征 |
+|| [`BERTSeqCrossClassifier`](./examples/tutorial/BERTSeqCrossClassifier.ipynb) 		| 序列标注与文本分类相结合的多任务学习 |
+|回归| [`WideDeepRegressor`](./examples/tutorial/WideDeepRegressor.ipynb) | 通过 Wide & Deep 架构融合句子级别特征 |
 | 模型蒸馏|[`TinyBERTClassifier`](./examples/tutorial/TinyBERTClassifier.ipynb) 		| 大幅压缩模型参数，提速十倍以上 |
 || [`TinyBERTBinaryClassifier`](./examples/tutorial/TinyBERTBinaryClassifier.ipynb)     | - |
 || [`FastBERTClassifier`](./examples/tutorial/FastBERTClassifier.ipynb) 		| 动态推理，易分样本提前离开模型 |

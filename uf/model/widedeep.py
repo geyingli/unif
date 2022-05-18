@@ -7,7 +7,7 @@ from .base import BaseDecoder
 from . import util
 
 
-class WideAndDeepCLSDecoder(BaseDecoder):
+class WideDeepClsDecoder(BaseDecoder):
     def __init__(self,
                  is_training,
                  input_tensor,
@@ -99,7 +99,7 @@ class WideAndDeepCLSDecoder(BaseDecoder):
             self.total_loss = tf.reduce_mean(per_example_loss)
 
 
-class WideAndDeepRegDecoder(BaseDecoder):
+class WideDeepRegDecoder(BaseDecoder):
     def __init__(self,
                  is_training,
                  input_tensor,

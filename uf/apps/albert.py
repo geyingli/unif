@@ -2,7 +2,7 @@ import numpy as np
 
 from .base import ClassifierModule, MRCModule, LMModule
 from .bert import BERTClassifier, BERTBinaryClassifier, BERTSeqClassifier, BERTMRC, BERTLM
-from ..model.base import CLSDecoder, BinaryCLSDecoder, SeqCLSDecoder, MRCDecoder
+from ..model.base import ClsDecoder, BinaryClsDecoder, SeqClsDecoder, MRCDecoder
 from ..model.albert import ALBERTEncoder, ALBERTDecoder, ALBERTConfig, create_instances_from_document, create_masked_lm_predictions, get_decay_power
 from ..token import WordPieceTokenizer
 from ..third import tf
@@ -61,7 +61,7 @@ class ALBERTClassifier(BERTClassifier, ClassifierModule):
             **kwargs,
         )
         encoder_output = encoder.get_pooled_output()
-        decoder = CLSDecoder(
+        decoder = ClsDecoder(
             is_training=is_training,
             input_tensor=encoder_output,
             label_ids=split_placeholders["label_ids"],
@@ -127,7 +127,7 @@ class ALBERTBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
             **kwargs,
         )
         encoder_output = encoder.get_pooled_output()
-        decoder = BinaryCLSDecoder(
+        decoder = BinaryClsDecoder(
             is_training=is_training,
             input_tensor=encoder_output,
             label_ids=split_placeholders["label_ids"],
@@ -189,7 +189,7 @@ class ALBERTSeqClassifier(BERTSeqClassifier, ClassifierModule):
             **kwargs,
         )
         encoder_output = encoder.get_sequence_output()
-        decoder = SeqCLSDecoder(
+        decoder = SeqClsDecoder(
             is_training=is_training,
             input_tensor=encoder_output,
             input_mask=split_placeholders["input_mask"],

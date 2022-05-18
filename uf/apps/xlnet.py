@@ -2,7 +2,7 @@ import numpy as np
 
 from .base import ClassifierModule, LMModule
 from .bert import BERTClassifier, BERTBinaryClassifier, BERTSeqClassifier, BERTLM
-from ..model.base import CLSDecoder, BinaryCLSDecoder, SeqCLSDecoder
+from ..model.base import ClsDecoder, BinaryClsDecoder, SeqClsDecoder
 from ..model.xlnet import XLNetEncoder, XLNet, XLNetConfig, create_instances_from_document, expand_features, get_decay_power, SEG_ID_CLS, SEG_ID_PAD, CLS_ID, SEP_ID, EOD_ID
 try:
     from ..token import SentencePieceTokenizer
@@ -99,7 +99,7 @@ class XLNetClassifier(BERTClassifier, ClassifierModule):
             **kwargs,
         )
         encoder_output = encoder.get_pooled_output()
-        decoder = CLSDecoder(
+        decoder = ClsDecoder(
             is_training=is_training,
             input_tensor=encoder_output,
             label_ids=split_placeholders["label_ids"],
@@ -200,7 +200,7 @@ class XLNetBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
             **kwargs,
         )
         encoder_output = encoder.get_pooled_output()
-        decoder = BinaryCLSDecoder(
+        decoder = BinaryClsDecoder(
             is_training=is_training,
             input_tensor=encoder_output,
             label_ids=split_placeholders["label_ids"],
@@ -300,7 +300,7 @@ class XLNetSeqClassifier(BERTSeqClassifier, ClassifierModule):
             **kwargs,
         )
         encoder_output = encoder.get_sequence_output()
-        decoder = SeqCLSDecoder(
+        decoder = SeqClsDecoder(
             is_training=is_training,
             input_tensor=encoder_output,
             input_mask=split_placeholders["input_mask"],

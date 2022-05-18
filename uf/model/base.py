@@ -30,7 +30,7 @@ class BaseDecoder:
         return (self.total_loss, self._tensors)
 
 
-class CLSDecoder(BaseDecoder):
+class ClsDecoder(BaseDecoder):
     def __init__(
         self,
         is_training,
@@ -124,7 +124,7 @@ class RegDecoder(BaseDecoder):
             self.total_loss = tf.reduce_mean(per_example_loss)
 
 
-class BinaryCLSDecoder(BaseDecoder):
+class BinaryClsDecoder(BaseDecoder):
     def __init__(
         self,
         is_training,
@@ -176,7 +176,7 @@ class BinaryCLSDecoder(BaseDecoder):
             self.total_loss = tf.reduce_mean(per_example_loss)
 
 
-class SeqCLSDecoder(BaseDecoder):
+class SeqClsDecoder(BaseDecoder):
     def __init__(
         self,
         is_training,
@@ -231,7 +231,7 @@ class SeqCLSDecoder(BaseDecoder):
             self.total_loss = tf.reduce_mean(per_example_loss)
 
 
-class SeqCLSMultiTaskDecoder(BaseDecoder):
+class SeqClsCrossDecoder(BaseDecoder):
     def __init__(
         self,
         is_training,

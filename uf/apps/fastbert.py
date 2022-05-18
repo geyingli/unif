@@ -3,7 +3,7 @@ import numpy as np
 from .base import ClassifierModule
 from .bert import BERTClassifier
 from ..model.bert import BERTConfig
-from ..model.fastbert import FastBERTCLSDistillor, convert_ignore_cls
+from ..model.fastbert import FastBERTClsDistillor, convert_ignore_cls
 from ..token import WordPieceTokenizer
 from ..third import tf
 from .. import com
@@ -176,7 +176,7 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
-        model = FastBERTCLSDistillor(
+        model = FastBERTClsDistillor(
             bert_config=self.bert_config,
             is_training=is_training,
             input_ids=split_placeholders["input_ids"],

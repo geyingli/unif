@@ -2,7 +2,7 @@ import numpy as np
 
 from .base import ClassifierModule, MRCModule, LMModule
 from .bert import BERTClassifier, BERTBinaryClassifier, BERTSeqClassifier, BERTMRC, BERTLM
-from ..model.base import CLSDecoder, BinaryCLSDecoder, SeqCLSDecoder, MRCDecoder
+from ..model.base import ClsDecoder, BinaryClsDecoder, SeqClsDecoder, MRCDecoder
 from ..model.bert import BERTEncoder, BERTConfig, create_masked_lm_predictions, get_decay_power
 from ..model.electra import ELECTRA
 from ..token import WordPieceTokenizer
@@ -61,7 +61,7 @@ class ELECTRAClassifier(BERTClassifier, ClassifierModule):
             **kwargs,
         )
         encoder_output = encoder.get_pooled_output()
-        decoder = CLSDecoder(
+        decoder = ClsDecoder(
             is_training=is_training,
             input_tensor=encoder_output,
             label_ids=split_placeholders["label_ids"],
@@ -126,7 +126,7 @@ class ELECTRABinaryClassifier(BERTBinaryClassifier, ClassifierModule):
             **kwargs,
         )
         encoder_output = encoder.get_pooled_output()
-        decoder = BinaryCLSDecoder(
+        decoder = BinaryClsDecoder(
             is_training=is_training,
             input_tensor=encoder_output,
             label_ids=split_placeholders["label_ids"],
@@ -190,7 +190,7 @@ class ELECTRASeqClassifier(BERTSeqClassifier, ClassifierModule):
             **kwargs,
         )
         encoder_output = encoder.get_sequence_output()
-        decoder = SeqCLSDecoder(
+        decoder = SeqClsDecoder(
             is_training=is_training,
             input_tensor=encoder_output,
             input_mask=split_placeholders["input_mask"],

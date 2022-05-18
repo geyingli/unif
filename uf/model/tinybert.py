@@ -6,7 +6,7 @@ from .base import BaseDecoder
 from . import util
 
 
-class TinyBERTCLSDistillor(BaseDecoder):
+class TinyBERTClsDistillor(BaseDecoder):
     def __init__(self,
                  student_config,
                  bert_config,
@@ -210,7 +210,7 @@ class TinyBERTCLSDistillor(BaseDecoder):
             self._tensors["losses"] = per_example_loss
 
 
-class TinyBERTBinaryCLSDistillor(TinyBERTCLSDistillor):
+class TinyBERTBinaryClsDistillor(TinyBERTClsDistillor):
 
     def _infer(self, student_logits, label_ids, sample_weight, label_size):
         probs = tf.nn.sigmoid(student_logits, name="probs")

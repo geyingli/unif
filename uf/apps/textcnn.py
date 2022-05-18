@@ -2,7 +2,7 @@ import numpy as np
 
 from .base import ClassifierModule
 from .bert import BERTClassifier
-from ..model.base import CLSDecoder
+from ..model.base import ClsDecoder
 from ..model.textcnn import TextCNNEncoder, get_decay_power
 from ..token import WordPieceTokenizer
 from ..third import tf
@@ -102,7 +102,7 @@ class TextCNNClassifier(BERTClassifier, ClassifierModule):
             **kwargs,
         )
         encoder_output = encoder.get_pooled_output()
-        decoder = CLSDecoder(
+        decoder = ClsDecoder(
             is_training=is_training,
             input_tensor=encoder_output,
             label_ids=split_placeholders["label_ids"],

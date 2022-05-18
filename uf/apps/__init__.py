@@ -15,7 +15,7 @@ from .bert import BERTClassifier
 from .roberta import RoBERTaClassifier
 from .albert import ALBERTClassifier
 from .electra import ELECTRAClassifier
-from .widedeep import WideAndDeepClassifier
+from .widedeep import WideDeepClassifier
 from .sembert import SemBERTClassifier
 from .performer import PerformerClassifier
 from .uda import UDAClassifier
@@ -31,8 +31,8 @@ from .bert import BERTSeqClassifier
 from .roberta import RoBERTaSeqClassifier
 from .albert import ALBERTSeqClassifier
 from .electra import ELECTRASeqClassifier
-from .bert import BERTSeqMultiTaskClassifier
-from .widedeep import WideAndDeepRegressor
+from .bert import BERTSeqCrossClassifier
+from .widedeep import WideDeepRegressor
 from .bert import BERTNER
 from .bert import BERTCRFNER
 from .bert import BERTCRFCascadeNER
@@ -71,7 +71,7 @@ __all__ = [
     "RoBERTaClassifier",
     "ALBERTClassifier",
     "ELECTRAClassifier",
-    "WideAndDeepClassifier",
+    "WideDeepClassifier",
     "SemBERTClassifier",
     "UDAClassifier",
     "TinyBERTClassifier",
@@ -86,8 +86,8 @@ __all__ = [
     "RoBERTaSeqClassifier",
     "ALBERTSeqClassifier",
     "ELECTRASeqClassifier",
-    "BERTSeqMultiTaskClassifier",
-    "WideAndDeepRegressor",
+    "BERTSeqCrossClassifier",
+    "WideDeepRegressor",
     "BERTNER",
     "BERTCRFNER",
     "BERTCRFCascadeNER",

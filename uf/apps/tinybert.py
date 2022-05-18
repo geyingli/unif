@@ -5,7 +5,7 @@ import numpy as np
 from .base import ClassifierModule
 from .bert import BERTClassifier, BERTBinaryClassifier
 from ..model.bert import BERTConfig
-from ..model.tinybert import TinyBERTCLSDistillor, TinyBERTBinaryCLSDistillor
+from ..model.tinybert import TinyBERTClsDistillor, TinyBERTBinaryClsDistillor
 from ..token import WordPieceTokenizer
 from ..third import tf
 
@@ -114,7 +114,7 @@ class TinyBERTClassifier(BERTClassifier, ClassifierModule):
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
-        model = TinyBERTCLSDistillor(
+        model = TinyBERTClsDistillor(
             student_config=self.student_config,
             bert_config=self.bert_config,
             is_training=is_training,
@@ -249,7 +249,7 @@ class TinyBERTBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
-        model = TinyBERTBinaryCLSDistillor(
+        model = TinyBERTBinaryClsDistillor(
             student_config=self.student_config,
             bert_config=self.bert_config,
             is_training=is_training,

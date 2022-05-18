@@ -703,8 +703,8 @@ class BaseModule:
         if sample_weight:
             assert isinstance(sample_weight, list), "`sample_weight` should be a list object."
             assert len(X) == len(sample_weight), (
-                "Length of `sample_weight` should be the "
-                "same with `X/X_tokenized`. (%d vs. %d)" % (len(y), len(X))
+                "Length of `sample_weight` should be the same with `X/X_tokenized`. "
+                "(%d vs. %d)" % (len(sample_weight), len(X))
             )
 
     def assign(self, variable, value):

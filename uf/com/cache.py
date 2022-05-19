@@ -7,16 +7,16 @@ from ..third import tf
 from .. import apps
 
 
-def load(code, cache_file="./.cache", **kwargs):
+def load(key, cache_file="./.cache", **kwargs):
     """ Load model from configurations saved in cache file.
 
     Args:
-        code: string. Unique name of configuration to load.
+        key: string. Unique name of configuration to load.
         cache_file: string. The path of cache file.
     Returns:
         None
     """
-    tf.logging.info("Loading model `%s` from %s" % (code, cache_file))
+    tf.logging.info("Loading model `%s` from %s" % (key, cache_file))
 
     if not os.path.exists(cache_file):
         raise ValueError("No cache file found with `%s`." % cache_file)
@@ -24,45 +24,45 @@ def load(code, cache_file="./.cache", **kwargs):
     cache_json = json.load(cache_fp)
     cache_fp.close()
 
-    if code not in cache_json.keys():
-        raise ValueError("No cached configs found with code `%s`." % code)
-    if "model" not in cache_json[code]:
+    if key not in cache_json.keys():
+        raise ValueError("No cached configs found with key `%s`." % key)
+    if "model" not in cache_json[key]:
         raise ValueError("No model assigned. Try `uf.XXX.load()` instead.")
-    model = cache_json[code]["model"]
+    model = cache_json[key]["model"]
     args = collections.OrderedDict()
 
     # unif >= beta v2.1.35
-    if "__init__" in cache_json[code]:
-        zips = cache_json[code]["__init__"].items()
+    if "__init__" in cache_json[key]:
+        zips = cache_json[key]["__init__"].items()
     # unif < beta v2.1.35
-    elif "keys" in cache_json[code]:
-        zips = zip(cache_json[code]["keys"], cache_json[code]["values"])
+    elif "keys" in cache_json[key]:
+        zips = zip(cache_json[key]["keys"], cache_json[key]["values"])
     else:
         raise ValueError("Wrong format of cache file.")
 
     cache_dir = os.path.dirname(cache_file)
     if cache_dir == "":
         cache_dir = "."
-    for key, value in zips:
+    for arg, value in zips:
 
         # convert from relative path
-        if key == "init_checkpoint" or key.endswith("_dir") or key.endswith("_file"):
+        if arg == "init_checkpoint" or arg.endswith("_dir") or arg.endswith("_file"):
             if isinstance(value, str) and not value.startswith("/"):
                 value = get_simplified_path(cache_dir + "/" + value)
 
-        if key in kwargs:
-            value = kwargs[key]
-        args[key] = value
+        if arg in kwargs:
+            value = kwargs[arg]
+        args[arg] = value
     return apps.__dict__[model](**args)
 
 
 def get_init_values(model):
     values = []
-    for key in model.__class__.__init__.__code__.co_varnames[1:]:
+    for arg in model.__class__.__init__.__code__.co_varnames[1:]:
         try:
-            value = model.__getattribute__(key)
+            value = model.__getattribute__(arg)
         except Exception:
-            value = model.__init_args__[key]
+            value = model.__init_args__[arg]
         values.append(value)
     return values
 

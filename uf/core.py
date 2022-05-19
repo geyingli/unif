@@ -68,13 +68,13 @@ class BaseModule:
 
     def __repr__(self):
         info = f"uf.{self.__class__.__name__}("
-        for key in self.__class__.__init__.__code__.co_varnames[1:]:
+        for arg in self.__class__.__init__.__code__.co_varnames[1:]:
             try:
-                value = self.__getattribute__(key)
+                value = self.__getattribute__(arg)
             except Exception:
-                value = self.__init_args__[key]
+                value = self.__init_args__[arg]
             value = f"\"{value}\"" if isinstance(value, str) else f"{value}"
-            info += "\n    %s=%s," % (key, value)
+            info += "\n    %s=%s," % (arg, value)
         info += "\n)"
         return info
 
@@ -435,12 +435,11 @@ class BaseModule:
             saver = tf.train.Saver(max_to_keep=max_to_keep)
             saver.save(self.sess, self.init_checkpoint)
 
-    def cache(self, code, cache_file="./.cache", max_to_keep=10000, note=""):
+    def cache(self, key, cache_file="./.cache", max_to_keep=10000, note=""):
         """ Save model configurations into cache file.
 
         Args:
-            code: string. Unique name of configuration to save. Can be any
-              kind of string.
+            key: string. Unique name of configuration to save. Can be any string.
             cache_file: string. The path of cache file.
             max_to_keep: int. Max number of checkpoints to save.
             note: string. The information you with to note.
@@ -452,7 +451,7 @@ class BaseModule:
         """
         if self.output_dir and self._session_built:
             self.save(max_to_keep)
-        tf.logging.info("Saving model configuration `%s` into %s" % (code, cache_file))
+        tf.logging.info("Saving model configuration `%s` into %s" % (key, cache_file))
 
         if os.path.exists(cache_file):
             cache_fp = open(cache_file, encoding="utf-8")
@@ -468,19 +467,19 @@ class BaseModule:
         if note:
             _cache_json["note"] = note
 
-        for key in self.__class__.__init__.__code__.co_varnames[1:]:
+        for arg in self.__class__.__init__.__code__.co_varnames[1:]:
             try:
-                value = self.__getattribute__(key)
+                value = self.__getattribute__(arg)
             except Exception:
-                value = self.__init_args__[key]
+                value = self.__init_args__[arg]
 
             # convert to relative path
-            if key == "init_checkpoint" or key.endswith("_dir") or key.endswith("_file"):
+            if arg == "init_checkpoint" or arg.endswith("_dir") or arg.endswith("_file"):
                 if isinstance(value, str) and not value.startswith("/"):
                     value = com.get_relative_path(source=cache_file, target=value)
 
-            _cache_json["__init__"][key] = value
-        cache_json[code] = _cache_json
+            _cache_json["__init__"][arg] = value
+        cache_json[key] = _cache_json
 
         cache_fp = open(cache_file, "w", encoding="utf-8")
         json.dump(cache_json, cache_fp, indent=2)

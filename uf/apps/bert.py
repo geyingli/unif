@@ -754,12 +754,12 @@ class BERTSeqCrossClassifier(BERTClassifier, ClassifierModule):
 
         # tokenize input texts
         for idx, sample in enumerate(X_target):
-            _input_tokens = self._convert_x(sample, tokenized)
+            _input_tokens = ["CLS"] + self._convert_x(sample, tokenized)
 
             com.truncate_segments([_input_tokens], self.max_seq_length, truncate_method=self.truncate_method)
 
             _input_ids = self.tokenizer.convert_tokens_to_ids(_input_tokens)
-            _input_mask = [1 for _ in range(len(_input_tokens))]
+            _input_mask = [0] + [1 for _ in range(len(_input_tokens) - 1)]
             _segment_ids = [0 for _ in range(len(_input_tokens))]
 
             # padding
@@ -948,8 +948,7 @@ class BERTSeqCrossClassifier(BERTClassifier, ClassifierModule):
         seq_cls_preds = []
         seq_cls_all_preds = np.argmax(seq_cls_probs, axis=-1)
         for _preds, _mask in zip(seq_cls_all_preds, self.data["input_mask"]):
-            input_length = np.sum(_mask)
-            _preds = _preds[:input_length].tolist()
+            _preds = [idx for i, idx in enumerate(_preds) if _mask[i] > 0]
             if self._seq_cls_id_to_label:
                 _preds = [self._seq_cls_id_to_label[idx] for idx in _preds]
             seq_cls_preds.append(_preds)

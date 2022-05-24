@@ -1122,6 +1122,10 @@ class BERTSeqCrossTmpClassifier(BERTClassifier, ClassifierModule):
 
         # automatically set `label_size`
         if self.seq_cls_labels:
+            if "[CLS]" not in self.seq_cls_labels:
+                self.seq_cls_labels.append("[CLS]")
+            if "[SEP]" not in self.seq_cls_labels:
+                self.seq_cls_labels.append("[SEP]")
             assert len(seq_cls_label_set) <= len(self.seq_cls_labels), ("Number of unique `y`s exceeds `seq_cls_labels`s.")
         else:
             self.seq_cls_labels = list(seq_cls_label_set)

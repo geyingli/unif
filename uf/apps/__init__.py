@@ -32,6 +32,7 @@ from .roberta import RoBERTaSeqClassifier
 from .albert import ALBERTSeqClassifier
 from .electra import ELECTRASeqClassifier
 from .bert import BERTSeqCrossClassifier
+from .bert import BERTSeqCrossTmpClassifier
 from .widedeep import WideDeepRegressor
 from .bert import BERTNER
 from .bert import BERTCRFNER
@@ -87,6 +88,7 @@ __all__ = [
     "ALBERTSeqClassifier",
     "ELECTRASeqClassifier",
     "BERTSeqCrossClassifier",
+    "BERTSeqCrossTmpClassifier",
     "WideDeepRegressor",
     "BERTNER",
     "BERTCRFNER",

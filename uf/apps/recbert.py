@@ -113,13 +113,14 @@ class RecBERTLM(LMModule):
                 if len(_input_tokens) == 0 or len(_input_tokens) > self.max_seq_length:
                     continue
             else:
-                com.truncate_segments([_input_tokens], self.max_seq_length, truncate_method=self.truncate_method)
+                com.truncate_segments([_input_tokens], self.max_seq_length - 1, truncate_method=self.truncate_method)
 
             # count char
             _input_ids = self.tokenizer.convert_tokens_to_ids(_input_tokens)
             if is_training:
                 for _input_id in _input_ids:
                     vocab_p[_input_id] += 1
+            _input_ids.insert(0, 1)
 
             input_tokens.append(_input_tokens)
             tokenized_input_ids.append(_input_ids)
@@ -267,41 +268,39 @@ class RecBERTLM(LMModule):
         output_arrays = list(zip(*batch_outputs))
 
         input_ids = self.data["input_ids"]
-        mask = (input_ids > 0)
 
         # integrated preds
         preds = []
         add_preds = com.transform(output_arrays[0], n_inputs)
         del_preds = com.transform(output_arrays[1], n_inputs)
-        tokens = self.data[com.BACKUP_DATA + "input_tokens"]
+        input_tokens = self.data[com.BACKUP_DATA + "input_tokens"]
         text = self.data[com.BACKUP_DATA + "X_target"]
         tokenized = self.data[com.BACKUP_DATA + "tokenized"][0]
         for idx in range(n_inputs):
+            _input_tokens = [""] + input_tokens[idx]
+            _input_length = np.sum(input_ids[idx] > 0)
             _add_preds = add_preds[idx]
+            print(_add_preds)
             _del_preds = del_preds[idx]
-            _input_length = np.sum(mask[idx])
-            _input_tokens = tokens[idx]
-            _output_tokens = [token for token in _input_tokens]
 
             if tokenized:
                 n = 0
+                _output_tokens = [token for token in _input_tokens]
                 for i in range(_input_length):
-                    if self._del_prob > 0 and _del_preds[i] != 0:
-                        _token = "{del:%s}" % _output_tokens[i + n]
-                        _output_tokens[i + n] = _token
+                    if self._del_prob > 0 and _del_preds[i] != 0 and i > 0:
+                        _output_tokens[i + n] = "{del:%s}" % _output_tokens[i + n]
                     if self._add_prob > 0 and _add_preds[i] != 0:
-                        _token = self.tokenizer.convert_ids_to_tokens([_add_preds[i]])[0]
-                        _token = "{add:%s}" % _token
+                        _token = "{add:%s}" % self.tokenizer.convert_ids_to_tokens([_add_preds[i]])[0]
                         _output_tokens.insert(i + 1 + n, _token)
                         n += 1
-                preds.append(_output_tokens)
+                preds.append(_output_tokens[1:])
             else:
                 _text = text[idx]
                 _mapping_start, _mapping_end = com.align_tokens_with_text(_input_tokens, _text, self._do_lower_case)
 
                 n = 0
                 for i in range(_input_length):
-                    if self._del_prob > 0 and _del_preds[i] != 0:
+                    if self._del_prob > 0 and _del_preds[i] != 0 and i > 0:
                         _start_ptr = _mapping_start[i] + n
                         _end_ptr = _mapping_end[i] + n
                         _del_token = _text[_start_ptr: _end_ptr]

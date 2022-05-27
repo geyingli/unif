@@ -44,7 +44,7 @@ def align_tokens_with_text(tokens, text, lower_case):
             mapping_end.append(j + len(token))
             i += 1
             j += len(token)
-        elif token not in text[j:]:  # [CLS], [SEP], some Japanese signs
+        elif token not in text[j:]:  # [CLS], [SEP], None, some Japanese signs
             mapping_start.append(j)
             if token in ("[CLS]", "[SEP]"):
                 mapping_end.append(j)

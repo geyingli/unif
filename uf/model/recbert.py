@@ -176,22 +176,18 @@ class RecBERT(BaseDecoder, BERTEncoder):
             with tf.variable_scope("verifier"):
                 logits = tf.layers.dense(
                     input_tensor, 2,
-                    kernel_initializer=util.create_initializer(
-                        bert_config.initializer_range),
-                    trainable=True)
-                verifier_label_ids = tf.cast(
-                    tf.greater(label_ids, 0), tf.int32)
+                    kernel_initializer=util.create_initializer(bert_config.initializer_range),
+                    trainable=True,
+                )
+                verifier_label_ids = tf.cast(tf.greater(label_ids, 0), tf.int32)
 
                 # loss
                 log_probs = tf.nn.log_softmax(logits, axis=-1)
-                one_hot_labels = tf.one_hot(
-                    verifier_label_ids, depth=2)
-                per_token_loss = -tf.reduce_sum(
-                    one_hot_labels * log_probs, axis=-1)
+                one_hot_labels = tf.one_hot(verifier_label_ids, depth=2)
+                per_token_loss = -tf.reduce_sum(one_hot_labels * log_probs, axis=-1)
 
                 input_mask = tf.cast(input_mask, tf.float32)
-                per_token_loss *= input_mask / tf.reduce_sum(
-                    input_mask, keepdims=True, axis=-1)
+                per_token_loss *= input_mask / tf.reduce_sum(input_mask, keepdims=True, axis=-1)
                 per_example_loss = tf.reduce_sum(per_token_loss, axis=-1)
                 if sample_weight is not None:
                     per_example_loss *= tf.expand_dims(sample_weight, axis=-1)
@@ -206,35 +202,28 @@ class RecBERT(BaseDecoder, BERTEncoder):
                 with tf.variable_scope("intermediate"):
                     logits = tf.layers.dense(
                         input_tensor, bert_config.hidden_size * 4,
-                        kernel_initializer=util.create_initializer(
-                            bert_config.initializer_range),
+                        kernel_initializer=util.create_initializer(bert_config.initializer_range),
                         activation=util.gelu,
-                        trainable=True)
+                        trainable=True,
+                    )
                 with tf.variable_scope("output"):
                     logits = tf.layers.dense(
                         logits, bert_config.hidden_size,
-                        kernel_initializer=util.create_initializer(
-                            bert_config.initializer_range),
-                        trainable=True)
+                        kernel_initializer=util.create_initializer(bert_config.initializer_range),
+                        trainable=True,
+                    )
 
-                flattened = tf.reshape(
-                    logits,
-                    [batch_size * max_seq_length, bert_config.hidden_size])
-                logits = tf.matmul(
-                    flattened, self.embedding_table, transpose_b=True)
-                logits = tf.reshape(
-                    logits, [-1, max_seq_length, bert_config.vocab_size])
+                flattened = tf.reshape(logits, [batch_size * max_seq_length, bert_config.hidden_size])
+                logits = tf.matmul(flattened, self.embedding_table, transpose_b=True)
+                logits = tf.reshape(logits, [-1, max_seq_length, bert_config.vocab_size])
 
                 # loss
                 log_probs = tf.nn.log_softmax(logits, axis=-1)
-                one_hot_labels = tf.one_hot(
-                    label_ids, depth=bert_config.vocab_size)
-                per_token_loss = -tf.reduce_sum(
-                    one_hot_labels * log_probs, axis=-1)
+                one_hot_labels = tf.one_hot(label_ids, depth=bert_config.vocab_size)
+                per_token_loss = -tf.reduce_sum(one_hot_labels * log_probs, axis=-1)
 
                 input_mask *= tf.cast(verifier_preds, tf.float32)
-                per_token_loss *= input_mask / (tf.reduce_sum(
-                    input_mask, keepdims=True, axis=-1) + 1e-6)
+                per_token_loss *= input_mask / (tf.reduce_sum(input_mask, keepdims=True, axis=-1) + 1e-6)
                 per_example_loss = tf.reduce_sum(per_token_loss, axis=-1)
                 if sample_weight is not None:
                     per_example_loss *= tf.expand_dims(sample_weight, axis=-1)
@@ -242,8 +231,7 @@ class RecBERT(BaseDecoder, BERTEncoder):
                 if prob != 0:
                     self.total_loss += tf.reduce_mean(per_example_loss)
                 self._tensors[name + "_loss"] = verifier_loss
-                self._tensors[name + "_preds"] = \
-                    tf.argmax(logits, axis=-1) * verifier_preds
+                self._tensors[name + "_preds"] = tf.argmax(logits, axis=-1) * verifier_preds
 
     def _cls_forward(self,
                      is_training,
@@ -290,7 +278,8 @@ class RecBERT(BaseDecoder, BERTEncoder):
 def sample_wrong_tokens(_input_ids, _add_label_ids, _del_label_ids, max_add, max_del, nonpad_seq_length, vocab_size, vocab_ind, vocab_p):
 
     # `add`, remove padding for prediction of adding tokens
-    # e.g. 124 591 9521 -> 124 9521
+    # e.g. input_ids: 124 591 9521 -> 124 9521
+    #      add_label_ids: 0 0 0 -> 1 0
     for _ in range(max_add):
         cand_indicies = [
             i for i in range(0, len(_input_ids) - 1)
@@ -300,31 +289,39 @@ def sample_wrong_tokens(_input_ids, _add_label_ids, _del_label_ids, max_add, max
             break
 
         index = random.choice(cand_indicies)
-        _add_label_ids[index] = _input_ids.pop(index + 1)
+        _id = _input_ids[index + 1]
+
+        _input_ids.pop(index + 1)
         _add_label_ids.pop(index + 1)
         _del_label_ids.pop(index + 1)
+
+        _add_label_ids[index] = _id
+
         _input_ids.append(0)
         _add_label_ids.append(0)
         _del_label_ids.append(0)
         nonpad_seq_length -= 1
 
     # `del`, add wrong tokens for prediction of deleted tokens
-    # e.g. 124 591 -> 124 92 591
+    # e.g. input_ids: 124 591 -> 92 124 591
+    #      del_label_ids: 0 0 -> 1 0 0
     for _ in range(max_del):
         if _input_ids[-1] != 0:  # no more space
             break
 
-        index = random.randint(0, nonpad_seq_length)
-        rand = np.random.choice(vocab_ind, p=vocab_p)  # sample from vocabulary
+        index = random.randint(1, nonpad_seq_length)
+        _id = np.random.choice(vocab_ind, p=vocab_p)  # sample from distribution of vocabulary
 
-        # always delete the right one
-        _input_ids.insert(index, rand)
+        _input_ids.insert(index, _id)
         _add_label_ids.insert(index, 0)
         _del_label_ids.insert(index, 1)
-        if rand == _input_ids[index + 1]:
+
+        # when new token is the same with the right one, only delete the right
+        if _id == _input_ids[index + 1]:
             _del_label_ids[index + 1], _del_label_ids[index] = _del_label_ids[index], _del_label_ids[index + 1]
 
         _input_ids.pop()
         _add_label_ids.pop()
         _del_label_ids.pop()
+
         nonpad_seq_length += 1

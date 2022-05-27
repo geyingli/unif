@@ -280,7 +280,6 @@ class RecBERTLM(LMModule):
             _input_tokens = [""] + input_tokens[idx]
             _input_length = np.sum(input_ids[idx] > 0)
             _add_preds = add_preds[idx]
-            print(_add_preds)
             _del_preds = del_preds[idx]
 
             if tokenized:

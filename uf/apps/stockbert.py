@@ -147,14 +147,13 @@ class StockBERTClassifier(BERTClassifier, ClassifierModule):
         label_ids = [self._label_to_id[label] for label in y]
         return label_ids
 
-    def _set_placeholders(self, target, on_export=False, **kwargs):
+    def _set_placeholders(self, target, **kwargs):
         self.placeholders = {
             "input_values": com.get_placeholder(target, "input_values", [None, self.max_seq_length - 1, self.max_unit_length], tf.float32),
             "input_mask": com.get_placeholder(target, "input_mask", [None, self.max_seq_length], tf.int32),
             "label_ids": com.get_placeholder(target, "label_ids", [None], tf.int32),
+            "sample_weight": com.get_placeholder(target, "sample_weight", [None], tf.float32),
         }
-        if not on_export:
-            self.placeholders["sample_weight"] = com.get_placeholder(target, "sample_weight", [None], tf.float32)
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 

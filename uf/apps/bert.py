@@ -173,15 +173,14 @@ class BERTClassifier(ClassifierModule):
         label_ids = [self._label_to_id[label] for label in y]
         return label_ids
 
-    def _set_placeholders(self, target, on_export=False, **kwargs):
+    def _set_placeholders(self, target, **kwargs):
         self.placeholders = {
             "input_ids": com.get_placeholder(target, "input_ids", [None, self.max_seq_length], tf.int32),
             "input_mask": com.get_placeholder(target, "input_mask", [None, self.max_seq_length], tf.int32),
             "segment_ids": com.get_placeholder(target, "segment_ids", [None, self.max_seq_length], tf.int32),
             "label_ids": com.get_placeholder(target, "label_ids", [None], tf.int32),
+            "sample_weight": com.get_placeholder(target, "sample_weight", [None], tf.float32),
         }
-        if not on_export:
-            self.placeholders["sample_weight"] = com.get_placeholder(target, "sample_weight", [None], tf.float32)
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
@@ -355,15 +354,14 @@ class BERTBinaryClassifier(BERTClassifier, ClassifierModule):
         label_ids = [[1 if self._id_to_label[i] in sample else 0 for i in range(self.label_size)] for sample in y]
         return label_ids
 
-    def _set_placeholders(self, target, on_export=False, **kwargs):
+    def _set_placeholders(self, target, **kwargs):
         self.placeholders = {
             "input_ids": com.get_placeholder(target, "input_ids", [None, self.max_seq_length], tf.int32),
             "input_mask": com.get_placeholder(target, "input_mask", [None, self.max_seq_length], tf.int32),
             "segment_ids": com.get_placeholder(target, "segment_ids", [None, self.max_seq_length], tf.int32),
             "label_ids": com.get_placeholder(target, "label_ids", [None, self.label_size], tf.int32),
+            "sample_weight": com.get_placeholder(target, "sample_weight", [None], tf.float32),
         }
-        if not on_export:
-            self.placeholders["sample_weight"] = com.get_placeholder(target, "sample_weight", [None], tf.float32)
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
@@ -560,15 +558,14 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
             label_ids.append(_label_ids)
         return label_ids
 
-    def _set_placeholders(self, target, on_export=False, **kwargs):
+    def _set_placeholders(self, target, **kwargs):
         self.placeholders = {
             "input_ids": com.get_placeholder(target, "input_ids", [None, self.max_seq_length], tf.int32),
             "input_mask": com.get_placeholder(target, "input_mask", [None, self.max_seq_length], tf.int32),
             "segment_ids": com.get_placeholder(target, "segment_ids", [None, self.max_seq_length], tf.int32),
             "label_ids": com.get_placeholder(target, "label_ids", [None, self.max_seq_length], tf.int32),
+            "sample_weight": com.get_placeholder(target, "sample_weight", [None], tf.float32),
         }
-        if not on_export:
-            self.placeholders["sample_weight"] = com.get_placeholder(target, "sample_weight", [None], tf.float32)
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
@@ -848,16 +845,15 @@ class BERTSeqCrossClassifier(BERTClassifier, ClassifierModule):
 
         return seq_cls_label_ids, cls_label_ids
 
-    def _set_placeholders(self, target, on_export=False, **kwargs):
+    def _set_placeholders(self, target, **kwargs):
         self.placeholders = {
             "input_ids": com.get_placeholder(target, "input_ids", [None, self.max_seq_length], tf.int32),
             "input_mask": com.get_placeholder(target, "input_mask", [None, self.max_seq_length], tf.int32),
             "segment_ids": com.get_placeholder(target, "segment_ids", [None, self.max_seq_length], tf.int32),
             "seq_cls_label_ids": com.get_placeholder(target, "seq_cls_label_ids", [None, self.max_seq_length], tf.int32),
             "cls_label_ids": com.get_placeholder(target, "cls_label_ids", [None], tf.int32),
+            "sample_weight": com.get_placeholder(target, "sample_weight", [None], tf.float32),
         }
-        if not on_export:
-            self.placeholders["sample_weight"] = com.get_placeholder(target, "sample_weight", [None], tf.float32)
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
@@ -1162,16 +1158,15 @@ class BERTSeqCrossTmpClassifier(BERTClassifier, ClassifierModule):
 
         return seq_cls_label_ids, cls_label_ids
 
-    def _set_placeholders(self, target, on_export=False, **kwargs):
+    def _set_placeholders(self, target, **kwargs):
         self.placeholders = {
             "input_ids": com.get_placeholder(target, "input_ids", [None, self.max_seq_length], tf.int32),
             "input_mask": com.get_placeholder(target, "input_mask", [None, self.max_seq_length], tf.int32),
             "segment_ids": com.get_placeholder(target, "segment_ids", [None, self.max_seq_length], tf.int32),
             "seq_cls_label_ids": com.get_placeholder(target, "seq_cls_label_ids", [None, self.max_seq_length], tf.int32),
             "cls_label_ids": com.get_placeholder(target, "cls_label_ids", [None], tf.int32),
+            "sample_weight": com.get_placeholder(target, "sample_weight", [None], tf.float32),
         }
-        if not on_export:
-            self.placeholders["sample_weight"] = com.get_placeholder(target, "sample_weight", [None], tf.float32)
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
@@ -1496,15 +1491,14 @@ class BERTNER(BERTClassifier, NERModule):
 
         return label_ids
 
-    def _set_placeholders(self, target, on_export=False, **kwargs):
+    def _set_placeholders(self, target, **kwargs):
         self.placeholders = {
             "input_ids": com.get_placeholder(target, "input_ids", [None, self.max_seq_length], tf.int32),
             "input_mask": com.get_placeholder(target, "input_mask", [None, self.max_seq_length], tf.int32),
             "segment_ids": com.get_placeholder(target, "segment_ids", [None, self.max_seq_length], tf.int32),
             "label_ids": com.get_placeholder(target, "label_ids", [None, self.max_seq_length], tf.int32),
+            "sample_weight": com.get_placeholder(target, "sample_weight", [None], tf.float32),
         }
-        if not on_export:
-            self.placeholders["sample_weight"] = com.get_placeholder(target, "sample_weight", [None], tf.float32)
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
@@ -2327,15 +2321,14 @@ class BERTMRC(BERTClassifier, MRCModule):
 
         return label_ids
 
-    def _set_placeholders(self, target, on_export=False, **kwargs):
+    def _set_placeholders(self, target, **kwargs):
         self.placeholders = {
             "input_ids": com.get_placeholder(target, "input_ids", [None, self.max_seq_length], tf.int32),
             "input_mask": com.get_placeholder(target, "input_mask", [None, self.max_seq_length], tf.int32),
             "segment_ids": com.get_placeholder(target, "segment_ids", [None, self.max_seq_length], tf.int32),
             "label_ids": com.get_placeholder(target, "label_ids", [None, 2], tf.int32),
+            "sample_weight": com.get_placeholder(target, "sample_weight", [None], tf.float32),
         }
-        if not on_export:
-            self.placeholders["sample_weight"] = com.get_placeholder(target, "sample_weight", [None], tf.float32)
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
@@ -2606,16 +2599,15 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
 
         return label_ids, has_answer
 
-    def _set_placeholders(self, target, on_export=False, **kwargs):
+    def _set_placeholders(self, target, **kwargs):
         self.placeholders = {
             "input_ids": com.get_placeholder(target, "input_ids", [None, self.max_seq_length], tf.int32),
             "input_mask": com.get_placeholder(target, "input_mask", [None, self.max_seq_length], tf.int32),
             "segment_ids": com.get_placeholder(target, "segment_ids", [None, self.max_seq_length], tf.int32),
             "label_ids": com.get_placeholder(target, "label_ids", [None, 2], tf.int32),
             "has_answer": com.get_placeholder(target, "has_answer", [None], tf.int32),
+            "sample_weight": com.get_placeholder(target, "sample_weight", [None], tf.float32),
         }
-        if not on_export:
-            self.placeholders["sample_weight"] = com.get_placeholder(target, "sample_weight", [None], tf.float32)
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
@@ -3052,7 +3044,7 @@ class BERTLM(LMModule):
         label_ids = [self._label_to_id[label] for label in y]
         return label_ids
 
-    def _set_placeholders(self, target, on_export=False, **kwargs):
+    def _set_placeholders(self, target, **kwargs):
         self.placeholders = {
             "input_ids": com.get_placeholder(target, "input_ids", [None, self.max_seq_length], tf.int32),
             "input_mask": com.get_placeholder(target, "input_mask", [None, self.max_seq_length], tf.int32),
@@ -3061,9 +3053,8 @@ class BERTLM(LMModule):
             "masked_lm_ids": com.get_placeholder(target, "masked_lm_ids", [None, self._max_predictions_per_seq], tf.int32),
             "masked_lm_weights": com.get_placeholder(target, "masked_lm_weights", [None, self._max_predictions_per_seq], tf.float32),
             "next_sentence_labels": com.get_placeholder(target, "next_sentence_labels", [None], tf.int32),
+            "sample_weight": com.get_placeholder(target, "sample_weight", [None], tf.float32),
         }
-        if not on_export:
-            self.placeholders["sample_weight"] = com.get_placeholder(target, "sample_weight", [None], tf.float32)
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 

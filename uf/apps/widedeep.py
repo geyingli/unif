@@ -180,7 +180,7 @@ class WideDeepClassifier(BERTClassifier, ClassifierModule):
 
         return input_ids, input_mask, segment_ids, n_wide_features, wide_features
 
-    def _set_placeholders(self, target, on_export=False, **kwargs):
+    def _set_placeholders(self, target, **kwargs):
         self.placeholders = {
             "input_ids": com.get_placeholder(target, "input_ids", [None, self.max_seq_length], tf.int32),
             "input_mask": com.get_placeholder(target, "input_mask", [None, self.max_seq_length], tf.int32),
@@ -188,9 +188,8 @@ class WideDeepClassifier(BERTClassifier, ClassifierModule):
             "n_wide_features": com.get_placeholder(target, "n_wide_features", [None], tf.int32),
             "wide_features": com.get_placeholder(target, "wide_features", [None, len(self.wide_features)], tf.int32),
             "label_ids": com.get_placeholder(target, "label_ids", [None], tf.int32),
+            "sample_weight": com.get_placeholder(target, "sample_weight", [None], tf.float32),
         }
-        if not on_export:
-            self.placeholders["sample_weight"] = com.get_placeholder(target, "sample_weight", [None], tf.float32)
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 
@@ -431,7 +430,7 @@ class WideDeepRegressor(WideDeepClassifier, RegressorModule):
 
         return label_floats
 
-    def _set_placeholders(self, target, on_export=False, **kwargs):
+    def _set_placeholders(self, target, **kwargs):
         self.placeholders = {
             "input_ids": com.get_placeholder(target, "input_ids", [None, self.max_seq_length], tf.int32),
             "input_mask": com.get_placeholder(target, "input_mask", [None, self.max_seq_length], tf.int32),
@@ -439,9 +438,8 @@ class WideDeepRegressor(WideDeepClassifier, RegressorModule):
             "n_wide_features": com.get_placeholder(target, "n_wide_features", [None], tf.int32),
             "wide_features": com.get_placeholder(target, "wide_features", [None, len(self.wide_features)], tf.int32),
             "label_floats": com.get_placeholder(target, "label_floats", [None, self.label_size], tf.float32),
+            "sample_weight": com.get_placeholder(target, "sample_weight", [None], tf.float32),
         }
-        if not on_export:
-            self.placeholders["sample_weight"] = com.get_placeholder(target, "sample_weight", [None], tf.float32)
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 

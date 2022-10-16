@@ -439,16 +439,15 @@ class XLNetLM(BERTLM, LMModule):
 
         return (inputs, targets, seg_ids, labels, is_masked)
 
-    def _set_placeholders(self, target, on_export=False, **kwargs):
+    def _set_placeholders(self, target, **kwargs):
         self.placeholders = {
             "input": com.get_placeholder(target, "input", [None, self.max_seq_length], tf.int32),
             "target": com.get_placeholder(target, "target", [None, self.max_seq_length], tf.int32),
             "seg_id": com.get_placeholder(target, "seg_id", [None, self.max_seq_length], tf.int32),
             "label": com.get_placeholder(target, "label", [None], tf.int32),
             "is_masked": com.get_placeholder(target, "is_masked", [None, self.max_seq_length], tf.int32),
+            "sample_weight": com.get_placeholder(target, "sample_weight", [None], tf.float32),
         }
-        if not on_export:
-            self.placeholders["sample_weight"] = com.get_placeholder(target, "sample_weight", [None], tf.float32)
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 

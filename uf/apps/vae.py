@@ -157,14 +157,13 @@ class VAELM(BERTClassifier, LMModule):
 
         return input_ids, input_mask, segment_ids
 
-    def _set_placeholders(self, target, on_export=False, **kwargs):
+    def _set_placeholders(self, target, **kwargs):
         self.placeholders = {
             "input_ids": com.get_placeholder(target, "input_ids", [None, self.max_seq_length], tf.int32),
             "input_mask": com.get_placeholder(target, "input_mask", [None, self.max_seq_length], tf.int32),
             "segment_ids": com.get_placeholder(target, "segment_ids", [None, self.max_seq_length], tf.int32),
+            "sample_weight": com.get_placeholder(target, "sample_weight", [None], tf.float32),
         }
-        if not on_export:
-            self.placeholders["sample_weight"] = com.get_placeholder(target, "sample_weight", [None], tf.float32)
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 

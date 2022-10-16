@@ -1,56 +1,56 @@
 from ..com import unimported_module
 
-from .bert import BERTLM
-from .roberta import RoBERTaLM
-from .albert import ALBERTLM
-from .electra import ELECTRALM
-from .dilated import DilatedLM
-from .recbert import RecBERTLM
-from .vae import VAELM
-from .spe import SPELM
-from .gpt2 import GPT2LM
-from .unilm import UniLM
-from .textcnn import TextCNNClassifier
-from .bert import BERTClassifier
-from .roberta import RoBERTaClassifier
-from .albert import ALBERTClassifier
-from .electra import ELECTRAClassifier
-from .widedeep import WideDeepClassifier
-from .sembert import SemBERTClassifier
-from .performer import PerformerClassifier
-from .uda import UDAClassifier
-from .tinybert import TinyBERTClassifier
-from .tinybert import TinyBERTBinaryClassifier
-from .fastbert import FastBERTClassifier
-from .stockbert import StockBERTClassifier
-from .bert import BERTBinaryClassifier
-from .roberta import RoBERTaBinaryClassifier
-from .albert import ALBERTBinaryClassifier
-from .electra import ELECTRABinaryClassifier
-from .bert import BERTSeqClassifier
-from .roberta import RoBERTaSeqClassifier
-from .albert import ALBERTSeqClassifier
-from .electra import ELECTRASeqClassifier
-from .bert import BERTSeqCrossClassifier
-from .bert import BERTSeqCrossTmpClassifier
-from .widedeep import WideDeepRegressor
-from .bert import BERTNER
-from .bert import BERTCRFNER
-from .bert import BERTCRFCascadeNER
-from .bert import BERTMRC
-from .bert import BERTVerifierMRC
-from .roberta import RoBERTaMRC
-from .albert import ALBERTMRC
-from .electra import ELECTRAMRC
-from .retroreader import RetroReaderMRC
-from .sanet import SANetMRC
-from .transformer import TransformerMT
+from .bert.bert_lm import BERTLM
+from .roberta.roberta_lm import RoBERTaLM
+from .albert.albert_lm import ALBERTLM
+from .electra.electra_lm import ELECTRALM
+from .dilated.dilated_lm import DilatedLM
+from .recbert.recbert_lm import RecBERTLM
+from .vae.vae_lm import VAELM
+from .spe.spe_lm import SPELM
+from .gpt2.gpt2_lm import GPT2LM
+from .unilm.unilm_lm import UniLM
+from .textcnn.textcnn_classifier import TextCNNClassifier
+from .bert.bert_classifier import BERTClassifier
+from .roberta.roberta_classifier import RoBERTaClassifier
+from .albert.albert_classifier import ALBERTClassifier
+from .electra.electra_classifier import ELECTRAClassifier
+from .widedeep.widedeep_classifier import WideDeepClassifier
+from .sembert.sembert_classifier import SemBERTClassifier
+from .performer.performer_classifier import PerformerClassifier
+from .uda.uda_classifier import UDAClassifier
+from .tinybert.tinybert_classifier import TinyBERTClassifier
+from .tinybert.tinybert_binary_classifier import TinyBERTBinaryClassifier
+from .fastbert.fastbert_classifier import FastBERTClassifier
+from .stockbert.stockbert_classifier import StockBERTClassifier
+from .bert.bert_binary_classifier import BERTBinaryClassifier
+from .roberta.roberta_binary_classifier import RoBERTaBinaryClassifier
+from .albert.albert_binary_classifier import ALBERTBinaryClassifier
+from .electra.electra_binary_classifier import ELECTRABinaryClassifier
+from .bert.bert_seq_classifier import BERTSeqClassifier
+from .roberta.roberta_seq_classifier import RoBERTaSeqClassifier
+from .albert.albert_seq_classifier import ALBERTSeqClassifier
+from .electra.electra_seq_classifier import ELECTRASeqClassifier
+from .bert.bert_seq_cross_classifier import BERTSeqCrossClassifier
+from .bert.bert_seq_cross_classifier import BERTSeqCrossTmpClassifier
+from .widedeep.widedeep_regressor import WideDeepRegressor
+from .bert.bert_ner import BERTNER
+from .bert.bert_crf_ner import BERTCRFNER
+from .bert.bert_crf_cascade_ner import BERTCRFCascadeNER
+from .bert.bert_mrc import BERTMRC
+from .bert.bert_verifier_mrc import BERTVerifierMRC
+from .roberta.roberta_mrc import RoBERTaMRC
+from .albert.albert_mrc import ALBERTMRC
+from .electra.electra_mrc import ELECTRAMRC
+from .retroreader.retroreader_mrc import RetroReaderMRC
+from .sanet.sanet_mrc import SANetMRC
+from .transformer.transformer_mt import TransformerMT
 
 
-# sentencepiece==0.1.85
+# test version: sentencepiece==0.1.85
 try:
-    from .xlnet import XLNetClassifier
-    from .xlnet import XLNetBinaryClassifier
+    from .xlnet.xlnet_classifier import XLNetClassifier
+    from .xlnet.xlnet_binary_classifier import XLNetBinaryClassifier
 except ModuleNotFoundError:
     XLNetClassifier = unimported_module("XLNetClassifier", "sentencepiece")
     XLNetBinaryClassifier = unimported_module("XLNetBinaryClassifier", "sentencepiece")
@@ -87,8 +87,6 @@ __all__ = [
     "RoBERTaSeqClassifier",
     "ALBERTSeqClassifier",
     "ELECTRASeqClassifier",
-    "BERTSeqCrossClassifier",
-    "BERTSeqCrossTmpClassifier",
     "WideDeepRegressor",
     "BERTNER",
     "BERTCRFNER",
@@ -108,4 +106,6 @@ __all__ = [
     "SPELM",
     "StockBERTClassifier",
     "PerformerClassifier",
+    "BERTSeqCrossClassifier",
+    "BERTSeqCrossTmpClassifier",
 ]

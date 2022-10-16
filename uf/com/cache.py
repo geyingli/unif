@@ -4,7 +4,6 @@ import json
 import collections
 
 from ..third import tf
-from .. import apps
 
 
 def load(key, cache_file="./.cache", **kwargs):
@@ -53,7 +52,7 @@ def load(key, cache_file="./.cache", **kwargs):
         if arg in kwargs:
             value = kwargs[arg]
         args[arg] = value
-    return apps.__dict__[model](**args)
+    return model.__dict__[model](**args)
 
 
 def get_init_values(model):

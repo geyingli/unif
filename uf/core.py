@@ -13,7 +13,7 @@ from . import com
 
 class BaseModule:
     """ Parent class of all the application processors. """
-    _INFER_ATTRIBUTES = {}    # values (with introduction) that must pass in order to infer
+    _INFER_ATTRIBUTES = {}    # values that must be passed in order to infer without training
 
     def __init__(self, init_checkpoint, output_dir, gpu_ids):
 

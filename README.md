@@ -8,7 +8,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-v2.5.0-blue">
+        <img src="https://img.shields.io/badge/version-v2.5.1-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-1.x\2.x-yellow">
@@ -222,7 +222,7 @@ model.fit_from_tfrecords(
 `fit` 和 `fit_from_tfrecords` 中的 `kwargs` 函数正是用来实现以下训练技巧：
 
 ```python
-# 打乱：随机打算训练数据
+# 打乱：随机打乱训练数据
 model.fit(..., shuffle=True)          # 默认False 
 
 # 优化器：`batch_size`大于512时推荐使用lamb

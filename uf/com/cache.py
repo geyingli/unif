@@ -3,6 +3,7 @@ import re
 import json
 import collections
 
+from .. import apps
 from ..third import tf
 
 
@@ -48,7 +49,7 @@ def restore(key, from_file="./.unif", **kwargs):
         if arg in kwargs:
             value = kwargs[arg]
         args[arg] = value
-    return model.__dict__[model](**args)
+    return apps.__dict__[model](**args)
 
 
 def load(key, cache_file="./.cache", **kwargs):

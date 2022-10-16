@@ -1,10 +1,11 @@
 
-__version__ = "v2.5.0"
+__version__ = "v2.5.1"
 
 # loading models
 from .apps import *
 
 from .com import MultiProcess
+from .com import restore
 from .com import load
 from .com import download
 from .com import download_all
@@ -19,6 +20,7 @@ set_verbosity()
 
 __all__ = [
     "MultiProcess",
+    "restore",
     "load",
     "download",
     "download_all",

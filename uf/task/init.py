@@ -6,6 +6,7 @@ from .base import Task
 
 
 class Initialization(Task):
+    """ Initialze the model, make it ready for inference. """
 
     def __init__(self, module):
         self.module = module

@@ -6,6 +6,7 @@ from .base import Task
 
 
 class Inference(Task):
+    """ Inference, as its name. """
 
     def __init__(self, module):
         self.module = module

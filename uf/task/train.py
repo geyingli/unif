@@ -9,14 +9,15 @@ from .base import Task
 
 
 class Training(Task):
+    """ Simply train, in a common neural-network manner. """
 
     def __init__(self, module, **kwargs):
         self.module = module
-        self.grad_acc_steps = float(kwargs.get("grad_acc_steps", "1"))    # gradient accumulation
-        self.shuffle = kwargs.get("shuffle", True)    # if to shuffle the training data
-        self.adversarial = kwargs.get("adversarial", "").lower()    # adversarial training algorithm
-        self.from_tfrecords = bool(kwargs.get("tfrecords_files"))    # if to reader data from tfrecords
-        self.tfrecords_files = kwargs.get("tfrecords_files", [])    # paths of tfrecords
+        self.grad_acc_steps = float(kwargs.get("grad_acc_steps", "1"))      # gradient accumulation
+        self.shuffle = kwargs.get("shuffle", True)                          # if to shuffle the training data
+        self.adversarial = kwargs.get("adversarial", "").lower()            # adversarial training algorithm
+        self.from_tfrecords = bool(kwargs.get("tfrecords_files"))           # if to reader data from tfrecords
+        self.tfrecords_files = kwargs.get("tfrecords_files", [])            # paths of tfrecords
         self.n_jobs = kwargs.get("n_jobs", max(multiprocessing.cpu_count() - 1, 1))    # number of threads loading tfrecords
         self.max_to_keep = kwargs.get("max_to_keep", 1000000)
 
@@ -261,6 +262,7 @@ class Training(Task):
 
 
 class AdversarialTraining(Training):
+    """ Train with adversarial algorithms. """
 
     def decorate(self, **kwargs):
         self._set_placeholders()

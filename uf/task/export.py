@@ -7,6 +7,7 @@ from .base import Task
 
 
 class Exportation(Task):
+    """ Export model into PB file. """
 
     def __init__(self, module):
         self.module = module

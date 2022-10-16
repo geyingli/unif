@@ -6,6 +6,7 @@ from .base import Task
 
 
 class Scoring(Task):
+    """ Infer the data and score the performance. """
 
     def __init__(self, module):
         self.module = module

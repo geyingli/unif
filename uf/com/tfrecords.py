@@ -2,7 +2,7 @@ import collections
 
 from ..third import tf
 
-BACKUP_DATA = "ex:"
+BACKUP_DATA = "ex:"        # data with the prefix `ex:` will not be fed into Tensorflow graph
 
 
 def write_tfrecords(data, tfrecords_file):

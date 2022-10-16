@@ -15,7 +15,7 @@ class Exportation(Task):
         self.decorate()
 
     def decorate(self):
-        self.module._set_placeholders("placeholder", is_training=False)
+        self.module._set_placeholders()
 
         _, self.module._tensors = self.module._parallel_forward(False)
 

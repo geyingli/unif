@@ -24,7 +24,7 @@ class Training(Task):
         self.decorate(**kwargs)
 
     def decorate(self, **kwargs):
-        self._set_placeholders()
+        self._init_placeholders()
 
         # accumulate gradients for updation
         if self.grad_acc_steps > 1:
@@ -39,6 +39,102 @@ class Training(Task):
             )
             update_step_op = self.module._global_step.assign(self.module._global_step + 1)
             self.train_ops = [update_params_op, update_step_op]
+
+    def run(self, target_steps, print_per_secs=60, save_per_steps=1000):
+
+        if self.shuffle and not self.tfrecords_files:
+            self._shuffle()
+
+        # init session
+        if not self.module._session_built:
+            com.count_params(self.module.global_variables, self.module.trainable_variables)
+            self._init_session()
+        else:
+            variables = []
+            for var in self.module.global_variables:
+                if var not in self.module._inited_vars:
+                    variables.append(var)
+            if variables:
+                self._init_variables(variables)
+        self.module._session_mode = "train"
+
+        # print
+        if self.adversarial:
+            tf.logging.info(
+                "Running adversarial training `%s` on %d samples (step %d -> %d)",
+                self.adversarial, self.n_inputs, self.module.step, target_steps,
+            )
+        else:
+            tf.logging.info(
+                "Running training on %d samples (step %d -> %d)",
+                self.n_inputs, self.module.step, target_steps,
+            )
+        if self.grad_acc_steps > 1:
+            tf.logging.info("Accumulate gradients every %d steps" % self.grad_acc_steps)
+
+        # SMART: initialize tilda_embedding
+        if self.adversarial == "smart":
+            self.module.sess.run(self.init_tilda_op)
+
+        self._ptr = 0
+        last_tic = time.time()
+        last_step = self.module.step
+        saver = tf.train.Saver(max_to_keep=self.max_to_keep)
+        for i in range(target_steps - self.module.step):
+            last_tic, last_step = self._train_one_batch(
+                self.module.step + 1, last_tic, last_step, target_steps,
+                print_per_secs, save_per_steps, saver, self.adversarial,
+            )
+            self.module.step += 1
+
+            # use accumulated gradients to update parameters
+            if (self.grad_acc_steps > 1) and (i % self.grad_acc_steps == 0):
+                self.module.sess.run(self.update_params_op)
+
+    def _init_placeholders(self):
+        if self.from_tfrecords:
+            self.n_inputs = com.get_tfrecords_length(self.tfrecords_files)
+
+            self.module._set_placeholders(is_training=True)
+                
+            # convert placeholders into features
+            features = {}
+            for key in com.get_tfrecords_keys(self.tfrecords_files[0]):
+                feature = self.module.placeholders[key]
+                if not isinstance(feature, tf.FixedLenFeature):
+                    feature = com.convert_placeholder_to_feature(feature)
+                features[key] = feature
+
+            def decode_record(record):
+                example = tf.parse_single_example(record, features)
+                for name in list(example.keys()):
+                    _t = example[name]
+                    if _t.dtype == tf.int64:
+                        _t = tf.to_int32(_t)
+                    example[name] = _t
+                return example
+
+            dataset = tf.data.TFRecordDataset(self.tfrecords_files)
+            dataset = dataset.repeat()
+            if tf.__version__.startswith("1"):
+                map_and_batch = tf.contrib.data.map_and_batch
+            elif tf.__version__.startswith("2"):
+                map_and_batch = tf.data.experimental.map_and_batch
+            dataset = dataset.apply(map_and_batch(
+                decode_record,
+                batch_size=self.module.batch_size,
+                num_parallel_batches=self.n_jobs,
+                drop_remainder=True),
+            )
+            dataset = dataset.shuffle(buffer_size=100)
+            iterator = dataset.make_one_shot_iterator()    # never stop
+            self.module.placeholders = iterator.get_next()
+        else:
+            self.n_inputs = len(list(self.module.data.values())[0])
+            self.module._set_placeholders(is_training=True)
+
+        if not self.n_inputs:
+            raise ValueError("0 input samples recognized.")
 
     def _accumulate_gradients(self, **kwargs):
         grads, self.module._tensors = self.module._parallel_forward(**kwargs)
@@ -122,102 +218,6 @@ class Training(Task):
             new_grads,
         )
 
-    def run(self, target_steps, print_per_secs=60, save_per_steps=1000):
-
-        if self.shuffle and not self.tfrecords_files:
-            self._shuffle()
-
-        # init session
-        if not self.module._session_built:
-            com.count_params(self.module.global_variables, self.module.trainable_variables)
-            self._init_session()
-        else:
-            variables = []
-            for var in self.module.global_variables:
-                if var not in self.module._inited_vars:
-                    variables.append(var)
-            if variables:
-                self._init_variables(variables)
-        self.module._session_mode = "train"
-
-        # print
-        if self.adversarial:
-            tf.logging.info(
-                "Running adversarial training `%s` on %d samples (step %d -> %d)",
-                self.adversarial, self.n_inputs, self.module.step, target_steps,
-            )
-        else:
-            tf.logging.info(
-                "Running training on %d samples (step %d -> %d)",
-                self.n_inputs, self.module.step, target_steps,
-            )
-        if self.grad_acc_steps > 1:
-            tf.logging.info("Accumulate gradients every %d steps" % self.grad_acc_steps)
-
-        # SMART: initialize tilda_embedding
-        if self.adversarial == "smart":
-            self.module.sess.run(self.init_tilda_op)
-
-        self._ptr = 0
-        last_tic = time.time()
-        last_step = self.module.step
-        saver = tf.train.Saver(max_to_keep=self.max_to_keep)
-        for i in range(target_steps - self.module.step):
-            last_tic, last_step = self._train_one_batch(
-                self.module.step + 1, last_tic, last_step, target_steps,
-                print_per_secs, save_per_steps, saver, self.adversarial,
-            )
-            self.module.step += 1
-
-            # use accumulated gradients to update parameters
-            if (self.grad_acc_steps > 1) and (i % self.grad_acc_steps == 0):
-                self.module.sess.run(self.update_params_op)
-
-    def _set_placeholders(self):
-        if self.from_tfrecords:
-            self.n_inputs = com.get_tfrecords_length(self.tfrecords_files)
-
-            self.module._set_placeholders("feature", is_training=True)
-                
-            # convert placeholders into features
-            features = {}
-            for key in com.get_tfrecords_keys(self.tfrecords_files[0]):
-                feature = self.module.placeholders[key]
-                if not isinstance(feature, tf.FixedLenFeature):
-                    feature = com.convert_placeholder_to_feature(feature)
-                features[key] = feature
-
-            def decode_record(record):
-                example = tf.parse_single_example(record, features)
-                for name in list(example.keys()):
-                    _t = example[name]
-                    if _t.dtype == tf.int64:
-                        _t = tf.to_int32(_t)
-                    example[name] = _t
-                return example
-
-            dataset = tf.data.TFRecordDataset(self.tfrecords_files)
-            dataset = dataset.repeat()
-            if tf.__version__.startswith("1"):
-                map_and_batch = tf.contrib.data.map_and_batch
-            elif tf.__version__.startswith("2"):
-                map_and_batch = tf.data.experimental.map_and_batch
-            dataset = dataset.apply(map_and_batch(
-                decode_record,
-                batch_size=self.module.batch_size,
-                num_parallel_batches=self.n_jobs,
-                drop_remainder=True),
-            )
-            dataset = dataset.shuffle(buffer_size=100)
-            iterator = dataset.make_one_shot_iterator()    # never stop
-            self.module.placeholders = iterator.get_next()
-        else:
-            self.n_inputs = len(list(self.module.data.values())[0])
-            self.module._set_placeholders("placeholder", is_training=True)
-
-        if not self.n_inputs:
-            raise ValueError("0 input samples recognized.")
-
     def _shuffle(self):
         index_list = list(range(len(list(self.module.data.values())[0])))
         random.shuffle(index_list)
@@ -269,7 +269,7 @@ class AdversarialTraining(Training):
     """ Train with adversarial algorithms. """
 
     def decorate(self, **kwargs):
-        self._set_placeholders()
+        self._init_placeholders()
 
         try:
             ok = True

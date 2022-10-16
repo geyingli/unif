@@ -28,10 +28,6 @@ class BaseModule:
 
         # convert GPU ids to list
         self._gpu_ids = []
-        if gpu_ids is None:
-            gpu_ids = os.environ.get("CUDA_VISIBLE_DEVICES", "")
-        elif not gpu_ids:
-            pass
         if gpu_ids:
             try:
                 if isinstance(gpu_ids, str):
@@ -39,7 +35,7 @@ class BaseModule:
                 else:
                     self._gpu_ids = list(map(str, gpu_ids))
             except Exception:
-                raise ValueError("`gpu_ids` should be a list of GPU ids or a string seperated with commas.")
+                raise ValueError("`gpu_ids` should be a list of GPU ids or a string seperated with commas, e.g. [0,1,2,3] or \"0,1,2,3\".")
 
         # build graph
         self.graph = tf.Graph()

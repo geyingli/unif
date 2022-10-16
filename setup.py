@@ -10,7 +10,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="uf",
-    version="v2.4.7",
+    version="v2.4.8",
     description="Unified framework for NLP tasks.",
     url="https://github.com/geyingli/unif",
     long_description=open("README.md", "r", encoding="utf-8").read(),
@@ -38,5 +38,6 @@ setup(
     keywords=(
         "bert xlnet electra nlp tensorflow classification generation "
         "question-answering machine-reading-comprehension "
-        "translation sequence-labeling"),
+        "translation sequence-labeling"
+    ),
 )

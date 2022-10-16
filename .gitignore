@@ -1,17 +1,26 @@
+
+# 隐藏文件
 .*
 */.*
 */*/.*
-*.sh
-*.tar.gz
-*.zip
-docs/*.pptx
-examples/tutorial/tmp
 
+# 无关文件
+*/__pycache__
+*/*/__pycache__
+docs/*.pptx
+*.sh
+tmp.py
 test.py
 replace.py
 
+# 压缩文件
+*.tar.gz
+*.zip
+
+# 安装生成文件
 build
 dist
 uf.egg-info
 
+# 输出文件
 artifacts

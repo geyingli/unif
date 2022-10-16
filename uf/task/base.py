@@ -21,7 +21,10 @@ class Task:
         raise NotImplementedError()
 
     def _init_session(self):
-        os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(self.module._gpu_ids)
+        if self.module._gpu_ids:
+            os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(self.module._gpu_ids)
+        else:
+            os.environ["CUDA_VISIBLE_DEVICES"] = "-1"       # disable GPUs
         config = tf.ConfigProto(allow_soft_placement=True)
         self.module.sess = tf.Session(graph=self.module.graph, config=config)
         self._init_variables(self.module.global_variables)
@@ -72,6 +75,7 @@ class Task:
                 self.module.sess.run(tf.assign(self.module._global_step, self.module.step))
 
     def _build_feed_dict(self):
+        """ Build `feed dict` for the current batch of data. """
         feed_dict = {}
         for key, data in self.module.data.items():
             if key.startswith(com.BACKUP_DATA):

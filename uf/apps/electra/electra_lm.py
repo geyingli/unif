@@ -182,14 +182,14 @@ class ELECTRALM(BERTLM, LMModule):
             "sample_weight": tf.placeholder(tf.float32, [None], "sample_weight"),
         }
 
-    def _forward(self, is_training, split_placeholders, **kwargs):
+    def _forward(self, is_training, placeholders, **kwargs):
 
         model = ELECTRA(
             vocab_size=len(self.tokenizer.vocab),
             model_size=self._model_size,
             is_training=is_training,
-            placeholders=split_placeholders,
-            sample_weight=split_placeholders.get("sample_weight"),
+            placeholders=placeholders,
+            sample_weight=placeholders.get("sample_weight"),
             max_predictions_per_seq=self._max_predictions_per_seq,
             gen_weight=self.generator_weight,
             disc_weight=self.discriminator_weight,

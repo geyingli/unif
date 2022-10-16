@@ -6,53 +6,58 @@ import collections
 from ..third import tf
 
 
-def load(key, cache_file="./.cache", **kwargs):
-    """ Load model from configurations saved in cache file.
+def restore(key, from_file="./.unif", **kwargs):
+    """ Load model from configurations saved in local file.
 
     Args:
         key: string. Unique name of configuration to load.
-        cache_file: string. The path of cache file.
-    Returns:
-        None
+        from_file: string. The path of configuration file.
     """
-    tf.logging.info("Loading model `%s` from %s" % (key, cache_file))
+    tf.logging.info("Loading model `%s` from %s" % (key, from_file))
 
-    if not os.path.exists(cache_file):
-        raise ValueError("No cache file found with `%s`." % cache_file)
-    cache_fp = open(cache_file, encoding="utf-8")
-    cache_json = json.load(cache_fp)
-    cache_fp.close()
+    if not os.path.exists(from_file):
+        raise ValueError("No file found with `%s`." % from_file)
+    from_fp = open(from_file, encoding="utf-8")
+    from_json = json.load(from_fp)
+    from_fp.close()
 
-    if key not in cache_json.keys():
-        raise ValueError("No cached configs found with key `%s`." % key)
-    if "model" not in cache_json[key]:
-        raise ValueError("No model assigned. Try `uf.XXX.load()` instead.")
-    model = cache_json[key]["model"]
+    if key not in from_json.keys():
+        raise ValueError("No key `%s`." % key)
+    model = from_json[key]["model"]
     args = collections.OrderedDict()
 
     # unif >= beta v2.1.35
-    if "__init__" in cache_json[key]:
-        zips = cache_json[key]["__init__"].items()
+    if "__init__" in from_json[key]:
+        zips = from_json[key]["__init__"].items()
     # unif < beta v2.1.35
-    elif "keys" in cache_json[key]:
-        zips = zip(cache_json[key]["keys"], cache_json[key]["values"])
+    elif "keys" in from_json[key]:
+        zips = zip(from_json[key]["keys"], from_json[key]["values"])
     else:
-        raise ValueError("Wrong format of cache file.")
+        raise ValueError("Wrong format.")
 
-    cache_dir = os.path.dirname(cache_file)
-    if cache_dir == "":
-        cache_dir = "."
+    from_dir = os.path.dirname(from_file)
+    if from_dir == "":
+        from_dir = "."
     for arg, value in zips:
 
         # convert from relative path
         if arg == "init_checkpoint" or arg.endswith("_dir") or arg.endswith("_file"):
             if isinstance(value, str) and not value.startswith("/"):
-                value = get_simplified_path(cache_dir + "/" + value)
+                value = get_simplified_path(from_dir + "/" + value)
 
         if arg in kwargs:
             value = kwargs[arg]
         args[arg] = value
     return model.__dict__[model](**args)
+
+
+def load(key, cache_file="./.cache", **kwargs):
+    """ Load model from configurations saved in cache file.
+
+    NOTE: This function is deprecated and not upgraded, just retained for compatibility "
+    "with older versions. Try `.restore()` instead.
+    """
+    return restore(key, from_file=cache_file, **kwargs)
 
 
 def get_init_values(model):

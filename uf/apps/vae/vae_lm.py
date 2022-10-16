@@ -165,15 +165,15 @@ class VAELM(BERTClassifier, LMModule):
             "sample_weight": tf.placeholder(tf.float32, [None], "sample_weight"),
         }
 
-    def _forward(self, is_training, split_placeholders, **kwargs):
+    def _forward(self, is_training, placeholders, **kwargs):
 
         model = VAE(
             vocab_size=len(self.tokenizer.vocab),
             is_training=is_training,
-            input_ids=split_placeholders["input_ids"],
-            input_mask=split_placeholders["input_mask"],
-            segment_ids=split_placeholders["segment_ids"],
-            sample_weight=split_placeholders.get("sample_weight"),
+            input_ids=placeholders["input_ids"],
+            input_mask=placeholders["input_mask"],
+            segment_ids=placeholders["segment_ids"],
+            sample_weight=placeholders.get("sample_weight"),
             reduced_size=self._reduced_size,
             topic_size=self._topic_size,
             hidden_size=self._hidden_size,

@@ -132,7 +132,7 @@ class UDADecoder(BaseDecoder):
 
                 self._tensors["unsupervised"] = per_example_loss
 
-            self.total_loss = sup_loss + unsup_loss
+            self.train_loss = sup_loss + unsup_loss
 
 
 def get_tsa_threshold(tsa_schedule, global_step, num_train_steps, start, end):

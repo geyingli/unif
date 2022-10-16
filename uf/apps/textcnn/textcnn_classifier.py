@@ -88,14 +88,14 @@ class TextCNNClassifier(BERTClassifier, ClassifierModule):
             "sample_weight": tf.placeholder(tf.float32, [None], "sample_weight"),
         }
 
-    def _forward(self, is_training, split_placeholders, **kwargs):
+    def _forward(self, is_training, placeholders, **kwargs):
 
         encoder = TextCNNEncoder(
             vocab_size=len(self.tokenizer.vocab),
             filter_sizes=self._filter_sizes,
             num_channels=self._num_channels,
             is_training=is_training,
-            input_ids=split_placeholders["input_ids"],
+            input_ids=placeholders["input_ids"],
             embedding_size=self._hidden_size,
             **kwargs,
         )
@@ -103,9 +103,9 @@ class TextCNNClassifier(BERTClassifier, ClassifierModule):
         decoder = ClsDecoder(
             is_training=is_training,
             input_tensor=encoder_output,
-            label_ids=split_placeholders["label_ids"],
+            label_ids=placeholders["label_ids"],
             label_size=self.label_size,
-            sample_weight=split_placeholders.get("sample_weight"),
+            sample_weight=placeholders.get("sample_weight"),
             scope="cls/seq_relationship",
             **kwargs,
         )

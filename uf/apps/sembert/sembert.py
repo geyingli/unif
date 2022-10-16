@@ -106,7 +106,7 @@ class SemBERTDecoder(BaseDecoder):
                     per_example_loss
 
             self._tensors["losses"] = per_example_loss
-            self.total_loss = tf.reduce_mean(per_example_loss)
+            self.train_loss = tf.reduce_mean(per_example_loss)
 
 
 def get_decay_power(num_hidden_layers):

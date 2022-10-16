@@ -34,7 +34,6 @@ class BERTMRC(BERTClassifier, MRCModule):
         self.max_seq_length = max_seq_length
         self.truncate_method = truncate_method
         self._do_lower_case = do_lower_case
-        self._on_predict = False
 
         self.bert_config = BERTConfig.from_json_file(config_file)
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
@@ -48,16 +47,6 @@ class BERTMRC(BERTClassifier, MRCModule):
             self.tokenizer.add("[SEP]")
             self.bert_config.vocab_size += 1
             tf.logging.info("Add necessary token `[SEP]` into vocabulary.")
-
-    def predict(self, X=None, X_tokenized=None, batch_size=8):
-
-        self._on_predict = True
-        ret = super(MRCModule, self).predict(X, X_tokenized, batch_size)
-        self._on_predict = False
-
-        return ret
-
-    predict.__doc__ = MRCModule.predict.__doc__
 
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None, is_training=False, is_parallel=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
@@ -243,22 +232,22 @@ class BERTMRC(BERTClassifier, MRCModule):
             "sample_weight": tf.placeholder(tf.float32, [None], "sample_weight"),
         }
 
-    def _forward(self, is_training, split_placeholders, **kwargs):
+    def _forward(self, is_training, placeholders, **kwargs):
 
         encoder = BERTEncoder(
             bert_config=self.bert_config,
             is_training=is_training,
-            input_ids=split_placeholders["input_ids"],
-            input_mask=split_placeholders["input_mask"],
-            segment_ids=split_placeholders["segment_ids"],
+            input_ids=placeholders["input_ids"],
+            input_mask=placeholders["input_mask"],
+            segment_ids=placeholders["segment_ids"],
             **kwargs,
         )
         encoder_output = encoder.get_sequence_output()
         decoder = MRCDecoder(
             is_training=is_training,
             input_tensor=encoder_output,
-            label_ids=split_placeholders["label_ids"],
-            sample_weight=split_placeholders.get("sample_weight"),
+            label_ids=placeholders["label_ids"],
+            sample_weight=placeholders.get("sample_weight"),
             scope="mrc",
             **kwargs,
         )

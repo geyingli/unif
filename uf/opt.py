@@ -1,7 +1,4 @@
-""" Optimization methods.
-  Code revised from Google's implementation of BERT.
-  See `https://github.com/google-research/bert`.
-"""
+""" Optimization methods. """
 
 import re
 

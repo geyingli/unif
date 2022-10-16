@@ -10,7 +10,7 @@ import numpy as np
 
 from ...third import tf
 from ..base.base import BaseEncoder, BaseDecoder
-from ..apps.base import util
+from .. import util
 
 
 SEG_ID_A = 0
@@ -243,8 +243,7 @@ class XLNet(BaseDecoder):
                     tf.cast(sample_weight, dtype=tf.float32), axis=-1)
                 per_example_loss *= sample_weight
 
-        self.total_loss = tf.reduce_sum(
-            per_example_loss * target_mask) / tf.reduce_sum(target_mask)
+        self.train_loss = tf.reduce_sum(per_example_loss * target_mask) / tf.reduce_sum(target_mask)
         self._tensors["losses"] = per_example_loss * target_mask
         self._tensors["preds"] = preds
         self._tensors["mask"] = target_mask
@@ -1494,11 +1493,11 @@ def _local_perm(inputs, targets, is_masked, perm_size, seq_len):
     return perm_mask, new_targets, target_mask, inputs_k, inputs_q
 
 
-def expand_features(module, split_placeholders):
+def expand_features(module, placeholders):
 
-    inputs = split_placeholders["input"]
-    target = split_placeholders["target"]
-    is_masked = tf.cast(split_placeholders["is_masked"], tf.bool)
+    inputs = placeholders["input"]
+    target = placeholders["target"]
+    is_masked = tf.cast(placeholders["is_masked"], tf.bool)
     batch_size = tf.shape(inputs)[0]
 
     non_reuse_len = module.max_seq_length - module.reuse_seq_length
@@ -1553,27 +1552,27 @@ def expand_features(module, split_placeholders):
         target_mapping = tf.one_hot(indices, module.max_seq_length, dtype=tf.float32)
         paddings = tf.zeros([pad_len, module.max_seq_length], dtype=target_mapping.dtype)
         target_mapping = tf.concat([target_mapping, paddings], axis=0)
-        split_placeholders["target_mapping"] = tf.reshape(target_mapping, [-1, module._num_predict, module.max_seq_length])
+        placeholders["target_mapping"] = tf.reshape(target_mapping, [-1, module._num_predict, module.max_seq_length])
 
         # target
         target = tf.boolean_mask(target, bool_target_mask)
         paddings = tf.zeros([pad_len], dtype=target.dtype)
         target = tf.concat([target, paddings], axis=0)
-        split_placeholders["target"] = tf.reshape(target, [-1, module._num_predict])
+        placeholders["target"] = tf.reshape(target, [-1, module._num_predict])
 
         # target mask
         target_mask = tf.concat([
             tf.ones([batch_size, actual_num_predict], dtype=tf.float32),
             tf.zeros([batch_size, pad_len], dtype=tf.float32)
         ], axis=1)
-        split_placeholders["target_mask"] = tf.reshape(target_mask, [-1, module._num_predict])
+        placeholders["target_mask"] = tf.reshape(target_mask, [-1, module._num_predict])
     else:
-        split_placeholders["target"] = tf.reshape(target, [-1, module.max_seq_length])
-        split_placeholders["target_mask"] = tf.reshape(target_mask, [-1, module.max_seq_length])
+        placeholders["target"] = tf.reshape(target, [-1, module.max_seq_length])
+        placeholders["target_mask"] = tf.reshape(target_mask, [-1, module.max_seq_length])
 
     # reshape back to fixed shape
-    split_placeholders["perm_mask"] = tf.reshape(perm_mask, [-1, module.max_seq_length, module.max_seq_length])
-    split_placeholders["input_k"] = tf.reshape(input_k, [-1, module.max_seq_length])
-    split_placeholders["input_q"] = tf.reshape(input_q, [-1, module.max_seq_length])
+    placeholders["perm_mask"] = tf.reshape(perm_mask, [-1, module.max_seq_length, module.max_seq_length])
+    placeholders["input_k"] = tf.reshape(input_k, [-1, module.max_seq_length])
+    placeholders["input_q"] = tf.reshape(input_q, [-1, module.max_seq_length])
 
-    return split_placeholders
+    return placeholders

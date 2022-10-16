@@ -237,16 +237,16 @@ class Training(Task):
         output_arrays = self.module.sess.run(fit_ops, feed_dict=feed_dict)[:-len(self.train_ops)]
 
         # print
-        if time.time() - last_tic > print_per_secs or step == target_steps:
+        diff_tic = time.time() - last_tic
+        if diff_tic > print_per_secs or step == target_steps:
             info = "step %d" % step
 
             # print processor-specific information
             info += self.module._get_fit_info(output_arrays, feed_dict, as_feature)
 
             # print training efficiency
-            if time.time() - last_tic > print_per_secs or step == target_steps:
-                info += ", %.2f steps/sec" % ((step - last_step) / (time.time() - last_tic))
-                info += ", %.2f examples/sec" % ((step - last_step) / (time.time() - last_tic) * self.module.batch_size)
+            info += ", %.2f steps/sec" % ((step - last_step) / diff_tic)
+            info += ", %.2f examples/sec" % ((step - last_step) / diff_tic * self.module.batch_size)
 
             tf.logging.info(info)
             last_tic = time.time()
@@ -570,8 +570,8 @@ class AdversarialTraining(Training):
                 self.module._tensors["prtb"] = prtb_lambda * (per_example_loss + per_example_loss_prtb)
 
                 # sum up
-                total_loss = cls_loss + breg_loss + prtb_loss
-                grads = tf.gradients(total_loss, self.module.trainable_variables)
+                train_loss = cls_loss + breg_loss + prtb_loss
+                grads = tf.gradients(train_loss, self.module.trainable_variables)
                 grad, _ = com.get_grad_and_param(
                     self.module.trainable_variables,
                     grads,

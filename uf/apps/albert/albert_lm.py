@@ -226,14 +226,14 @@ class ALBERTLM(BERTLM, LMModule):
             "sample_weight": tf.placeholder(tf.float32, [None], "sample_weight"),
         }
 
-    def _forward(self, is_training, split_placeholders, **kwargs):
+    def _forward(self, is_training, placeholders, **kwargs):
 
         encoder = ALBERTEncoder(
             albert_config=self.albert_config,
             is_training=is_training,
-            input_ids=split_placeholders["input_ids"],
-            input_mask=split_placeholders["input_mask"],
-            segment_ids=split_placeholders["segment_ids"],
+            input_ids=placeholders["input_ids"],
+            input_mask=placeholders["input_mask"],
+            segment_ids=placeholders["segment_ids"],
             drop_pooler=self._drop_pooler,
             **kwargs,
         )
@@ -241,11 +241,11 @@ class ALBERTLM(BERTLM, LMModule):
             albert_config=self.albert_config,
             is_training=is_training,
             encoder=encoder,
-            masked_lm_positions=split_placeholders["masked_lm_positions"],
-            masked_lm_ids=split_placeholders["masked_lm_ids"],
-            masked_lm_weights=split_placeholders["masked_lm_weights"],
-            sentence_order_labels=split_placeholders.get("sentence_order_labels"),
-            sample_weight=split_placeholders.get("sample_weight"),
+            masked_lm_positions=placeholders["masked_lm_positions"],
+            masked_lm_ids=placeholders["masked_lm_ids"],
+            masked_lm_weights=placeholders["masked_lm_weights"],
+            sentence_order_labels=placeholders.get("sentence_order_labels"),
+            sample_weight=placeholders.get("sample_weight"),
             scope_lm="cls/predictions",
             scope_cls="cls/seq_relationship",
             **kwargs,

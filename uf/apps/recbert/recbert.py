@@ -64,7 +64,7 @@ class RecBERT(BaseDecoder, BERTEncoder):
             #     embedding_slice,
             #     [1, max_seq_length, bert_config.hidden_size])
 
-            self.total_loss = 0
+            self.train_loss = 0
             self._lm_forward(
                 is_training,
                 input_tensor=hidden,
@@ -193,7 +193,7 @@ class RecBERT(BaseDecoder, BERTEncoder):
                     per_example_loss *= tf.expand_dims(sample_weight, axis=-1)
 
                 if prob != 0:
-                    self.total_loss += tf.reduce_mean(per_example_loss)
+                    self.train_loss += tf.reduce_mean(per_example_loss)
                 verifier_loss = per_example_loss
                 verifier_preds = tf.argmax(logits, axis=-1)
 
@@ -229,7 +229,7 @@ class RecBERT(BaseDecoder, BERTEncoder):
                     per_example_loss *= tf.expand_dims(sample_weight, axis=-1)
 
                 if prob != 0:
-                    self.total_loss += tf.reduce_mean(per_example_loss)
+                    self.train_loss += tf.reduce_mean(per_example_loss)
                 self._tensors[name + "_loss"] = verifier_loss
                 self._tensors[name + "_preds"] = tf.argmax(logits, axis=-1) * verifier_preds
 
@@ -270,7 +270,7 @@ class RecBERT(BaseDecoder, BERTEncoder):
                 per_example_loss *= tf.expand_dims(sample_weight, axis=-1)
 
             if prob != 0:
-                self.total_loss += tf.reduce_mean(per_example_loss)
+                self.train_loss += tf.reduce_mean(per_example_loss)
             self._tensors[name + "_loss"] = per_example_loss
             self._tensors[name + "_preds"] = tf.argmax(logits, axis=-1)
 

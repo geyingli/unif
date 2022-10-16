@@ -183,14 +183,14 @@ class SemBERTClassifier(BERTClassifier, ClassifierModule):
             "sample_weight": tf.placeholder(tf.float32, [None], "sample_weight"),
         }
 
-    def _forward(self, is_training, split_placeholders, **kwargs):
+    def _forward(self, is_training, placeholders, **kwargs):
 
         encoder = BERTEncoder(
             bert_config=self.bert_config,
             is_training=is_training,
-            input_ids=split_placeholders["input_ids"],
-            input_mask=split_placeholders["input_mask"],
-            segment_ids=split_placeholders["segment_ids"],
+            input_ids=placeholders["input_ids"],
+            input_mask=placeholders["input_mask"],
+            segment_ids=placeholders["segment_ids"],
             drop_pooler=self._drop_pooler,
             **kwargs,
         )
@@ -199,13 +199,13 @@ class SemBERTClassifier(BERTClassifier, ClassifierModule):
             bert_config=self.bert_config,
             is_training=is_training,
             input_tensor=encoder_output,
-            input_mask=split_placeholders["input_mask"],
-            sem_features=split_placeholders["sem_features"],
-            label_ids=split_placeholders["label_ids"],
+            input_mask=placeholders["input_mask"],
+            sem_features=placeholders["sem_features"],
+            label_ids=placeholders["label_ids"],
             max_seq_length=self.max_seq_length,
             feature_size=len(self.sem_features),
             label_size=self.label_size,
-            sample_weight=split_placeholders.get("sample_weight"),
+            sample_weight=placeholders.get("sample_weight"),
             scope="cls/seq_relationship",
             **kwargs,
         )

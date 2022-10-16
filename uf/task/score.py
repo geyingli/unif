@@ -30,30 +30,37 @@ class Scoring(Task):
             self._init_session()
         self.module._session_mode = "infer"
 
+        tf.logging.info("Running scoring on %d samples", n_inputs)
+
         self._ptr = 0
         last_tic = time.time()
+        last_step = 0
         batch_outputs = []
         total_steps = (n_inputs - 1) // self.module.batch_size + 1
         for step in range(total_steps):
-            self._score_one_batch(step, last_tic, total_steps, batch_outputs)
+            last_tic, last_step = self._score_one_batch(
+                step + 1, last_tic, last_step, total_steps, batch_outputs,
+            )
 
         return self.module._get_score_outputs(batch_outputs)
 
-    def _score_one_batch(self, step, last_tic, total_steps, batch_outputs):
+    def _score_one_batch(self, step, last_tic, last_step, total_steps, batch_outputs):
         feed_dict = self._build_feed_dict()
         score_ops = self.module._get_score_ops()
         output_arrays = self.module.sess.run(score_ops, feed_dict=feed_dict)
-
-        # cache
         batch_outputs.append(output_arrays)
 
         # print
-        if step == total_steps - 1:
+        diff_tic = time.time() - last_tic
+        process = step / total_steps
+        if (diff_tic > 10 and process >= 0.005) or step == total_steps:
+            info = "process %.1f%%" % (process * 100)
 
-            # print inference efficiency
-            diff_tic = time.time() - last_tic
-            info = "Time usage %dm-%.2fs" % (diff_tic // 60, diff_tic % 60)
-            info += ", %.2f steps/sec" % (total_steps / diff_tic)
-            info += ", %.2f examples/sec" % (total_steps / diff_tic * self.module.batch_size)
+            # print scoring efficiency
+            info += ", %.2f examples/sec" % ((step - last_step) / diff_tic * self.module.batch_size)
 
             tf.logging.info(info)
+            last_tic = time.time()
+            last_step = step
+
+        return last_tic, last_step

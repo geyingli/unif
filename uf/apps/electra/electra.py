@@ -61,7 +61,7 @@ class ELECTRA(BaseDecoder):
             name="generator")
         mlm_output = self._get_generator_output(
             masked_inputs, sample_weight, generator)
-        self.total_loss = self.config.gen_weight * mlm_output.loss
+        self.train_loss = self.config.gen_weight * mlm_output.loss
         self._tensors["MLM_losses"] = mlm_output.per_example_loss
         self._tensors["MLM_preds"] = tf.reshape(
             mlm_output.preds, [-1, max_predictions_per_seq])
@@ -82,7 +82,7 @@ class ELECTRA(BaseDecoder):
             disc_input, sample_weight, discriminator,
             fake_data.is_fake_tokens)
         if electra_objective:
-            self.total_loss += self.config.disc_weight * disc_output.loss
+            self.train_loss += self.config.disc_weight * disc_output.loss
         self._tensors["RTD_losses"] = disc_output.per_example_loss
         self._tensors["RTD_probs"] = disc_output.probs
         self._tensors["RTD_preds"] = disc_output.preds

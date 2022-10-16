@@ -67,7 +67,7 @@ class DLM(BaseDecoder, BERTEncoder):
                 if sample_weight is not None:
                     per_example_loss *= tf.expand_dims(sample_weight, axis=-1)
 
-                self.total_loss = tf.reduce_mean(per_example_loss)
+                self.train_loss = tf.reduce_mean(per_example_loss)
                 self._tensors["LM"] = per_example_loss
 
             # forward loop

@@ -159,7 +159,7 @@ class FastBERTClsDistillor(BaseDecoder, BERTEncoder):
                 losses.append(loss)
 
             distill_loss = tf.add_n(losses)
-            self.total_loss = distill_loss
+            self.train_loss = distill_loss
             self._tensors["losses"] = distill_loss
 
         else:

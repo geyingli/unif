@@ -291,7 +291,7 @@ class ALBERTDecoder(BaseDecoder):
                 self._tensors["SOP_probs"] = probs
                 self._tensors["SOP_preds"] = tf.argmax(probs, axis=-1)
 
-        self.total_loss = tf.add_n(scalar_losses)
+        self.train_loss = tf.add_n(scalar_losses)
 
 
 def get_timing_signal_1d_given_position(channels,

@@ -155,14 +155,14 @@ class GPT2LM(LMModule):
             "sample_weight": tf.placeholder(tf.float32, [None], "sample_weight"),
         }
 
-    def _forward(self, is_training, split_placeholders, **kwargs):
+    def _forward(self, is_training, placeholders, **kwargs):
 
         model = GPT2(
             hparams=self.gpt2_config,
             vocab_size=len(self.tokenizer.vocab),
             is_training=is_training,
-            input_ids=split_placeholders["input_ids"],
-            sample_weight=split_placeholders.get("sample_weight"),
+            input_ids=placeholders["input_ids"],
+            sample_weight=placeholders.get("sample_weight"),
             given=self._given,
             **kwargs,
         )

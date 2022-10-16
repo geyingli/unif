@@ -95,7 +95,7 @@ class TinyBERTClsDistillor(BaseDecoder):
             # sum up
             distill_loss = (embedding_loss + attention_loss +
                             hidden_loss + pred_loss)
-            self.total_loss = distill_loss
+            self.train_loss = distill_loss
             self._tensors["losses"] = tf.reshape(distill_loss, [1])
 
         else:
@@ -183,12 +183,9 @@ class TinyBERTClsDistillor(BaseDecoder):
         teacher_probs = tf.nn.softmax(teacher_logits, axis=-1)
         teacher_probs = tf.stop_gradient(teacher_probs)
         student_log_probs = tf.nn.log_softmax(student_logits, axis=-1)
+        pred_loss = -tf.reduce_sum(teacher_probs * student_log_probs, axis=-1)
         if sample_weight is not None:
-            pred_loss = (
-                - tf.reduce_sum(teacher_probs * student_log_probs, axis=-1) *
-                tf.reshape(sample_weight, [-1, 1]))
-        else:
-            pred_loss = - tf.reduce_sum(teacher_probs * student_log_probs, axis=-1)
+            pred_loss *= tf.reshape(sample_weight, [-1, 1])
         pred_loss = tf.reduce_mean(pred_loss)
         return pred_loss
 
@@ -211,6 +208,14 @@ class TinyBERTClsDistillor(BaseDecoder):
 
 
 class TinyBERTBinaryClsDistillor(TinyBERTClsDistillor):
+
+    def _get_pred_loss(self, teacher_logits, student_logits, sample_weight):
+        teacher_logits = tf.stop_gradient(teacher_logits)
+        pred_loss = tf.losses.mean_squared_error(teacher_logits, student_logits)
+        if sample_weight is not None:
+            pred_loss *= tf.reshape(sample_weight, [-1, 1])
+        pred_loss = tf.reduce_mean(pred_loss)
+        return pred_loss
 
     def _infer(self, student_logits, label_ids, sample_weight, label_size):
         probs = tf.nn.sigmoid(student_logits, name="probs")

@@ -3,6 +3,7 @@
 .*
 */.*
 */*/.*
+*/*/*/.*
 
 # 压缩文件
 *.tar.gz
@@ -19,6 +20,8 @@ artifacts
 # 无关文件
 */__pycache__
 */*/__pycache__
+*/*/*/__pycache__
+*/*/*/*/__pycache__
 docs/*.pptx
 *.sh
 modify.py

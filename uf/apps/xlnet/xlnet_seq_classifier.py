@@ -1,6 +1,6 @@
 from .xlnet import XLNetEncoder, XLNetConfig, get_decay_power, SEG_ID_CLS, SEG_ID_PAD, CLS_ID, SEP_ID
 from ..base.base_classifier import ClassifierModule
-from ..bert.bert_classifier import BERTSeqClassifier
+from ..bert.bert_seq_classifier import BERTSeqClassifier
 from ..base.base import SeqClsDecoder
 try:
     from ...token import SentencePieceTokenizer
@@ -82,11 +82,11 @@ class XLNetSeqClassifier(BERTSeqClassifier, ClassifierModule):
 
         return input_ids, input_mask, segment_ids
 
-    def _forward(self, is_training, split_placeholders, **kwargs):
+    def _forward(self, is_training, placeholders, **kwargs):
 
-        input_ids = tf.transpose(split_placeholders["input_ids"], [1, 0])
-        input_mask = tf.transpose(split_placeholders["input_mask"], [1, 0])
-        segment_ids = tf.transpose(split_placeholders["segment_ids"], [1, 0])
+        input_ids = tf.transpose(placeholders["input_ids"], [1, 0])
+        input_mask = tf.transpose(placeholders["input_mask"], [1, 0])
+        segment_ids = tf.transpose(placeholders["segment_ids"], [1, 0])
 
         encoder = XLNetEncoder(
             xlnet_config=self.xlnet_config,
@@ -100,10 +100,10 @@ class XLNetSeqClassifier(BERTSeqClassifier, ClassifierModule):
         decoder = SeqClsDecoder(
             is_training=is_training,
             input_tensor=encoder_output,
-            input_mask=split_placeholders["input_mask"],
-            label_ids=split_placeholders["label_ids"],
+            input_mask=placeholders["input_mask"],
+            label_ids=placeholders["label_ids"],
             label_size=self.label_size,
-            sample_weight=split_placeholders.get("sample_weight"),
+            sample_weight=placeholders.get("sample_weight"),
             scope="cls/sequence",
             **kwargs,
         )

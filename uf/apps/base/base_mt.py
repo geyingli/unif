@@ -8,6 +8,7 @@ class MTModule(BaseModule):
     """ Application class of machine translation (MT). """
 
     def _get_bleu(self, preds, labels, mask, max_gram=4):
+        """ Bilingual evaluation understudy. """
         eos_id = self.tokenizer.convert_tokens_to_ids(["</s>"])[0]
 
         bleus = []
@@ -46,6 +47,7 @@ class MTModule(BaseModule):
         return np.mean(bleus)
 
     def _get_rouge(self, preds, labels, mask, max_gram=4):
+        """ Recall-Oriented Understudy for Gisting Evaluation. """
         eos_id = self.tokenizer.convert_tokens_to_ids(["</s>"])[0]
 
         rouges = []
@@ -71,7 +73,7 @@ class MTModule(BaseModule):
                     denominator += len(com.find_all_boyer_moore(_labels, ngram))
                     ngrams.append(ngram)
 
-            _rouge = nominator / (denominator + 1e-6)
+            _rouge = nominator / denominator if denominator else 0
             rouges.append(_rouge)
 
         return np.mean(rouges)

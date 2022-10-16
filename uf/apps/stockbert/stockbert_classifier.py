@@ -155,13 +155,13 @@ class StockBERTClassifier(BERTClassifier, ClassifierModule):
             "sample_weight": tf.placeholder(tf.float32, [None], "sample_weight"),
         }
 
-    def _forward(self, is_training, split_placeholders, **kwargs):
+    def _forward(self, is_training, placeholders, **kwargs):
 
         encoder = StockBERTEncoder(
             bert_config=self.bert_config,
             is_training=is_training,
-            input_values=split_placeholders["input_values"],
-            input_mask=split_placeholders["input_mask"],
+            input_values=placeholders["input_values"],
+            input_mask=placeholders["input_mask"],
             drop_pooler=self._drop_pooler,
             **kwargs,
         )
@@ -169,9 +169,9 @@ class StockBERTClassifier(BERTClassifier, ClassifierModule):
         decoder = ClsDecoder(
             is_training=is_training,
             input_tensor=encoder_output,
-            label_ids=split_placeholders["label_ids"],
+            label_ids=placeholders["label_ids"],
             label_size=self.label_size,
-            sample_weight=split_placeholders.get("sample_weight"),
+            sample_weight=placeholders.get("sample_weight"),
             scope="cls/seq_relationship",
             **kwargs,
         )

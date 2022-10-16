@@ -35,7 +35,6 @@ class RecBERTLM(LMModule):
         self.max_seq_length = max_seq_length
         self.truncate_method = truncate_method
         self._do_lower_case = do_lower_case
-        self._on_predict = False
         self._add_prob = add_prob
         self._del_prob = del_prob
 
@@ -43,24 +42,6 @@ class RecBERTLM(LMModule):
         self.bert_config = BERTConfig.from_json_file(config_file)
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
         self.decay_power = get_decay_power(self.bert_config.num_hidden_layers)
-
-    def predict(self, X=None, X_tokenized=None, batch_size=8):
-        """ Inference on the model.
-
-        Args:
-            X: list. A list object consisting untokenized inputs.
-            X_tokenized: list. A list object consisting tokenized inputs.
-              Either `X` or `X_tokenized` should be None.
-            batch_size: int. The size of batch in each step.
-        Returns:
-            A dict object of model outputs.
-        """
-
-        self._on_predict = True
-        ret = super(LMModule, self).predict(X, X_tokenized, batch_size)
-        self._on_predict = False
-
-        return ret
 
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None, is_training=False, is_parallel=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
@@ -191,15 +172,15 @@ class RecBERTLM(LMModule):
             "sample_weight": tf.placeholder(tf.float32, [None], "sample_weight"),
         }
 
-    def _forward(self, is_training, split_placeholders, **kwargs):
+    def _forward(self, is_training, placeholders, **kwargs):
 
         model = RecBERT(
             bert_config=self.bert_config,
             is_training=is_training,
-            input_ids=split_placeholders["input_ids"],
-            add_label_ids=split_placeholders["add_label_ids"],
-            del_label_ids=split_placeholders["del_label_ids"],
-            sample_weight=split_placeholders.get("sample_weight"),
+            input_ids=placeholders["input_ids"],
+            add_label_ids=placeholders["add_label_ids"],
+            del_label_ids=placeholders["del_label_ids"],
+            sample_weight=placeholders.get("sample_weight"),
             add_prob=self._add_prob,
             del_prob=self._del_prob,
             **kwargs,

@@ -1,6 +1,6 @@
 <p align="center">
     <br>
-    	<img src="./docs/logo.png" style="zoom:74%"/>
+    	<img src="./docs/pics/logo.png" style="zoom:74%"/>
     <br>
 <p>
 <p align="center">
@@ -8,7 +8,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-v2.4.8-blue">
+        <img src="https://img.shields.io/badge/version-v2.5.0-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-1.x\2.x-yellow">
@@ -44,8 +44,8 @@ python3 setup.py install --user
 ``` python
 import uf
 
-# 新建模型（使用demo配置文件进行示范）
-model = uf.BERTClassifier(config_file="./demo/bert_config.json", vocab_file="./demo/vocab.txt")
+# 建模
+model = uf.BERTClassifier(config_file="./ref/bert_config.json", vocab_file="./ref/vocab.txt")
 
 # 定义训练样本
 X, y = ["久旱逢甘露", "他乡遇故知"], [1, 0]
@@ -116,7 +116,7 @@ model = uf.BERTClassifier(
     label_size=2,               # label取值数
     init_checkpoint=None,       # 预训练参数的路径或目录
     output_dir="./output",      # 输出文件导出目录
-    gpu_ids="0,1,3,5",          # GPU代号 (为空代表不使用GPU)
+    gpu_ids="0,1,3,5",          # GPU代号 (为空代表不使用GPU; 如果使用的是Nvidia显卡，需要预先安装CUDA及cuDNN，而后可以通过`nvidia-smi`指令查看可用GPU代号)
     drop_pooler=False,          # 建模时是否跳过 pooler 层
     do_lower_case=True,         # 英文是否进行小写处理
     truncate_method="LIFO",     # 输入超出`max_seq_length`时的截断方式 (LIFO:尾词先弃, FIFO:首词先弃, longer-FO:长文本先弃)
@@ -157,16 +157,16 @@ num_epochs = 6      # 假设总共训练6轮
 for loop_id in range(10):
     model.fit(
         X, y,
-        target_steps=-((loop_id + 1) * num_epochs / num_loops), # 断点
+        target_steps=-((loop_id + 1) * num_epochs / num_loops),  # 断点
         total_steps=-num_epochs,
     )
-    print(model.score(X_dev, y_dev))                            # 验证模型
-    model.cache(f"breakpoint.{loop_id}", cache_file=".cache")   # 缓存模型配置到`cache_file` (并保存模型参数到`output_dir`)
+    print(model.score(X_dev, y_dev))                             # 验证模型
+    model.localize(f"breakpoint.{loop_id}", into_file=".unif")   # 保存模型配置到`into_file` (同时保存模型参数到`output_dir`)
 ```
 
-多次验证后表现最佳的断点，可以通过 `load` 函数取用：
+多次验证后表现最佳的断点，可以通过 `restore` 函数取用：
 ``` python
-model = uf.load("breakpoint.7", cache_file=".cache")
+model = uf.restore("breakpoint.7", from_file=".unif")
 ```
 
 
@@ -321,7 +321,7 @@ model.export(
 
 <p align="center">
     <br>
-    	  <img src="./docs/framework.png" style="zoom:50%"/>
+    	  <img src="./docs/pics/framework.png" style="zoom:50%"/>
     <br>
 <p>
 

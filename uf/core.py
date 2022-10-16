@@ -59,7 +59,7 @@ class BaseModule:
         # build graph
         self.graph = tf.Graph()
 
-        # Before we register the task, `score` and fast `predict` is not allowed.
+        # Before we register the task, fast prediction or scoring is not allowed.
         self.step = 0
         self._session_mode = None
         self._session_built = False
@@ -256,8 +256,6 @@ class BaseModule:
             **kwargs: Other arguments about layer-wise learning rate decay,
               adversarial training or model-specific settings. See `README.md`
               to obtain more
-        Returns:
-            None
         """
 
         # Make sure the arguments are correct.
@@ -411,7 +409,7 @@ class BaseModule:
             t = task.Scoring(self)
             return t.run()
 
-    def save(self, max_to_keep=10000):
+    def save(self, max_to_keep=1000):
         """ Save model into checkpoint file.
 
         When attribute `output_dir` is None, the method is illegal. Otherwise
@@ -434,37 +432,43 @@ class BaseModule:
             saver = tf.train.Saver(max_to_keep=max_to_keep)
             saver.save(self.sess, self.init_checkpoint)
 
-    def cache(self, key, cache_file="./.cache", max_to_keep=10000, note=""):
+    def cache(self, key, cache_file="./.cache", max_to_keep=1000, note=""):
         """ Save model configurations into cache file.
+        
+        NOTE: This function is deprecated and not upgraded, just retained for compatibility "
+        "with older versions. Try `.localize()` instead.
+        """
+        return self.localize(key, into_file=cache_file, max_to_keep=max_to_keep, note=note)
+
+    def localize(self, key, into_file="./.unif", max_to_keep=1000, note=""):
+        """ Save model configurations into local file.
 
         Args:
             key: string. Unique name of configuration to save. Can be any string.
-            cache_file: string. The path of cache file.
+            into_file: string. The path of configuration file.
             max_to_keep: int. Max number of checkpoints to save.
             note: string. The information you with to note.
-        Returns:
-            None
 
         When attribute `output_dir` is not None, the method will save the
         model into checkpoint file simultaneously.
         """
         if self.output_dir and self._session_built:
             self.save(max_to_keep)
-        tf.logging.info("Saving model configuration `%s` into %s" % (key, cache_file))
+        tf.logging.info("Saving model configuration `%s` into %s" % (key, into_file))
 
-        if os.path.exists(cache_file):
-            cache_fp = open(cache_file, encoding="utf-8")
-            cache_json = json.load(cache_fp)
-            cache_fp.close()
+        if os.path.exists(into_file):
+            into_fp = open(into_file, encoding="utf-8")
+            into_json = json.load(into_fp)
+            into_fp.close()
         else:
-            cache_json = {}
+            into_json = {}
 
-        _cache_json = {
+        _into_json = {
             "model": self.__class__.__name__,
             "__init__": {},
         }
         if note:
-            _cache_json["note"] = note
+            _into_json["note"] = note
 
         for arg in self.__class__.__init__.__code__.co_varnames[1:]:
             try:
@@ -475,14 +479,14 @@ class BaseModule:
             # convert to relative path
             if arg == "init_checkpoint" or arg.endswith("_dir") or arg.endswith("_file"):
                 if isinstance(value, str) and not value.startswith("/"):
-                    value = com.get_relative_path(source=cache_file, target=value)
+                    value = com.get_relative_path(source=into_file, target=value)
 
-            _cache_json["__init__"][arg] = value
-        cache_json[key] = _cache_json
+            _into_json["__init__"][arg] = value
+        into_json[key] = _into_json
 
-        cache_fp = open(cache_file, "w", encoding="utf-8")
-        json.dump(cache_json, cache_fp, indent=2)
-        cache_fp.close()
+        into_fp = open(into_file, "w", encoding="utf-8")
+        json.dump(into_json, into_fp, indent=2)
+        into_fp.close()
 
     def init(self, reinit_all=False, ignore_checkpoint=False):
         """ Initialize the graph randomly or from checkpoint file.
@@ -734,15 +738,15 @@ class BaseModule:
         for idx in range(n_device):
             _gpu_id = self._gpu_ids[idx] if self._gpu_ids else ""
             with device("gpu:%s" % _gpu_id):
-                total_loss, d_tensors = self._forward(
+                train_loss, d_tensors = self._forward(
                     is_training=is_training,
-                    split_placeholders=split_placeholders[idx],
+                    placeholders=split_placeholders[idx],
                     **kwargs,
                 )
 
                 if is_training:
                     # This is the so-called "backward" process
-                    d_grads = tf.gradients(total_loss, self.trainable_variables)
+                    d_grads = tf.gradients(train_loss, self.trainable_variables)
                     all_grads.append(d_grads)
 
                 all_tensors.append(d_tensors)

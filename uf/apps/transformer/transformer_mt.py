@@ -140,15 +140,15 @@ class TransformerMT(MTModule):
             "sample_weight": tf.placeholder(tf.float32, [None], "sample_weight"),
         }
 
-    def _forward(self, is_training, split_placeholders, **kwargs):
+    def _forward(self, is_training, placeholders, **kwargs):
 
         model = Transformer(
             vocab_size=len(self.tokenizer.vocab),
             is_training=is_training,
-            source_ids=split_placeholders["source_ids"],
-            target_ids=split_placeholders["target_ids"],
+            source_ids=placeholders["source_ids"],
+            target_ids=placeholders["target_ids"],
             sos_id=self.tokenizer.convert_tokens_to_ids(["<s>"])[0],
-            sample_weight=split_placeholders.get("sample_weight"),
+            sample_weight=placeholders.get("sample_weight"),
             hidden_size=self._hidden_size,
             num_blocks=self._num_hidden_layers,
             num_attention_heads=self._num_attention_heads,

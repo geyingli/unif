@@ -46,14 +46,14 @@ class ALBERTClassifier(BERTClassifier, ClassifierModule):
             self.albert_config.vocab_size += 1
             tf.logging.info("Add necessary token `[SEP]` into vocabulary.")
 
-    def _forward(self, is_training, split_placeholders, **kwargs):
+    def _forward(self, is_training, placeholders, **kwargs):
 
         encoder = ALBERTEncoder(
             albert_config=self.albert_config,
             is_training=is_training,
-            input_ids=split_placeholders["input_ids"],
-            input_mask=split_placeholders["input_mask"],
-            segment_ids=split_placeholders["segment_ids"],
+            input_ids=placeholders["input_ids"],
+            input_mask=placeholders["input_mask"],
+            segment_ids=placeholders["segment_ids"],
             drop_pooler=self._drop_pooler,
             **kwargs,
         )
@@ -61,9 +61,9 @@ class ALBERTClassifier(BERTClassifier, ClassifierModule):
         decoder = ClsDecoder(
             is_training=is_training,
             input_tensor=encoder_output,
-            label_ids=split_placeholders["label_ids"],
+            label_ids=placeholders["label_ids"],
             label_size=self.label_size,
-            sample_weight=split_placeholders.get("sample_weight"),
+            sample_weight=placeholders.get("sample_weight"),
             scope="cls/seq_relationship",
             **kwargs,
         )

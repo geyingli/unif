@@ -566,7 +566,7 @@ class BERTDecoder(BaseDecoder):
                 self._tensors["NSP_probs"] = probs
                 self._tensors["NSP_preds"] = tf.argmax(probs, axis=-1)
 
-        self.total_loss = tf.add_n(scalar_losses)
+        self.train_loss = tf.add_n(scalar_losses)
 
 
 class BERTConfig:

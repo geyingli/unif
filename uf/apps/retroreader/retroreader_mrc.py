@@ -23,7 +23,6 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
         output_dir=None,
         gpu_ids=None,
         do_lower_case=True,
-        reading_module="bert",
         matching_mechanism="cross-attention",
         beta_1=0.5,
         beta_2=0.5,
@@ -39,20 +38,10 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
         self.beta_1 = beta_1
         self.beta_2 = beta_2
         self._do_lower_case = do_lower_case
-        self._on_predict = False
-        self._reading_module = reading_module
         self._matching_mechanism = matching_mechanism
         self._threshold = threshold
 
-        if reading_module == "albert":
-            self.bert_config = ALBERTConfig.from_json_file(config_file)
-        else:
-            self.bert_config = BERTConfig.from_json_file(config_file)
-
-        assert reading_module in ("bert", "roberta", "albert", "electra"), (
-            "Invalid value of `reading_module`: %s. Pick one from "
-            "`bert`, `roberta`, `albert` and `electra`."
-        )
+        self.bert_config = BERTConfig.from_json_file(config_file)
         assert matching_mechanism in ("cross-attention", "matching-attention"), (
             "Invalid value of `matching_machanism`: %s. Pick one from "
             "`cross-attention` and `matching-attention`."
@@ -188,50 +177,26 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
             "sample_weight": tf.placeholder(tf.float32, [None], "sample_weight"),
         }
 
-    def _forward(self, is_training, split_placeholders, **kwargs):
+    def _forward(self, is_training, placeholders, **kwargs):
 
-        def _get_encoder(model_name):
-            if model_name == "bert" or model_name == "roberta":
-                sketchy_encoder = BERTEncoder(
-                    bert_config=self.bert_config,
-                    is_training=is_training,
-                    input_ids=split_placeholders["input_ids"],
-                    input_mask=split_placeholders["input_mask"],
-                    segment_ids=split_placeholders["segment_ids"],
-                    **kwargs,
-                )
-            elif model_name == "albert":
-                sketchy_encoder = ALBERTEncoder(
-                    albert_config=self.bert_config,
-                    is_training=is_training,
-                    input_ids=split_placeholders["input_ids"],
-                    input_mask=split_placeholders["input_mask"],
-                    segment_ids=split_placeholders["segment_ids"],
-                    **kwargs,
-                )
-            elif model_name == "electra":
-                sketchy_encoder = BERTEncoder(
-                    bert_config=self.bert_config,
-                    is_training=is_training,
-                    input_ids=split_placeholders["input_ids"],
-                    input_mask=split_placeholders["input_mask"],
-                    segment_ids=split_placeholders["segment_ids"],
-                    scope="electra",
-                    **kwargs,
-                )
-            return sketchy_encoder
-
-        sketchy_encoder = _get_encoder(self._reading_module)
-        intensive_encoder = sketchy_encoder    # TODO: experiment with different encoder
+        sketchy_encoder = BERTEncoder(
+            bert_config=self.bert_config,
+            is_training=is_training,
+            input_ids=placeholders["input_ids"],
+            input_mask=placeholders["input_mask"],
+            segment_ids=placeholders["segment_ids"],
+            **kwargs,
+        )
+        intensive_encoder = sketchy_encoder
         decoder = RetroReaderDecoder(
             bert_config=self.bert_config,
             is_training=is_training,
             sketchy_encoder=sketchy_encoder,
             intensive_encoder=intensive_encoder,
-            query_mask=split_placeholders["query_mask"],
-            label_ids=split_placeholders["label_ids"],
-            has_answer=split_placeholders["has_answer"],
-            sample_weight=split_placeholders.get("sample_weight"),
+            query_mask=placeholders["query_mask"],
+            label_ids=placeholders["label_ids"],
+            has_answer=placeholders["has_answer"],
+            sample_weight=placeholders.get("sample_weight"),
             matching_mechanism=self._matching_mechanism,
             beta_1=self.beta_1,
             beta_2=self.beta_2,

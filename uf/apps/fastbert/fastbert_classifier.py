@@ -174,15 +174,15 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
 
         return data
 
-    def _forward(self, is_training, split_placeholders, **kwargs):
+    def _forward(self, is_training, placeholders, **kwargs):
 
         model = FastBERTClsDistillor(
             bert_config=self.bert_config,
             is_training=is_training,
-            input_ids=split_placeholders["input_ids"],
-            input_mask=split_placeholders["input_mask"],
-            segment_ids=split_placeholders["segment_ids"],
-            sample_weight=split_placeholders.get("sample_weight"),
+            input_ids=placeholders["input_ids"],
+            input_mask=placeholders["input_mask"],
+            segment_ids=placeholders["segment_ids"],
+            sample_weight=placeholders.get("sample_weight"),
             drop_pooler=self._drop_pooler,
             speed=self._speed,
             ignore_cls=[] if is_training else self._ignore_cls,

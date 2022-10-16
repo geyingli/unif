@@ -18,14 +18,14 @@ class BaseEncoder:
 class BaseDecoder:
     def __init__(self, *args, **kwargs):
 
-        # scalar of total loss
-        self.total_loss = None
+        # scalar of total loss, used for back propagation
+        self.train_loss = None
 
         # supervised tensors of each example
         self._tensors = collections.OrderedDict()
 
     def get_forward_outputs(self):
-        return (self.total_loss, self._tensors)
+        return (self.train_loss, self._tensors)
 
 
 class ClsDecoder(BaseDecoder):
@@ -77,7 +77,7 @@ class ClsDecoder(BaseDecoder):
                 per_example_loss = tf.cast(tf.less(largest_prob, thresh), dtype=tf.float32) * per_example_loss
 
             self._tensors["losses"] = per_example_loss
-            self.total_loss = tf.reduce_mean(per_example_loss)
+            self.train_loss = tf.reduce_mean(per_example_loss)
 
 
 class RegDecoder(BaseDecoder):
@@ -119,7 +119,7 @@ class RegDecoder(BaseDecoder):
                 per_example_loss = tf.cast(sample_weight, dtype=tf.float32) * per_example_loss
 
             self._tensors["losses"] = per_example_loss
-            self.total_loss = tf.reduce_mean(per_example_loss)
+            self.train_loss = tf.reduce_mean(per_example_loss)
 
 
 class BinaryClsDecoder(BaseDecoder):
@@ -171,7 +171,7 @@ class BinaryClsDecoder(BaseDecoder):
                 per_example_loss *= sample_weight
 
             self._tensors["losses"] = per_example_loss
-            self.total_loss = tf.reduce_mean(per_example_loss)
+            self.train_loss = tf.reduce_mean(per_example_loss)
 
 
 class SeqClsDecoder(BaseDecoder):
@@ -226,7 +226,7 @@ class SeqClsDecoder(BaseDecoder):
                 per_example_loss *= tf.cast(sample_weight, dtype=tf.float32)
 
             self._tensors["losses"] = per_example_loss
-            self.total_loss = tf.reduce_mean(per_example_loss)
+            self.train_loss = tf.reduce_mean(per_example_loss)
 
 
 class SeqClsCrossDecoder(BaseDecoder):
@@ -310,7 +310,7 @@ class SeqClsCrossDecoder(BaseDecoder):
                 per_example_loss = tf.cast(sample_weight, dtype=tf.float32) * per_example_loss
             self._tensors["cls_losses"] = per_example_loss
 
-        self.total_loss = tf.reduce_mean(self._tensors["seq_cls_losses"]) + tf.reduce_mean(self._tensors["cls_losses"])
+        self.train_loss = tf.reduce_mean(self._tensors["seq_cls_losses"]) + tf.reduce_mean(self._tensors["cls_losses"])
 
 
 class MRCDecoder(BaseDecoder):
@@ -366,4 +366,4 @@ class MRCDecoder(BaseDecoder):
                 per_example_loss *= sample_weight
 
             self._tensors["losses"] = per_example_loss
-            self.total_loss = tf.reduce_mean(per_example_loss)
+            self.train_loss = tf.reduce_mean(per_example_loss)

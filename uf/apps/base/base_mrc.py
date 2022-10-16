@@ -5,6 +5,7 @@ class MRCModule(BaseModule):
     """ Application class of machine reading comprehension (MRC). """
 
     def _get_em_and_f1(self, preds, labels):
+        """ Exact-match and F1. """
         em, f1 = 0, 0
         for _preds, _labels in zip(preds, labels):
             start_pred, end_pred = int(_preds[0]), int(_preds[1])
@@ -27,9 +28,9 @@ class MRCModule(BaseModule):
                 fn = (max(0, start_pred - start_label) + max(0, end_label - end_pred))
                 if fp + fn == 0:
                     em += 1
-                precision = tp / (tp + fp + 1e-6)
-                recall = tp / (tp + fn + 1e-6)
-                f1 += 2 * precision * recall / (precision + recall + 1e-6)
+                precision = tp / max(tp + fp, 1)
+                recall = tp / max(tp + fn, 1)
+                f1 += 2 * precision * recall / max(precision + recall, 1)
 
         em /= len(labels)
         f1 /= len(labels)

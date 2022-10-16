@@ -28,7 +28,6 @@ class ALBERTMRC(BERTMRC, MRCModule):
         self.max_seq_length = max_seq_length
         self.truncate_method = truncate_method
         self._do_lower_case = do_lower_case
-        self._on_predict = False
         self._id_to_label = None
 
         self.albert_config = ALBERTConfig.from_json_file(config_file)
@@ -44,22 +43,22 @@ class ALBERTMRC(BERTMRC, MRCModule):
             self.albert_config.vocab_size += 1
             tf.logging.info("Add necessary token `[SEP]` into vocabulary.")
 
-    def _forward(self, is_training, split_placeholders, **kwargs):
+    def _forward(self, is_training, placeholders, **kwargs):
 
         encoder = ALBERTEncoder(
             albert_config=self.albert_config,
             is_training=is_training,
-            input_ids=split_placeholders["input_ids"],
-            input_mask=split_placeholders["input_mask"],
-            segment_ids=split_placeholders["segment_ids"],
+            input_ids=placeholders["input_ids"],
+            input_mask=placeholders["input_mask"],
+            segment_ids=placeholders["segment_ids"],
             **kwargs,
         )
         encoder_output = encoder.get_sequence_output()
         decoder = MRCDecoder(
             is_training=is_training,
             input_tensor=encoder_output,
-            label_ids=split_placeholders["label_ids"],
-            sample_weight=split_placeholders.get("sample_weight"),
+            label_ids=placeholders["label_ids"],
+            sample_weight=placeholders.get("sample_weight"),
             scope="mrc",
             **kwargs,
         )

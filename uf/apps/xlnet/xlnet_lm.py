@@ -147,20 +147,20 @@ class XLNetLM(BERTLM, LMModule):
             "sample_weight": tf.placeholder(tf.float32, [None], "sample_weight"),
         }
 
-    def _forward(self, is_training, split_placeholders, **kwargs):
+    def _forward(self, is_training, placeholders, **kwargs):
 
-        split_placeholders = expand_features(self, split_placeholders)
+        placeholders = expand_features(self, placeholders)
 
-        input_k = tf.transpose(split_placeholders["input_k"], [1, 0])
-        input_q = tf.transpose(split_placeholders["input_q"], [1, 0])
-        seg_id = tf.transpose(split_placeholders["seg_id"], [1, 0])
-        perm_mask = tf.transpose(split_placeholders["perm_mask"], [1, 2, 0])
-        target = split_placeholders["target"]
-        target_mask = split_placeholders["target_mask"]
+        input_k = tf.transpose(placeholders["input_k"], [1, 0])
+        input_q = tf.transpose(placeholders["input_q"], [1, 0])
+        seg_id = tf.transpose(placeholders["seg_id"], [1, 0])
+        perm_mask = tf.transpose(placeholders["perm_mask"], [1, 2, 0])
+        target = placeholders["target"]
+        target_mask = placeholders["target_mask"]
 
         target_mapping = None
-        if "target_mapping" in split_placeholders:
-            target_mapping = tf.transpose(split_placeholders["target_mapping"], [1, 2, 0])
+        if "target_mapping" in placeholders:
+            target_mapping = tf.transpose(placeholders["target_mapping"], [1, 2, 0])
 
         model = XLNet(
             xlnet_config=self.xlnet_config,
@@ -174,7 +174,7 @@ class XLNetLM(BERTLM, LMModule):
             target_mask=target_mask,
             target_mapping=target_mapping,
             inp_q=input_q,
-            sample_weight=split_placeholders.get("sample_weight"),
+            sample_weight=placeholders.get("sample_weight"),
             **kwargs,
         )
         return model.get_forward_outputs()

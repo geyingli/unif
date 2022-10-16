@@ -32,7 +32,6 @@ from .roberta.roberta_seq_classifier import RoBERTaSeqClassifier
 from .albert.albert_seq_classifier import ALBERTSeqClassifier
 from .electra.electra_seq_classifier import ELECTRASeqClassifier
 from .bert.bert_seq_cross_classifier import BERTSeqCrossClassifier
-from .bert.bert_seq_cross_classifier import BERTSeqCrossTmpClassifier
 from .widedeep.widedeep_regressor import WideDeepRegressor
 from .bert.bert_ner import BERTNER
 from .bert.bert_crf_ner import BERTCRFNER
@@ -47,7 +46,6 @@ from .sanet.sanet_mrc import SANetMRC
 from .transformer.transformer_mt import TransformerMT
 
 
-# test version: sentencepiece==0.1.85
 try:
     from .xlnet.xlnet_classifier import XLNetClassifier
     from .xlnet.xlnet_binary_classifier import XLNetBinaryClassifier
@@ -87,6 +85,7 @@ __all__ = [
     "RoBERTaSeqClassifier",
     "ALBERTSeqClassifier",
     "ELECTRASeqClassifier",
+    "BERTSeqCrossClassifier",
     "WideDeepRegressor",
     "BERTNER",
     "BERTCRFNER",
@@ -106,6 +105,4 @@ __all__ = [
     "SPELM",
     "StockBERTClassifier",
     "PerformerClassifier",
-    "BERTSeqCrossClassifier",
-    "BERTSeqCrossTmpClassifier",
 ]

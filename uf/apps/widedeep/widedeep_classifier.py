@@ -29,7 +29,6 @@ class WideDeepClassifier(BERTClassifier, ClassifierModule):
         output_dir=None,
         gpu_ids=None,
         wide_features=None,
-        deep_module="bert",
         do_lower_case=True,
         truncate_method="LIFO",
     ):
@@ -41,18 +40,9 @@ class WideDeepClassifier(BERTClassifier, ClassifierModule):
         self.label_size = label_size
         self.truncate_method = truncate_method
         self.wide_features = wide_features
-        self._deep_module = deep_module
         self._id_to_label = None
 
-        if deep_module == "albert":
-            self.bert_config = ALBERTConfig.from_json_file(config_file)
-        else:
-            self.bert_config = BERTConfig.from_json_file(config_file)
-
-        assert deep_module in ("bert", "roberta", "albert", "electra"), (
-            "Invalid value of `deep_module`: %s. Pick one from "
-            "`bert`, `roberta`, `albert` and `electra`."
-        )
+        self.bert_config = BERTConfig.from_json_file(config_file)
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
         self.decay_power = get_decay_power(self.bert_config.num_hidden_layers)
 
@@ -191,49 +181,25 @@ class WideDeepClassifier(BERTClassifier, ClassifierModule):
             "sample_weight": tf.placeholder(tf.float32, [None], "sample_weight"),
         }
 
-    def _forward(self, is_training, split_placeholders, **kwargs):
+    def _forward(self, is_training, placeholders, **kwargs):
 
-        def _get_encoder(model_name):
-            if model_name == "bert" or model_name == "roberta":
-                encoder = BERTEncoder(
-                    bert_config=self.bert_config,
-                    is_training=is_training,
-                    input_ids=split_placeholders["input_ids"],
-                    input_mask=split_placeholders["input_mask"],
-                    segment_ids=split_placeholders["segment_ids"],
-                    **kwargs,
-                )
-            elif model_name == "albert":
-                encoder = ALBERTEncoder(
-                    albert_config=self.bert_config,
-                    is_training=is_training,
-                    input_ids=split_placeholders["input_ids"],
-                    input_mask=split_placeholders["input_mask"],
-                    segment_ids=split_placeholders["segment_ids"],
-                    **kwargs,
-                )
-            elif model_name == "electra":
-                encoder = BERTEncoder(
-                    bert_config=self.bert_config,
-                    is_training=is_training,
-                    input_ids=split_placeholders["input_ids"],
-                    input_mask=split_placeholders["input_mask"],
-                    segment_ids=split_placeholders["segment_ids"],
-                    scope="electra",
-                    **kwargs,
-                )
-            return encoder
-
-        encoder = _get_encoder(self._deep_module)
+        encoder = BERTEncoder(
+            bert_config=self.bert_config,
+            is_training=is_training,
+            input_ids=placeholders["input_ids"],
+            input_mask=placeholders["input_mask"],
+            segment_ids=placeholders["segment_ids"],
+            **kwargs,
+        )
         encoder_output = encoder.get_pooled_output()
         decoder = WideDeepClsDecoder(
             is_training=is_training,
             input_tensor=encoder_output,
-            n_wide_features=split_placeholders["n_wide_features"],
-            wide_features=split_placeholders["wide_features"],
-            label_ids=split_placeholders["label_ids"],
+            n_wide_features=placeholders["n_wide_features"],
+            wide_features=placeholders["wide_features"],
+            label_ids=placeholders["label_ids"],
             label_size=self.label_size,
-            sample_weight=split_placeholders.get("sample_weight"),
+            sample_weight=placeholders.get("sample_weight"),
             scope="cls/seq_relationship",
             **kwargs,
         )

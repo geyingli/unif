@@ -13,6 +13,7 @@ class NERModule(BaseModule):
     S_ID = 4
 
     def _get_cascade_f1(self, preds, labels, mask):
+        """ Micro and macro F1. """
         metrics = {}
 
         # f1 of each type
@@ -38,6 +39,7 @@ class NERModule(BaseModule):
         return metrics
 
     def _get_f1(self, preds, labels, mask, B_id=None):
+        """ F1. """
 
         tp_token, fp_token, fn_token = 0, 0, 0
         tp_entity, fp_entity, fn_entity = 0, 0, 0
@@ -72,17 +74,18 @@ class NERModule(BaseModule):
                 elif _label_id == 1:
                     fn_token += 1
 
-        pre_token = tp_token / (tp_token + fp_token + 1e-6)
-        rec_token = tp_token / (tp_token + fn_token + 1e-6)
-        f1_token = 2 * pre_token * rec_token / (pre_token + rec_token + 1e-6)
+        pre_token = tp_token / max(tp_token + fp_token, 1)
+        rec_token = tp_token / max(tp_token + fn_token, 1)
+        f1_token = 2 * pre_token * rec_token / max(pre_token + rec_token, 1)
 
-        pre_entity = tp_entity / (tp_entity + fp_entity + 1e-6)
-        rec_entity = tp_entity / (tp_entity + fn_entity + 1e-6)
-        f1_entity = 2 * pre_entity * rec_entity / (pre_entity + rec_entity + 1e-6)
+        pre_entity = tp_entity / max(tp_entity + fp_entity, 1)
+        rec_entity = tp_entity / max(tp_entity + fn_entity, 1)
+        f1_entity = 2 * pre_entity * rec_entity / max(pre_entity + rec_entity, 1)
 
         return f1_token, f1_entity
 
     def _get_entities(self, ids, B_id=None):
+        """ Parse BIESO tags. """
         if not B_id:
             B_id = self.B_ID
             I_id = self.I_ID

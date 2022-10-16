@@ -23,7 +23,6 @@ class SANetMRC(BERTMRC, MRCModule):
         output_dir=None,
         gpu_ids=None,
         do_lower_case=True,
-        reading_module="bert",
         split_signs=",，。?？!！;；",
         alpha=0.5,
         truncate_method="longer-FO",
@@ -36,19 +35,9 @@ class SANetMRC(BERTMRC, MRCModule):
         self.truncate_method = truncate_method
         self.split_signs = list(map(str, split_signs))
         self._do_lower_case = do_lower_case
-        self._on_predict = False
-        self._reading_module = reading_module
         self._alpha = alpha
 
-        if reading_module == "albert":
-            self.bert_config = ALBERTConfig.from_json_file(config_file)
-        else:
-            self.bert_config = BERTConfig.from_json_file(config_file)
-
-        assert reading_module in ("bert", "albert", "electra"), (
-            "Invalid value of `reading_module`: %s. Pick one from "
-            "`bert`, `albert` and `electra`."
-        )
+        self.bert_config = BERTConfig.from_json_file(config_file)
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
         self.decay_power = get_decay_power(self.bert_config.num_hidden_layers)
 
@@ -111,8 +100,7 @@ class SANetMRC(BERTMRC, MRCModule):
                 segment_input_tokens.append(self._convert_x(sample, tokenized))
             except Exception:
                 raise ValueError(
-                    "Wrong input format (line %d): \"%s\". "
-                    "An untokenized example: "
+                    "Wrong input format (line %d): \"%s\". An untokenized example: "
                     "`X = [{\"doc\": \"...\", \"question\": \"...\", ...}, "
                     "...]`" % (idx, sample)
                 )
@@ -233,48 +221,23 @@ class SANetMRC(BERTMRC, MRCModule):
             "sample_weight": tf.placeholder(tf.float32, [None], "sample_weight"),
         }
 
-    def _forward(self, is_training, split_placeholders, **kwargs):
+    def _forward(self, is_training, placeholders, **kwargs):
 
-        def _get_encoder(model_name):
-            if model_name == "bert":
-                encoder = BERTEncoder(
-                    bert_config=self.bert_config,
-                    is_training=is_training,
-                    input_ids=split_placeholders["input_ids"],
-                    input_mask=split_placeholders["input_mask"],
-                    segment_ids=split_placeholders["segment_ids"],
-                    **kwargs,
-                )
-            elif model_name == "albert":
-                encoder = ALBERTEncoder(
-                    albert_config=self.bert_config,
-                    is_training=is_training,
-                    input_ids=split_placeholders["input_ids"],
-                    input_mask=split_placeholders["input_mask"],
-                    segment_ids=split_placeholders["segment_ids"],
-                    drop_pooler=self._drop_pooler,
-                    **kwargs,
-                )
-            elif model_name == "electra":
-                encoder = BERTEncoder(
-                    bert_config=self.bert_config,
-                    is_training=is_training,
-                    input_ids=split_placeholders["input_ids"],
-                    input_mask=split_placeholders["input_mask"],
-                    segment_ids=split_placeholders["segment_ids"],
-                    scope="electra",
-                    **kwargs,
-                )
-            return encoder
-
-        encoder = _get_encoder(self._reading_module)
+        encoder = BERTEncoder(
+            bert_config=self.bert_config,
+            is_training=is_training,
+            input_ids=placeholders["input_ids"],
+            input_mask=placeholders["input_mask"],
+            segment_ids=placeholders["segment_ids"],
+            **kwargs,
+        )
         decoder = SANetDecoder(
             bert_config=self.bert_config,
             is_training=is_training,
             input_tensor=encoder.get_sequence_output(),
-            sa_mask=split_placeholders["sa_mask"],
-            label_ids=split_placeholders["label_ids"],
-            sample_weight=split_placeholders.get("sample_weight"),
+            sa_mask=placeholders["sa_mask"],
+            label_ids=placeholders["label_ids"],
+            sample_weight=placeholders.get("sample_weight"),
             alpha=self._alpha,
             trainable=True,
             **kwargs,

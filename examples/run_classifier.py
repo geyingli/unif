@@ -81,7 +81,7 @@ def main():
             total_steps=-3,
             print_per_secs=5,
             save_per_steps=1000000)
-        model.cache("epoch_%d" % epoch)
+        model.localize("epoch_%d" % epoch)
 
         probs = model.predict(X_dev)["probs"]
         for i in range(2):

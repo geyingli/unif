@@ -178,11 +178,10 @@ class RetroReaderDecoder(BaseDecoder):
 
             # rear verification
             v = beta_1 * score_diff + beta_2 * score_ext
-            self._tensors["verifier_preds"] = \
-                tf.cast(tf.greater(v, threshold), tf.int32)
+            self._tensors["verifier_preds"] = tf.cast(tf.greater(v, threshold), tf.int32)
             self._tensors["verifier_probs"] = v
 
-            self.total_loss = sketchy_loss + intensive_loss
+            self.train_loss = sketchy_loss + intensive_loss
 
     def create_attention_mask_from_input_mask(self,
                                               to_mask,

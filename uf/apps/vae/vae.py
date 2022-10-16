@@ -229,7 +229,7 @@ class VAE(BaseDecoder, BERTEncoder):
             if sample_weight is not None:
                 per_example_loss *= tf.expand_dims(sample_weight, axis=-1)
 
-            self.total_loss = (
+            self.train_loss = (
                 tf.reduce_mean(per_example_loss) +
                 tf.reduce_mean(tf.square(miu)) +
                 tf.reduce_mean(tf.exp(sigma) - sigma - 1))

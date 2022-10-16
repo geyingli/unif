@@ -183,17 +183,17 @@ class DilatedLM(LMModule):
             "sample_weight": tf.placeholder(tf.float32, [None], "sample_weight"),
         }
 
-    def _forward(self, is_training, split_placeholders, **kwargs):
+    def _forward(self, is_training, placeholders, **kwargs):
 
         model = DLM(
             bert_config=self.bert_config,
             is_training=is_training,
-            dilated_ids=split_placeholders["dilated_ids"],
-            label_ids=split_placeholders["label_ids"],
+            dilated_ids=placeholders["dilated_ids"],
+            label_ids=placeholders["label_ids"],
             max_seq_length=self.max_seq_length,
             spad_id=self.tokenizer.convert_tokens_to_ids(["[SPAD]"])[0],
             loop=self._loop,
-            sample_weight=split_placeholders.get("sample_weight"),
+            sample_weight=placeholders.get("sample_weight"),
             **kwargs,
         )
         return model.get_forward_outputs()

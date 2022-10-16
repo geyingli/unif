@@ -21,7 +21,7 @@ class Initialization(Task):
     def run(self, reinit_all, ignore_checkpoint):
 
         # init session
-        if reinit_all:
+        if reinit_all or not self.module._session_built:
             self._init_session(ignore_checkpoint=ignore_checkpoint)
         
         # init uninitialized variables

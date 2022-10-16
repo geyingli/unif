@@ -228,17 +228,17 @@ class UDAClassifier(BERTClassifier, ClassifierModule):
                 "is_supervised": tf.placeholder(tf.float32, [None], "is_supervised"),
             })
 
-    def _forward(self, is_training, split_placeholders, **kwargs):
+    def _forward(self, is_training, placeholders, **kwargs):
 
         if not is_training:
-            return super()._forward(is_training, split_placeholders, **kwargs)
+            return super()._forward(is_training, placeholders, **kwargs)
 
-        aug_input_ids = tf.boolean_mask(split_placeholders["aug_input_ids"], mask=(1.0 - split_placeholders["is_supervised"]), axis=0)
-        aug_input_mask = tf.boolean_mask(split_placeholders["aug_input_mask"], mask=(1.0 - split_placeholders["is_supervised"]), axis=0)
-        aug_segment_ids = tf.boolean_mask(split_placeholders["aug_segment_ids"], mask=(1.0 - split_placeholders["is_supervised"]), axis=0)
-        input_ids = tf.concat([split_placeholders["input_ids"], aug_input_ids], axis=0)
-        input_mask = tf.concat([split_placeholders["input_mask"], aug_input_mask], axis=0)
-        segment_ids = tf.concat([split_placeholders["segment_ids"], aug_segment_ids], axis=0)
+        aug_input_ids = tf.boolean_mask(placeholders["aug_input_ids"], mask=(1.0 - placeholders["is_supervised"]), axis=0)
+        aug_input_mask = tf.boolean_mask(placeholders["aug_input_mask"], mask=(1.0 - placeholders["is_supervised"]), axis=0)
+        aug_segment_ids = tf.boolean_mask(placeholders["aug_segment_ids"], mask=(1.0 - placeholders["is_supervised"]), axis=0)
+        input_ids = tf.concat([placeholders["input_ids"], aug_input_ids], axis=0)
+        input_mask = tf.concat([placeholders["input_mask"], aug_input_mask], axis=0)
+        segment_ids = tf.concat([placeholders["segment_ids"], aug_segment_ids], axis=0)
         encoder = BERTEncoder(
             bert_config=self.bert_config,
             is_training=is_training,
@@ -250,7 +250,7 @@ class UDAClassifier(BERTClassifier, ClassifierModule):
         )
         encoder_output = encoder.get_pooled_output()
 
-        label_ids = split_placeholders["label_ids"]
+        label_ids = placeholders["label_ids"]
         is_expanded = tf.zeros_like(label_ids, dtype=tf.float32)
         batch_size = util.get_shape_list(aug_input_ids)[0]
         aug_is_expanded = tf.ones((batch_size), dtype=tf.float32)
@@ -258,11 +258,11 @@ class UDAClassifier(BERTClassifier, ClassifierModule):
         decoder = UDADecoder(
             is_training=is_training,
             input_tensor=encoder_output,
-            is_supervised=split_placeholders["is_supervised"],
+            is_supervised=placeholders["is_supervised"],
             is_expanded=is_expanded,
             label_ids=label_ids,
             label_size=self.label_size,
-            sample_weight=split_placeholders.get("sample_weight"),
+            sample_weight=placeholders.get("sample_weight"),
             scope="cls/seq_relationship",
             global_step=self._global_step,
             num_train_steps=self.total_steps,

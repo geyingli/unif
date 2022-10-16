@@ -82,7 +82,7 @@ class SANetDecoder(BaseDecoder):
             if sample_weight is not None:
                 per_example_loss *= sample_weight
 
-            self.total_loss = tf.reduce_mean(per_example_loss)
+            self.train_loss = tf.reduce_mean(per_example_loss)
             self._tensors["losses"] = per_example_loss
 
     def attention_layer(self,

@@ -35,7 +35,10 @@ class BaseModule:
                 else:
                     self._gpu_ids = list(map(str, gpu_ids))
             except Exception:
-                raise ValueError("`gpu_ids` should be a list of GPU ids or a string seperated with commas, e.g. [0,1,2,3] or \"0,1,2,3\".")
+                raise ValueError(
+                    "`gpu_ids` should be a list of GPU ids or a string seperated "
+                    "with commas, e.g. [0,1,2,3] or \"0,1,2,3\"."
+                )
 
         # build graph
         self.graph = tf.Graph()
@@ -698,8 +701,8 @@ class BaseModule:
         if sample_weight:
             assert isinstance(sample_weight, list), "`sample_weight` should be a list object."
             assert len(X) == len(sample_weight), (
-                "Length of `sample_weight` should be the same with `X/X_tokenized`. "
-                "(%d vs. %d)" % (len(sample_weight), len(X))
+                "Length of `sample_weight` should be the same with `X/X_tokenized`. (%d vs. %d)" 
+                % (len(sample_weight), len(X))
             )
 
     def assign(self, variable, value):
@@ -713,11 +716,9 @@ class BaseModule:
         raise NotImplementedError()
 
     def _parallel_forward(self, is_training=True, **kwargs):
-        """ Parallel foundation of computation graph in multi GPUs,
-        a general method. """
+        """ Parallel foundation of computation graph in multi GPUs, a general method. """
 
-        # We implement data parallelization instead of model
-        # parallelization, for this design suits most real cases.
+        # We implement data parallelization instead of model parallelization, for this design suits most real cases.
         all_grads = []
         all_tensors = []
         n_device = len(self._gpu_ids) if self._gpu_ids else 1

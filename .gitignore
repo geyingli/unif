@@ -4,15 +4,6 @@
 */.*
 */*/.*
 
-# 无关文件
-*/__pycache__
-*/*/__pycache__
-docs/*.pptx
-*.sh
-tmp.py
-test.py
-replace.py
-
 # 压缩文件
 *.tar.gz
 *.zip
@@ -24,3 +15,14 @@ uf.egg-info
 
 # 输出文件
 artifacts
+
+# 无关文件
+*/__pycache__
+*/*/__pycache__
+docs/*.pptx
+*.sh
+modify.py
+tmp.py
+test.py
+replace.py
+PLAN.md

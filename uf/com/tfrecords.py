@@ -6,6 +6,8 @@ BACKUP_DATA = "ex:"        # data with the prefix `ex:` will not be fed into Ten
 
 
 def write_tfrecords(data, tfrecords_file):
+    """ Write data into tfrecords file. """
+
     writer = tf.python_io.TFRecordWriter(tfrecords_file)
     keys = []
     values = []
@@ -34,6 +36,7 @@ def write_tfrecords(data, tfrecords_file):
 
 
 def get_tfrecords_keys(tfrecords_file):
+    """ Read keys from tfrecords file. """
     iterator = tf.python_io.tf_record_iterator(tfrecords_file)
     record = next(iterator)
     example = tf.train.Example()
@@ -42,11 +45,23 @@ def get_tfrecords_keys(tfrecords_file):
 
 
 def get_tfrecords_length(tfrecords_files):
+    """ Count number of data in tfrecords files. """
     n = 0
     for tfrecords_file in tfrecords_files:
         for _ in tf.python_io.tf_record_iterator(tfrecords_file):
             n += 1
     return n
+
+
+def convert_placeholder_to_feature(placeholder):
+    """ Convert `PlaceHolder` for feeding data in memory into `FixedLenFeature` for local TFRecords. """
+    if placeholder.dtype.name.startswith("int"):
+        dtype = tf.int64
+    elif placeholder.dtype.name.startswith("float"):
+        dtype = tf.float32
+    else:
+        raise ValueError(f"Unsupported dtype: {placeholder.dtype}.")
+    return tf.FixedLenFeature(list(placeholder.shape)[1:], dtype)
 
 
 def create_int_feature(values):

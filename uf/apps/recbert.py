@@ -183,12 +183,12 @@ class RecBERTLM(LMModule):
         # deal with tokenized and multiple inputs
         raise ValueError("%s only supports single sentence inputs." % self.__class__.__name__)
 
-    def _set_placeholders(self, target, **kwargs):
+    def _set_placeholders(self, **kwargs):
         self.placeholders = {
-            "input_ids": com.get_placeholder(target, "input_ids", [None, self.max_seq_length], tf.int32),
-            "add_label_ids": com.get_placeholder(target, "add_label_ids", [None, self.max_seq_length], tf.int32),
-            "del_label_ids": com.get_placeholder(target, "del_label_ids", [None, self.max_seq_length], tf.int32),
-            "sample_weight": com.get_placeholder(target, "sample_weight", [None], tf.float32),
+            "input_ids": tf.placeholder(tf.int32, [None, self.max_seq_length], "input_ids"),
+            "add_label_ids": tf.placeholder(tf.int32, [None, self.max_seq_length], "add_label_ids"),
+            "del_label_ids": tf.placeholder(tf.int32, [None, self.max_seq_length], "del_label_ids"),
+            "sample_weight": tf.placeholder(tf.float32, [None], "sample_weight"),
         }
 
     def _forward(self, is_training, split_placeholders, **kwargs):

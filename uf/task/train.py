@@ -178,10 +178,14 @@ class Training(Task):
             self.n_inputs = com.get_tfrecords_length(self.tfrecords_files)
 
             self.module._set_placeholders("feature", is_training=True)
-            features = {
-                key: self.module.placeholders[key]
-                for key in com.get_tfrecords_keys(self.tfrecords_files[0])
-            }
+                
+            # convert placeholders into features
+            features = {}
+            for key in com.get_tfrecords_keys(self.tfrecords_files[0]):
+                feature = self.module.placeholders[key]
+                if not isinstance(feature, tf.FixedLenFeature):
+                    feature = com.convert_placeholder_to_feature(feature)
+                features[key] = feature
 
             def decode_record(record):
                 example = tf.parse_single_example(record, features)

@@ -133,11 +133,11 @@ class TransformerMT(MTModule):
 
         return target_ids
 
-    def _set_placeholders(self, target, **kwargs):
+    def _set_placeholders(self, **kwargs):
         self.placeholders = {
-            "source_ids": com.get_placeholder(target, "source_ids", [None, self.source_max_seq_length], tf.int32),
-            "target_ids": com.get_placeholder(target, "target_ids", [None, self.target_max_seq_length], tf.int32),
-            "sample_weight": com.get_placeholder(target, "sample_weight", [None], tf.float32),
+            "source_ids": tf.placeholder(tf.int32, [None, self.source_max_seq_length], "source_ids"),
+            "target_ids": tf.placeholder(tf.int32, [None, self.target_max_seq_length], "target_ids"),
+            "sample_weight": tf.placeholder(tf.float32, [None], "sample_weight"),
         }
 
     def _forward(self, is_training, split_placeholders, **kwargs):

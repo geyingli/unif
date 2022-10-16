@@ -212,19 +212,21 @@ class UDAClassifier(BERTClassifier, ClassifierModule):
         label_ids = [self._label_to_id[label] if label is not None else -1 for label in y]
         return label_ids
 
-    def _set_placeholders(self, target, **kwargs):
+    def _set_placeholders(self, **kwargs):
         self.placeholders = {
-            "input_ids": com.get_placeholder(target, "input_ids", [None, self.max_seq_length], tf.int32),
-            "input_mask": com.get_placeholder(target, "input_mask", [None, self.max_seq_length], tf.int32),
-            "segment_ids": com.get_placeholder(target, "segment_ids", [None, self.max_seq_length], tf.int32),
-            "label_ids": com.get_placeholder(target, "label_ids", [None], tf.int32),
-            "sample_weight": com.get_placeholder(target, "sample_weight", [None], tf.float32),
+            "input_ids": tf.placeholder(tf.int32, [None, self.max_seq_length], "input_ids"),
+            "input_mask": tf.placeholder(tf.int32, [None, self.max_seq_length], "input_mask"),
+            "segment_ids": tf.placeholder(tf.int32, [None, self.max_seq_length], "segment_ids"),
+            "label_ids": tf.placeholder(tf.int32, [None], "label_ids"),
+            "sample_weight": tf.placeholder(tf.float32, [None], "sample_weight"),
         }
         if kwargs.get("is_training"):
-            self.placeholders["aug_input_ids"] = com.get_placeholder(target, "aug_input_ids", [None, self.max_seq_length], tf.int32)
-            self.placeholders["aug_input_mask"] = com.get_placeholder(target, "aug_input_mask", [None, self.max_seq_length], tf.int32)
-            self.placeholders["aug_segment_ids"] = com.get_placeholder(target, "aug_segment_ids", [None, self.max_seq_length], tf.int32)
-            self.placeholders["is_supervised"] = com.get_placeholder(target, "is_supervised", [None], tf.float32)
+            self.placeholders.update({
+                "aug_input_ids": tf.placeholder(tf.int32, [None, self.max_seq_length], "aug_input_ids"),
+                "aug_input_mask": tf.placeholder(tf.int32, [None, self.max_seq_length], "aug_input_mask"),
+                "aug_segment_ids": tf.placeholder(tf.int32, [None, self.max_seq_length], "aug_segment_ids"),
+                "is_supervised": tf.placeholder(tf.float32, [None], "is_supervised"),
+            })
 
     def _forward(self, is_training, split_placeholders, **kwargs):
 

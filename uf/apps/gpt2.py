@@ -149,10 +149,10 @@ class GPT2LM(LMModule):
         # deal with tokenized and multiple inputs
         raise ValueError("GPT2 only supports single sentence inputs.")
 
-    def _set_placeholders(self, target, **kwargs):
+    def _set_placeholders(self, **kwargs):
         self.placeholders = {
-            "input_ids": com.get_placeholder(target, "input_ids", [None, self.max_seq_length], tf.int32),
-            "sample_weight": com.get_placeholder(target, "sample_weight", [None], tf.float32),
+            "input_ids": tf.placeholder(tf.int32, [None, self.max_seq_length], "input_ids"),
+            "sample_weight": tf.placeholder(tf.float32, [None], "sample_weight"),
         }
 
     def _forward(self, is_training, split_placeholders, **kwargs):

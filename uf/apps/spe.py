@@ -175,16 +175,16 @@ class SPELM(BERTLM, LMModule):
 
         return (input_ids, input_mask, segment_ids, position_ids, masked_lm_positions, masked_lm_ids, masked_lm_weights)
 
-    def _set_placeholders(self, target, **kwargs):
+    def _set_placeholders(self, **kwargs):
         self.placeholders = {
-            "input_ids": com.get_placeholder(target, "input_ids", [None, self.max_seq_length], tf.int32),
-            "input_mask": com.get_placeholder(target, "input_mask", [None, self.max_seq_length], tf.int32),
-            "segment_ids": com.get_placeholder(target, "segment_ids", [None, self.max_seq_length], tf.int32),
-            "position_ids": com.get_placeholder(target, "position_ids", [None, self.max_seq_length], tf.int32),
-            "masked_lm_positions": com.get_placeholder(target, "masked_lm_positions", [None, self._max_predictions_per_seq], tf.int32),
-            "masked_lm_ids": com.get_placeholder(target, "masked_lm_ids", [None, self._max_predictions_per_seq], tf.int32),
-            "masked_lm_weights": com.get_placeholder(target, "masked_lm_weights", [None, self._max_predictions_per_seq], tf.float32),
-            "sample_weight": com.get_placeholder(target, "sample_weight", [None], tf.float32),
+            "input_ids": tf.placeholder(tf.int32, [None, self.max_seq_length], "input_ids"),
+            "input_mask": tf.placeholder(tf.int32, [None, self.max_seq_length], "input_mask"),
+            "segment_ids": tf.placeholder(tf.int32, [None, self.max_seq_length], "segment_ids"),
+            "position_ids": tf.placeholder(tf.int32, [None, self.max_seq_length], "position_ids"),
+            "masked_lm_positions": tf.placeholder(tf.int32, [None, self._max_predictions_per_seq], "masked_lm_positions"),
+            "masked_lm_ids": tf.placeholder(tf.int32, [None, self._max_predictions_per_seq], "masked_lm_ids"),
+            "masked_lm_weights": tf.placeholder(tf.float32, [None, self._max_predictions_per_seq], "masked_lm_weights"),
+            "sample_weight": tf.placeholder(tf.float32, [None], "sample_weight"),
         }
 
     def _forward(self, is_training, split_placeholders, **kwargs):

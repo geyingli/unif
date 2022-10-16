@@ -66,18 +66,6 @@ def set_log(log_file):
     log.addHandler(fh)
 
 
-def get_placeholder(target, name, shape, dtype):
-    """ Returns `PlaceHolder` for feeding data in memory or `FixedLenFeature` for local TFRecords. """
-    if target == "placeholder":
-        return tf.placeholder(name=name, shape=shape, dtype=dtype)
-
-    if dtype.name.startswith("int"):
-        dtype = tf.int64
-    elif dtype.name.startswith("float"):
-        dtype = tf.float32
-    return tf.FixedLenFeature(shape[1:], dtype)
-
-
 def truncate_segments(segments, max_seq_length, truncate_method="LIFO"):
     """ Truncate sequence segments to avoid the overall length exceeds the `max_seq_length`. """
     total_seq_length = sum([len(segment) for segment in segments])

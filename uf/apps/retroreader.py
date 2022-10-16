@@ -177,15 +177,15 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
 
         return (input_tokens, input_ids, input_mask, query_mask, segment_ids, doc_ids, doc_text, doc_start)
 
-    def _set_placeholders(self, target, **kwargs):
+    def _set_placeholders(self, **kwargs):
         self.placeholders = {
-            "input_ids": com.get_placeholder(target, "input_ids", [None, self.max_seq_length], tf.int32),
-            "input_mask": com.get_placeholder(target, "input_mask", [None, self.max_seq_length], tf.int32),
-            "query_mask": com.get_placeholder(target, "query_mask", [None, self.max_seq_length], tf.int32),
-            "segment_ids": com.get_placeholder(target, "segment_ids", [None, self.max_seq_length], tf.int32),
-            "label_ids": com.get_placeholder(target, "label_ids", [None, 2], tf.int32),
-            "has_answer": com.get_placeholder(target, "has_answer", [None], tf.int32),
-            "sample_weight": com.get_placeholder(target, "sample_weight", [None], tf.float32),
+            "input_ids": tf.placeholder(tf.int32, [None, self.max_seq_length], "input_ids"),
+            "input_mask": tf.placeholder(tf.int32, [None, self.max_seq_length], "input_mask"),
+            "query_mask": tf.placeholder(tf.int32, [None, self.max_seq_length], "query_mask"),
+            "segment_ids": tf.placeholder(tf.int32, [None, self.max_seq_length], "segment_ids"),
+            "label_ids": tf.placeholder(tf.int32, [None, 2], "label_ids"),
+            "has_answer": tf.placeholder(tf.int32, [None], "has_answer"),
+            "sample_weight": tf.placeholder(tf.float32, [None], "sample_weight"),
         }
 
     def _forward(self, is_training, split_placeholders, **kwargs):

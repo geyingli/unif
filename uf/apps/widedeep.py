@@ -180,15 +180,15 @@ class WideDeepClassifier(BERTClassifier, ClassifierModule):
 
         return input_ids, input_mask, segment_ids, n_wide_features, wide_features
 
-    def _set_placeholders(self, target, **kwargs):
+    def _set_placeholders(self, **kwargs):
         self.placeholders = {
-            "input_ids": com.get_placeholder(target, "input_ids", [None, self.max_seq_length], tf.int32),
-            "input_mask": com.get_placeholder(target, "input_mask", [None, self.max_seq_length], tf.int32),
-            "segment_ids": com.get_placeholder(target, "segment_ids", [None, self.max_seq_length], tf.int32),
-            "n_wide_features": com.get_placeholder(target, "n_wide_features", [None], tf.int32),
-            "wide_features": com.get_placeholder(target, "wide_features", [None, len(self.wide_features)], tf.int32),
-            "label_ids": com.get_placeholder(target, "label_ids", [None], tf.int32),
-            "sample_weight": com.get_placeholder(target, "sample_weight", [None], tf.float32),
+            "input_ids": tf.placeholder(tf.int32, [None, self.max_seq_length], "input_ids"),
+            "input_mask": tf.placeholder(tf.int32, [None, self.max_seq_length], "input_mask"),
+            "segment_ids": tf.placeholder(tf.int32, [None, self.max_seq_length], "segment_ids"),
+            "n_wide_features": tf.placeholder(tf.int32, [None], "n_wide_features"),
+            "wide_features": tf.placeholder(tf.int32, [None, len(self.wide_features)], "wide_features"),
+            "label_ids": tf.placeholder(tf.int32, [None], "label_ids"),
+            "sample_weight": tf.placeholder(tf.float32, [None], "sample_weight"),
         }
 
     def _forward(self, is_training, split_placeholders, **kwargs):
@@ -430,15 +430,15 @@ class WideDeepRegressor(WideDeepClassifier, RegressorModule):
 
         return label_floats
 
-    def _set_placeholders(self, target, **kwargs):
+    def _set_placeholders(self, **kwargs):
         self.placeholders = {
-            "input_ids": com.get_placeholder(target, "input_ids", [None, self.max_seq_length], tf.int32),
-            "input_mask": com.get_placeholder(target, "input_mask", [None, self.max_seq_length], tf.int32),
-            "segment_ids": com.get_placeholder(target, "segment_ids", [None, self.max_seq_length], tf.int32),
-            "n_wide_features": com.get_placeholder(target, "n_wide_features", [None], tf.int32),
-            "wide_features": com.get_placeholder(target, "wide_features", [None, len(self.wide_features)], tf.int32),
-            "label_floats": com.get_placeholder(target, "label_floats", [None, self.label_size], tf.float32),
-            "sample_weight": com.get_placeholder(target, "sample_weight", [None], tf.float32),
+            "input_ids": tf.placeholder(tf.int32, [None, self.max_seq_length], "input_ids"),
+            "input_mask": tf.placeholder(tf.int32, [None, self.max_seq_length], "input_mask"),
+            "segment_ids": tf.placeholder(tf.int32, [None, self.max_seq_length], "segment_ids"),
+            "n_wide_features": tf.placeholder(tf.int32, [None], "n_wide_features"),
+            "wide_features": tf.placeholder(tf.int32, [None, len(self.wide_features)], "wide_features"),
+            "label_floats": tf.placeholder(tf.float32, [None, self.label_size], "label_floats"),
+            "sample_weight": tf.placeholder(tf.float32, [None], "sample_weight"),
         }
 
     def _forward(self, is_training, split_placeholders, **kwargs):

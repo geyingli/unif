@@ -176,11 +176,11 @@ class DilatedLM(LMModule):
         # deal with tokenized and multiple inputs
         raise ValueError("%s only supports single sentence inputs." % self.__class__.__name__)
 
-    def _set_placeholders(self, target, **kwargs):
+    def _set_placeholders(self, **kwargs):
         self.placeholders = {
-            "dilated_ids": com.get_placeholder(target, "dilated_ids", [None, self.max_seq_length * 2], tf.int32),
-            "label_ids": com.get_placeholder(target, "label_ids", [None, self.max_seq_length * 2], tf.int32),
-            "sample_weight": com.get_placeholder(target, "sample_weight", [None], tf.float32),
+            "dilated_ids": tf.placeholder(tf.int32, [None, self.max_seq_length * 2], "dilated_ids"),
+            "label_ids": tf.placeholder(tf.int32, [None, self.max_seq_length * 2], "label_ids"),
+            "sample_weight": tf.placeholder(tf.float32, [None], "sample_weight"),
         }
 
     def _forward(self, is_training, split_placeholders, **kwargs):

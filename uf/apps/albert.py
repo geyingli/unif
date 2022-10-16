@@ -468,16 +468,16 @@ class ALBERTLM(BERTLM, LMModule):
 
         return (input_ids, input_mask, segment_ids, masked_lm_positions, masked_lm_ids, masked_lm_weights, sentence_order_labels)
 
-    def _set_placeholders(self, target, **kwargs):
+    def _set_placeholders(self, **kwargs):
         self.placeholders = {
-            "input_ids": com.get_placeholder(target, "input_ids", [None, self.max_seq_length], tf.int32),
-            "input_mask": com.get_placeholder(target, "input_mask", [None, self.max_seq_length], tf.int32),
-            "segment_ids": com.get_placeholder(target, "segment_ids", [None, self.max_seq_length], tf.int32),
-            "masked_lm_positions": com.get_placeholder(target, "masked_lm_positions", [None, self._max_predictions_per_seq * (1 + self._do_permutation)], tf.int32),
-            "masked_lm_ids": com.get_placeholder(target, "masked_lm_ids", [None, self._max_predictions_per_seq * (1 + self._do_permutation)], tf.int32),
-            "masked_lm_weights": com.get_placeholder(target, "masked_lm_weights", [None, self._max_predictions_per_seq * (1 + self._do_permutation)], tf.float32),
-            "sentence_order_labels": com.get_placeholder(target, "sentence_order_labels", [None], tf.int32),
-            "sample_weight": com.get_placeholder(target, "sample_weight", [None], tf.float32),
+            "input_ids": tf.placeholder(tf.int32, [None, self.max_seq_length], "input_ids"),
+            "input_mask": tf.placeholder(tf.int32, [None, self.max_seq_length], "input_mask"),
+            "segment_ids": tf.placeholder(tf.int32, [None, self.max_seq_length], "segment_ids"),
+            "masked_lm_positions": tf.placeholder(tf.int32, [None, self._max_predictions_per_seq * (1 + self._do_permutation)], "masked_lm_positions"),
+            "masked_lm_ids": tf.placeholder(tf.int32, [None, self._max_predictions_per_seq * (1 + self._do_permutation)], "masked_lm_ids"),
+            "masked_lm_weights": tf.placeholder(tf.float32, [None, self._max_predictions_per_seq * (1 + self._do_permutation)], "masked_lm_weights"),
+            "sentence_order_labels": tf.placeholder(tf.int32, [None], "sentence_order_labels"),
+            "sample_weight": tf.placeholder(tf.float32, [None], "sample_weight"),
         }
 
     def _forward(self, is_training, split_placeholders, **kwargs):

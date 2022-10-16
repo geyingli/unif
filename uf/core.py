@@ -43,10 +43,10 @@ class BaseModule:
         # build graph
         self.graph = tf.Graph()
 
-        # Before we register the task, `score` and fast `predict` is not allowed.
-        self.step = 0
-        self._session_mode = None
-        self._session_built = False
+        # Before we register the task, fast prediction or scoring is not allowed.
+        self.step = 0                           # current training step
+        self._session_mode = None               # one of None, "train" and "infer"
+        self._session_built = False             
         self._inited_vars = set()
 
     def reset(self):
@@ -484,12 +484,13 @@ class BaseModule:
         json.dump(cache_json, cache_fp, indent=2)
         cache_fp.close()
 
-    def init(self, reinit_all=False):
+    def init(self, reinit_all=False, ignore_checkpoint=False):
         """ Initialize the graph randomly or from checkpoint file.
 
         Args:
-            reinit_all: bool. Set to True if you wish to re-initialize the
-              graph with random values.
+            reinit_all: bool. Set to True if you with to re-initialize the graph.
+            ignore_checkpoint: bool. Set to True if you need random initialization.
+              
         """
 
         # Make sure necessary arguments are on spot.
@@ -513,10 +514,7 @@ class BaseModule:
         # Register the task, and then run.
         with self.graph.as_default(), tf.variable_scope("", reuse=tf.AUTO_REUSE):
             t = task.Initialization(self)
-            return t.run(
-                reinit_all=reinit_all,
-                ignore_checkpoint=(self.init_checkpoint is None),
-            )
+            return t.run(reinit_all, ignore_checkpoint)
 
     def reinit_from_checkpoint(self, init_checkpoint=None, assignment_map=None):
         """ Reinitialize variables from checkpoint file.
@@ -560,6 +558,7 @@ class BaseModule:
         with self.graph.as_default():
             loader = tf.train.Saver(self.assignment_map)
             loader.restore(self.sess, checkpoint_path)
+            
         try:
             self.sess.run(tf.assign(self._global_step, self.step))
         except AttributeError:

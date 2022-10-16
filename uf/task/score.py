@@ -27,7 +27,6 @@ class Scoring(Task):
 
         # init session
         if not self.module._session_built:
-            com.count_params(self.module.global_variables, self.module.trainable_variables)
             self._init_session()
         self.module._session_mode = "infer"
 

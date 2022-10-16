@@ -19,15 +19,17 @@ class Task:
     def run(self, *args, **kwargs):
         raise NotImplementedError()
 
-    def _init_session(self):
+    def _init_session(self, ignore_checkpoint=False):
         """ Initialize Tensorflow session. """
+        com.count_params(self.module.global_variables, self.module.trainable_variables)
+        
         if self.module._gpu_ids:
             os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(self.module._gpu_ids)
         else:
             os.environ["CUDA_VISIBLE_DEVICES"] = "-1"       # disable GPUs
         config = tf.ConfigProto(allow_soft_placement=True)
         self.module.sess = tf.Session(graph=self.module.graph, config=config)
-        self._init_variables(self.module.global_variables)
+        self._init_variables(self.module.global_variables, ignore_checkpoint=ignore_checkpoint)
         self.module._session_built = True
 
     def _init_variables(self, variables, ignore_checkpoint=False):
@@ -45,12 +47,14 @@ class Task:
             checkpoint_path = com.get_checkpoint_path(self.module.init_checkpoint)
             if not checkpoint_path:
                 raise ValueError(
-                    "Checkpoint file \"%s\" does not exist. Make sure you pass correct value to `init_checkpoint`."
+                    "Checkpoint file \"%s\" does not exist. Make sure you pass correct value to "
+                    "`init_checkpoint`."
                     % self.module.init_checkpoint
                 )
             self.module.init_checkpoint = checkpoint_path       # rectified path replacement
 
-            # `continual` means we tend to succeed the training step and momentums variables stored in the checkpoint file
+            # `continual` means we tend to succeed the training step and momentums variables "
+            # "stored in the checkpoint file
             continual = os.path.dirname(checkpoint_path) == self.module.output_dir
             if continual:
                 self.module.step = int(checkpoint_path.split("-")[-1])
@@ -62,7 +66,8 @@ class Task:
 
             if uninited_vars:
                 tf.logging.info(
-                    "%d local variables failed to match up with the checkpoint file. Check more details through `.uninited_vars`." 
+                    "%d local variables failed to match up with the checkpoint file. "
+                    "Check more details through `.uninited_vars`." 
                     % len(uninited_vars)
                 )
 

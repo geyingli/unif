@@ -222,15 +222,18 @@ model.fit_from_tfrecords(
 `fit` 和 `fit_from_tfrecords` 中的 `kwargs` 函数正是用来实现以下训练技巧：
 
 ```python
-# 优化器
+# 打乱：随机打算训练数据
+model.fit(..., shuffle=True)          # 默认False 
+
+# 优化器：`batch_size`大于512时推荐使用lamb
 model.fit(..., optimizer="gd")
 model.fit(..., optimizer="adam")
-model.fit(..., optimizer="adamw")   # 默认
+model.fit(..., optimizer="adamw")     # 默认adamw
 model.fit(..., optimizer="lamb")
 
 # 分层学习率：应对迁移学习中的catastrophic forgetting问题 (少量模型不适用)
 model.fit(..., layerwise_lr_decay_ratio=0.85)
-print(model.decay_power)            # 衰减指数 (可修改)
+print(model.decay_power)              # 衰减指数 (可修改)
 
 # 对抗式训练：在输入中添加扰动，以提高模型的鲁棒性和泛化能力
 model.fit(..., adversarial="fgm", epsilon=0.5)                  # FGM
@@ -240,10 +243,10 @@ model.fit(..., adversarial="freeat", epsilon=0.001, n_loop=3)   # FreeAT
 model.fit(..., adversarial="smart", epsilon=0.01, n_loop=2, prtb_lambda=0.5, breg_miu=0.2, tilda_beta=0.3)    # SMART (仅Classifier可用)
 
 # 置信度过滤：样本置信度达到阈值后不再参与训练，避免过拟合 (仅Classifier可用)
-model.fit(..., conf_thresh=0.99)    # 默认为None
+model.fit(..., conf_thresh=0.99)      # 默认None，不启用
 
 # 梯度累积：当`batch_size`过小以至于模型拟合困难时，梯度累积可以显著提高拟合表现 (功能尚在测试中)
-model.fit(..., grad_acc_steps=5)    # 默认为1，即不累积梯度
+model.fit(..., grad_acc_steps=5)      # 默认1，不累积梯度
 ```
 
 2020 年流行对抗式训练，2021 年流行对比学习，这些都属于模型训练的 trick。未来还会有更多 trick，都将在这一部分引入。
@@ -326,7 +329,7 @@ model.export(
 
 - 问：有什么提高训练速度的方法吗？
 
-  答：首先是几种能立即实施的基础方法：减小 max_seq_length，多 GPU 并行，多进程数据处理，以及梯度累积。在这些之外，可以进一步尝试对输入的数据进行拆分，在训练过程中逐步提高 max_seq_length、batch_size 和 dropout_rate (通过提高拟合速度，缩短整个训练周期)。当然，还有一些在 UNIF 暂时无法实现的功能，可以前往其他 repo 寻求解决方案，包括但不限于混合精度训练、OP融合、使用 Linformer 等时间复杂度小于 O(N^2) 的模型。
+  答：首先是几种能立即实施的基础方法：减小 max_seq_length，多 GPU 并行，多进程数据处理，以及梯度累积。在这些之外，可以进一步尝试对输入的数据进行拆分，在训练过程中逐步提高 max_seq_length、batch_size 和 dropout_rate (通过提高拟合速度，缩短整个训练周期)。当然，还有一些在 UNIF 暂时无法实现的功能，可以前往其他 repo 寻求解决方案，包括但不限于混合精度训练、OP融合、使用 Linformer 等时间复杂度小于 $O(N^2)$ 的模型。
 
 - 问：训练时内存不足，该怎么办？
 

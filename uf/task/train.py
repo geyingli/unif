@@ -42,12 +42,12 @@ class Training(Task):
 
     def run(self, target_steps, print_per_secs=60, save_per_steps=1000):
 
+        # shuffle training samples
         if self.shuffle and not self.tfrecords_files:
             self._shuffle()
 
-        # init session
+        # init session/variables
         if not self.module._session_built:
-            com.count_params(self.module.global_variables, self.module.trainable_variables)
             self._init_session()
         else:
             variables = []

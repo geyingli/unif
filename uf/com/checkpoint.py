@@ -13,13 +13,12 @@ def get_checkpoint_path(path):
         dir_name = "."
 
     # get file
-    file_name = ""
     if not os.path.isdir(path):
-        file_name = path.strip("/").split("/")[-1]
+        prefix = path.strip("/").split("/")[-1]
 
         # find checkpoint
-        if os.path.isfile(f"{dir_name}/{file_name}.index"):
-            return f"{dir_name}/{file_name}"
+        if os.path.isfile(f"{dir_name}/{prefix}.index"):
+            return f"{dir_name}/{prefix}"
 
         # stop to avoid error
         return None
@@ -29,28 +28,28 @@ def get_checkpoint_path(path):
         with open(f"{dir_name}/checkpoint") as f:
             line = f.readline()
         try:
-            file = re.findall("model_checkpoint_path: \"(.+?)\"", line)[0]
-            if os.path.exists(f"{dir_name}/{file}.index"):
-                return f"{dir_name}/{file}"
+            prefix = re.findall("model_checkpoint_path: \"(.+?)\"", line)[0]
+            if os.path.exists(f"{dir_name}/{prefix}.index"):
+                return f"{dir_name}/{prefix}"
         except IndexError:
             pass
 
     # find file with largest step
     files = []
     for file in os.listdir(dir_name):
-        prefix = re.findall("(.+?).index", file)
-        if prefix:
-            step = 0
-            prefix = prefix[0]
-            try:
-                step = int(prefix.split("-")[-1])
-            except:
-                pass
-            files.append((step, file))
+        if not file.endswith(".index"):
+            continue
+        prefix = file.replace(".index", "")
+        step = 0
+        try:
+            step = int(prefix.split("-")[-1])
+        except:
+            pass
+        files.append((step, file))
     if files:
         files.sort(key=lambda x: x[0], reverse=True)
-        file = files[0][1].replace(".index", "")
-        return f"{dir_name}/{file}"
+        prefix = files[0][1].replace(".index", "")
+        return f"{dir_name}/{prefix}"
 
     # find no checkpoint
     return None

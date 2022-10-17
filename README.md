@@ -137,7 +137,7 @@ model = uf.BERTClassifier(
       X_tokenized=None,       # 输入列表 (已预先分词处理的`X`)
       batch_size=32,          # 每训练一步使用多少数据
       learning_rate=5e-05,    # 学习率
-      target_steps=None,      # 放空代表直接一口气训练到`total_steps`；否则为训练停止的位置
+      target_steps=None,      # 放空代表直接不间断地训练到`total_steps`；否则为训练停止的位置
       total_steps=-3,         # 模型计划训练的总步长，决定了学习率的变化曲线；正数，如1000000，代表训练一百万步；负数，如-3，代表根据数据量循环三轮的总步长
       warmup_ratio=0.1,       # 训练初期学习率从零开始，线性增长到`learning_rate`的步长范围；0.1代表在前10%的步数里逐渐增长
       print_per_secs=1,       # 多少秒打印一次训练信息
@@ -157,8 +157,8 @@ num_epochs = 6      # 假设总共训练6轮
 for loop_id in range(10):
     model.fit(
         X, y,
-        target_steps=-((loop_id + 1) * num_epochs / num_loops),  # 断点
-        total_steps=-num_epochs,
+        target_steps=-((loop_id + 1) * num_epochs / num_loops),  # 训练断点 (-0.6, -1.2, ...)
+        total_steps=-num_epochs,                                 # 训练全长 (-6)
     )
     print(model.score(X_dev, y_dev))                             # 验证模型
     model.localize(f"breakpoint.{loop_id}", into_file=".unif")   # 保存模型配置到`into_file` (同时保存模型参数到`output_dir`)
@@ -169,23 +169,25 @@ for loop_id in range(10):
 model = uf.restore("breakpoint.7", from_file=".unif")
 ```
 
+从以上代码不难看出，`localize` 和 `restore` 函数是模型管理的利器。
 
 ### 多进程
 
 `fit` 函数内部包含了两个步骤：
 
-- 对输入进行预处理，转换为模型可接受的输入 (e.g. ID矩阵)
+- 对输入进行预处理，转换为模型可接受的输入 (e.g. 整数/浮点数矩阵)
 
 - 训练模型
 
-当数据量变得庞大时，例如百万级，数据预处理可能要消耗十几二十分钟，这段期间 GPU 处于闲置状态，无疑是对资源的浪费，可以通过开启多进程处理加速这一过程 (注：对第二步模型训练无效)：
+当数据量变得庞大时，例如百万级，数据预处理可能要消耗十几二十分钟，这段期间 GPU 处于闲置状态，无疑是对资源的浪费，可以通过开启多进程处理加速这一过程 (注：不会对第二步模型训练加速)：
 
 ``` python
 with uf.MultiProcess():
+    X, y = ...            # 读取数据
     model.fit(X, y)
 ```
 
-由于 python 中存在 PIL锁，每一个进程只能使用一个 CPU，那么多进程唤醒其他 CPU 的本质是对当前进程进行复制。因此需要注意的是，最好在大批量数据读到程序内存以前开启 `MultiProcess`，而不要在之后，否则每一个复制的进程都会拷贝一份数据，造成不必要的内存占用。
+由于 python 中存在 PIL锁，每一个进程只能使用一个 CPU，那么多进程唤醒其他 CPU 的本质是对当前进程进行复制。因此需要注意的是，最好在大批量数据读到程序内存以前开启 `MultiProcess`，而不要在之后，否则每一个复制的进程都会拷贝一份完整数据，造成不必要的内存占用。
 
 ### TFRecords
 
@@ -193,6 +195,7 @@ with uf.MultiProcess():
 
 ``` python
 with uf.MultiProcess():
+    X, y = ...            # 读取数据
 
     # 缓存数据
     model.to_tfrecords(
@@ -202,7 +205,7 @@ with uf.MultiProcess():
 
 # 边读边训
 model.fit_from_tfrecords(
-    tfrecords_files=["train.tfrecords", "train.1.tfrecords", ...],    # 支持同步从一个或多个TFRecords文件读取
+    tfrecords_files=["train.tfrecords", ...],    # 支持同步从一个或多个TFRecords文件读取
     n_jobs=3,             # 启动三个线程
     batch_size=32,        # 以下参数和`fit`函数中参数相同
     learning_rate=5e-05,
@@ -223,7 +226,7 @@ model.fit_from_tfrecords(
 
 ```python
 # 打乱：随机打乱训练数据
-model.fit(..., shuffle=True)          # 默认False 
+model.fit(..., shuffle=True)          # 默认False
 
 # 优化器：`batch_size`大于512时推荐使用lamb
 model.fit(..., optimizer="gd")
@@ -233,7 +236,7 @@ model.fit(..., optimizer="lamb")
 
 # 分层学习率：应对迁移学习中的catastrophic forgetting问题 (少量模型不适用)
 model.fit(..., layerwise_lr_decay_ratio=0.85)
-print(model.decay_power)              # 衰减指数 (可修改)
+print(model.decay_power)              # 衰减指数 (可按需修改)
 
 # 对抗式训练：在输入中添加扰动，以提高模型的鲁棒性和泛化能力
 model.fit(..., adversarial="fgm", epsilon=0.5)                  # FGM

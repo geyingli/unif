@@ -129,10 +129,10 @@ class TinyBERTClassifier(BERTClassifier, ClassifierModule):
         )
         return model.get_forward_outputs()
 
-    def _get_fit_ops(self, as_feature=False):
+    def _get_fit_ops(self, from_tfrecords=False):
         return [self._tensors["losses"]]
 
-    def _get_fit_info(self, output_arrays, feed_dict, as_feature=False):
+    def _get_fit_info(self, output_arrays, feed_dict, from_tfrecords=False):
 
         # loss
         batch_losses = output_arrays[0]

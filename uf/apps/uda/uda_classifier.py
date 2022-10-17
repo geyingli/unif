@@ -273,15 +273,15 @@ class UDAClassifier(BERTClassifier, ClassifierModule):
         )
         return decoder.get_forward_outputs()
 
-    def _get_fit_ops(self, as_feature=False):
+    def _get_fit_ops(self, from_tfrecords=False):
         ops = [self._tensors["preds"], self._tensors["supervised"], self._tensors["unsupervised"]]
-        if as_feature:
+        if from_tfrecords:
             ops.extend([self.placeholders["is_supervised"], self.placeholders["label_ids"]])
         return ops
 
-    def _get_fit_info(self, output_arrays, feed_dict, as_feature=False):
+    def _get_fit_info(self, output_arrays, feed_dict, from_tfrecords=False):
 
-        if as_feature:
+        if from_tfrecords:
             batch_is_sup = output_arrays[-2]
             batch_labels = output_arrays[-1]
         else:

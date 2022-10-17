@@ -286,17 +286,17 @@ class UniLM(BERTLM, LMModule):
         )
         return decoder.get_forward_outputs()
 
-    def _get_fit_ops(self, as_feature=False):
+    def _get_fit_ops(self, from_tfrecords=False):
         ops = [self._tensors["MLM_preds"], self._tensors["MLM_losses"]]
         if self.mode == "bi":
             ops.extend([self._tensors["NSP_preds"], self._tensors["NSP_losses"]])
-        if as_feature:
+        if from_tfrecords:
             ops.extend([self.placeholders["masked_lm_positions"], self.placeholders["masked_lm_ids"], self.placeholders["next_sentence_labels"]])
         return ops
 
-    def _get_fit_info(self, output_arrays, feed_dict, as_feature=False):
+    def _get_fit_info(self, output_arrays, feed_dict, from_tfrecords=False):
 
-        if as_feature:
+        if from_tfrecords:
             batch_mlm_positions = output_arrays[-3]
             batch_mlm_labels = output_arrays[-2]
             batch_nsp_labels = output_arrays[-1]

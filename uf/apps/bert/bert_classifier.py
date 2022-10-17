@@ -202,15 +202,15 @@ class BERTClassifier(ClassifierModule):
         )
         return decoder.get_forward_outputs()
 
-    def _get_fit_ops(self, as_feature=False):
+    def _get_fit_ops(self, from_tfrecords=False):
         ops = [self._tensors["preds"], self._tensors["losses"]]
-        if as_feature:
+        if from_tfrecords:
             ops.extend([self.placeholders["label_ids"]])
         return ops
 
-    def _get_fit_info(self, output_arrays, feed_dict, as_feature=False):
+    def _get_fit_info(self, output_arrays, feed_dict, from_tfrecords=False):
 
-        if as_feature:
+        if from_tfrecords:
             batch_labels = output_arrays[-1]
         else:
             batch_labels = feed_dict[self.placeholders["label_ids"]]

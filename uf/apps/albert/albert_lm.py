@@ -252,15 +252,15 @@ class ALBERTLM(BERTLM, LMModule):
         )
         return decoder.get_forward_outputs()
 
-    def _get_fit_ops(self, as_feature=False):
+    def _get_fit_ops(self, from_tfrecords=False):
         ops = [self._tensors["MLM_preds"], self._tensors["SOP_preds"], self._tensors["MLM_losses"], self._tensors["SOP_losses"]]
-        if as_feature:
+        if from_tfrecords:
             ops.extend([self.placeholders["masked_lm_positions"], self.placeholders["masked_lm_ids"], self.placeholders["sentence_order_labels"]])
         return ops
 
-    def _get_fit_info(self, output_arrays, feed_dict, as_feature=False):
+    def _get_fit_info(self, output_arrays, feed_dict, from_tfrecords=False):
 
-        if as_feature:
+        if from_tfrecords:
             batch_mlm_positions = output_arrays[-3]
             batch_mlm_labels = output_arrays[-2]
             batch_sop_labels = output_arrays[-1]
@@ -276,21 +276,21 @@ class ALBERTLM(BERTLM, LMModule):
 
         # SOP accuracy
         batch_sop_preds = output_arrays[1]
-        SOP_accuracy = np.mean(batch_sop_preds == batch_sop_labels)
+        sop_accuracy = np.mean(batch_sop_preds == batch_sop_labels)
 
         # MLM loss
         batch_mlm_losses = output_arrays[2]
         mlm_loss = np.mean(batch_mlm_losses)
 
         # SOP loss
-        batch_SOP_losses = output_arrays[3]
-        SOP_loss = np.mean(batch_SOP_losses)
+        batch_sop_losses = output_arrays[3]
+        sop_loss = np.mean(batch_sop_losses)
 
         info = ""
         info += ", MLM accuracy %.4f" % mlm_accuracy
-        info += ", SOP accuracy %.4f" % SOP_accuracy
+        info += ", SOP accuracy %.4f" % sop_accuracy
         info += ", MLM loss %.6f" % mlm_loss
-        info += ", SOP loss %.6f" % SOP_loss
+        info += ", SOP loss %.6f" % sop_loss
 
         return info
 
@@ -314,14 +314,14 @@ class ALBERTLM(BERTLM, LMModule):
             mlm_preds.append(self.tokenizer.convert_ids_to_tokens(_ids))
 
         # SOP preds
-        SOP_preds = com.transform(output_arrays[1], n_inputs).tolist()
+        sop_preds = com.transform(output_arrays[1], n_inputs).tolist()
 
         # SOP probs
-        SOP_probs = com.transform(output_arrays[2], n_inputs)
+        sop_probs = com.transform(output_arrays[2], n_inputs)
 
         outputs = {}
         outputs["mlm_preds"] = mlm_preds
-        outputs["sop_preds"] = SOP_preds
-        outputs["sop_probs"] = SOP_probs
+        outputs["sop_preds"] = sop_preds
+        outputs["sop_probs"] = sop_probs
 
         return outputs

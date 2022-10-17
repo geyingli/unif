@@ -228,11 +228,9 @@ class Training(Task):
 
     def _train_one_batch(self, step, last_tic, last_step, target_steps, print_per_secs, save_per_steps, saver, adversarial=None):
         feed_dict = {}
-        as_feature = True
         if not self.from_tfrecords:
             feed_dict = self._build_feed_dict()
-            as_feature = False
-        fit_ops = self.module._get_fit_ops(as_feature) + self.train_ops
+        fit_ops = self.module._get_fit_ops(self.from_tfrecords) + self.train_ops
 
         output_arrays = self.module.sess.run(fit_ops, feed_dict=feed_dict)[:-len(self.train_ops)]
 
@@ -242,7 +240,7 @@ class Training(Task):
             info = "step %d" % step
 
             # print processor-specific information
-            info += self.module._get_fit_info(output_arrays, feed_dict, as_feature)
+            info += self.module._get_fit_info(output_arrays, feed_dict, self.from_tfrecords)
 
             # print training efficiency
             info += ", %.2f steps/sec" % ((step - last_step) / diff_tic)

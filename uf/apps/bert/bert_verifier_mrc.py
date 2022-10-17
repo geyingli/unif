@@ -11,8 +11,8 @@ from ... import com
 
 
 class BERTVerifierMRC(BERTMRC, MRCModule):
-    """ Machine reading comprehension on BERT, with a external front
-    verifier. """
+    """ Machine reading comprehension on BERT, with a external front verifier. """
+
     _INFER_ATTRIBUTES = BERTMRC._INFER_ATTRIBUTES
 
     def __init__(
@@ -269,9 +269,7 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
             self._tensors["mrc_preds"],
         ]
 
-    def _get_predict_outputs(self, batch_outputs):
-        n_inputs = len(list(self.data.values())[0])
-        output_arrays = list(zip(*batch_outputs))
+    def _get_predict_outputs(self, output_arrays, n_inputs):
 
         # verifier preds & probs
         verifier_probs = com.transform(output_arrays[0], n_inputs)[:, 1]
@@ -326,9 +324,7 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
             self._tensors["mrc_losses"],
         ]
 
-    def _get_score_outputs(self, batch_outputs):
-        n_inputs = len(list(self.data.values())[0])
-        output_arrays = list(zip(*batch_outputs))
+    def _get_score_outputs(self, output_arrays, n_inputs):
 
         # verifier accuracy
         has_answer_preds = com.transform(output_arrays[0], n_inputs)

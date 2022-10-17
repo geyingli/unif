@@ -8,6 +8,7 @@ from ...third import tf
 
 class ALBERTMRC(BERTMRC, MRCModule):
     """ Machine reading comprehension on ALBERT. """
+    
     _INFER_ATTRIBUTES = BERTMRC._INFER_ATTRIBUTES
 
     def __init__(

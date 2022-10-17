@@ -12,6 +12,7 @@ from ... import com
 
 class RetroReaderMRC(BERTVerifierMRC, MRCModule):
     """ Machine reading comprehension on Retro-Reader. """
+    
     _INFER_ATTRIBUTES = BERTVerifierMRC._INFER_ATTRIBUTES
 
     def __init__(
@@ -263,9 +264,7 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
             self._tensors["mrc_preds"],
         ]
 
-    def _get_predict_outputs(self, batch_outputs):
-        n_inputs = len(list(self.data.values())[0])
-        output_arrays = list(zip(*batch_outputs))
+    def _get_predict_outputs(self, output_arrays, n_inputs):
 
         # verifier preds & probs
         verifier_probs = com.transform(output_arrays[0], n_inputs)
@@ -320,9 +319,7 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
             self._tensors["intensive_losses"],
         ]
 
-    def _get_score_outputs(self, batch_outputs):
-        n_inputs = len(list(self.data.values())[0])
-        output_arrays = list(zip(*batch_outputs))
+    def _get_score_outputs(self, output_arrays, n_inputs):
 
         # verifier accuracy
         has_answer_preds = com.transform(output_arrays[0], n_inputs)

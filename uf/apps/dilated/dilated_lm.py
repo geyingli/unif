@@ -10,7 +10,8 @@ from ... import com
 
 class DilatedLM(LMModule):
     """ Language modeling on DilatedBERT. """
-    _INFER_ATTRIBUTES = {
+    
+    _INFER_ATTRIBUTES = {    # params whose value cannot be None in order to infer without training
         "max_seq_length": "An integer that defines max sequence length of input tokens",
         "init_checkpoint": "A string that directs to the checkpoint file used for initialization",
     }
@@ -231,9 +232,7 @@ class DilatedLM(LMModule):
     def _get_predict_ops(self):
         return [self._tensors["LM"]]
 
-    def _get_predict_outputs(self, batch_outputs):
-        n_inputs = len(list(self.data.values())[0])
-        output_arrays = list(zip(*batch_outputs))
+    def _get_predict_outputs(self, output_arrays, n_inputs):
 
         # preds
         all_preds = com.transform(output_arrays[0], n_inputs).tolist()

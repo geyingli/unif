@@ -8,6 +8,7 @@ from ...third import tf
 
 class ELECTRAMRC(BERTMRC, MRCModule):
     """ Machine reading comprehension on ELECTRA. """
+    
     _INFER_ATTRIBUTES = BERTMRC._INFER_ATTRIBUTES
 
     def __init__(

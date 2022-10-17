@@ -12,7 +12,8 @@ from ... import com
 
 class BERTNER(BERTClassifier, NERModule):
     """ Named entity recognition on BERT. """
-    _INFER_ATTRIBUTES = {
+    
+    _INFER_ATTRIBUTES = {    # params whose value cannot be None in order to infer without training
         "max_seq_length": "An integer that defines max sequence length of input tokens",
         "init_checkpoint": "A string that directs to the checkpoint file used for initialization",
     }
@@ -248,9 +249,7 @@ class BERTNER(BERTClassifier, NERModule):
     def _get_predict_ops(self):
         return [self._tensors["probs"]]
 
-    def _get_predict_outputs(self, batch_outputs):
-        n_inputs = len(list(self.data.values())[0])
-        output_arrays = list(zip(*batch_outputs))
+    def _get_predict_outputs(self, output_arrays, n_inputs):
 
         # probs
         probs = com.transform(output_arrays[0], n_inputs)
@@ -304,9 +303,7 @@ class BERTNER(BERTClassifier, NERModule):
     def _get_score_ops(self):
         return [self._tensors["preds"], self._tensors["losses"]]
 
-    def _get_score_outputs(self, batch_outputs):
-        n_inputs = len(list(self.data.values())[0])
-        output_arrays = list(zip(*batch_outputs))
+    def _get_score_outputs(self, output_arrays, n_inputs):
 
         # f1
         preds = com.transform(output_arrays[0], n_inputs)

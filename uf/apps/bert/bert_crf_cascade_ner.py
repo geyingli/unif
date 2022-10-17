@@ -11,7 +11,8 @@ from ... import com
 
 class BERTCRFCascadeNER(BERTCRFNER, NERModule):
     """ Named entity recognization and classification on BERT with CRF. """
-    _INFER_ATTRIBUTES = {
+    
+    _INFER_ATTRIBUTES = {    # params whose value cannot be None in order to infer without training
         "max_seq_length": "An integer that defines max sequence length of input tokens",
         "entity_types": "A list of strings that defines possible types of entities",
         "init_checkpoint": "A string that directs to the checkpoint file used for initialization",
@@ -230,9 +231,7 @@ class BERTCRFCascadeNER(BERTCRFNER, NERModule):
     def _get_predict_ops(self):
         return [self._tensors["logits"], self._tensors["transition_matrix"]]
 
-    def _get_predict_outputs(self, batch_outputs):
-        n_inputs = len(list(self.data.values())[0])
-        output_arrays = list(zip(*batch_outputs))
+    def _get_predict_outputs(self, output_arrays, n_inputs):
 
         # preds
         logits = com.transform(output_arrays[0], n_inputs)
@@ -290,9 +289,7 @@ class BERTCRFCascadeNER(BERTCRFNER, NERModule):
     def _get_score_ops(self):
         return [self._tensors["logits"], self._tensors["transition_matrix"], self._tensors["losses"]]
 
-    def _get_score_outputs(self, batch_outputs):
-        n_inputs = len(list(self.data.values())[0])
-        output_arrays = list(zip(*batch_outputs))
+    def _get_score_outputs(self, output_arrays, n_inputs):
 
         # f1
         logits = com.transform(output_arrays[0], n_inputs)

@@ -12,6 +12,7 @@ from ...third import tf
 
 class TinyBERTBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
     """ Multi-label classifier on TinyBERT, a distillation model. """
+    
     _INFER_ATTRIBUTES = BERTBinaryClassifier._INFER_ATTRIBUTES
 
     def __init__(

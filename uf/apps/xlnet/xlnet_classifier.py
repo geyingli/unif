@@ -12,6 +12,7 @@ from ... import com
 
 class XLNetClassifier(BERTClassifier, ClassifierModule):
     """ Single-label classifier on XLNet. """
+
     _INFER_ATTRIBUTES = BERTClassifier._INFER_ATTRIBUTES
 
     def __init__(

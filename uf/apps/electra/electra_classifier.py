@@ -8,6 +8,7 @@ from ...third import tf
 
 class ELECTRAClassifier(BERTClassifier, ClassifierModule):
     """ Single-label classifier on ELECTRA. """
+    
     _INFER_ATTRIBUTES = BERTClassifier._INFER_ATTRIBUTES
 
     def __init__(

@@ -9,6 +9,7 @@ from ... import com
 
 class BERTCRFNER(BERTNER, NERModule):
     """ Named entity recognization on BERT with CRF. """
+    
     _INFER_ATTRIBUTES = BERTNER._INFER_ATTRIBUTES
 
     def _forward(self, is_training, placeholders, **kwargs):
@@ -73,9 +74,7 @@ class BERTCRFNER(BERTNER, NERModule):
     def _get_predict_ops(self):
         return [self._tensors["logits"], self._tensors["transition_matrix"]]
 
-    def _get_predict_outputs(self, batch_outputs):
-        n_inputs = len(list(self.data.values())[0])
-        output_arrays = list(zip(*batch_outputs))
+    def _get_predict_outputs(self, output_arrays, n_inputs):
 
         # preds
         logits = com.transform(output_arrays[0], n_inputs)
@@ -131,9 +130,7 @@ class BERTCRFNER(BERTNER, NERModule):
     def _get_score_ops(self):
         return [self._tensors["logits"], self._tensors["transition_matrix"], self._tensors["losses"]]
 
-    def _get_score_outputs(self, batch_outputs):
-        n_inputs = len(list(self.data.values())[0])
-        output_arrays = list(zip(*batch_outputs))
+    def _get_score_outputs(self, output_arrays, n_inputs):
 
         # f1
         logits = com.transform(output_arrays[0], n_inputs)

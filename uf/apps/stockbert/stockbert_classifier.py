@@ -11,7 +11,8 @@ from ... import com
 
 class StockBERTClassifier(BERTClassifier, ClassifierModule):
     """ Single-label classifier on Stock-BERT. """
-    _INFER_ATTRIBUTES = {
+    
+    _INFER_ATTRIBUTES = {    # params whose value cannot be None in order to infer without training
         "max_seq_length": "An integer that defines max length of input time spots",
         "max_unit_length": "An integer that defines max length of input sub-prices",
         "init_checkpoint": "A string that directs to the checkpoint file used for initialization",

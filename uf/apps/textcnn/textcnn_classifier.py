@@ -10,6 +10,7 @@ from ...third import tf
 
 class TextCNNClassifier(BERTClassifier, ClassifierModule):
     """ Single-label classifier on TextCNN. """
+    
     _INFER_ATTRIBUTES = BERTClassifier._INFER_ATTRIBUTES
 
     def __init__(

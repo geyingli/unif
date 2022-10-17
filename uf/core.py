@@ -13,7 +13,7 @@ from . import com
 
 class BaseModule:
     """ Parent class of all the application processors. """
-    _INFER_ATTRIBUTES = {}    # values that must be passed in order to infer without training
+    _INFER_ATTRIBUTES = {}    # params whose value cannot be None in order to infer without training
 
     def __init__(self, init_checkpoint, output_dir, gpu_ids):
 
@@ -321,8 +321,9 @@ class BaseModule:
         Returns:
             A dict object of model outputs.
         """
-        # NOTE: This method is reimplemented by `FastBERTClassifier`,
-        # `GPT2LM`, `BERTNER`.
+        # NOTE: This method is reimplemented in `FastBERTClassifier`,
+        # `GPT2LM`, `DilatedLM`, `VAELM`, `XLNetLM`.
+        # Take care if you wish to modify codes here.
 
         # Make sure the arguments are correct.
         self.batch_size = batch_size
@@ -371,8 +372,9 @@ class BaseModule:
         Returns:
             A dict object of output metrics.
         """
-        # NOTE: This method is reimplemented by `FastBERTClassifier` and
-        # `GPT2LM`.
+        # NOTE: This method is reimplemented in `FastBERTClassifier`.
+        # Take care if you wish to modify codes here.
+
         assert y is not None, "`y` can\"t be None."
 
         # Make sure the arguments are correct.
@@ -594,8 +596,10 @@ class BaseModule:
         Returns:
             None
         """
-        # NOTE: This method is reimplemented by `FastBERTClassifier` and
-        # `GPT2LM`.
+        # NOTE: This method is reimplemented in `FastBERTClassifier`,
+        # `GPT2LM`, `DilatedLM`, `VAELM`.
+        # Take care if you wish to modify codes here.
+
         tf.gfile.MakeDirs(export_dir)
 
         # Make sure necessary arguments are on spot.

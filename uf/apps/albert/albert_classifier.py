@@ -8,6 +8,7 @@ from ...third import tf
 
 class ALBERTClassifier(BERTClassifier, ClassifierModule):
     """ Single-label classifier on ALBERT. """
+    
     _INFER_ATTRIBUTES = BERTClassifier._INFER_ATTRIBUTES
 
     def __init__(

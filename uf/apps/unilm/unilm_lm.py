@@ -11,7 +11,8 @@ from ... import com
 
 class UniLM(BERTLM, LMModule):
     """ Language modeling on UniLM. """
-    _INFER_ATTRIBUTES = {
+    
+    _INFER_ATTRIBUTES = {    # params whose value cannot be None in order to infer without training
         "max_seq_length": "An integer that defines max sequence length of input tokens",
         "init_checkpoint": "A string that directs to the checkpoint file used for initialization",
     }
@@ -339,9 +340,7 @@ class UniLM(BERTLM, LMModule):
             ops += [self._tensors["NSP_preds"], self._tensors["NSP_probs"]]
         return ops
 
-    def _get_predict_outputs(self, batch_outputs):
-        n_inputs = len(list(self.data.values())[0])
-        output_arrays = list(zip(*batch_outputs))
+    def _get_predict_outputs(self, output_arrays, n_inputs):
 
         # MLM preds
         mlm_preds = []

@@ -10,7 +10,8 @@ from ... import com
 
 class VAELM(BERTClassifier, LMModule):
     """ Text generator in VAE structure. """
-    _INFER_ATTRIBUTES = {
+    
+    _INFER_ATTRIBUTES = {    # params whose value cannot be None in order to infer without training
         "max_seq_length": "An integer that defines max sequence length of input tokens",
         "init_checkpoint": "A string that directs to the checkpoint file used for initialization",
     }
@@ -216,9 +217,7 @@ class VAELM(BERTClassifier, LMModule):
     def _get_predict_ops(self):
         return [self._tensors["miu"], self._tensors["sigma"], self._tensors["preds"]]
 
-    def _get_predict_outputs(self, batch_outputs):
-        n_inputs = len(list(self.data.values())[0])
-        output_arrays = list(zip(*batch_outputs))
+    def _get_predict_outputs(self, output_arrays, n_inputs):
 
         # miu
         miu = com.transform(output_arrays[0], n_inputs)

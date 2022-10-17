@@ -12,6 +12,7 @@ from ... import com
 
 class UDAClassifier(BERTClassifier, ClassifierModule):
     """ Single-label classifier on UDA. """
+    
     _INFER_ATTRIBUTES = BERTClassifier._INFER_ATTRIBUTES
 
     def __init__(

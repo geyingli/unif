@@ -4,7 +4,6 @@ from .sanet import SANetDecoder, get_decay_power
 from ..base.base_mrc import MRCModule
 from ..bert.bert_mrc import BERTMRC
 from ..bert.bert import BERTEncoder, BERTConfig
-from ..albert.albert import ALBERTEncoder, ALBERTConfig
 from ...token import WordPieceTokenizer
 from ...third import tf
 from ... import com
@@ -12,6 +11,7 @@ from ... import com
 
 class SANetMRC(BERTMRC, MRCModule):
     """ Machine reading comprehension on SANet. """
+
     _INFER_ATTRIBUTES = BERTMRC._INFER_ATTRIBUTES
 
     def __init__(

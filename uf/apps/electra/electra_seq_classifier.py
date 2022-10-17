@@ -8,6 +8,7 @@ from ...third import tf
 
 class ELECTRASeqClassifier(BERTSeqClassifier, ClassifierModule):
     """ Sequence labeling classifier on ELECTRA. """
+    
     _INFER_ATTRIBUTES = BERTSeqClassifier._INFER_ATTRIBUTES
 
     def __init__(

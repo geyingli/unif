@@ -4,7 +4,6 @@ from .widedeep import WideDeepRegDecoder, get_decay_power
 from .widedeep_classifier import WideDeepClassifier
 from ..base.base_regressor import RegressorModule
 from ..bert.bert import BERTEncoder, BERTConfig
-from ..albert.albert import ALBERTEncoder, ALBERTConfig
 from ...token import WordPieceTokenizer
 from ...third import tf
 from ... import com
@@ -12,7 +11,8 @@ from ... import com
 
 class WideDeepRegressor(WideDeepClassifier, RegressorModule):
     """ Single-label classifier on Wide & Deep model with BERT. """
-    _INFER_ATTRIBUTES = {
+    
+    _INFER_ATTRIBUTES = {    # params whose value cannot be None in order to infer without training
         "max_seq_length": "An integer that defines max sequence length of input tokens",
         "init_checkpoint": "A string that directs to the checkpoint file used for initialization",
         "wide_features": "A list of possible values for `Wide` features (integer or string)",
@@ -251,9 +251,7 @@ class WideDeepRegressor(WideDeepClassifier, RegressorModule):
     def _get_predict_ops(self):
         return [self._tensors["preds"]]
 
-    def _get_predict_outputs(self, batch_outputs):
-        n_inputs = len(list(self.data.values())[0])
-        output_arrays = list(zip(*batch_outputs))
+    def _get_predict_outputs(self, output_arrays, n_inputs):
 
         # preds
         preds = com.transform(output_arrays[0], n_inputs)
@@ -266,9 +264,7 @@ class WideDeepRegressor(WideDeepClassifier, RegressorModule):
     def _get_score_ops(self):
         return [self._tensors["preds"], self._tensors["losses"]]
 
-    def _get_score_outputs(self, batch_outputs):
-        n_inputs = len(list(self.data.values())[0])
-        output_arrays = list(zip(*batch_outputs))
+    def _get_score_outputs(self, output_arrays, n_inputs):
 
         # mse
         preds = com.transform(output_arrays[0], n_inputs)

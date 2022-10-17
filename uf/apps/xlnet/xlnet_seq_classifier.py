@@ -12,6 +12,7 @@ from ... import com
 
 class XLNetSeqClassifier(BERTSeqClassifier, ClassifierModule):
     """ Sequence labeling classifier on XLNet. """
+    
     _INFER_ATTRIBUTES = BERTSeqClassifier._INFER_ATTRIBUTES
 
     def __init__(

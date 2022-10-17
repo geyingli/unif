@@ -4,7 +4,6 @@ from .widedeep import WideDeepClsDecoder, get_decay_power
 from ..base.base_classifier import ClassifierModule
 from ..bert.bert_classifier import BERTClassifier
 from ..bert.bert import BERTEncoder, BERTConfig
-from ..albert.albert import ALBERTEncoder, ALBERTConfig
 from ...token import WordPieceTokenizer
 from ...third import tf
 from ... import com
@@ -12,7 +11,8 @@ from ... import com
 
 class WideDeepClassifier(BERTClassifier, ClassifierModule):
     """ Single-label classifier on Wide & Deep model with BERT. """
-    _INFER_ATTRIBUTES = {
+    
+    _INFER_ATTRIBUTES = {    # params whose value cannot be None in order to infer without training
         "max_seq_length": "An integer that defines max sequence length of input tokens",
         "label_size": "An integer that defines number of possible labels of outputs",
         "init_checkpoint": "A string that directs to the checkpoint file used for initialization",

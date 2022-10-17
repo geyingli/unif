@@ -11,6 +11,7 @@ from ... import com
 
 class ELECTRALM(BERTLM, LMModule):
     """ Language modeling on ELECTRA. """
+    
     _INFER_ATTRIBUTES = BERTLM._INFER_ATTRIBUTES
 
     def __init__(
@@ -254,9 +255,7 @@ class ELECTRALM(BERTLM, LMModule):
     def _get_predict_ops(self):
         return [self._tensors["MLM_preds"], self._tensors["RTD_preds"], self._tensors["RTD_probs"]]
 
-    def _get_predict_outputs(self, batch_outputs):
-        n_inputs = len(list(self.data.values())[0])
-        output_arrays = list(zip(*batch_outputs))
+    def _get_predict_outputs(self, output_arrays, n_inputs):
 
         # MLM preds
         mlm_preds = []

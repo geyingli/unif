@@ -13,6 +13,7 @@ from ... import com
 
 class XLNetLM(BERTLM, LMModule):
     """ Language modeling on XLNet. """
+    
     _INFER_ATTRIBUTES = BERTLM._INFER_ATTRIBUTES
 
     def __init__(
@@ -213,9 +214,7 @@ class XLNetLM(BERTLM, LMModule):
     def _get_predict_ops(self):
         return [self._tensors["preds"]]
 
-    def _get_predict_outputs(self, batch_outputs):
-        n_inputs = len(list(self.data.values())[0])
-        output_arrays = list(zip(*batch_outputs))
+    def _get_predict_outputs(self, output_arrays, n_inputs):
 
         # PLM preds
         plm_preds = com.transform(output_arrays[0], n_inputs).tolist()

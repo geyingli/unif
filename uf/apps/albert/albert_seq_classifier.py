@@ -8,6 +8,7 @@ from ...third import tf
 
 class ALBERTSeqClassifier(BERTSeqClassifier, ClassifierModule):
     """ Sequence labeling classifier on ALBERT. """
+    
     _INFER_ATTRIBUTES = BERTSeqClassifier._INFER_ATTRIBUTES
 
     def __init__(

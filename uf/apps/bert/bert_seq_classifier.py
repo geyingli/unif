@@ -11,6 +11,7 @@ from ... import com
 
 class BERTSeqClassifier(BERTClassifier, ClassifierModule):
     """ Sequence labeling classifier on BERT. """
+    
     _INFER_ATTRIBUTES = BERTClassifier._INFER_ATTRIBUTES
 
     def __init__(
@@ -230,9 +231,7 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
     def _get_predict_ops(self):
         return [self._tensors["probs"]]
 
-    def _get_predict_outputs(self, batch_outputs):
-        n_inputs = len(list(self.data.values())[0])
-        output_arrays = list(zip(*batch_outputs))
+    def _get_predict_outputs(self, output_arrays, n_inputs):
 
         # probs
         probs = com.transform(output_arrays[0], n_inputs)
@@ -257,9 +256,7 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
     def _get_score_ops(self):
         return [self._tensors["preds"], self._tensors["losses"]]
 
-    def _get_score_outputs(self, batch_outputs):
-        n_inputs = len(list(self.data.values())[0])
-        output_arrays = list(zip(*batch_outputs))
+    def _get_score_outputs(self, output_arrays, n_inputs):
 
         # accuracy
         preds = com.transform(output_arrays[0], n_inputs)

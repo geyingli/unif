@@ -71,23 +71,30 @@ def truncate_segments(segments, max_seq_length, truncate_method="LIFO"):
     total_seq_length = sum([len(segment) for segment in segments])
     if total_seq_length <= max_seq_length:
         return
+    if truncate_method not in ("longer-FO", "FIFO", "LIFO"):
+        raise ValueError("Invalid value for `truncate_method`. Pick one from `FIFO`, `LIFO` and `longer-FO`.")
 
-    for _ in range(total_seq_length - max_seq_length):
-        if truncate_method == "longer-FO":
-            max(segments, key=lambda x: len(x)).pop()
-        elif truncate_method == "FIFO":
-            index = 0
-            while len(segments[index]) == 0:
+    n = 0
+    if truncate_method == "FIFO":
+        index = 0
+        while n < total_seq_length - max_seq_length:
+            if not segments[index]:
                 index += 1
+                continue
             segments[index].pop(0)
-        elif truncate_method == "LIFO":
-            index = -1
-            while len(segments[index]) == 0:
+            n += 1
+    elif truncate_method == "LIFO":
+        index = len(segments) - 1
+        while n < total_seq_length - max_seq_length:
+            if not segments[index]:
                 index -= 1
+                continue
             segments[index].pop()
-        else:
-            raise ValueError("Invalid value for `truncate_method`. Pick one from `longer-FO`, `FIFO`, `LIFO`.")
-
+            n += 1
+    else:
+        while n < total_seq_length - max_seq_length:
+            max(segments, key=lambda x: len(x)).pop()
+            n += 1
 
 def transform(output_arrays, n_inputs=None):
     """ Transform raw outputs. """
@@ -98,13 +105,12 @@ def transform(output_arrays, n_inputs=None):
             out = np.hstack(output_arrays)
         else:                                   # 2D/3D/...
             out = np.vstack(output_arrays)
-        if n_inputs:
-            out = out[:n_inputs]
-        return out
+        return out[:n_inputs] if n_inputs else out
 
     # flatten
     elif isinstance(output_arrays[0], list):
-        return [item for output_array in output_arrays for item in output_array]
+        out = [item for output_array in output_arrays for item in output_array]
+        return out[:n_inputs] if n_inputs else out
 
     else:
         return output_arrays

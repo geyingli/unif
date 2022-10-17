@@ -4,51 +4,55 @@ import re
 from ..third import tf
 
 
-def get_checkpoint_path(ckpt_dir):
+def get_checkpoint_path(path):
     """ If detected no checkpoint file, return None. """
-    if os.path.isdir(ckpt_dir):
-        if not os.path.exists(os.path.join(ckpt_dir, "checkpoint")):
-            for file in os.listdir(ckpt_dir):
-                if file.endswith(".index"):
-                    return os.path.join(ckpt_dir, file.replace(".index", ""))
-            return None
-        with open(os.path.join(ckpt_dir, "checkpoint")) as f:
-            line = f.readline()
-        try:
-            file = re.findall("model_checkpoint_path: \"(.+?)\"", line)[0]
-        except IndexError:
-            return None
-        if os.path.exists(os.path.join(ckpt_dir, file + ".index")):
-            return os.path.join(ckpt_dir, file)
-    else:
-        if os.path.isfile(ckpt_dir + ".index"):
-            return ckpt_dir
-        filename = ckpt_dir.split("/")[-1]
-        dirname = os.path.dirname(ckpt_dir)
-        if not dirname:
-            dirname = "."
 
-        exists_similar = False
-        for file in os.listdir(dirname):
-            try:
-                re.findall(r"%s-[\d]+[.]index" % filename, file)
-            except IndexError:
-                continue
-            if re.findall(r"%s-[\d]+[.]index" % filename, file):
-                exists_similar = True
-                break
-        if not exists_similar:
-            return None
-        if not os.path.exists(os.path.join(dirname, "checkpoint")):
-            return None
-        with open(os.path.join(dirname, "checkpoint")) as f:
+    # get directory
+    dir_name = path if os.path.isdir(path) else os.path.dirname(path)
+    if not dir_name:
+        dir_name = "."
+
+    # get file
+    file_name = ""
+    if not os.path.isdir(path):
+        file_name = path.strip("/").split("/")[-1]
+
+        # find checkpoint
+        if os.path.isfile(f"{dir_name}/{file_name}.index"):
+            return f"{dir_name}/{file_name}"
+
+        # stop to avoid error
+        return None
+
+    # get file from record file
+    if os.path.exists(f"{dir_name}/checkpoint"):
+        with open(f"{dir_name}/checkpoint") as f:
             line = f.readline()
         try:
             file = re.findall("model_checkpoint_path: \"(.+?)\"", line)[0]
+            if os.path.exists(f"{dir_name}/{file}.index"):
+                return f"{dir_name}/{file}"
         except IndexError:
-            return None
-        if os.path.exists(os.path.join(dirname, file + ".index")):
-            return os.path.join(dirname, file)
+            pass
+
+    # find file with largest step
+    files = []
+    for file in os.listdir(dir_name):
+        prefix = re.findall("(.+?).index", file)
+        if prefix:
+            step = 0
+            prefix = prefix[0]
+            try:
+                step = int(prefix.split("-")[-1])
+            except:
+                pass
+            files.append((step, file))
+    if files:
+        files.sort(key=lambda x: x[0], reverse=True)
+        file = files[0][1].replace(".index", "")
+        return f"{dir_name}/{file}"
+
+    # find no checkpoint
     return None
 
 

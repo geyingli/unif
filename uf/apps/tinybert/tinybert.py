@@ -58,7 +58,8 @@ class TinyBERTClsDistillor(BaseDecoder):
             **kwargs)
         student_logits = _get_logits(
             student.get_pooled_output(),
-            student_config.hidden_size, "tiny/cls/seq_relationship", True)
+            student_config.hidden_size, "tiny/cls/seq_relationship", trainable=trainable,
+        )
 
         if is_training:
             teacher = BERTEncoder(
@@ -74,7 +75,8 @@ class TinyBERTClsDistillor(BaseDecoder):
                 **kwargs)
             teacher_logits = _get_logits(
                 teacher.get_pooled_output(),
-                bert_config.hidden_size, "cls/seq_relationship", False)
+                bert_config.hidden_size, "cls/seq_relationship", trainable=False,
+            )
 
             # embedding loss
             embedding_loss = self._get_embedding_loss(

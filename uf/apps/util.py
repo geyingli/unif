@@ -1,5 +1,6 @@
 """ Commonly-used modeling methods. """
 
+import math
 import numpy as np
 
 from ..third import tf
@@ -33,16 +34,79 @@ def get_activation(activation_string):
     raise ValueError("Unsupported activation: %s" % act)
 
 
-def dropout(input_tensor, dropout_prob):
-    """ A more intuitive dropout function. """
-    if dropout_prob is None or dropout_prob == 0.0:
-        return input_tensor
+def xavier_initializer(uniform=True,
+                       factor=1.0,
+                       mode="FAN_AVG",
+                       seed=None,
+                       dtype=tf.float32):
+    """Returns an initializer performing "Xavier" initialization for weights.
 
-    try:
-        output = tf.nn.dropout(input_tensor, keep_prob=1.0 - dropout_prob)
-    except:
-        output = tf.nn.dropout(input_tensor, rate=dropout_prob)
-    return output
+    This function implements the weight initialization from:
+    Xavier Glorot and Yoshua Bengio (2010):
+             [Understanding the difficulty of training deep feedforward neural
+             networks. International conference on artificial intelligence and
+             statistics.](
+             http://www.jmlr.org/proceedings/papers/v9/glorot10a/glorot10a.pdf)
+
+    This initializer is designed to keep the scale of the gradients roughly
+    the     same in all layers. In uniform distribution this ends up being
+    the range: `x = sqrt(6. / (in + out)); [-x, x]` and for normal
+    distribution a standard deviation of `sqrt(2. / (in + out))` is used.
+
+    Args:
+        uniform: Whether to use uniform or normal distributed random
+          initialization.
+        seed: A Python integer. Used to create random seeds. See
+          `tf.compat.v1.set_random_seed` for behavior.
+        dtype: The data type. Only floating point types are supported.
+
+    Returns:
+        An initializer for a weight matrix.
+    """
+
+    if not dtype.is_floating:
+        raise TypeError(
+            "Cannot create initializer for non-floating point type.")
+    if mode not in ["FAN_IN", "FAN_OUT", "FAN_AVG"]:
+        raise TypeError("Unknown mode %s [FAN_IN, FAN_OUT, FAN_AVG]", mode)
+
+    def _initializer(shape, dtype=dtype, partition_info=None):
+      """Initializer function."""
+      if not dtype.is_floating:
+          raise TypeError(
+              "Cannot create initializer for non-floating point type.")
+      # Estimating fan_in and fan_out is not possible to do perfectly, but we try.
+      # This is the right thing for matrix multiply and convolutions.
+      if shape:
+          fan_in = float(shape[-2]) if len(shape) > 1 else float(shape[-1])
+          fan_out = float(shape[-1])
+      else:
+          fan_in = 1.0
+          fan_out = 1.0
+      for dim in shape[:-2]:
+          fan_in *= float(dim)
+          fan_out *= float(dim)
+      if mode == "FAN_IN":
+          # Count only number of input connections.
+          n = fan_in
+      elif mode == "FAN_OUT":
+          # Count only number of output connections.
+          n = fan_out
+      elif mode == "FAN_AVG":
+          # Average number of inputs and output connections.
+          n = (fan_in + fan_out) / 2.0
+      if uniform:
+          # To get stddev = math.sqrt(factor / n) need to adjust for uniform.
+          limit = math.sqrt(3.0 * factor / n)
+          return tf.random_uniform(
+              shape, -limit, limit, dtype, seed=seed)
+      else:
+          # To get stddev = math.sqrt(factor / n) need to adjust for truncated.
+          trunc_stddev = math.sqrt(1.3 * factor / n)
+          return tf.truncated_normal(
+              shape, 0.0, trunc_stddev, dtype, seed=seed)
+
+    return _initializer
 
 
 def layer_norm(input_tensor,
@@ -54,7 +118,8 @@ def layer_norm(input_tensor,
                begin_norm_axis=-1,
                begin_params_axis=-1,
                trainable=True,
-               name="LayerNorm"):
+               scope="LayerNorm",
+               reuse=None):
     """ Runs layer normalization on the last dimension of the tensor.
 
     Args:
@@ -89,7 +154,7 @@ def layer_norm(input_tensor,
         time, or if `input_tensor.shape[begin_params_axis:]` is not fully
         defined at graph build time.
     """
-    with tf.variable_scope(name):
+    with tf.variable_scope(scope, reuse=reuse):
         inputs_shape = input_tensor.shape
         inputs_rank = inputs_shape.ndims
         if inputs_rank is None:
@@ -142,6 +207,18 @@ def layer_norm(input_tensor,
         if activation_fn is not None:
             outputs = activation_fn(outputs)
         return outputs
+
+
+def dropout(input_tensor, dropout_prob):
+    """ A more intuitive dropout function. """
+    if dropout_prob is None or dropout_prob == 0.0:
+        return input_tensor
+
+    try:
+        output = tf.nn.dropout(input_tensor, rate=dropout_prob)
+    except:
+        output = tf.nn.dropout(input_tensor, keep_prob=1.0 - dropout_prob)
+    return output
 
 
 def layer_norm_and_dropout(input_tensor, dropout_prob, trainable=True):

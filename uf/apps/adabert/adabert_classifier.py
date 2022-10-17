@@ -1,8 +1,6 @@
-import os
-import copy
 import numpy as np
 
-from .tinybert import TinyBERTClsDistillor
+from .adabert import AdaBERTClsDistillor
 from .._base_._base_classifier import ClassifierModule
 from ..bert.bert_classifier import BERTClassifier
 from ..bert.bert import BERTConfig
@@ -10,8 +8,8 @@ from ...token import WordPieceTokenizer
 from ...third import tf
 
 
-class TinyBERTClassifier(BERTClassifier, ClassifierModule):
-    """ Single-label classifier on TinyBERT, a distillation model. """
+class AdaBERTClassifier(BERTClassifier, ClassifierModule):
+    """ Single-label classifier on AdaBERT, a distillation model. """
 
     _INFER_ATTRIBUTES = BERTClassifier._INFER_ATTRIBUTES
 
@@ -25,8 +23,14 @@ class TinyBERTClassifier(BERTClassifier, ClassifierModule):
         output_dir=None,
         gpu_ids=None,
         drop_pooler=False,
-        hidden_size=384,
-        num_hidden_layers=4,
+        k_max=4,
+        num_intermediates=3,
+        embedding_size=128,
+        temp_decay_steps=18000,
+        model_l2_reg=3e-4,
+        arch_l2_reg=1e-3,
+        loss_gamma=0.8,
+        loss_beta=4.0,
         do_lower_case=True,
         truncate_method="LIFO",
     ):
@@ -38,53 +42,32 @@ class TinyBERTClassifier(BERTClassifier, ClassifierModule):
         self.label_size = label_size
         self.truncate_method = truncate_method
         self._drop_pooler = drop_pooler
+        self._k_max = k_max
+        self._num_intermediates = num_intermediates
+        self._embedding_size = embedding_size
+        self._temp_decay_steps = temp_decay_steps
+        self._model_l2_reg = model_l2_reg
+        self._arch_l2_reg = arch_l2_reg
+        self._loss_gamma = loss_gamma
+        self._loss_beta = loss_beta
         self._id_to_label = None
 
         self.bert_config = BERTConfig.from_json_file(config_file)
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
         self.decay_power = "unsupported"
 
-        self.student_config = copy.deepcopy(self.bert_config)
-        self.student_config.hidden_size = hidden_size
-        self.student_config.intermediate_size = 4 * hidden_size
-        self.student_config.num_hidden_layers = num_hidden_layers
-
         assert label_size, ("`label_size` can't be None.")
         if "[CLS]" not in self.tokenizer.vocab:
             self.tokenizer.add("[CLS]")
             self.bert_config.vocab_size += 1
-            self.student_config.vocab_size += 1
             tf.logging.info("Add necessary token `[CLS]` into vocabulary.")
         if "[SEP]" not in self.tokenizer.vocab:
             self.tokenizer.add("[SEP]")
             self.bert_config.vocab_size += 1
-            self.student_config.vocab_size += 1
             tf.logging.info("Add necessary token `[SEP]` into vocabulary.")
-
-    def to_bert(self, save_dir):
-        """ Isolate student tiny_bert out of traing graph. """
-        if not self._session_built:
-            raise ValueError("Init, fit, predict or score before saving checkpoint.")
-
-        tf.gfile.MakeDirs(save_dir)
-
-        tf.logging.info("Saving checkpoint into %s/bert_model.ckpt" % save_dir)
-        self.init_checkpoint = save_dir + "/bert_model.ckpt"
-
-        assignment_map = {}
-        for var in self.global_variables:
-            if var.name.startswith("tiny/"):
-                assignment_map[var.name.replace("tiny/", "")[:-2]] = var
-        saver = tf.train.Saver(assignment_map, max_to_keep=1000000)
-        saver.save(self.sess, self.init_checkpoint)
-
-        self.student_config.to_json_file(os.path.join(save_dir, "bert_config.json"))
 
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None, is_training=False, is_parallel=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
-
-        if is_training:
-            assert y is None, "Training of %s is unsupervised. `y` should be None." % self.__class__.__name__
 
         n_inputs = None
         data = {}
@@ -115,8 +98,7 @@ class TinyBERTClassifier(BERTClassifier, ClassifierModule):
 
     def _forward(self, is_training, placeholders, **kwargs):
 
-        model = TinyBERTClsDistillor(
-            student_config=self.student_config,
+        model = AdaBERTClsDistillor(
             bert_config=self.bert_config,
             is_training=is_training,
             input_ids=placeholders["input_ids"],
@@ -124,8 +106,17 @@ class TinyBERTClassifier(BERTClassifier, ClassifierModule):
             segment_ids=placeholders["segment_ids"],
             label_ids=placeholders.get("label_ids"),
             sample_weight=placeholders.get("sample_weight"),
+            global_step=self.__dict__.get("_global_step"),
             drop_pooler=self._drop_pooler,
             label_size=self.label_size,
+            k_max=self._k_max,
+            num_intermediates=self._num_intermediates,
+            embedding_size=self._embedding_size ,
+            temp_decay_steps=self._temp_decay_steps,
+            model_l2_reg=self._model_l2_reg,
+            arch_l2_reg=self._arch_l2_reg,
+            loss_gamma=self._loss_gamma,
+            loss_beta=self._loss_beta,
             **kwargs,
         )
         return model.get_forward_outputs()

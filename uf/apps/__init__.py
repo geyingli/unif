@@ -22,6 +22,7 @@ from .uda.uda_classifier import UDAClassifier
 from .tinybert.tinybert_classifier import TinyBERTClassifier
 from .tinybert.tinybert_binary_classifier import TinyBERTBinaryClassifier
 from .fastbert.fastbert_classifier import FastBERTClassifier
+from .adabert.adabert_classifier import AdaBERTClassifier
 from .stockbert.stockbert_classifier import StockBERTClassifier
 from .bert.bert_binary_classifier import BERTBinaryClassifier
 from .roberta.roberta_binary_classifier import RoBERTaBinaryClassifier
@@ -105,4 +106,5 @@ __all__ = [
     "SPELM",
     "StockBERTClassifier",
     "PerformerClassifier",
+    "AdaBERTClassifier",
 ]

@@ -43,6 +43,7 @@ class BERTEncoder(BaseEncoder):
         batch_size = input_shape[0]
         max_seq_length = input_shape[1]
 
+        self.all_encoder_layers = []
         with tf.variable_scope(scope):
             with tf.variable_scope("embeddings"):
                 self.embedding_output, self.embedding_table = self.embedding_lookup(
@@ -75,12 +76,13 @@ class BERTEncoder(BaseEncoder):
                     dropout_prob=bert_config.hidden_dropout_prob,
                     trainable=trainable,
                 )
+                self.all_encoder_layers.append(self.embedding_output)
 
             with tf.variable_scope("encoder"):
                 attention_mask = self.create_attention_mask_from_input_mask(input_mask, batch_size, max_seq_length)
 
                 # stacked transformers
-                self.all_encoder_layers = self.transformer_model(
+                self.all_encoder_layers += self.transformer_model(
                     input_tensor=self.embedding_output,
                     batch_size=batch_size,
                     max_seq_length=max_seq_length,

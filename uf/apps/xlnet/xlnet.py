@@ -381,7 +381,7 @@ def positionwise_ffn(inp, d_model, d_inner, dropout, kernel_initializer,
             name="drop_2")
         output = util.layer_norm(
             output + inp,
-            name="LayerNorm")
+            scope="LayerNorm")
     return output
 
 

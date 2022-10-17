@@ -43,6 +43,15 @@ class RecBERTLM(LMModule):
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
         self.decay_power = get_decay_power(self.bert_config.num_hidden_layers)
 
+        if "[CLS]" not in self.tokenizer.vocab:
+            self.tokenizer.add("[CLS]")
+            self.bert_config.vocab_size += 1
+            tf.logging.info("Add necessary token `[CLS]` into vocabulary.")
+        if "[SEP]" not in self.tokenizer.vocab:
+            self.tokenizer.add("[SEP]")
+            self.bert_config.vocab_size += 1
+            tf.logging.info("Add necessary token `[SEP]` into vocabulary.")
+
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None, is_training=False, is_parallel=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
 

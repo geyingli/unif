@@ -1,7 +1,7 @@
 """ TinyBERT, a distillation model of BERT. """
 
 from ..bert.bert import BERTEncoder
-from ..base.base import BaseDecoder
+from .._base_._base_ import BaseDecoder
 from ...third import tf
 from .. import util
 

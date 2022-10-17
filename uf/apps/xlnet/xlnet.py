@@ -9,7 +9,7 @@ import random
 import numpy as np
 
 from ...third import tf
-from ..base.base import BaseEncoder, BaseDecoder
+from .._base_._base_ import BaseEncoder, BaseDecoder
 from .. import util
 
 

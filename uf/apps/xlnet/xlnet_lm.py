@@ -1,7 +1,7 @@
 import numpy as np
 
 from .xlnet import XLNet, XLNetConfig, create_instances_from_document, expand_features, get_decay_power, EOD_ID
-from ..base.base_classifier import LMModule
+from .._base_._base_classifier import LMModule
 from ..bert.bert_classifier import BERTLM
 try:
     from ...token import SentencePieceTokenizer

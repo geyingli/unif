@@ -1,7 +1,7 @@
 import numpy as np
 
 from .sanet import SANetDecoder, get_decay_power
-from ..base.base_mrc import MRCModule
+from .._base_._base_mrc import MRCModule
 from ..bert.bert_mrc import BERTMRC
 from ..bert.bert import BERTEncoder, BERTConfig
 from ...token import WordPieceTokenizer

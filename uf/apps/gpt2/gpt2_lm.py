@@ -1,7 +1,7 @@
 import numpy as np
 
 from .gpt2 import GPT2, GPT2Config, get_decay_power
-from ..base.base_lm import LMModule
+from .._base_._base_lm import LMModule
 from ...token import WordPieceTokenizer
 from ...third import tf
 from ... import com

@@ -1,6 +1,6 @@
-from ..base.base_mrc import MRCModule
+from .._base_._base_mrc import MRCModule
 from ..bert.bert_mrc import BERTMRC
-from ..base.base import MRCDecoder
+from .._base_._base_ import MRCDecoder
 from ..bert.bert import BERTEncoder, BERTConfig, get_decay_power
 from ...token import WordPieceTokenizer
 from ...third import tf

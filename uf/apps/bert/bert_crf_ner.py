@@ -2,7 +2,7 @@ import numpy as np
 
 from .bert import BERTEncoder
 from .bert_ner import BERTNER
-from ..base.base_ner import NERModule
+from .._base_._base_ner import NERModule
 from ..crf.crf import CRFDecoder, viterbi_decode
 from ... import com
 

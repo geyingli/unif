@@ -1,7 +1,7 @@
 import numpy as np
 
 from .bert import BERTEncoder, BERTDecoder, BERTConfig, create_instances_from_document, create_masked_lm_predictions, get_decay_power
-from ..base.base_lm import LMModule
+from .._base_._base_lm import LMModule
 from ...token import WordPieceTokenizer
 from ...third import tf
 from ... import com

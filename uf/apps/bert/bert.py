@@ -9,7 +9,7 @@ import json
 import random
 import collections
 
-from ..base.base import BaseEncoder, BaseDecoder
+from .._base_._base_ import BaseEncoder, BaseDecoder
 from .. import util
 from ...third import tf
 

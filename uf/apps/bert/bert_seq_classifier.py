@@ -2,8 +2,8 @@ import numpy as np
 
 from .bert import BERTEncoder, BERTConfig, get_decay_power
 from .bert_classifier import BERTClassifier
-from ..base.base_classifier import ClassifierModule
-from ..base.base import SeqClsDecoder
+from .._base_._base_classifier import ClassifierModule
+from .._base_._base_ import SeqClsDecoder
 from ...token import WordPieceTokenizer
 from ...third import tf
 from ... import com

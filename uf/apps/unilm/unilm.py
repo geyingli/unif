@@ -4,7 +4,7 @@ import random
 import collections
 import numpy as np
 
-from ..base.base import BaseEncoder
+from .._base_._base_ import BaseEncoder
 from ..bert.bert import BERTEncoder
 from ...third import tf
 

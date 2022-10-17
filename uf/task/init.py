@@ -2,7 +2,7 @@ import os
 
 from ..third import tf
 from .. import com
-from .base import Task
+from ._base_ import Task
 
 
 class Initialization(Task):

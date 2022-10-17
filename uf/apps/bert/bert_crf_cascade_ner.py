@@ -2,7 +2,7 @@ import numpy as np
 
 from .bert import BERTEncoder, BERTConfig, get_decay_power
 from .bert_crf_ner import BERTCRFNER
-from ..base.base_ner import NERModule
+from .._base_._base_ner import NERModule
 from ..crf.crf import CRFDecoder, viterbi_decode
 from ...token import WordPieceTokenizer
 from ...third import tf

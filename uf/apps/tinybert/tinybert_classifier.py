@@ -2,7 +2,7 @@ import os
 import copy
 import numpy as np
 
-from ..base.base_classifier import ClassifierModule
+from .._base_._base_classifier import ClassifierModule
 from ..bert.bert_classifier import BERTClassifier
 from ..bert.bert import BERTConfig
 from .tinybert import TinyBERTClsDistillor

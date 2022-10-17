@@ -2,7 +2,7 @@ import numpy as np
 
 from .widedeep import WideDeepRegDecoder, get_decay_power
 from .widedeep_classifier import WideDeepClassifier
-from ..base.base_regressor import RegressorModule
+from .._base_._base_regressor import RegressorModule
 from ..bert.bert import BERTEncoder, BERTConfig
 from ...token import WordPieceTokenizer
 from ...third import tf

@@ -1,6 +1,6 @@
 import numpy as np
 
-from ..base.base_lm import LMModule
+from .._base_._base_lm import LMModule
 from ..bert.bert_lm import BERTLM
 from ..bert.bert import BERTDecoder, BERTConfig, create_instances_from_document
 from .unilm import UniLMEncoder, create_masked_lm_predictions, get_decay_power

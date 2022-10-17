@@ -4,7 +4,7 @@ import random
 import numpy as np
 
 from ...third import tf
-from ..base.base import BaseDecoder
+from .._base_._base_ import BaseDecoder
 from ..bert.bert import BERTEncoder
 from .. import util
 

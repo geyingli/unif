@@ -1,7 +1,7 @@
 import numpy as np
 
 from .uda import UDADecoder
-from ..base.base_classifier import ClassifierModule
+from .._base_._base_classifier import ClassifierModule
 from ..bert.bert_classifier import BERTClassifier
 from ..bert.bert import BERTEncoder, BERTConfig, get_decay_power
 from .. import util

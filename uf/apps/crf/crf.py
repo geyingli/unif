@@ -5,7 +5,7 @@ from tensorflow.python.framework import smart_cond as smart
 from tensorflow.python.ops import rnn
 from tensorflow.python.ops import rnn_cell
 
-from ..base.base import BaseDecoder
+from .._base_._base_ import BaseDecoder
 from .. import util
 from ...third import tf
 

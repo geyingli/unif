@@ -1,7 +1,7 @@
 import numpy as np
 
 from .electra import ELECTRA
-from ..base.base_lm import LMModule
+from .._base_._base_lm import LMModule
 from ..bert.bert_lm import BERTLM
 from ..bert.bert import create_masked_lm_predictions
 from ...token import WordPieceTokenizer

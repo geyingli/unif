@@ -1,7 +1,7 @@
 import numpy as np
 
 from .fastbert import FastBERTClsDistillor, convert_ignore_cls
-from ..base.base_classifier import ClassifierModule
+from .._base_._base_classifier import ClassifierModule
 from ..bert.bert_classifier import BERTClassifier
 from ..bert.bert import BERTConfig
 from ...token import WordPieceTokenizer

@@ -1,4 +1,4 @@
-from ..base.base_classifier import ClassifierModule
+from .._base_._base_classifier import ClassifierModule
 from ..bert.bert_binary_classifier import BERTBinaryClassifier
 
 

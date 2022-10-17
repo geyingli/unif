@@ -1,7 +1,7 @@
 from .xlnet import XLNetEncoder, XLNetConfig, get_decay_power, SEG_ID_CLS, SEG_ID_PAD, CLS_ID, SEP_ID
-from ..base.base_classifier import ClassifierModule
+from .._base_._base_classifier import ClassifierModule
 from ..bert.bert_seq_classifier import BERTSeqClassifier
-from ..base.base import SeqClsDecoder
+from .._base_._base_ import SeqClsDecoder
 try:
     from ...token import SentencePieceTokenizer
 except:

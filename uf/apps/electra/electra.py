@@ -8,7 +8,7 @@ import copy
 import collections
 
 from ...third import tf
-from ..base.base import BaseDecoder
+from .._base_._base_ import BaseDecoder
 from ..bert.bert import BERTConfig
 from .. import util
 

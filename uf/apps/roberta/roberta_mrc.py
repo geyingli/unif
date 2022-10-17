@@ -1,4 +1,4 @@
-from ..base.base_mrc import MRCModule
+from .._base_._base_mrc import MRCModule
 from ..bert.bert_mrc import BERTMRC
 
 

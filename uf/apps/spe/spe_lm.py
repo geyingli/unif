@@ -1,7 +1,7 @@
 import numpy as np
 
 from .spe import SPEEncoder
-from ..base.base_lm import LMModule
+from .._base_._base_lm import LMModule
 from ..bert.bert_lm import BERTLM
 from ...third import tf
 from ..bert.bert import BERTDecoder, BERTConfig, get_decay_power, create_masked_lm_predictions

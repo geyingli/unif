@@ -1,7 +1,7 @@
 import numpy as np
 
 from .transformer import Transformer, get_decay_power
-from ..base.base_mt import MTModule
+from .._base_._base_mt import MTModule
 from ...token import WordPieceTokenizer
 from ...third import tf
 from ... import com

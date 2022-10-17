@@ -3,7 +3,7 @@
 import copy
 
 from ...third import tf
-from ..base.base import BaseEncoder
+from .._base_._base_ import BaseEncoder
 from ..bert.bert import BERTEncoder
 from .. import util
 

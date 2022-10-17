@@ -1,9 +1,9 @@
 import numpy as np
 
 from .textcnn import TextCNNEncoder, get_decay_power
-from ..base.base_classifier import ClassifierModule
+from .._base_._base_classifier import ClassifierModule
 from ..bert.bert_classifier import BERTClassifier
-from ..base.base import ClsDecoder
+from .._base_._base_ import ClsDecoder
 from ...token import WordPieceTokenizer
 from ...third import tf
 

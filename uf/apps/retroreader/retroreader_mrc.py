@@ -1,7 +1,7 @@
 import numpy as np
 
 from .retroreader import RetroReaderDecoder, get_decay_power
-from ..base.base_mrc import MRCModule
+from .._base_._base_mrc import MRCModule
 from ..bert.bert_verifier_mrc import BERTVerifierMRC
 from ..bert.bert import BERTEncoder, BERTConfig
 from ..albert.albert import ALBERTEncoder, ALBERTConfig

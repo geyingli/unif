@@ -1,7 +1,7 @@
 import numpy as np
 
 from .albert import ALBERTEncoder, ALBERTDecoder, ALBERTConfig, create_instances_from_document, create_masked_lm_predictions, get_decay_power
-from ..base.base_lm import LMModule
+from .._base_._base_lm import LMModule
 from ..bert.bert_lm import BERTLM
 from ...token import WordPieceTokenizer
 from ...third import tf

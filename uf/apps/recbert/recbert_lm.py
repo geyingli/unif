@@ -1,7 +1,7 @@
 import numpy as np
 
 from .recbert import RecBERT, sample_wrong_tokens
-from ..base.base_lm import LMModule
+from .._base_._base_lm import LMModule
 from ..bert.bert import BERTConfig, get_decay_power
 from ...token import WordPieceTokenizer
 from ...third import tf

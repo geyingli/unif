@@ -39,11 +39,11 @@ class BERTEncoder(BaseEncoder):
         self.all_encoder_layers = []
         with tf.variable_scope(scope):
             with tf.variable_scope("embeddings"):
-                self.embedding_output, self.embedding_table = self.embedding_lookup(
+                self.embedding_output, self.embedding_table = util.embedding_lookup(
                     input_ids=input_ids,
                     vocab_size=bert_config.vocab_size,
                     batch_size=batch_size,
-                    max_seq_length=max_seq_length,
+                    seq_length=max_seq_length,
                     embedding_size=bert_config.hidden_size,
                     initializer_range=bert_config.initializer_range,
                     word_embedding_name="word_embeddings",
@@ -124,38 +124,6 @@ class BERTEncoder(BaseEncoder):
 
     def get_attention_scores(self):
         return self.attention_scores
-
-    def embedding_lookup(
-        self,
-        input_ids,
-        vocab_size,
-        batch_size,
-        max_seq_length,
-        embedding_size=128,
-        initializer_range=0.02,
-        word_embedding_name="word_embeddings",
-        dtype=tf.float32,
-        trainable=True,
-        tilda_embeddings=None,
-    ):
-        if input_ids.shape.ndims == 2:
-            input_ids = tf.expand_dims(input_ids, axis=[-1])
-
-        if tilda_embeddings is not None:
-            embedding_table = tilda_embeddings
-        else:
-            embedding_table = tf.get_variable(
-                name=word_embedding_name,
-                shape=[vocab_size, embedding_size],
-                initializer=util.create_initializer(initializer_range),
-                dtype=dtype,
-                trainable=trainable,
-            )
-
-        flat_input_ids = tf.reshape(input_ids, [-1])
-        output = tf.gather(embedding_table, flat_input_ids, name="embedding_look_up")
-        output = tf.reshape(output, [batch_size, max_seq_length, embedding_size])
-        return (output, embedding_table)
 
     def embedding_postprocessor(
         self,

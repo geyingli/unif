@@ -34,11 +34,11 @@ class SPEEncoder(BERTEncoder, BaseEncoder):
             with tf.variable_scope("embeddings"):
 
                 (self.embedding_output, self.embedding_table) = \
-                    self.embedding_lookup(
+                    util.embedding_lookup(
                         input_ids=input_ids,
                         vocab_size=bert_config.vocab_size,
                         batch_size=batch_size,
-                        max_seq_length=max_seq_length,
+                        seq_length=max_seq_length,
                         embedding_size=bert_config.hidden_size,
                         initializer_range=bert_config.initializer_range,
                         word_embedding_name="word_embeddings",

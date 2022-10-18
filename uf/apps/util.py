@@ -118,6 +118,38 @@ def xavier_initializer(uniform=True,
     return _initializer
 
 
+def embedding_lookup(
+    input_ids,
+    vocab_size,
+    batch_size,
+    seq_length,
+    embedding_size=128,
+    initializer_range=0.02,
+    word_embedding_name="word_embeddings",
+    dtype=tf.float32,
+    trainable=True,
+    tilda_embeddings=None,
+):
+    if input_ids.shape.ndims == 2:
+        input_ids = tf.expand_dims(input_ids, axis=[-1])
+
+    if tilda_embeddings is not None:
+        embedding_table = tilda_embeddings
+    else:
+        embedding_table = tf.get_variable(
+            name=word_embedding_name,
+            shape=[vocab_size, embedding_size],
+            initializer=create_initializer(initializer_range),
+            dtype=dtype,
+            trainable=trainable,
+        )
+
+    flat_input_ids = tf.reshape(input_ids, [-1])
+    output = tf.gather(embedding_table, flat_input_ids, name="embedding_look_up")
+    output = tf.reshape(output, [batch_size, seq_length, embedding_size])
+    return output, embedding_table
+
+
 def layer_norm(input_tensor,
                center=True,
                scale=True,

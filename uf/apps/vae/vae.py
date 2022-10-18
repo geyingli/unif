@@ -44,7 +44,7 @@ class VAE(BaseDecoder, BERTEncoder):
             with tf.variable_scope("embeddings"):
 
                 (self.embedding_output, self.embedding_table) = \
-                    self.embedding_lookup(
+                    util.embedding_lookup(
                         input_ids=input_ids,
                         vocab_size=config.vocab_size,
                         batch_size=batch_size,

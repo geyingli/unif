@@ -221,10 +221,23 @@ class Training(Task):
     def _shuffle(self):
         index_list = list(range(len(list(self.module.data.values())[0])))
         random.shuffle(index_list)
-        for key, data in self.module.data.items():
+
+        # indexing
+        shuffled_data = {}
+        for key in self.module.data.keys():
             if key.startswith(com.BACKUP_DATA):
                 continue
-            self.module.data[key] = self.module.data[key][index_list]
+            
+            # Error may occurs when the system trying to unberably 
+            # allocate large memory for indexing. 
+            try:
+                shuffled_data[key] = self.module.data[key][index_list]
+            except:
+                return
+
+        # replace
+        for key in shuffled_data:
+            self.module.data[key] = shuffled_data[key]
 
     def _train_one_batch(self, step, last_tic, last_step, target_steps, print_per_secs, save_per_steps, saver, adversarial=None):
         feed_dict = {}

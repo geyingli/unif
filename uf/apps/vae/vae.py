@@ -23,15 +23,8 @@ class VAE(BaseDecoder, BERTEncoder):
                  bias=0,
                  scope="vae",
                  trainable=True,
-                 use_tilda_embedding=False,
                  **kwargs):
         super().__init__()
-
-        # Tilda embeddings for SMART algorithm
-        tilda_embeddings = None
-        if use_tilda_embedding:
-            with tf.variable_scope("", reuse=True):
-                tilda_embeddings = tf.get_variable("tilda_embeddings")
 
         # freeze parameters
         config = VAEConfig(
@@ -59,7 +52,7 @@ class VAE(BaseDecoder, BERTEncoder):
                         embedding_size=config.hidden_size,
                         initializer_range=config.initializer_range,
                         word_embedding_name="word_embeddings",
-                        tilda_embeddings=tilda_embeddings,
+                        tilda_embeddings=kwargs.get("tilda_embeddings"),
                         trainable=trainable)
                 self.embedding_output = self.embedding_postprocessor(
                     input_tensor=self.embedding_output,

@@ -25,15 +25,8 @@ class BERTEncoder(BaseEncoder):
         scope="bert",
         drop_pooler=False,
         trainable=True,
-        use_tilda_embedding=False,
         **kwargs,
     ):
-
-        # Tilda embeddings for SMART algorithm
-        tilda_embeddings = None
-        if use_tilda_embedding:
-            with tf.variable_scope("", reuse=True):
-                tilda_embeddings = tf.get_variable("tilda_embeddings")
 
         bert_config = copy.deepcopy(bert_config)
         if not is_training:
@@ -54,7 +47,7 @@ class BERTEncoder(BaseEncoder):
                     embedding_size=bert_config.hidden_size,
                     initializer_range=bert_config.initializer_range,
                     word_embedding_name="word_embeddings",
-                    tilda_embeddings=tilda_embeddings,
+                    tilda_embeddings=kwargs.get("tilda_embeddings"),
                     trainable=trainable,
                 )
 

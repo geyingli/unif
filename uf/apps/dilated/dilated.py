@@ -19,15 +19,8 @@ class DLM(BaseDecoder, BERTEncoder):
                  loop=3,
                  sample_weight=None,
                  scope="dilated",
-                 use_tilda_embedding=False,
                  **kwargs):
         super().__init__()
-
-        # Tilda embeddings for SMART algorithm
-        tilda_embeddings = None
-        if use_tilda_embedding:
-            with tf.variable_scope("", reuse=True):
-                tilda_embeddings = tf.get_variable("tilda_embeddings")
 
         dilated_mask = tf.cast(
             tf.not_equal(dilated_ids, 0), tf.float32)
@@ -46,7 +39,7 @@ class DLM(BaseDecoder, BERTEncoder):
                     dilated_mask,
                     batch_size,
                     dilated_seq_length,
-                    tilda_embeddings=tilda_embeddings)
+                    tilda_embeddings=kwargs.get("tilda_embeddings"))
 
                 self._tensors["LM"] = tf.argmax(logits, axis=-1)
 
@@ -79,8 +72,7 @@ class DLM(BaseDecoder, BERTEncoder):
                         dilated_ids,
                         dilated_mask,
                         batch_size,
-                        dilated_seq_length,
-                        tilda_embeddings=tilda_embeddings)
+                        dilated_seq_length)
                     output_ids = tf.argmax(logits, axis=-1)
                     output_ids = tf.cast(output_ids, dtype=tf.int32)
 

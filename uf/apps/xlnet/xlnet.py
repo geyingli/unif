@@ -50,7 +50,6 @@ class XLNetEncoder(BaseEncoder):
                  perm_mask=None,
                  target_mapping=None,
                  inp_q=None,
-                 use_tilda_embedding=False,
                  **kwargs):
         """
         Args:
@@ -77,12 +76,6 @@ class XLNetEncoder(BaseEncoder):
               Only used during pretraining for two-stream attention.
               Set to None during finetuning.
         """
-
-        # Tilda embeddings for SMART algorithm
-        tilda_embeddings = None
-        if use_tilda_embedding:
-            with tf.variable_scope("", reuse=True):
-                tilda_embeddings = tf.get_variable("tilda_embeddings")
 
         run_config = XLNetRunConfig(
             is_training=is_training,
@@ -129,7 +122,7 @@ class XLNetEncoder(BaseEncoder):
             perm_mask=perm_mask,
             target_mapping=target_mapping,
             inp_q=inp_q,
-            tilda_embeddings=tilda_embeddings)
+            tilda_embeddings=kwargs.get("tilda_embeddings"))
         tfm_args.update(input_args)
 
         with tf.variable_scope("model", reuse=tf.AUTO_REUSE):

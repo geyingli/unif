@@ -19,15 +19,8 @@ class RNNEncoder(BaseEncoder):
         scope="rnn",
         initializer_range=0.02,
         trainable=True,
-        use_tilda_embedding=False,
         **kwargs,
     ):
-        
-        # Tilda embeddings for SMART algorithm
-        tilda_embeddings = None
-        if use_tilda_embedding:
-            with tf.variable_scope("", reuse=True):
-                tilda_embeddings = tf.get_variable("tilda_embeddings")
 
         input_shape = util.get_shape_list(input_ids, expected_rank=2)
         batch_size = input_shape[0]
@@ -42,7 +35,7 @@ class RNNEncoder(BaseEncoder):
                 embedding_size=hidden_size,
                 initializer_range=initializer_range,
                 word_embedding_name="word_embeddings",
-                tilda_embeddings=tilda_embeddings,
+                tilda_embeddings=kwargs.get("tilda_embeddings"),
                 trainable=trainable,
             )
 

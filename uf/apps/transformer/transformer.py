@@ -23,15 +23,8 @@ class Transformer(BaseDecoder, BaseEncoder):
                  num_attention_heads=12,
                  scope="transformer",
                  use_label_smoothing=False,
-                 use_tilda_embedding=False,
                  **kwargs):
         super().__init__()
-
-        # Tilda embeddings for SMART algorithm
-        tilda_embeddings = None
-        if use_tilda_embedding:
-            with tf.variable_scope("", reuse=True):
-                tilda_embeddings = tf.get_variable("tilda_embeddings")
 
         dropout_rate = 0.0
         if is_training:
@@ -55,7 +48,7 @@ class Transformer(BaseDecoder, BaseEncoder):
                     max_seq_length=source_max_seq_length,
                     embedding_size=hidden_size,
                     word_embedding_name="word_embeddings",
-                    tilda_embeddings=tilda_embeddings)
+                    tilda_embeddings=kwargs.get("tilda_embeddings"))
                 enc *= hidden_size ** 0.5  # scale
                 enc += positional_encoding(enc, source_max_seq_length)
                 enc = util.dropout(enc, dropout_rate)

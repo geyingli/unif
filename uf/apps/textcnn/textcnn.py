@@ -16,14 +16,7 @@ class TextCNNEncoder(BaseEncoder):
                  embedding_size=256,
                  dropout_prob=0.1,
                  trainable=True,
-                 use_tilda_embedding=False,
                  **kwargs):
-
-        # Tilda embeddings for SMART algorithm
-        tilda_embeddings = None
-        if use_tilda_embedding:
-            with tf.variable_scope("", reuse=True):
-                tilda_embeddings = tf.get_variable("tilda_embeddings")
 
         input_shape = util.get_shape_list(input_ids, expected_rank=2)
         batch_size = input_shape[0]
@@ -38,9 +31,8 @@ class TextCNNEncoder(BaseEncoder):
         with tf.variable_scope(scope):
             with tf.variable_scope("embeddings"):
 
-                if tilda_embeddings is not None:
-                    embedding_table = tilda_embeddings
-                else:
+                embedding_table = kwargs.get("tilda_embeddings")
+                if embedding_table is None:
                     embedding_table = tf.get_variable(
                         name="word_embeddings",
                         shape=[vocab_size, embedding_size],

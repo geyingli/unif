@@ -20,15 +20,8 @@ class RecBERT(BaseDecoder, BERTEncoder):
                  add_prob=0,
                  del_prob=0,
                  scope="bert",
-                 use_tilda_embedding=False,
                  **kwargs):
         super().__init__()
-
-        # Tilda embeddings for SMART algorithm
-        tilda_embeddings = None
-        if use_tilda_embedding:
-            with tf.variable_scope("", reuse=True):
-                tilda_embeddings = tf.get_variable("tilda_embeddings")
 
         input_mask = tf.cast(
             tf.not_equal(input_ids, 0), tf.float32)
@@ -50,7 +43,7 @@ class RecBERT(BaseDecoder, BERTEncoder):
                 input_mask,
                 batch_size,
                 max_seq_length,
-                tilda_embeddings=tilda_embeddings)
+                tilda_embeddings=kwargs.get("tilda_embeddings"))
 
             # additional_position_embeddings = tf.get_variable(
             #     name="position_embeddings",

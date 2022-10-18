@@ -18,15 +18,8 @@ class GPT2(BaseDecoder, BaseEncoder):
                  sample_weight=None,
                  scope="model",
                  given=1,
-                 use_tilda_embedding=False,
                  **kwargs):
         super().__init__()
-
-        # Tilda embeddings for SMART algorithm
-        tilda_embeddings = None
-        if use_tilda_embedding:
-            with tf.variable_scope("", reuse=True):
-                tilda_embeddings = tf.get_variable("tilda_embeddings")
 
         batch_size = util.get_shape_list(input_ids, expected_rank=2)[0]
         max_seq_length = hparams.n_predict
@@ -36,12 +29,11 @@ class GPT2(BaseDecoder, BaseEncoder):
             def _forward(input_ids, past=None):
                 batch, sequence = shape_list(input_ids)
 
-                if tilda_embeddings is None:
+                wte = kwargs.get("tilda_embeddings")
+                if wte is None:
                     wte = tf.get_variable(
                         "word_embeddings", [hparams.n_vocab, hparams.n_embed],
                         initializer=tf.random_normal_initializer(stddev=0.02))
-                else:
-                    wte = tilda_embeddings
                 wpe = tf.get_variable(
                     "wpe", [hparams.n_ctx, hparams.n_embed],
                     initializer=tf.random_normal_initializer(stddev=0.01))

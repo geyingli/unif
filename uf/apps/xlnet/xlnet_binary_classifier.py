@@ -4,10 +4,7 @@ from .xlnet import XLNetEncoder, XLNetConfig, get_decay_power, SEG_ID_CLS, SEG_I
 from .._base_._base_classifier import ClassifierModule
 from ..bert.bert_binary_classifier import BERTBinaryClassifier
 from .._base_._base_ import BinaryClsDecoder
-try:
-    from ...token import SentencePieceTokenizer
-except:
-    pass
+from ...token import SentencePieceTokenizer
 from ...third import tf
 from ... import com
 

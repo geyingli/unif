@@ -3,10 +3,7 @@ import numpy as np
 from .xlnet import XLNet, XLNetConfig, create_instances_from_document, expand_features, get_decay_power, EOD_ID
 from .._base_._base_classifier import LMModule
 from ..bert.bert_classifier import BERTLM
-try:
-    from ...token import SentencePieceTokenizer
-except:
-    pass
+from ...token import SentencePieceTokenizer
 from ...third import tf
 from ... import com
 

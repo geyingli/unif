@@ -40,7 +40,7 @@ def get_optimizer(
     # layer-wise learning rate decay
     layerwise_lr_decay_ratio = kwargs.get("layerwise_lr_decay_ratio")
     if layerwise_lr_decay_ratio:
-        if decay_power == "unsupported":
+        if decay_power is None or decay_power == "unsupported":
             tf.logging.warning("Layer-wise learning rate decay is not supported in the current module. Ignored.")
         else:
             learning_rate = {

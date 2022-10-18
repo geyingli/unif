@@ -19,16 +19,12 @@ class Null:
         pass
 
 
-def unimported_module(name, required):
+def unimported_module(name, message):
     """ Returns an invalid module where error occurs only when being called. """
 
     class UnimportedModule:
         def __init__(self, *args, **kwargs):
-            raise ImportError(
-                "Module `%s` is required to launch %s. Check "
-                "\"https://pypi.org/project/%s/\" for installation details."
-                % (required, name, required)
-            )
+            raise ImportError(message)
     return UnimportedModule
 
 

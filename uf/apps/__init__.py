@@ -45,14 +45,28 @@ from .electra.electra_mrc import ELECTRAMRC
 from .retroreader.retroreader_mrc import RetroReaderMRC
 from .sanet.sanet_mrc import SANetMRC
 from .transformer.transformer_mt import TransformerMT
-
-
 try:
     from .xlnet.xlnet_classifier import XLNetClassifier
     from .xlnet.xlnet_binary_classifier import XLNetBinaryClassifier
-except ModuleNotFoundError:
-    XLNetClassifier = unimported_module("XLNetClassifier", "sentencepiece")
-    XLNetBinaryClassifier = unimported_module("XLNetBinaryClassifier", "sentencepiece")
+except (ModuleNotFoundError, ImportError):
+    XLNetClassifier = unimported_module(
+        "XLNetClassifier", 
+        "Module `sentencepiece` is required to launch XLNetClassifier. "
+        "Try `pip install sentencepiece` or build from source."
+    )
+    XLNetBinaryClassifier = unimported_module(
+        "XLNetBinaryClassifier", 
+        "Module `sentencepiece` is required to launch XLNetBinaryClassifier. "
+        "Try `pip install sentencepiece` or build from source."
+    )
+try:
+    from .nasnet.pnasnet_classifier import PNasNetClassifier
+except (ModuleNotFoundError, ImportError):
+    PNasNetClassifier = unimported_module(
+        "PNasNetClassifier", 
+        "Module `tf_slim` is required to launch PNasNetClassifier. "
+        "Try `pip install tf_slim` or build from source."
+    )
 
 del unimported_module
 
@@ -107,4 +121,5 @@ __all__ = [
     "StockBERTClassifier",
     "PerformerClassifier",
     "AdaBERTClassifier",
+    "PNasNetClassifier",
 ]

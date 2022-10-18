@@ -6,6 +6,15 @@ import numpy as np
 from ..third import tf
 
 
+class HParams:
+    """ Hyparameters. """
+    def __init__(self, **kwargs):
+        for k, v in kwargs.items():
+            self.__dict__[k] = v
+    def set_hparam(self, k, v):
+        self.__dict__[k] = v
+
+
 def gelu(num):
     """ Gaussian Error Linear Unit, a smoother version of the RELU.
     paper: https://arxiv.org/abs/1606.08415 """
@@ -39,7 +48,7 @@ def xavier_initializer(uniform=True,
                        mode="FAN_AVG",
                        seed=None,
                        dtype=tf.float32):
-    """Returns an initializer performing "Xavier" initialization for weights.
+    """ Returns an initializer performing "Xavier" initialization for weights.
 
     This function implements the weight initialization from:
     Xavier Glorot and Yoshua Bengio (2010):

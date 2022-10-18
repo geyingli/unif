@@ -691,22 +691,18 @@ class BaseModule:
         if X:
             if X_tokenized:
                 raise ValueError("Set None to one of `X` and `X_tokenized`.")
-            assert isinstance(X, list), "`X` should be a list object."
         else:
             if not X_tokenized:
                 raise ValueError("Must pass value to `X` or `X_tokenized`.")
-            assert isinstance(X_tokenized, list), "`X_tokenized` should be a list object."
             X = X_tokenized
 
         if y:
-            assert isinstance(y, list), "`y` should be a list object."
             assert len(X) == len(y), (
                 "Length of `y` should be the same with `X/X_tokenized`. "
                 "(%d vs. %d)" % (len(y), len(X))
             )
 
         if sample_weight:
-            assert isinstance(sample_weight, list), "`sample_weight` should be a list object."
             assert len(X) == len(sample_weight), (
                 "Length of `sample_weight` should be the same with `X/X_tokenized`. (%d vs. %d)" 
                 % (len(sample_weight), len(X))

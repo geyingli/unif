@@ -66,9 +66,9 @@ class Task:
 
             if uninited_vars:
                 tf.logging.info(
-                    "%d local variables failed to match up with the checkpoint file. "
+                    "%d (out of %d) local variables failed to match up with the checkpoint file. "
                     "Check more details through `.uninited_vars`." 
-                    % len(uninited_vars)
+                    % (len(uninited_vars), len(assignment_map) + len(uninited_vars))
                 )
 
             if not self.module.assignment_map:    # no variables to restore

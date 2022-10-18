@@ -32,7 +32,7 @@ class PNasNetClassifier(BERTClassifier, ClassifierModule):
         self.label_size = label_size
         self.model_size = model_size
         self.data_format = data_format
-        self._id_to_label = []
+        self._id_to_label = None
 
         assert model_size in ("mobile", "large"), (f"Invalid `model_size`: {model_size}. Pick one from \"mobile\" and \"large\".")
         assert data_format in ("NHWC", "NCHW"), (f"Unsupported `data_format`: {data_format}. Piack one from \"NHWC\" and \"NCHW\"")

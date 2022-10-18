@@ -1,7 +1,6 @@
 import time
 
 from ..third import tf
-from .. import com
 from ._base_ import Task
 
 

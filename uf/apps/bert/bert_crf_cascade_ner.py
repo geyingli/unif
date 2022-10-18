@@ -11,7 +11,7 @@ from ... import com
 
 class BERTCRFCascadeNER(BERTCRFNER, NERModule):
     """ Named entity recognization and classification on BERT with CRF. """
-    
+
     _INFER_ATTRIBUTES = {    # params whose value cannot be None in order to infer without training
         "max_seq_length": "An integer that defines max sequence length of input tokens",
         "entity_types": "A list of strings that defines possible types of entities",
@@ -64,8 +64,8 @@ class BERTCRFCascadeNER(BERTCRFNER, NERModule):
         data = {}
 
         # convert X
-        if X or X_tokenized:
-            tokenized = False if X else X_tokenized
+        if X is not None or X_tokenized is not None:
+            tokenized = False if X is not None else X_tokenized
             X_target = X_tokenized if tokenized else X
             input_tokens, input_ids, input_mask, segment_ids = self._convert_X(X_target, tokenized=tokenized)
             data["input_ids"] = np.array(input_ids, dtype=np.int32)
@@ -82,12 +82,12 @@ class BERTCRFCascadeNER(BERTCRFNER, NERModule):
                 self.batch_size = max(n_inputs, len(self._gpu_ids))
 
         # convert y
-        if y:
+        if y is not None:
             label_ids = self._convert_y(y, input_ids, tokenized)
             data["label_ids"] = np.array(label_ids, dtype=np.int32)
 
         # convert sample_weight
-        if is_training or y:
+        if is_training or y is not None:
             sample_weight = self._convert_sample_weight(sample_weight, n_inputs)
             data["sample_weight"] = np.array(sample_weight, dtype=np.float32)
 

@@ -12,7 +12,7 @@ from ... import com
 
 class SemBERTClassifier(BERTClassifier, ClassifierModule):
     """ Single-label classifier on SemBERT. """
-    
+
     _INFER_ATTRIBUTES = BERTClassifier._INFER_ATTRIBUTES
 
     def __init__(
@@ -65,8 +65,8 @@ class SemBERTClassifier(BERTClassifier, ClassifierModule):
         data = {}
 
         # convert X
-        if X or X_tokenized:
-            tokenized = False if X else X_tokenized
+        if X is not None or X_tokenized is not None:
+            tokenized = False if X is not None else X_tokenized
             assert tokenized, ("Inputs of `%s` must be already tokenized and fed into `X_tokenized`." % self.__class__.__name__)
             (input_ids, input_mask, segment_ids, sem_features) = self._convert_X(X_tokenized if tokenized else X, tokenized=tokenized)
             data["input_ids"] = np.array(input_ids, dtype=np.int32)
@@ -79,12 +79,12 @@ class SemBERTClassifier(BERTClassifier, ClassifierModule):
                 self.batch_size = max(n_inputs, len(self._gpu_ids))
 
         # convert y
-        if y:
+        if y is not None:
             label_ids = self._convert_y(y)
             data["label_ids"] = np.array(label_ids, dtype=np.int32)
 
         # convert sample_weight
-        if is_training or y:
+        if is_training or y is not None:
             sample_weight = self._convert_sample_weight(sample_weight, n_inputs)
             data["sample_weight"] = np.array(sample_weight, dtype=np.float32)
 

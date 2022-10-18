@@ -58,16 +58,6 @@ def get_optimizer(
     return optimizer
 
 
-def get_global_step():
-    return tf.get_variable(
-        "global_step",
-        shape=(),
-        initializer=tf.zeros_initializer,
-        dtype=tf.int32,
-        trainable=False,
-    )
-
-
 class Optimizer:
     """ A unified optimizer for GD, Adam, AdamW and LAMB optimizers. """
     def __init__(

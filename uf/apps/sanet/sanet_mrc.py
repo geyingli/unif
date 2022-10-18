@@ -60,8 +60,8 @@ class SANetMRC(BERTMRC, MRCModule):
         data = {}
 
         # convert X
-        if X or X_tokenized:
-            tokenized = False if X else X_tokenized
+        if X is not None or X_tokenized is not None:
+            tokenized = False if X is not None else X_tokenized
             X_target = X_tokenized if tokenized else X
             (input_tokens, input_ids, input_mask, sa_mask, segment_ids,
              doc_ids, doc_text, doc_start) = self._convert_X(X_target, tokenized=tokenized)
@@ -80,12 +80,12 @@ class SANetMRC(BERTMRC, MRCModule):
                 self.batch_size = max(n_inputs, len(self._gpu_ids))
 
         # convert y
-        if y:
+        if y is not None:
             label_ids = self._convert_y(y, doc_ids, doc_text, doc_start, tokenized)
             data["label_ids"] = np.array(label_ids, dtype=np.int32)
 
         # convert sample_weight
-        if is_training or y:
+        if is_training or y is not None:
             sample_weight = self._convert_sample_weight(sample_weight, n_inputs)
             data["sample_weight"] = np.array(sample_weight, dtype=np.float32)
 

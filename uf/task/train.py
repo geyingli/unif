@@ -96,7 +96,7 @@ class Training(Task):
             self.n_inputs = com.get_tfrecords_length(self.tfrecords_files)
 
             self.module._set_placeholders(is_training=True)
-                
+
             # convert placeholders into features
             features = {}
             for key in com.get_tfrecords_keys(self.tfrecords_files[0]):

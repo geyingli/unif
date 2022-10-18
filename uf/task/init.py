@@ -1,7 +1,4 @@
-import os
-
 from ..third import tf
-from .. import com
 from ._base_ import Task
 
 
@@ -23,7 +20,7 @@ class Initialization(Task):
         # init session
         if reinit_all or not self.module._session_built:
             self._init_session(ignore_checkpoint=ignore_checkpoint)
-        
+
         # init uninitialized variables
         else:
             variables = []

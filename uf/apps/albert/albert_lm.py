@@ -10,7 +10,7 @@ from ... import com
 
 class ALBERTLM(BERTLM, LMModule):
     """ Language modeling on ALBERT. """
-    
+
     _INFER_ATTRIBUTES = BERTLM._INFER_ATTRIBUTES
 
     def __init__(
@@ -77,8 +77,8 @@ class ALBERTLM(BERTLM, LMModule):
         data = {}
 
         # convert X
-        if X or X_tokenized:
-            tokenized = False if X else X_tokenized
+        if X is not None or X_tokenized is not None:
+            tokenized = False if X is not None else X_tokenized
 
             (input_ids, input_mask, segment_ids, masked_lm_positions, masked_lm_ids, masked_lm_weights, sentence_order_labels) = self._convert_X(
                 X_tokenized if tokenized else X, is_training, tokenized=tokenized,
@@ -101,12 +101,12 @@ class ALBERTLM(BERTLM, LMModule):
                 self.batch_size = max(n_inputs, len(self._gpu_ids))
 
         # convert y
-        if y:
+        if y is not None:
             sentence_order_labels = self._convert_y(y)
             data["sentence_order_labels"] = np.array(sentence_order_labels, dtype=np.int32)
 
         # convert sample_weight
-        if is_training or y:
+        if is_training or y is not None:
             sample_weight = self._convert_sample_weight(sample_weight, n_inputs)
             data["sample_weight"] = np.array(sample_weight, dtype=np.float32)
 

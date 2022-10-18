@@ -2,7 +2,6 @@ import os
 import time
 
 from ..third import tf
-from .. import com
 from ._base_ import Task
 
 
@@ -30,20 +29,20 @@ class Exportation(Task):
             inputs[key] = tf.saved_model.utils.build_tensor_info(value)
             tf.logging.info("Register Input: %s, %s, %s" % (key, value.shape.as_list(), value.dtype.name))
 
+        def set_output(key, value):
+            outputs[key] = tf.saved_model.utils.build_tensor_info(value)
+            tf.logging.info("Register Output: %s, %s, %s" % (key, value.shape.as_list(), value.dtype.name))
+
         # define inputs
         inputs = {}
         if not ignore_inputs:
             ignore_inputs = []
         for key, value in list(self.module.placeholders.items()):
-            if key == "sample_weight" or key in ignore_inputs:
+            if key in ignore_inputs:
                 continue
             if rename_inputs and key in rename_inputs:
                 key = rename_inputs[key]
             set_input(key, value)
-
-        def set_output(key, value):
-            outputs[key] = tf.saved_model.utils.build_tensor_info(value)
-            tf.logging.info("Register Output: %s, %s, %s" % (key, value.shape.as_list(), value.dtype.name))
 
         # define outputs
         outputs = {}

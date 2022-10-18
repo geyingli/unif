@@ -14,9 +14,6 @@ build
 dist
 uf.egg-info
 
-# 输出文件
-artifacts
-
 # 无关文件
 */__pycache__
 */*/__pycache__
@@ -29,5 +26,9 @@ tmp.py
 test.py
 replace.py
 PLAN.md
+log
 tf_slim
 data
+checkpoint
+pretrained
+pnasnet

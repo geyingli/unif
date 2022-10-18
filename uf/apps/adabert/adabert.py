@@ -19,7 +19,6 @@ class AdaBERTClsDistillor(BaseDecoder):
                  segment_ids,
                  label_ids=None,
                  sample_weight=None,
-                 global_step=None,
                  scope="bert",
                  dtype=tf.float32,
                  drop_pooler=False,
@@ -82,7 +81,6 @@ class AdaBERTClsDistillor(BaseDecoder):
             vocab_size=bert_config.vocab_size,
             is_pair_task=False,
             num_classes=label_size,
-            global_step=global_step,
             Kmax=k_max,
             num_intermediates=num_intermediates,
             emb_size=embedding_size,
@@ -138,7 +136,6 @@ class AdaBERTStudent(object):
                  vocab_size,
                  is_pair_task,
                  num_classes,
-                 global_step=None,
                  Kmax=8,
                  num_intermediates=3,
                  emb_size=128,
@@ -205,9 +202,9 @@ class AdaBERTStudent(object):
         self.pretrained_pos_embeddings = pretrained_pos_embeddings
         self.given_arch = given_arch
 
-        self._build_graph(inputs, is_training, global_step)
+        self._build_graph(inputs, is_training)
 
-    def _build_graph(self, inputs, is_training, global_step):
+    def _build_graph(self, inputs, is_training):
         """Create the computation graph
         """
 
@@ -221,8 +218,8 @@ class AdaBERTStudent(object):
         else:
             labels = inputs[3]
 
-        self.global_step = global_step
-        if is_training and self.given_arch is None:
+        self.global_step = tf.train.get_or_create_global_step()
+        if self.given_arch is None:
             # this is the search procedure
             # decayed_learning_rate = learning_rate * decay_rate ^ (global_step / decay_steps)
             decay_rate = np.e ** ((100 / self.temp_decay_steps) * np.log(0.2))
@@ -554,8 +551,6 @@ class AdaBERTStudent(object):
         self.train_loss = self.loss + self.model_l2_reg * model_reg_loss
         if self.given_arch is None:
             self.train_loss += self.arch_l2_reg * arch_reg_loss
-
-
 
     def build_cell(self,
                    input0,

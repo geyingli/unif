@@ -73,8 +73,8 @@ class AdaBERTClassifier(BERTClassifier, ClassifierModule):
         data = {}
 
         # convert X
-        if X or X_tokenized:
-            tokenized = False if X else X_tokenized
+        if X is not None or X_tokenized is not None:
+            tokenized = False if X is not None else X_tokenized
             input_ids, input_mask, segment_ids = self._convert_X(X_tokenized if tokenized else X, tokenized=tokenized)
             data["input_ids"] = np.array(input_ids, dtype=np.int32)
             data["input_mask"] = np.array(input_mask, dtype=np.int32)
@@ -84,13 +84,13 @@ class AdaBERTClassifier(BERTClassifier, ClassifierModule):
             if n_inputs < self.batch_size:
                 self.batch_size = max(n_inputs, len(self._gpu_ids))
 
-        if y:
+        if y is not None:
             # convert y and sample_weight
             label_ids = self._convert_y(y)
             data["label_ids"] = np.array(label_ids, dtype=np.int32)
 
         # convert sample_weight
-        if is_training or y:
+        if is_training or y is not None:
             sample_weight = self._convert_sample_weight(sample_weight, n_inputs)
             data["sample_weight"] = np.array(sample_weight, dtype=np.float32)
 
@@ -106,7 +106,6 @@ class AdaBERTClassifier(BERTClassifier, ClassifierModule):
             segment_ids=placeholders["segment_ids"],
             label_ids=placeholders.get("label_ids"),
             sample_weight=placeholders.get("sample_weight"),
-            global_step=self.__dict__.get("_global_step"),
             drop_pooler=self._drop_pooler,
             label_size=self.label_size,
             k_max=self._k_max,

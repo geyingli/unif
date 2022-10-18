@@ -46,7 +46,7 @@ class BaseModule:
         # Before we register the task, fast prediction or scoring is not allowed.
         self.step = 0                           # current training step
         self._session_mode = None               # one of None, "train" and "infer"
-        self._session_built = False             
+        self._session_built = False
         self._inited_vars = set()
 
     def reset(self):
@@ -192,7 +192,7 @@ class BaseModule:
 
         # Define optimization process, register the task, and then run.
         with self.graph.as_default(), tf.variable_scope("", reuse=tf.AUTO_REUSE):
-            self._global_step = opt.get_global_step()
+            self._global_step = tf.train.get_or_create_global_step()
             self._optimizer = opt.get_optimizer(
                 init_lr=learning_rate,
                 global_step=self._global_step,
@@ -290,7 +290,7 @@ class BaseModule:
 
         # Define optimization process, register the task, and then run.
         with self.graph.as_default(), tf.variable_scope("", reuse=tf.AUTO_REUSE):
-            self._global_step = opt.get_global_step()
+            self._global_step = tf.train.get_or_create_global_step()
             self._optimizer = opt.get_optimizer(
                 init_lr=learning_rate,
                 global_step=self._global_step,
@@ -436,7 +436,7 @@ class BaseModule:
 
     def cache(self, key, cache_file="./.cache", max_to_keep=1000, note=""):
         """ Save model configurations into cache file.
-        
+
         NOTE: This function is deprecated and not upgraded, just retained for compatibility "
         "with older versions. Try `.localize()` instead.
         """
@@ -496,7 +496,7 @@ class BaseModule:
         Args:
             reinit_all: bool. Set to True if you with to re-initialize the graph.
             ignore_checkpoint: bool. Set to True if you need random initialization.
-              
+
         """
 
         # Make sure necessary arguments are on spot.
@@ -564,7 +564,7 @@ class BaseModule:
         with self.graph.as_default():
             loader = tf.train.Saver(self.assignment_map)
             loader.restore(self.sess, checkpoint_path)
-            
+
         try:
             self.sess.run(tf.assign(self._global_step, self.step))
         except AttributeError:
@@ -632,25 +632,25 @@ class BaseModule:
 
         tf.logging.info("Parsing input data on %d parallel processes" % com.NUM_PROCESSES)
 
-        n_inputs = len(X if X else X_tokenized)
+        n_inputs = len(X if X is not None else X_tokenized)
         n_buckets = max(min(n_inputs, com.NUM_PROCESSES), 1)
         bucket_size = (n_inputs - 1) // n_buckets + 1
 
         buckets = [{
-            "X": [] if X else None,
-            "y": [] if y else None,
-            "sample_weight": [] if sample_weight else None,
-            "X_tokenized": [] if X_tokenized else None,
+            "X": [] if X is not None else None,
+            "y": [] if y is not None else None,
+            "sample_weight": [] if sample_weight is not None else None,
+            "X_tokenized": [] if X_tokenized is not None else None,
         } for _ in range(n_buckets)]
         for i in range(n_inputs):
             index = i // bucket_size
-            if X:
+            if X is not None:
                 buckets[index]["X"].append(X[i])
-            if y:
+            if y is not None:
                 buckets[index]["y"].append(y[i])
-            if sample_weight:
+            if sample_weight is not None:
                 buckets[index]["sample_weight"].append(sample_weight[i])
-            if X_tokenized:
+            if X_tokenized is not None:
                 buckets[index]["X_tokenized"].append(X_tokenized[i])
 
         values = com.get_init_values(self)
@@ -677,7 +677,7 @@ class BaseModule:
     @staticmethod
     def _convert_sample_weight(sample_weight, n_inputs):
         """ Standardize `sample_weight`. """
-        if sample_weight:
+        if sample_weight is not None:
             try:
                 return [float(item) for item in sample_weight]
             except ValueError:
@@ -688,25 +688,23 @@ class BaseModule:
     def _assert_legal(X, y, sample_weight, X_tokenized):
         """ Make sure strange errors intrigged by data not occur. """
 
-        if X:
-            if X_tokenized:
+        if X is not None:
+            if X_tokenized is not None:
                 raise ValueError("Set None to one of `X` and `X_tokenized`.")
         else:
-            if not X_tokenized:
+            if X_tokenized is None:
                 raise ValueError("Must pass value to `X` or `X_tokenized`.")
             X = X_tokenized
 
-        if y:
+        if y is not None:
             assert len(X) == len(y), (
-                "Length of `y` should be the same with `X/X_tokenized`. "
-                "(%d vs. %d)" % (len(y), len(X))
-            )
+                "Length of `y` should be the same with `X/X_tokenized`. (%d vs. %d)"
+                % (len(y), len(X)))
 
-        if sample_weight:
+        if sample_weight is not None:
             assert len(X) == len(sample_weight), (
-                "Length of `sample_weight` should be the same with `X/X_tokenized`. (%d vs. %d)" 
-                % (len(sample_weight), len(X))
-            )
+                "Length of `sample_weight` should be the same with `X/X_tokenized`. (%d vs. %d)"
+                % (len(sample_weight), len(X)))
 
     def assign(self, variable, value):
         """ Manually assign values for a parameter. """

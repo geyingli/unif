@@ -8,7 +8,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-v2.5.2-blue">
+        <img src="https://img.shields.io/badge/version-v2.5.3-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-1.x\2.x-yellow">
@@ -102,6 +102,7 @@ print(model.predict(X))
 | 模型蒸馏|[`TinyBERTClassifier`](./examples/tutorial/TinyBERTClassifier.ipynb) 		| 大幅压缩模型参数，提速十倍以上 |
 || [`TinyBERTBinaryClassifier`](./examples/tutorial/TinyBERTBinaryClassifier.ipynb)     | - |
 || [`FastBERTClassifier`](./examples/tutorial/FastBERTClassifier.ipynb) 		| 动态推理，易分样本提前离开模型 |
+| 图像分类 / 单label | [`PNasNetClassifier`](./examples/tutorial/PNasNetClassifier.ipynb) 		| - |
 
 
 ## 建模

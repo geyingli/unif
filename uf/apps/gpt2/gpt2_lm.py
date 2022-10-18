@@ -9,7 +9,7 @@ from ... import com
 
 class GPT2LM(LMModule):
     """ Language modeling on GPT-2. """
-    
+
     _INFER_ATTRIBUTES = {    # params whose value cannot be None in order to infer without training
         "max_seq_length": "An integer that defines max sequence length of input tokens",
         "init_checkpoint": "A string that directs to the checkpoint file used for initialization",
@@ -101,8 +101,8 @@ class GPT2LM(LMModule):
         data = {}
 
         # convert X
-        if X or X_tokenized:
-            tokenized = False if X else X_tokenized
+        if X is not None or X_tokenized is not None:
+            tokenized = False if X is not None else X_tokenized
             input_ids = self._convert_X(X_tokenized if tokenized else X, tokenized=tokenized)
             data["input_ids"] = np.array(input_ids, dtype=np.int32)
             n_inputs = len(input_ids)
@@ -111,7 +111,7 @@ class GPT2LM(LMModule):
                 self.batch_size = max(n_inputs, len(self._gpu_ids))
 
         # convert sample_weight
-        if is_training or y:
+        if is_training or y is not None:
             sample_weight = self._convert_sample_weight(sample_weight, n_inputs)
             data["sample_weight"] = np.array(sample_weight, dtype=np.float32)
 

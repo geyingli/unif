@@ -1,7 +1,7 @@
 """ Progressive Neural Architecture Search.
 
 Code revised from: https://github.com/tensorflow/models/blob/master/research/slim/nets/nasnet/pnasnet.py.
-Paper from: https://arxiv.org/abs/1712.00559.
+Paper: https://arxiv.org/abs/1712.00559.
 """
 
 import copy
@@ -177,7 +177,7 @@ def build_pnasnet_large(images,
                                   hparams.use_bounded_activation)
   with arg_scope(
       [slim.dropout, nasnet_utils.drop_path, slim.batch_norm],
-      is_training=is_training):
+      is_training=True):
     with arg_scope([slim.avg_pool2d, slim.max_pool2d, slim.conv2d,
                     slim.batch_norm, slim.separable_conv2d,
                     nasnet_utils.factorized_reduction,
@@ -190,7 +190,7 @@ def build_pnasnet_large(images,
           normal_cell=normal_cell,
           num_classes=num_classes,
           hparams=hparams,
-          is_training=is_training,
+          is_training=True,
           final_endpoint=final_endpoint)
 build_pnasnet_large.default_image_size = 331
 
@@ -226,7 +226,7 @@ def build_pnasnet_mobile(images,
                                   hparams.use_bounded_activation)
   with arg_scope(
       [slim.dropout, nasnet_utils.drop_path, slim.batch_norm],
-      is_training=is_training):
+      is_training=True):
     with arg_scope(
         [
             slim.avg_pool2d, slim.max_pool2d, slim.conv2d, slim.batch_norm,
@@ -240,7 +240,7 @@ def build_pnasnet_mobile(images,
           normal_cell=normal_cell,
           num_classes=num_classes,
           hparams=hparams,
-          is_training=is_training,
+          is_training=True,
           final_endpoint=final_endpoint)
 
 
@@ -265,3 +265,17 @@ class PNasNetNormalCell(nasnet_utils.NasNetABaseCell):
         num_conv_filters, operations, used_hiddenstates, hiddenstate_indices,
         drop_path_keep_prob, total_num_cells, total_training_steps,
         use_bounded_activation)
+
+
+def get_decay_power(model_size):
+  num_hidden_layers = 9
+  if model_size == "large":
+    num_hidden_layers = 12
+  decay_power = {
+    "conv0/": num_hidden_layers + 2,
+    "cell_stem": num_hidden_layers + 1,
+    "final_layer/": 0,
+  }
+  for layer_idx in range(num_hidden_layers):
+    decay_power["cell_%d/" % layer_idx] = num_hidden_layers - layer_idx
+  return decay_power

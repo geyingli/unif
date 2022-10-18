@@ -1,7 +1,7 @@
 import numpy as np
 from PIL import Image
 
-from .pnasnet import build_pnasnet_mobile, build_pnasnet_large
+from .pnasnet import build_pnasnet_mobile, build_pnasnet_large, get_decay_power
 from .._base_._base_classifier import ClassifierModule
 from .._base_._base_ import ClsDecoder
 from ..bert.bert_classifier import BERTClassifier
@@ -37,7 +37,7 @@ class PNasNetClassifier(BERTClassifier, ClassifierModule):
         assert model_size in ("mobile", "large"), (f"Invalid `model_size`: {model_size}. Pick one from \"mobile\" and \"large\".")
         assert data_format in ("NHWC", "NCHW"), (f"Unsupported `data_format`: {data_format}. Piack one from \"NHWC\" and \"NCHW\"")
         self._image_size = 224 if model_size == "mobile" else 331
-        self.decay_power = "unsupported"
+        self.decay_power = get_decay_power(model_size)
 
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None, is_training=False, is_parallel=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
@@ -115,19 +115,15 @@ class PNasNetClassifier(BERTClassifier, ClassifierModule):
 
     def _forward(self, is_training, placeholders, **kwargs):
 
-        # For some unknown reason, we must pass True for `is_training` params
-        # whenever in real training or inference phrase, otherwise huge bias of
-        # forward results will be created. It's a problem remains to be solved.
-        # Before than, inference results would be unstable owing to dropout.
         if self.model_size == "mobile":
             logits, _ = build_pnasnet_mobile(
                 images=placeholders["input_ids"], num_classes=self.label_size,
-                is_training=True, final_endpoint=None,
+                is_training=is_training, final_endpoint=None,
             )
         elif self.model_size == "large":
             logits, _ = build_pnasnet_large(
                 images=placeholders["input_ids"], num_classes=self.label_size,
-                is_training=True, final_endpoint=None,
+                is_training=is_training, final_endpoint=None,
             )
         decoder = ClsDecoder(
             is_training,

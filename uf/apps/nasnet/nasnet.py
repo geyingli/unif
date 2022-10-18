@@ -1,7 +1,7 @@
 """ Neural Architecture Search.
 
 Code revised from: https://github.com/tensorflow/models/blob/master/research/slim/nets/nasnet/nasnet.py.
-Paper from: https://arxiv.org/abs/1707.07012.
+Paper: https://arxiv.org/abs/1707.07012.
 """
 
 import copy

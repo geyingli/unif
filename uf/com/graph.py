@@ -75,6 +75,8 @@ def add_n_grads(split_grads):
 
 def average_n_grads(split_grads):
     split_grads = [grad for grad in split_grads if grad is not None]
+    if not split_grads:
+        return None
     if len(split_grads) == 1:
         return split_grads[0]
 

@@ -14,7 +14,7 @@ from . import com
 class BaseModule:
     """ Parent class of all the application processors. """
     _INFER_ATTRIBUTES = {}    # params whose value cannot be None in order to infer without training
-    _LOCALIZE_ATTRIBUTES = {"_id_to_label", "_label_to_id"}    # attributes to store in localization
+    _LOCALIZE_ATTRIBUTES = ["_id_to_label", "_label_to_id"]    # attributes to store in localization
 
     def __init__(self, init_checkpoint, output_dir, gpu_ids):
 

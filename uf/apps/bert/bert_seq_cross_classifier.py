@@ -187,7 +187,6 @@ class BERTSeqCrossClassifier(BERTClassifier, ClassifierModule):
         cls_label_ids = []
         for sample in y:
             _seq_cls_label_ids = []
-            _cls_label_ids = []
 
             for label in sample["seq_cls"]:
                 if label not in self._seq_cls_label_to_id:
@@ -207,7 +206,7 @@ class BERTSeqCrossClassifier(BERTClassifier, ClassifierModule):
                 assert len(self._cls_label_to_id) < self.cls_label_size, "Number of unique labels exceeds `label_size`."
                 self._cls_label_to_id[label] = len(self._cls_label_to_id)
                 self._cls_id_to_label.append(label)
-            _cls_label_ids.append(self._cls_label_to_id[label])
+            cls_label_ids.append(self._cls_label_to_id[label])
         return seq_cls_label_ids, cls_label_ids
 
     def _set_placeholders(self, **kwargs):

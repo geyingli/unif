@@ -11,8 +11,6 @@ from ... import com
 class ALBERTLM(BERTLM, LMModule):
     """ Language modeling on ALBERT. """
 
-    _INFER_ATTRIBUTES = BERTLM._INFER_ATTRIBUTES
-
     def __init__(
         self,
         config_file,

@@ -12,8 +12,6 @@ from ... import com
 class SANetMRC(BERTMRC, MRCModule):
     """ Machine reading comprehension on SANet. """
 
-    _INFER_ATTRIBUTES = BERTMRC._INFER_ATTRIBUTES
-
     def __init__(
         self,
         config_file,

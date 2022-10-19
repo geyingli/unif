@@ -9,8 +9,6 @@ from ...third import tf
 class ELECTRABinaryClassifier(BERTBinaryClassifier, ClassifierModule):
     """ Multi-label classifier on ELECTRA. """
 
-    _INFER_ATTRIBUTES = BERTBinaryClassifier._INFER_ATTRIBUTES
-
     def __init__(
         self,
         config_file,

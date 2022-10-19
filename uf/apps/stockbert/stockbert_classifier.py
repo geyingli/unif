@@ -2,14 +2,13 @@ import numpy as np
 
 from .stockbert import StockBERTEncoder
 from .._base_._base_classifier import ClassifierModule
-from ..bert.bert_classifier import BERTClassifier
 from .._base_._base_ import ClsDecoder
 from ..bert.bert import BERTConfig, get_decay_power
 from ...third import tf
 from ... import com
 
 
-class StockBERTClassifier(BERTClassifier, ClassifierModule):
+class StockBERTClassifier(ClassifierModule):
     """ Single-label classifier on Stock-BERT. """
 
     _INFER_ATTRIBUTES = {    # params whose value cannot be None in order to infer without training

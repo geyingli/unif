@@ -4,6 +4,11 @@ from ...core import BaseModule
 class MRCModule(BaseModule):
     """ Application class of machine reading comprehension (MRC). """
 
+    _INFER_ATTRIBUTES = {    # params whose value cannot be None in order to infer without training
+        "max_seq_length": "An integer that defines max sequence length of input tokens",
+        "init_checkpoint": "A string that directs to the checkpoint file used for initialization",
+    }
+
     def _get_em_and_f1(self, preds, labels):
         """ Exact-match and F1. """
         em, f1 = 0, 0

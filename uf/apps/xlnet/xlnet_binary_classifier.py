@@ -12,8 +12,6 @@ from ... import com
 class XLNetBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
     """ Multi-label classifier on XLNet. """
 
-    _INFER_ATTRIBUTES = BERTBinaryClassifier._INFER_ATTRIBUTES
-
     def __init__(
         self,
         config_file,

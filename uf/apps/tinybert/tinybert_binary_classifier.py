@@ -13,8 +13,6 @@ from ...third import tf
 class TinyBERTBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
     """ Multi-label classifier on TinyBERT, a distillation model. """
 
-    _INFER_ATTRIBUTES = BERTBinaryClassifier._INFER_ATTRIBUTES
-
     def __init__(
         self,
         config_file,
@@ -67,8 +65,7 @@ class TinyBERTBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
         tf.gfile.MakeDirs(save_dir)
 
         tf.logging.info("Saving checkpoint into %s/bert_model.ckpt" % (save_dir))
-        self.init_checkpoint = (
-            save_dir + "/bert_model.ckpt")
+        self.init_checkpoint = save_dir + "/bert_model.ckpt"
 
         assignment_map = {}
         for var in self.global_variables:

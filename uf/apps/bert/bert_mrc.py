@@ -1,7 +1,6 @@
 import numpy as np
 
 from .bert import BERTEncoder, BERTConfig, get_decay_power
-from .bert_classifier import BERTClassifier
 from .._base_._base_mrc import MRCModule
 from .._base_._base_ import MRCDecoder
 from ...token import WordPieceTokenizer
@@ -9,13 +8,8 @@ from ...third import tf
 from ... import com
 
 
-class BERTMRC(BERTClassifier, MRCModule):
+class BERTMRC(MRCModule):
     """ Machine reading comprehension on BERT. """
-
-    _INFER_ATTRIBUTES = {    # params whose value cannot be None in order to infer without training
-        "max_seq_length": "An integer that defines max sequence length of input tokens",
-        "init_checkpoint": "A string that directs to the checkpoint file used for initialization",
-    }
 
     def __init__(
         self,

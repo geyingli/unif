@@ -12,8 +12,6 @@ from ... import com
 class SPELM(BERTLM, LMModule):
     """ Language modeling on Semantic-Parsing-Enhanced. """
 
-    _INFER_ATTRIBUTES = BERTLM._INFER_ATTRIBUTES
-
     def __init__(
         self,
         config_file,

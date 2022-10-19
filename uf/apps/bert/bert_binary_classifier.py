@@ -10,8 +10,6 @@ from ... import com
 class BERTBinaryClassifier(BERTClassifier, ClassifierModule):
     """ Multi-label classifier on BERT. """
 
-    _INFER_ATTRIBUTES = BERTClassifier._INFER_ATTRIBUTES
-
     def __init__(
         self,
         config_file,

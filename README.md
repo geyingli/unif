@@ -79,7 +79,7 @@ print(model.predict(X))
 | |[`SANetMRC`](./examples/tutorial/SANetMRC.ipynb) 		| 引入 Sentence Attention |
 | |[`BERTVerifierMRC`](./examples/tutorial/BERTVerifierMRC.ipynb) | 抽取 answer span 的同时判断可答性 |
 | |[`RetroReaderMRC`](./examples/tutorial/RetroReaderMRC.ipynb) | 抽取 answer span 的同时判断可答性 |
-| 文本分类 / 单label|[`TextCNNClassifier`](./examples/tutorial/TextCNNClassifier.ipynb) 		| 小而快 |
+|文本分类 / 单label|[`TextCNNClassifier`](./examples/tutorial/TextCNNClassifier.ipynb) 		| 小而快 |
 || [`BERTClassifier`](./examples/tutorial/BERTClassifier.ipynb) 		| - |
 || [`XLNetClassifier`](./examples/tutorial/XLNetClassifier.ipynb) 		| - |
 || [`RoBERTaClassifier`](./examples/tutorial/RoBERTaClassifier.ipynb) 		| - |
@@ -93,7 +93,7 @@ print(model.predict(X))
 | |[`RoBERTaBinaryClassifier`](./examples/tutorial/RoBERTaBinaryClassifier.ipynb) 		| - |
 | |[`ALBERTBinaryClassifier`](./examples/tutorial/ALBERTBinaryClassifier.ipynb) 		| - |
 | |[`ELECTRABinaryClassifier`](./examples/tutorial/ELECTRABinaryClassifier.ipynb) 		| - |
-| 序列标注|[`BERTSeqClassifier`](./examples/tutorial/BERTSeqClassifier.ipynb) 		| - |
+|序列标注|[`BERTSeqClassifier`](./examples/tutorial/BERTSeqClassifier.ipynb) 		| - |
 || [`RoBERTaSeqClassifier`](./examples/tutorial/RoBERTaSeqClassifier.ipynb) 		| - |
 || [`ALBERTSeqClassifier`](./examples/tutorial/ALBERTSeqClassifier.ipynb) 		| - |
 || [`ELECTRASeqClassifier`](./examples/tutorial/ELECTRASeqClassifier.ipynb) 		| - |
@@ -273,7 +273,7 @@ model.reinit_from_checkpoint()                     # 重新读取预训练参数
 print(model.uninited_vars)                         # 在打印的结果中看看初始化失败的变量是否已消失
 ```
 
-`ckpt` 是 tensorflow 输出的预训练参数，如果希望读取 pytorch 输出的预训练参数，则稍微繁琐一些，可以通过将参数读到内存中，使用下面的变量赋值的方法实现。
+`ckpt` 是 tensorflow 输出的预训练参数，如果希望读取 PyTorch 输出的预训练参数，则稍微繁琐一些，可以通过将参数读到内存中，使用下面的变量赋值的方法实现。
 
 ### 变量赋值
 

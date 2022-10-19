@@ -9,8 +9,6 @@ from ... import com
 
 class BERTCRFNER(BERTNER, NERModule):
     """ Named entity recognization on BERT with CRF. """
-    
-    _INFER_ATTRIBUTES = BERTNER._INFER_ATTRIBUTES
 
     def _forward(self, is_training, placeholders, **kwargs):
 

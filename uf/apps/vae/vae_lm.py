@@ -10,12 +10,7 @@ from ... import com
 
 class VAELM(BERTClassifier, LMModule):
     """ Text generator in VAE structure. """
-
-    _INFER_ATTRIBUTES = {    # params whose value cannot be None in order to infer without training
-        "max_seq_length": "An integer that defines max sequence length of input tokens",
-        "init_checkpoint": "A string that directs to the checkpoint file used for initialization",
-    }
-
+    
     def __init__(
         self,
         vocab_file,

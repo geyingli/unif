@@ -12,8 +12,6 @@ from ... import com
 class RoBERTaLM(BERTLM, LMModule):
     """ Language modeling on RoBERTa. """
 
-    _INFER_ATTRIBUTES = BERTLM._INFER_ATTRIBUTES
-
     def __init__(
         self,
         config_file,

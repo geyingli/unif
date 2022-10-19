@@ -12,8 +12,6 @@ from ... import com
 class FastBERTClassifier(BERTClassifier, ClassifierModule):
     """ Single-label classifier on FastBERT, a distillation model. """
 
-    _INFER_ATTRIBUTES = BERTClassifier._INFER_ATTRIBUTES
-
     def __init__(
         self,
         config_file,

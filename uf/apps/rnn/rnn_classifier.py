@@ -3,13 +3,12 @@ import numpy as np
 from .rnn import RNNEncoder, get_decay_power
 from .._base_._base_classifier import ClassifierModule
 from .._base_._base_ import ClsDecoder
-from ..bert.bert_classifier import BERTClassifier
 from ...token import WordPieceTokenizer
 from ...third import tf
 from ... import com
 
 
-class RNNClassifier(BERTClassifier, ClassifierModule):
+class RNNClassifier(ClassifierModule):
     """ Single-label classifier on RNN/LSTM/GRU. """
 
     _INFER_ATTRIBUTES = {    # params whose value cannot be None in order to infer without training

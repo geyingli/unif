@@ -13,8 +13,6 @@ from ... import com
 class BERTVerifierMRC(BERTMRC, MRCModule):
     """ Machine reading comprehension on BERT, with a external front verifier. """
 
-    _INFER_ATTRIBUTES = BERTMRC._INFER_ATTRIBUTES
-
     def __init__(
         self,
         config_file,

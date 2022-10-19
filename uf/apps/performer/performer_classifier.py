@@ -10,8 +10,6 @@ from ...third import tf
 class PerformerClassifier(BERTClassifier, ClassifierModule):
     """ Single-label classifier on Performer. """
 
-    _INFER_ATTRIBUTES = BERTClassifier._INFER_ATTRIBUTES
-
     def __init__(
         self,
         config_file,

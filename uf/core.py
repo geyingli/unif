@@ -13,8 +13,14 @@ from . import com
 
 class BaseModule:
     """ Parent class of all the application processors. """
-    _INFER_ATTRIBUTES = {}    # params whose value cannot be None in order to infer without training
-    _LOCALIZE_ATTRIBUTES = ["_id_to_label", "_label_to_id"]    # attributes to store in localization
+
+    # params whose value cannot be None in order to infer without training
+    _INFER_ATTRIBUTES = {    
+        "init_checkpoint": "A string that directs to the checkpoint file used for initialization",
+    }
+
+    # attributes to store in localization
+    _LOCALIZE_ATTRIBUTES = ["_id_to_label", "_label_to_id"]    
 
     def __init__(self, init_checkpoint, output_dir, gpu_ids):
 
@@ -681,6 +687,26 @@ class BaseModule:
     def convert(self, *args, **kwargs):
         raise NotImplementedError()
 
+    def _convert_x(self, x, tokenized):
+        """ Convert text sample. """
+
+        # deal with untokenized inputs
+        if not tokenized:
+
+            # deal with general inputs
+            if isinstance(x, str):
+                return [self.tokenizer.tokenize(x)]
+
+            # deal with multiple inputs
+            return [self.tokenizer.tokenize(seg) for seg in x]
+
+        # deal with tokenized inputs
+        if isinstance(x[0], str):
+            return [x]
+
+        # deal with tokenized and multiple inputs
+        return x
+
     @staticmethod
     def _convert_sample_weight(sample_weight, n_inputs):
         """ Standardize `sample_weight`. """
@@ -689,7 +715,7 @@ class BaseModule:
                 return [float(item) for item in sample_weight]
             except ValueError:
                 raise ValueError("`sample_weight` must be a list of float-convertable values.")
-        return [1.0 for _ in range(n_inputs)]
+        return [1.0] * n_inputs
 
     @staticmethod
     def _assert_legal(X, y, sample_weight, X_tokenized):

@@ -2,7 +2,7 @@ import numpy as np
 
 from .xlnet import XLNet, XLNetConfig, create_instances_from_document, expand_features, get_decay_power, EOD_ID
 from .._base_._base_classifier import LMModule
-from ..bert.bert_classifier import BERTLM
+from ..bert.bert_lm import BERTLM
 from ...token import SentencePieceTokenizer
 from ...third import tf
 from ... import com
@@ -10,8 +10,6 @@ from ... import com
 
 class XLNetLM(BERTLM, LMModule):
     """ Language modeling on XLNet. """
-
-    _INFER_ATTRIBUTES = BERTLM._INFER_ATTRIBUTES
 
     def __init__(
         self,

@@ -2,16 +2,14 @@ import numpy as np
 
 from .textcnn import TextCNNEncoder, get_decay_power
 from .._base_._base_classifier import ClassifierModule
-from ..bert.bert_classifier import BERTClassifier
 from .._base_._base_ import ClsDecoder
 from ...token import WordPieceTokenizer
 from ...third import tf
+from .. import com
 
 
-class TextCNNClassifier(BERTClassifier, ClassifierModule):
+class TextCNNClassifier(ClassifierModule):
     """ Single-label classifier on TextCNN. """
-
-    _INFER_ATTRIBUTES = BERTClassifier._INFER_ATTRIBUTES
 
     def __init__(
         self,
@@ -61,7 +59,7 @@ class TextCNNClassifier(BERTClassifier, ClassifierModule):
         # convert X
         if X is not None or X_tokenized is not None:
             tokenized = False if X is not None else X_tokenized
-            input_ids, _, _ = self._convert_X(X_tokenized if tokenized else X, tokenized=tokenized)
+            input_ids = self._convert_X(X_tokenized if tokenized else X, tokenized=tokenized)
             data["input_ids"] = np.array(input_ids, dtype=np.int32)
             n_inputs = len(input_ids)
 
@@ -79,6 +77,35 @@ class TextCNNClassifier(BERTClassifier, ClassifierModule):
             data["sample_weight"] = np.array(sample_weight, dtype=np.float32)
 
         return data
+
+    def _convert_X(self, X_target, tokenized):
+
+        # tokenize input texts
+        segment_input_tokens = []
+        for idx, sample in enumerate(X_target):
+            try:
+                segment_input_tokens.append(self._convert_x(sample, tokenized))
+            except Exception as e:
+                raise ValueError("Wrong input format (%s): %s." % (sample, e))
+
+        input_ids = []
+        for idx, segments in enumerate(segment_input_tokens):
+            _input_tokens = ["[CLS]"]
+            _input_ids = []
+
+            com.truncate_segments(segments, self.max_seq_length - len(segments) - 1, truncate_method=self.truncate_method)
+            for s_id, segment in enumerate(segments):
+                _input_tokens.extend(segment + ["[SEP]"])
+
+            _input_ids = self.tokenizer.convert_tokens_to_ids(_input_tokens)
+
+            # padding
+            for _ in range(self.max_seq_length - len(_input_ids)):
+                _input_ids.append(0)
+
+            input_ids.append(_input_ids)
+
+        return input_ids
 
     def _set_placeholders(self, **kwargs):
         self.placeholders = {

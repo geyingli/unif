@@ -6,6 +6,11 @@ from ...core import BaseModule
 class NERModule(BaseModule):
     """ Application class of name entity recognition (NER). """
 
+    _INFER_ATTRIBUTES = {    # params whose value cannot be None in order to infer without training
+        "max_seq_length": "An integer that defines max sequence length of input tokens",
+        "init_checkpoint": "A string that directs to the checkpoint file used for initialization",
+    }
+
     O_ID = 0
     B_ID = 1
     I_ID = 2

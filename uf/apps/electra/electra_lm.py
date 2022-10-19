@@ -12,8 +12,6 @@ from ... import com
 class ELECTRALM(BERTLM, LMModule):
     """ Language modeling on ELECTRA. """
 
-    _INFER_ATTRIBUTES = BERTLM._INFER_ATTRIBUTES
-
     def __init__(
         self,
         vocab_file,

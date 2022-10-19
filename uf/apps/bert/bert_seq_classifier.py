@@ -1,7 +1,6 @@
 import numpy as np
 
 from .bert import BERTEncoder, BERTConfig, get_decay_power
-from .bert_classifier import BERTClassifier
 from .._base_._base_classifier import ClassifierModule
 from .._base_._base_ import SeqClsDecoder
 from ...token import WordPieceTokenizer
@@ -9,10 +8,8 @@ from ...third import tf
 from ... import com
 
 
-class BERTSeqClassifier(BERTClassifier, ClassifierModule):
+class BERTSeqClassifier(ClassifierModule):
     """ Sequence labeling classifier on BERT. """
-
-    _INFER_ATTRIBUTES = BERTClassifier._INFER_ATTRIBUTES
 
     def __init__(
         self,

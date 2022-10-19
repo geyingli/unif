@@ -7,6 +7,12 @@ from ... import com
 class MTModule(BaseModule):
     """ Application class of machine translation (MT). """
 
+    _INFER_ATTRIBUTES = {    # params whose value cannot be None in order to infer without training
+        "source_max_seq_length": "An integer that defines max sequence length of source language tokens",
+        "target_max_seq_length": "An integer that defines max sequence length of target language tokens",
+        "init_checkpoint": "A string that directs to the checkpoint file used for initialization",
+    }
+
     def _get_bleu(self, preds, labels, mask, max_gram=4):
         """ Bilingual evaluation understudy. """
         eos_id = self.tokenizer.convert_tokens_to_ids(["</s>"])[0]

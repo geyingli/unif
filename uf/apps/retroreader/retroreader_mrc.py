@@ -13,8 +13,6 @@ from ... import com
 class RetroReaderMRC(BERTVerifierMRC, MRCModule):
     """ Machine reading comprehension on Retro-Reader. """
 
-    _INFER_ATTRIBUTES = BERTVerifierMRC._INFER_ATTRIBUTES
-
     def __init__(
         self,
         config_file,

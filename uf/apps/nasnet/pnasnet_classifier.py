@@ -4,11 +4,10 @@ from PIL import Image
 from .pnasnet import build_pnasnet_mobile, build_pnasnet_large, get_decay_power
 from .._base_._base_classifier import ClassifierModule
 from .._base_._base_ import ClsDecoder
-from ..bert.bert_classifier import BERTClassifier
 from ...third import tf
 
 
-class PNasNetClassifier(BERTClassifier, ClassifierModule):
+class PNasNetClassifier(ClassifierModule):
     """ Single-label classifier on PNasNet. """
 
     _INFER_ATTRIBUTES = {    # params whose value cannot be None in order to infer without training

@@ -46,7 +46,9 @@ class BERTSeqCrossClassifier(BERTClassifier, ClassifierModule):
         self.cls_label_size = cls_label_size
         self.truncate_method = truncate_method
         self._seq_cls_id_to_label = None
+        self._seq_cls_label_to_id = None
         self._cls_id_to_label = None
+        self._cls_label_to_id = None
 
         self.bert_config = BERTConfig.from_json_file(config_file)
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)

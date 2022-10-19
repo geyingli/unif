@@ -5,7 +5,7 @@ from .._base_._base_classifier import ClassifierModule
 from .._base_._base_ import ClsDecoder
 from ...token import WordPieceTokenizer
 from ...third import tf
-from .. import com
+from ... import com
 
 
 class TextCNNClassifier(ClassifierModule):

@@ -73,7 +73,7 @@ class UDAClassifier(BERTClassifier, ClassifierModule):
             tokenized = False if X is not None else X_tokenized
             (input_ids, input_mask, segment_ids,
              aug_input_ids, aug_input_mask, aug_segment_ids,
-             is_supervised) = self._convert_X(X_tokenized if tokenized else X, y, tokenized=tokenized)
+             is_supervised) = self._convert_X_reimp(X_tokenized if tokenized else X, y, tokenized=tokenized)
             data["input_ids"] = np.array(input_ids, dtype=np.int32)
             data["input_mask"] = np.array(input_mask, dtype=np.int32)
             data["segment_ids"] = np.array(segment_ids, dtype=np.int32)
@@ -98,7 +98,7 @@ class UDAClassifier(BERTClassifier, ClassifierModule):
 
         return data
 
-    def _convert_X(self, X_target, y, tokenized):
+    def _convert_X_reimp(self, X_target, y, tokenized):
 
         # tokenize input texts
         sup_ori_input_tokens = []

@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 
 from ..third import tf
@@ -63,15 +64,21 @@ class Exportation(Task):
         tf.logging.info("Register Signature: predict")
 
         legacy_init_op = tf.group(tf.tables_initializer(), name="legacy_init_op")
-        builder = tf.saved_model.builder.SavedModelBuilder(os.path.join(export_dir, time.strftime("%Y%m%d.%H%M%S")))
+        builder_path = os.path.join(export_dir, time.strftime("%Y%m%d%H%M%S"))
+
+        # solve the path problem
+        if sys.platform.startswith("win"):
+            builder_path = builder_path.replace("/", "\\")
+
         try:
+            builder = tf.saved_model.builder.SavedModelBuilder(builder_path)
             builder.add_meta_graph_and_variables(
                 self.module.sess,
                 [tf.saved_model.tag_constants.SERVING],
                 signature_def_map=signature_def_map,
                 legacy_init_op=legacy_init_op,
             )
-        except Exception:
+        except ValueError:
             raise ValueError(
                 "Twice exportation is not allowed. Try `.save()` and "
                 "`.reset()` method to save and reset the graph before "

@@ -85,11 +85,11 @@ class StockBERTClassifier(BERTClassifier, ClassifierModule):
         for idx, sample in enumerate(X_target):
             try:
                 segment_input_values.append(self._convert_x(sample))
-            except Exception:
+            except Exception as e:
                 raise ValueError(
-                    "Wrong input format (line %d): \"%s\". An example: "
+                    "Wrong input format (%s): %s. An example: "
                     "`X_tokenized = [[[0.0023, -0.0001, 0.0015, ...], ...], "
-                    "...]`" % (idx, sample)
+                    "...]`" % (sample, e)
                 )
 
         input_values = []

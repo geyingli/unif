@@ -99,12 +99,12 @@ class WideDeepRegressor(WideDeepClassifier, RegressorModule):
                     "Wide": sample["Wide"],
                     "Deep": self._convert_x(sample["Deep"], tokenized),
                 })
-            except Exception:
+            except Exception as e:
                 raise ValueError(
-                    "Wrong input format (line %d): \"%s\". An untokenized "
+                    "Wrong input format (%s): %s. An untokenized "
                     "example: X = [{\"Wide\": [1, 5, \"positive\"], "
                     "\"Deep\": \"I bet she will win.\"}, ...]"
-                    % (idx, sample)
+                    % (sample, e)
                 )
 
         if self.wide_features is None:

@@ -168,7 +168,7 @@ class RecBERTLM(LMModule):
             elif isinstance(x[0], str):
                 return x
         except Exception:
-            raise ValueError("Wrong input format: \"%s\". " % (x))
+            raise ValueError("Wrong input format (%s)." % (x))
 
         # deal with tokenized and multiple inputs
         raise ValueError("%s only supports single sentence inputs." % self.__class__.__name__)

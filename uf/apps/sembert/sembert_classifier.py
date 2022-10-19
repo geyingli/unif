@@ -105,12 +105,12 @@ class SemBERTClassifier(BERTClassifier, ClassifierModule):
                     "Sem": sem,
                     "Text": self._convert_x(sample["Text"], tokenized),
                 })
-            except Exception:
+            except Exception as e:
                 raise ValueError(
-                    "Wrong input format (line %d): %s. An example: "
+                    "Wrong input format (%s): %s. An example: "
                     "X_tokenized = [{\"Sem\": [\"n\", \"v\", \"n\"], "
                     "\"Text\": [\"I\", \"love\", \"you\"]}, ...]"
-                    % (idx, sample)
+                    % (sample, e)
                 )
 
         if self.sem_features is None:

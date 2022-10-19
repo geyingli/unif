@@ -94,12 +94,12 @@ class BERTMRC(BERTClassifier, MRCModule):
         for idx, sample in enumerate(X_target):
             try:
                 segment_input_tokens.append(self._convert_x(sample, tokenized))
-            except Exception:
+            except Exception as e:
                 raise ValueError(
-                    "Wrong input format (line %d): \"%s\". "
+                    "Wrong input format (%s): %s. "
                     "An untokenized example: "
                     "`X = [{\"doc\": \"...\", \"question\": \"...\", ...}, "
-                    "...]`" % (idx, sample)
+                    "...]`" % (sample, e)
                 )
 
         input_tokens = []
@@ -173,9 +173,10 @@ class BERTMRC(BERTClassifier, MRCModule):
 
             if not isinstance(_y, dict) or "text" not in _y or "answer_start" not in _y:
                 raise ValueError(
-                    "Wrong input format of `y`. An untokenized example: "
+                    "Wrong label format (%s). An untokenized example: "
                     "`y = [{\"text\": \"Obama\", \"answer_start\": 12}, "
                     "None, ...]`"
+                    % (_y)
                 )
 
             _answer_text = _y["text"]

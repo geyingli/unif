@@ -97,11 +97,11 @@ class SANetMRC(BERTMRC, MRCModule):
         for idx, sample in enumerate(X_target):
             try:
                 segment_input_tokens.append(self._convert_x(sample, tokenized))
-            except Exception:
+            except Exception as e:
                 raise ValueError(
-                    "Wrong input format (line %d): \"%s\". An untokenized example: "
+                    "Wrong input format (%s): %s. An untokenized example: "
                     "`X = [{\"doc\": \"...\", \"question\": \"...\", ...}, "
-                    "...]`" % (idx, sample)
+                    "...]`" % (sample, e)
                 )
 
         input_tokens = []
@@ -177,13 +177,7 @@ class SANetMRC(BERTMRC, MRCModule):
     def _convert_x(self, x, tokenized):
         output = {}
 
-        if not isinstance(x, dict) or "doc" not in x:
-            raise ValueError(
-                "Wrong input format of `y`. An untokenized example: "
-                "`y = [{\"doc\": \"...\", \"question\": \"...\", ...}, "
-                "None, ...]`"
-            )
-
+        assert isinstance(x, dict) and "doc" in x
         for key in x:
             if not tokenized:
                 chars = self.tokenizer.tokenize(x[key])

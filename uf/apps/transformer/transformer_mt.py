@@ -87,8 +87,8 @@ class TransformerMT(MTModule):
         for idx, sample in enumerate(X_target):
             try:
                 _source_tokens = self._convert_x(sample, tokenized)
-            except Exception:
-                raise ValueError("Wrong input format (line %d): \"%s\". " % (idx, sample))
+            except Exception as e:
+                raise ValueError("Wrong input format (%s): %s." % (sample, e))
             _source_ids = self.tokenizer.convert_tokens_to_ids(_source_tokens)
 
             com.truncate_segments([_source_ids], self.source_max_seq_length, truncate_method=self.truncate_method)

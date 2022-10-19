@@ -95,8 +95,8 @@ class SPELM(BERTLM, LMModule):
         for idx, sample in enumerate(X_target):
             try:
                 segment_input_tokens.append(self._convert_x(sample, tokenized))
-            except Exception:
-                tf.logging.warning("Wrong input format (line %d): \"%s\". " % (idx, sample))
+            except Exception as e:
+                raise ValueError("Wrong input format (%s): %s." % (sample, e))
             assert len(sample) == 2, "`%s` only supports two-sentence inputs." % self.__class__.__name__
 
         input_ids = []

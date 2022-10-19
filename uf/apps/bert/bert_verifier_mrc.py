@@ -101,9 +101,10 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
 
             if not isinstance(_y, dict) or "text" not in _y or "answer_start" not in _y:
                 raise ValueError(
-                    "Wrong input format of `y`. An untokenized example: "
+                    "Wrong label format (%s). An untokenized example: "
                     "`y = [{\"text\": \"Obama\", \"answer_start\": 12}, "
                     "None, ...]`"
+                    % (_y)
                 )
 
             _answer_text = _y["text"]

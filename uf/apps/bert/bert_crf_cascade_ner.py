@@ -109,9 +109,10 @@ class BERTCRFCascadeNER(BERTCRFNER, NERModule):
 
             if not isinstance(_y, dict):
                 raise ValueError(
-                    "Wrong input format of `y`. An untokenized example: "
+                    "Wrong label format (%s). An untokenized example: "
                     "`y = [{\"Person\": [\"Trump\", \"Obama\"], "
                     "\"City\": [\"Washington D.C.\"], ...}, ...]`"
+                    % (_y)
                 )
 
             # tagging
@@ -138,7 +139,12 @@ class BERTCRFCascadeNER(BERTCRFNER, NERModule):
                         if isinstance(_entity[0], str):
                             _entity_ids = self.tokenizer.convert_tokens_to_ids(_y)
                         else:
-                            raise ValueError("Wrong input format (line %d): \"%s\". " % (idx, _entity))
+                            raise ValueError(
+                                "Wrong label format (%s). An untokenized example: "
+                                "`y = [{\"Person\": [\"Trump\", \"Obama\"], "
+                                "\"City\": [\"Washington D.C.\"], ...}, ...]`"
+                                % (_y)
+                            )
 
                     # search and tag
                     start_positions = com.find_all_boyer_moore(_input_ids, _entity_ids)

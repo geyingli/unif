@@ -125,8 +125,8 @@ class DilatedLM(LMModule):
         for idx, sample in enumerate(X_target):
             try:
                 _input_tokens = self._convert_x(sample, tokenized)
-            except Exception:
-                raise ValueError("Wrong input format (line %d): \"%s\". " % (idx, sample))
+            except Exception as e:
+                raise ValueError("Wrong input format (%s): %s." % (sample, e))
 
             _input_tokens = ["[CLS]"] + _input_tokens
             _input_ids = self.tokenizer.convert_tokens_to_ids(_input_tokens)

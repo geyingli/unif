@@ -121,8 +121,8 @@ class UDAClassifier(BERTClassifier, ClassifierModule):
                     is_supervised.append(1)
             except AssertionError:
                 assert False, "Must have exactly two sentence input for an unsupervised example, respectively original and augmented."
-            except Exception:
-                raise ValueError("Wrong input format (line %d): \"%s\". " % (idx, sample))
+            except Exception as e:
+                raise ValueError("Wrong input format (%s): %s." % (sample, e))
 
         input_ids = []
         input_mask = []

@@ -107,12 +107,12 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
         for idx, sample in enumerate(X_target):
             try:
                 segment_input_tokens.append(self._convert_x(sample, tokenized))
-            except Exception:
+            except Exception as e:
                 raise ValueError(
-                    "Wrong input format (line %d): \"%s\". "
+                    "Wrong input format (%s): %s. "
                     "An untokenized example: "
                     "`X = [{\"doc\": \"...\", \"question\": \"...\", ...}, "
-                    "...]`" % (idx, sample)
+                    "...]`" % (sample, e)
                 )
 
         input_tokens = []

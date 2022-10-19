@@ -93,8 +93,8 @@ class BERTClassifier(ClassifierModule):
         for idx, sample in enumerate(X_target):
             try:
                 segment_input_tokens.append(self._convert_x(sample, tokenized))
-            except Exception:
-                raise ValueError("Wrong input format (line %d): \"%s\". " % (idx, sample))
+            except Exception as e:
+                raise ValueError("Wrong input format (%s): %s." % (sample, e))
 
         input_ids = []
         input_mask = []

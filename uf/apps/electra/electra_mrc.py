@@ -8,7 +8,7 @@ from ...third import tf
 
 class ELECTRAMRC(BERTMRC, MRCModule):
     """ Machine reading comprehension on ELECTRA. """
-    
+
     _INFER_ATTRIBUTES = BERTMRC._INFER_ATTRIBUTES
 
     def __init__(
@@ -25,11 +25,9 @@ class ELECTRAMRC(BERTMRC, MRCModule):
         self.__init_args__ = locals()
         super(MRCModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
-        self.batch_size = 0
         self.max_seq_length = max_seq_length
         self.truncate_method = truncate_method
         self._do_lower_case = do_lower_case
-        self._id_to_label = None
 
         self.bert_config = BERTConfig.from_json_file(config_file)
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)

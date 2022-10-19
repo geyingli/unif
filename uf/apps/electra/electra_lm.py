@@ -33,7 +33,6 @@ class ELECTRALM(BERTLM, LMModule):
         self.__init_args__ = locals()
         super(LMModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
-        self.batch_size = 0
         self.max_seq_length = max_seq_length
         self.generator_weight = generator_weight
         self.discriminator_weight = discriminator_weight
@@ -42,7 +41,6 @@ class ELECTRALM(BERTLM, LMModule):
         self.truncate_method = truncate_method
         self._model_size = model_size
         self._max_predictions_per_seq = max_predictions_per_seq
-        self._id_to_label = None
 
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
         self.decay_power = "unsupported"

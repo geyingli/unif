@@ -21,18 +21,17 @@ def restore(key, from_file="./.unif", **kwargs):
     from_fp = open(from_file, encoding="utf-8")
     from_json = json.load(from_fp)
     from_fp.close()
-
     if key not in from_json.keys():
         raise ValueError("No key `%s`." % key)
-    model = from_json[key]["model"]
-    args = collections.OrderedDict()
+    _from_json = from_json[key]
 
-    # unif >= beta v2.1.35
-    if "__init__" in from_json[key]:
-        zips = from_json[key]["__init__"].items()
-    # unif < beta v2.1.35
-    elif "keys" in from_json[key]:
-        zips = zip(from_json[key]["keys"], from_json[key]["values"])
+    # restore configuration
+    model_name = _from_json["model"]
+    init_args = collections.OrderedDict()
+    if "__init__" in _from_json:        # unif >= beta v2.1.35
+        zips = _from_json["__init__"].items()
+    elif "keys" in _from_json:          # unif < beta v2.1.35
+        zips = zip(_from_json["keys"], _from_json["values"])
     else:
         raise ValueError("Wrong format.")
 
@@ -48,15 +47,22 @@ def restore(key, from_file="./.unif", **kwargs):
 
         if arg in kwargs:
             value = kwargs[arg]
-        args[arg] = value
-    return apps.__dict__[model](**args)
+        init_args[arg] = value
+    model = apps.__dict__[model_name](**init_args)
+
+    # restore attributes
+    for arg, value in _from_json.get("__dict__", {}).items():
+        model.__dict__[arg] = value
+
+    return model
 
 
 def load(key, cache_file="./.cache", **kwargs):
     """ Load model from configurations saved in cache file.
 
-    NOTE: This function is deprecated and not upgraded, just retained for compatibility "
-    "with older versions. Try `.restore()` instead.
+    NOTE: This function is deprecated and not upgraded,
+    retained only for compatibility with older versions.
+    Try `uf.restore()` instead.
     """
     return restore(key, from_file=cache_file, **kwargs)
 

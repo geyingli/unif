@@ -36,7 +36,6 @@ class ALBERTLM(BERTLM, LMModule):
         self.__init_args__ = locals()
         super(LMModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
-        self.batch_size = 0
         self.max_seq_length = max_seq_length
         self.label_size = 2
         self.do_sample_sentence = do_sample_sentence
@@ -49,7 +48,6 @@ class ALBERTLM(BERTLM, LMModule):
         self._drop_pooler = drop_pooler
         self._max_predictions_per_seq = max_predictions_per_seq
         self._do_permutation = do_permutation
-        self._id_to_label = None
 
         self.albert_config = ALBERTConfig.from_json_file(config_file)
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)

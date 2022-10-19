@@ -31,7 +31,6 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
         self.__init_args__ = locals()
         super(ClassifierModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
-        self.batch_size = 0
         self.max_seq_length = max_seq_length
         self.label_size = label_size
         self.truncate_method = truncate_method
@@ -39,7 +38,6 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
         self._ignore_cls = [0]
         self._speed = 0.1
         self._drop_pooler = drop_pooler
-        self._id_to_label = None
 
         self.bert_config = BERTConfig.from_json_file(config_file)
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
@@ -260,7 +258,7 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
         # preds
         preds = np.argmax(probs, axis=-1).tolist()
         if self._id_to_label:
-            preds = [self._id_to_label[idx] for idx in preds]
+            preds = [self._id_to_label[idx] if idx < len(self._id_to_label) else None for idx in preds]
 
         outputs = {}
         outputs["preds"] = preds

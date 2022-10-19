@@ -18,6 +18,12 @@ class BERTSeqCrossClassifier(BERTClassifier, ClassifierModule):
         "cls_label_size": "An integer that defines number of possible labels of sequence classification",
         "init_checkpoint": "A string that directs to the checkpoint file used for initialization",
     }
+    _LOCALIZE_ATTRIBUTES = [    # attributes to store in localization
+        "_seq_cls_id_to_label",
+        "_seq_cls_label_to_id",
+        "_cls_id_to_label",
+        "_cls_label_to_id",
+    ]
 
     def __init__(
         self,
@@ -35,7 +41,6 @@ class BERTSeqCrossClassifier(BERTClassifier, ClassifierModule):
         self.__init_args__ = locals()
         super(ClassifierModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
-        self.batch_size = 0
         self.max_seq_length = max_seq_length
         self.seq_cls_label_size = seq_cls_label_size
         self.cls_label_size = cls_label_size
@@ -161,8 +166,6 @@ class BERTSeqCrossClassifier(BERTClassifier, ClassifierModule):
                 self._seq_cls_id_to_label = list(sorted(self._seq_cls_id_to_label))
             except Exception:
                 pass
-            if len(self._seq_cls_id_to_label) < self.seq_cls_label_size:
-                self._seq_cls_id_to_label = list(range(self.seq_cls_label_size))
         if not self._cls_id_to_label:
             self._cls_id_to_label = list(cls_label_set)
             try:
@@ -171,27 +174,38 @@ class BERTSeqCrossClassifier(BERTClassifier, ClassifierModule):
                 self._cls_id_to_label = list(sorted(self._cls_id_to_label))
             except Exception:
                 pass
-            if len(self._cls_id_to_label) < self.cls_label_size:
-                self._cls_id_to_label = list(range(self.cls_label_size))
 
         # automatically set `label_to_id` for prediction
-        self._seq_cls_label_to_id = {label: index for index, label in enumerate(self._seq_cls_id_to_label)}
-        self._cls_label_to_id = {label: index for index, label in enumerate(self._cls_id_to_label)}
+        if not self._seq_cls_label_to_id:
+            self._seq_cls_label_to_id = {label: index for index, label in enumerate(self._seq_cls_id_to_label)}
+        if not self._cls_label_to_id:
+            self._cls_label_to_id = {label: index for index, label in enumerate(self._cls_id_to_label)}
 
         seq_cls_label_ids = []
         cls_label_ids = []
         for sample in y:
-            _labels = [label for label in sample["seq_cls"]]
-            _label_ids = [self._seq_cls_label_to_id[label] for label in _labels]
-            com.truncate_segments([_label_ids], self.max_seq_length - 1, truncate_method=self.truncate_method)
-            _label_ids.insert(0, 0)
-            for _ in range(self.max_seq_length - len(_label_ids)):
-                _label_ids.append(0)
-            seq_cls_label_ids.append(_label_ids)
-        for sample in y:
-            _label = sample["cls"]
-            cls_label_ids.append(self._cls_label_to_id[_label])
+            _seq_cls_label_ids = []
+            _cls_label_ids = []
 
+            for label in sample["seq_cls"]:
+                if label not in self._seq_cls_label_to_id:
+                    assert len(self._seq_cls_label_to_id) < self.seq_cls_label_size, "Number of unique labels exceeds `label_size`."
+                    self._seq_cls_label_to_id[label] = len(self._seq_cls_label_to_id)
+                    self._seq_cls_id_to_label.append(label)
+                _seq_cls_label_ids.append(self._seq_cls_label_to_id[label])
+
+            com.truncate_segments([_seq_cls_label_ids], self.max_seq_length - 1, truncate_method=self.truncate_method)
+            _seq_cls_label_ids.insert(0, 0)
+            for _ in range(self.max_seq_length - len(_seq_cls_label_ids)):
+                _seq_cls_label_ids.append(0)
+            seq_cls_label_ids.append(_seq_cls_label_ids)
+
+            label = sample["cls"]
+            if label not in self._cls_label_to_id:
+                assert len(self._cls_label_to_id) < self.cls_label_size, "Number of unique labels exceeds `label_size`."
+                self._cls_label_to_id[label] = len(self._cls_label_to_id)
+                self._cls_id_to_label.append(label)
+            _cls_label_ids.append(self._cls_label_to_id[label])
         return seq_cls_label_ids, cls_label_ids
 
     def _set_placeholders(self, **kwargs):
@@ -291,11 +305,11 @@ class BERTSeqCrossClassifier(BERTClassifier, ClassifierModule):
         for _preds, _mask in zip(seq_cls_all_preds, self.data["input_mask"]):
             _preds = [idx for i, idx in enumerate(_preds) if _mask[i] > 0]
             if self._seq_cls_id_to_label:
-                _preds = [self._seq_cls_id_to_label[idx] for idx in _preds]
+                _preds = [self._seq_cls_id_to_label[idx] if idx < len(self._seq_cls_id_to_label) else None for idx in _preds]
             seq_cls_preds.append(_preds)
         cls_preds = np.argmax(cls_probs, axis=-1).tolist()
         if self._cls_id_to_label:
-            cls_preds = [self._cls_id_to_label[idx] for idx in cls_preds]
+            cls_preds = [self._cls_id_to_label[idx] if idx < len(self._cls_id_to_label) else None for idx in cls_preds]
 
         outputs = {}
         outputs["seq_cls_preds"] = seq_cls_preds

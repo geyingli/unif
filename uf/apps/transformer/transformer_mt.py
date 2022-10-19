@@ -33,7 +33,6 @@ class TransformerMT(MTModule):
         self.__init_args__ = locals()
         super(MTModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
-        self.batch_size = 0
         self.source_max_seq_length = source_max_seq_length
         self.target_max_seq_length = target_max_seq_length
         self.truncate_method = truncate_method

@@ -34,7 +34,6 @@ class WideDeepRegressor(WideDeepClassifier, RegressorModule):
         self.__init_args__ = locals()
         super(RegressorModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
-        self.batch_size = 0
         self.max_seq_length = max_seq_length
         self.label_size = label_size
         self.truncate_method = truncate_method

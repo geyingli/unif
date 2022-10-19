@@ -9,7 +9,7 @@ from ...third import tf
 
 class PerformerClassifier(BERTClassifier, ClassifierModule):
     """ Single-label classifier on Performer. """
-    
+
     _INFER_ATTRIBUTES = BERTClassifier._INFER_ATTRIBUTES
 
     def __init__(
@@ -30,12 +30,10 @@ class PerformerClassifier(BERTClassifier, ClassifierModule):
         self.__init_args__ = locals()
         super(ClassifierModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
-        self.batch_size = 0
         self.max_seq_length = max_seq_length
         self.label_size = label_size
         self.truncate_method = truncate_method
         self._drop_pooler = drop_pooler
-        self._id_to_label = None
         self._kernel_transformation = kernel_transformation
         self._nb_random_features = nb_random_features
 

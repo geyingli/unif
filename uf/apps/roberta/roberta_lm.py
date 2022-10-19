@@ -32,7 +32,6 @@ class RoBERTaLM(BERTLM, LMModule):
         self.__init_args__ = locals()
         super(LMModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
-        self.batch_size = 0
         self.max_seq_length = max_seq_length
         self.label_size = 2
         self.masked_lm_prob = masked_lm_prob

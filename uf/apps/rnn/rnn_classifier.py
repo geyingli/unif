@@ -32,12 +32,10 @@ class RNNClassifier(BERTClassifier, ClassifierModule):
         self.__init_args__ = locals()
         super(ClassifierModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
-        self.batch_size = 0
         self.label_size = label_size
         self.truncate_method = truncate_method
         self._rnn_core = rnn_core
         self._hidden_size = hidden_size
-        self._id_to_label = None
 
         assert rnn_core in ("rnn", "lstm", "gru"), (f"Invalid `rnn_core`: {rnn_core}. Pick one from \"rnn\", \"lstm\" and \"gru\".")
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)

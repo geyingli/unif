@@ -38,7 +38,6 @@ class UniLM(BERTLM, LMModule):
         self.__init_args__ = locals()
         super(LMModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
-        self.batch_size = 0
         self.max_seq_length = max_seq_length
         self.label_size = 2
         self.do_sample_next_sentence = do_sample_next_sentence
@@ -49,7 +48,6 @@ class UniLM(BERTLM, LMModule):
         self._drop_pooler = drop_pooler
         self._max_predictions_per_seq = max_predictions_per_seq
         self.mode = mode
-        self._id_to_label = None
 
         assert mode in ("bi", "l2r", "r2l", "s2s"), (
             "Wrong value of `mode`: %s. Pick one from `bi` (bidirectional), "

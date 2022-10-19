@@ -34,7 +34,6 @@ class UDAClassifier(BERTClassifier, ClassifierModule):
         self.__init_args__ = locals()
         super(ClassifierModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
-        self.batch_size = 0
         self.max_seq_length = max_seq_length
         self.label_size = label_size
         self.truncate_method = truncate_method
@@ -42,7 +41,6 @@ class UDAClassifier(BERTClassifier, ClassifierModule):
         self._uda_softmax_temp = uda_softmax_temp
         self._uda_confidence_thresh = uda_confidence_thresh
         self._tsa_schedule = tsa_schedule
-        self._id_to_label = None
 
         self.bert_config = BERTConfig.from_json_file(config_file)
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
@@ -204,13 +202,21 @@ class UDAClassifier(BERTClassifier, ClassifierModule):
                 self._id_to_label = list(sorted(self._id_to_label))
             except Exception:
                 pass
-            if len(self._id_to_label) < self.label_size:
-                self._id_to_label = list(range(self.label_size))
 
         # automatically set `label_to_id` for prediction
-        self._label_to_id = {label: index for index, label in enumerate(self._id_to_label)}
+        if not self._label_to_id:
+            self._label_to_id = {label: index for index, label in enumerate(self._id_to_label)}
 
-        label_ids = [self._label_to_id[label] if label is not None else -1 for label in y]
+        label_ids = []
+        for label in y:
+            if label is None:
+                label_ids.append(-1)
+                continue
+            if label not in self._label_to_id:
+                assert len(self._label_to_id) < self.label_size, "Number of unique labels exceeds `label_size`."
+                self._label_to_id[label] = len(self._label_to_id)
+                self._id_to_label.append(label)
+            label_ids.append(self._label_to_id[label])
         return label_ids
 
     def _set_placeholders(self, **kwargs):

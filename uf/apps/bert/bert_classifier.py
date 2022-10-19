@@ -33,12 +33,10 @@ class BERTClassifier(ClassifierModule):
         self.__init_args__ = locals()
         super(ClassifierModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
-        self.batch_size = 0
         self.max_seq_length = max_seq_length
         self.label_size = label_size
         self.truncate_method = truncate_method
         self._drop_pooler = drop_pooler
-        self._id_to_label = None
 
         self.bert_config = BERTConfig.from_json_file(config_file)
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
@@ -162,13 +160,18 @@ class BERTClassifier(ClassifierModule):
                 self._id_to_label = list(sorted(self._id_to_label))
             except Exception:
                 pass
-            if len(self._id_to_label) < self.label_size:
-                self._id_to_label = list(range(self.label_size))
 
         # automatically set `label_to_id` for prediction
-        self._label_to_id = {label: index for index, label in enumerate(self._id_to_label)}
+        if not self._label_to_id:
+            self._label_to_id = {label: index for index, label in enumerate(self._id_to_label)}
 
-        label_ids = [self._label_to_id[label] for label in y]
+        label_ids = []
+        for label in y:
+            if label not in self._label_to_id:
+                assert len(self._label_to_id) < self.label_size, "Number of unique labels exceeds `label_size`."
+                self._label_to_id[label] = len(self._label_to_id)
+                self._id_to_label.append(label)
+            label_ids.append(self._label_to_id[label])
         return label_ids
 
     def _set_placeholders(self, **kwargs):
@@ -241,7 +244,7 @@ class BERTClassifier(ClassifierModule):
         # preds
         preds = np.argmax(probs, axis=-1).tolist()
         if self._id_to_label:
-            preds = [self._id_to_label[idx] for idx in preds]
+            preds = [self._id_to_label[idx] if idx < len(self._id_to_label) else None for idx in preds]
 
         outputs = {}
         outputs["preds"] = preds

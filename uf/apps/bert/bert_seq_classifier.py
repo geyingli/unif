@@ -29,11 +29,9 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
         self.__init_args__ = locals()
         super(ClassifierModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
-        self.batch_size = 0
         self.max_seq_length = max_seq_length
         self.label_size = label_size
         self.truncate_method = truncate_method
-        self._id_to_label = None
 
         self.bert_config = BERTConfig.from_json_file(config_file)
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
@@ -145,11 +143,10 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
                 self._id_to_label = list(sorted(self._id_to_label))
             except Exception:
                 pass
-            if len(self._id_to_label) < self.label_size:
-                self._id_to_label = list(range(self.label_size))
 
         # automatically set `label_to_id` for prediction
-        self._label_to_id = {label: index for index, label in enumerate(self._id_to_label)}
+        if not self._label_to_id:
+            self._label_to_id = {label: index for index, label in enumerate(self._id_to_label)}
 
         label_ids = []
         for sample in y:
@@ -163,7 +160,13 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
 
                 com.truncate_segments([sample], self.max_seq_length, truncate_method=self.truncate_method)
 
-            _label_ids = [self._label_to_id[label] for label in sample]
+            _label_ids = []
+            for label in sample:
+                if label not in self._label_to_id:
+                    assert len(self._label_to_id) < self.label_size, "Number of unique labels exceeds `label_size`."
+                    self._label_to_id[label] = len(self._label_to_id)
+                    self._id_to_label.append(label)
+                _label_ids.append(self._label_to_id[label])
             label_ids.append(_label_ids)
         return label_ids
 
@@ -244,7 +247,7 @@ class BERTSeqClassifier(BERTClassifier, ClassifierModule):
             input_length = np.sum(_mask)
             _preds = _preds[:input_length].tolist()
             if self._id_to_label:
-                _preds = [self._id_to_label[idx] for idx in _preds]
+                _preds = [self._id_to_label[idx] if idx < len(self._id_to_label) else None for idx in _preds]
             preds.append(_preds)
 
         outputs = {}

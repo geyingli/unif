@@ -9,7 +9,7 @@ from ... import com
 
 class XLNetSeqClassifier(BERTSeqClassifier, ClassifierModule):
     """ Sequence labeling classifier on XLNet. """
-    
+
     _INFER_ATTRIBUTES = BERTSeqClassifier._INFER_ATTRIBUTES
 
     def __init__(
@@ -27,11 +27,9 @@ class XLNetSeqClassifier(BERTSeqClassifier, ClassifierModule):
         self.__init_args__ = locals()
         super(ClassifierModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
-        self.batch_size = 0
         self.max_seq_length = max_seq_length
         self.label_size = label_size
         self.truncate_method = truncate_method
-        self._id_to_label = None
 
         self.xlnet_config = XLNetConfig(json_path=config_file)
         self.tokenizer = SentencePieceTokenizer(spm_file, do_lower_case)

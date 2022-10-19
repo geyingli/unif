@@ -34,7 +34,6 @@ class VAELM(BERTClassifier, LMModule):
         self.__init_args__ = locals()
         super(LMModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
-        self.batch_size = 0
         self.max_seq_length = max_seq_length
         self.truncate_method = truncate_method
         self._reduced_size = reduced_size

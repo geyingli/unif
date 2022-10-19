@@ -28,7 +28,7 @@ class XLNetLM(BERTLM, LMModule):
         do_lower_case=True,
         truncate_method="LIFO",
     ):
-        raise Exception("We are faced with some problems in XLNetLM. It will soon be fixed in the future.")
+        raise Exception("We are faced with some problems in XLNetLM. It may be fixed in the future.")
 
         self.__init_args__ = locals()
         super(LMModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
@@ -42,7 +42,6 @@ class XLNetLM(BERTLM, LMModule):
         self._mask_alpha = mask_alpha
         self._mask_beta = mask_beta
         self._num_predict = None
-        self._id_to_label = None
 
         self.xlnet_config = XLNetConfig(json_path=config_file)
         self.tokenizer = SentencePieceTokenizer(spm_file, do_lower_case)

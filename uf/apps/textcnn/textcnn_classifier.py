@@ -30,14 +30,12 @@ class TextCNNClassifier(BERTClassifier, ClassifierModule):
         self.__init_args__ = locals()
         super(ClassifierModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
-        self.batch_size = 0
         self.max_seq_length = max_seq_length
         self.label_size = label_size
         self.truncate_method = truncate_method
         self._filter_sizes = filter_sizes
         self._num_channels = num_channels
         self._hidden_size = hidden_size
-        self._id_to_label = None
 
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
         self.decay_power = get_decay_power()

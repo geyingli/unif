@@ -14,6 +14,7 @@ from . import com
 class BaseModule:
     """ Parent class of all the application processors. """
     _INFER_ATTRIBUTES = {}    # params whose value cannot be None in order to infer without training
+    _LOCALIZE_ATTRIBUTES = {"_id_to_label", "_label_to_id"}    # attributes to store in localization
 
     def __init__(self, init_checkpoint, output_dir, gpu_ids):
 
@@ -40,14 +41,7 @@ class BaseModule:
                     "with commas, e.g. [0,1,2,3] or \"0,1,2,3\"."
                 )
 
-        # build graph
-        self.graph = tf.Graph()
-
-        # Before we register the task, fast prediction or scoring is not allowed.
-        self.step = 0                           # current training step
-        self._session_mode = None               # one of None, "train" and "infer"
-        self._session_built = False
-        self._inited_vars = set()
+        self.reset()
 
     def reset(self):
         """ Reset existing session and graph. """
@@ -56,12 +50,17 @@ class BaseModule:
         except AttributeError:
             pass
 
+        # runtime attributes
+        self.batch_size = 0
+        self._id_to_label = None
+        self._label_to_id = None
+
         # build graph
         self.graph = tf.Graph()
 
         # Before we register the task, fast prediction or scoring is not allowed.
-        self.step = 0
-        self._session_mode = None
+        self.step = 0                           # current training step
+        self._session_mode = None               # one of None, "train" and "infer"
         self._session_built = False
         self._inited_vars = set()
 
@@ -437,8 +436,9 @@ class BaseModule:
     def cache(self, key, cache_file="./.cache", max_to_keep=1000, note=""):
         """ Save model configurations into cache file.
 
-        NOTE: This function is deprecated and not upgraded, just retained for compatibility "
-        "with older versions. Try `.localize()` instead.
+        NOTE: This function is deprecated and not upgraded,
+        retained only for compatibility with older versions.
+        Try `.localize()` instead.
         """
         return self.localize(key, into_file=cache_file, max_to_keep=max_to_keep, note=note)
 
@@ -468,15 +468,16 @@ class BaseModule:
         _into_json = {
             "model": self.__class__.__name__,
             "__init__": {},
+            "__dict__": {},
         }
         if note:
             _into_json["note"] = note
 
+        # initialization arguments
         for arg in self.__class__.__init__.__code__.co_varnames[1:]:
-            try:
-                value = self.__getattribute__(arg)
-            except Exception:
-                value = self.__init_args__[arg]
+            value = self.__init_args__[arg]
+            if arg in self.__dict__:
+                value = self.__dict__[arg]
 
             # convert to relative path
             if arg == "init_checkpoint" or arg.endswith("_dir") or arg.endswith("_file"):
@@ -484,8 +485,14 @@ class BaseModule:
                     value = com.get_relative_path(source=into_file, target=value)
 
             _into_json["__init__"][arg] = value
-        into_json[key] = _into_json
 
+        # runtime attributes
+        for arg in self._LOCALIZE_ATTRIBUTES:
+            value = self.__dict__.get(arg)
+            if value is not None:
+                _into_json["__dict__"][arg] = value
+
+        into_json[key] = _into_json
         into_fp = open(into_file, "w", encoding="utf-8")
         json.dump(into_json, into_fp, indent=2)
         into_fp.close()

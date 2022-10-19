@@ -9,7 +9,7 @@ from ... import com
 
 class BERTBinaryClassifier(BERTClassifier, ClassifierModule):
     """ Multi-label classifier on BERT. """
-    
+
     _INFER_ATTRIBUTES = BERTClassifier._INFER_ATTRIBUTES
 
     def __init__(
@@ -29,13 +29,11 @@ class BERTBinaryClassifier(BERTClassifier, ClassifierModule):
         self.__init_args__ = locals()
         super(ClassifierModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
-        self.batch_size = 0
         self.max_seq_length = max_seq_length
         self.label_size = label_size
         self.label_weight = label_weight
         self.truncate_method = truncate_method
         self._drop_pooler = drop_pooler
-        self._id_to_label = None
 
         self.bert_config = BERTConfig.from_json_file(config_file)
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
@@ -77,13 +75,23 @@ class BERTBinaryClassifier(BERTClassifier, ClassifierModule):
                 self._id_to_label = list(sorted(self._id_to_label))
             except Exception:
                 pass
-            if len(self._id_to_label) < self.label_size:
-                self._id_to_label = list(range(self.label_size))
 
         # automatically set `label_to_id` for prediction
-        self._label_to_id = {label: index for index, label in enumerate(self._id_to_label)}
+        if not self._label_to_id:
+            self._label_to_id = {label: index for index, label in enumerate(self._id_to_label)}
 
-        label_ids = [[1 if self._id_to_label[i] in sample else 0 for i in range(self.label_size)] for sample in y]
+        label_ids = []
+        for sample in y:
+            _label_ids = [0] * len(self.label_size)
+
+            for label in sample:
+                if label not in self._label_to_id:
+                    assert len(self._label_to_id) < self.label_size, "Number of unique labels exceeds `label_size`."
+                    self._label_to_id[label] = len(self._label_to_id)
+                    self._id_to_label.append(label)
+                label_id = self._label_to_id[label]
+                _label_ids[label_id] = 1
+            label_ids.append(_label_ids)
         return label_ids
 
     def _set_placeholders(self, **kwargs):
@@ -130,7 +138,10 @@ class BERTBinaryClassifier(BERTClassifier, ClassifierModule):
         # preds
         preds = (probs >= 0.5)
         if self._id_to_label:
-            preds = [[self._id_to_label[i] for i in range(self.label_size) if _preds[i]] for _preds in preds]
+            preds = [[
+                self._id_to_label[i] for i in range(self.label_size)
+                if _preds[i] and i < len(self._id_to_label)
+            ] for _preds in preds]
         else:
             preds = [[i for i in range(self.label_size) if _preds[i]] for _preds in preds]
 

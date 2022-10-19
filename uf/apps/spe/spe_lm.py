@@ -32,7 +32,6 @@ class SPELM(BERTLM, LMModule):
         self.__init_args__ = locals()
         super(BERTLM, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
-        self.batch_size = 0
         self.max_seq_length = max_seq_length
         self.masked_lm_prob = masked_lm_prob
         self.do_whole_word_mask = do_whole_word_mask

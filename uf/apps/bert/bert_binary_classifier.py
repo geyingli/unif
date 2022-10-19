@@ -82,7 +82,7 @@ class BERTBinaryClassifier(BERTClassifier, ClassifierModule):
 
         label_ids = []
         for sample in y:
-            _label_ids = [0] * len(self.label_size)
+            _label_ids = [0] * self.label_size
 
             for label in sample:
                 if label not in self._label_to_id:

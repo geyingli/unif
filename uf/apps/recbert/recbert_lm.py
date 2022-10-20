@@ -189,14 +189,15 @@ class RecBERTLM(LMModule):
             del_prob=self._del_prob,
             **kwargs,
         )
-        return model.get_forward_outputs()
+        train_loss, tensors = model.get_forward_outputs()
+        return train_loss, tensors
 
     def _get_fit_ops(self, from_tfrecords=False):
         ops = [
-            self._tensors["add_preds"],
-            self._tensors["del_preds"],
-            self._tensors["add_loss"],
-            self._tensors["del_loss"],
+            self.tensors["add_preds"],
+            self.tensors["del_preds"],
+            self.tensors["add_loss"],
+            self.tensors["del_loss"],
         ]
         if from_tfrecords:
             ops.extend([
@@ -245,7 +246,7 @@ class RecBERTLM(LMModule):
         return info
 
     def _get_predict_ops(self):
-        return [self._tensors["add_preds"], self._tensors["del_preds"]]
+        return [self.tensors["add_preds"], self.tensors["del_preds"]]
 
     def _get_predict_outputs(self, output_arrays, n_inputs):
         input_ids = self.data["input_ids"]

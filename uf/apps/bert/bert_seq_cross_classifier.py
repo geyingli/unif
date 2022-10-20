@@ -230,14 +230,15 @@ class BERTSeqCrossClassifier(SeqClassifierModule):
             cls_scope="cls/sequence",
             **kwargs,
         )
-        return decoder.get_forward_outputs()
+        train_loss, tensors = decoder.get_forward_outputs()
+        return train_loss, tensors
 
     def _get_fit_ops(self, from_tfrecords=False):
         ops = [
-            self._tensors["seq_cls_preds"],
-            self._tensors["cls_preds"],
-            self._tensors["seq_cls_losses"],
-            self._tensors["cls_losses"],
+            self.tensors["seq_cls_preds"],
+            self.tensors["cls_preds"],
+            self.tensors["seq_cls_losses"],
+            self.tensors["cls_losses"],
         ]
         if from_tfrecords:
             ops.extend([
@@ -279,7 +280,7 @@ class BERTSeqCrossClassifier(SeqClassifierModule):
         return info
 
     def _get_predict_ops(self):
-        return [self._tensors["seq_cls_probs"], self._tensors["cls_probs"]]
+        return [self.tensors["seq_cls_probs"], self.tensors["cls_probs"]]
 
     def _get_predict_outputs(self, output_arrays, n_inputs):
 
@@ -309,10 +310,10 @@ class BERTSeqCrossClassifier(SeqClassifierModule):
 
     def _get_score_ops(self):
         return [
-            self._tensors["seq_cls_preds"],
-            self._tensors["cls_preds"],
-            self._tensors["seq_cls_losses"],
-            self._tensors["cls_losses"],
+            self.tensors["seq_cls_preds"],
+            self.tensors["cls_preds"],
+            self.tensors["seq_cls_losses"],
+            self.tensors["cls_losses"],
         ]
 
     def _get_score_outputs(self, output_arrays, n_inputs):

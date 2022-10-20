@@ -5,17 +5,11 @@ from ._base_ import Task
 class Initialization(Task):
     """ Initialze the model, make it ready for inference. """
 
-    def __init__(self, module):
-        self.module = module
-
-        self.decorate()
-
-    def decorate(self):
-        self.module._set_placeholders()
-
-        _, self.module._tensors = self.module._parallel_forward(False)
-
     def run(self, reinit_all, ignore_checkpoint):
+
+        # build graph
+        self.module._set_placeholders()
+        _, self.module.tensors = self.module._parallel_forward(is_training=False)
 
         # init session
         if reinit_all or not self.module._session_built:

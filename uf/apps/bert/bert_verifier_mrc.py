@@ -212,10 +212,10 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
 
     def _get_fit_ops(self, from_tfrecords=False):
         ops = [
-            self._tensors["verifier_preds"],
-            self._tensors["verifier_losses"],
-            self._tensors["mrc_preds"],
-            self._tensors["mrc_losses"],
+            self.tensors["verifier_preds"],
+            self.tensors["verifier_losses"],
+            self.tensors["mrc_preds"],
+            self.tensors["mrc_losses"],
         ]
         if from_tfrecords:
             ops.extend([self.placeholders["label_ids"]])
@@ -261,10 +261,10 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
 
     def _get_predict_ops(self):
         return [
-            self._tensors["verifier_probs"],
-            self._tensors["verifier_preds"],
-            self._tensors["mrc_probs"],
-            self._tensors["mrc_preds"],
+            self.tensors["verifier_probs"],
+            self.tensors["verifier_preds"],
+            self.tensors["mrc_probs"],
+            self.tensors["mrc_preds"],
         ]
 
     def _get_predict_outputs(self, output_arrays, n_inputs):
@@ -316,10 +316,10 @@ class BERTVerifierMRC(BERTMRC, MRCModule):
 
     def _get_score_ops(self):
         return [
-            self._tensors["verifier_preds"],
-            self._tensors["verifier_losses"],
-            self._tensors["mrc_preds"],
-            self._tensors["mrc_losses"],
+            self.tensors["verifier_preds"],
+            self.tensors["verifier_losses"],
+            self.tensors["mrc_preds"],
+            self.tensors["mrc_losses"],
         ]
 
     def _get_score_outputs(self, output_arrays, n_inputs):

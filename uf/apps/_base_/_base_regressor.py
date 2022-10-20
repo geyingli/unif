@@ -45,13 +45,13 @@ class RegDecoder(BaseDecoder):
                     name="preds",
                 )
 
-        self._tensors["preds"] = logits
+        self.tensors["preds"] = logits
 
         per_example_loss = tf.reduce_sum(tf.square(label_floats - logits), axis=-1)
         if sample_weight is not None:
             per_example_loss = tf.cast(sample_weight, dtype=tf.float32) * per_example_loss
 
-        self._tensors["losses"] = per_example_loss
+        self.tensors["losses"] = per_example_loss
         self.train_loss = tf.reduce_mean(per_example_loss)
 
 
@@ -105,7 +105,7 @@ class RegressorModule(BaseModule):
         return label_floats
 
     def _get_fit_ops(self, from_tfrecords=False):
-        ops = [self._tensors["preds"]]
+        ops = [self.tensors["preds"]]
         if from_tfrecords:
             ops.extend([self.placeholders["label_floats"]])
         return ops
@@ -127,7 +127,7 @@ class RegressorModule(BaseModule):
         return info
 
     def _get_predict_ops(self):
-        return [self._tensors["preds"]]
+        return [self.tensors["preds"]]
 
     def _get_predict_outputs(self, output_arrays, n_inputs):
 
@@ -140,7 +140,7 @@ class RegressorModule(BaseModule):
         return outputs
 
     def _get_score_ops(self):
-        return [self._tensors["preds"], self._tensors["losses"]]
+        return [self.tensors["preds"], self.tensors["losses"]]
 
     def _get_score_outputs(self, output_arrays, n_inputs):
 

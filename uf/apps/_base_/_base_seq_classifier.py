@@ -50,8 +50,8 @@ class SeqClsDecoder(BaseDecoder):
                 logits = tf.nn.bias_add(logits, output_bias)
                 logits = tf.reshape(logits, [-1, seq_length, label_size])
 
-        self._tensors["preds"] = tf.argmax(logits, axis=-1, name="preds")
-        self._tensors["probs"] = tf.nn.softmax(logits, axis=-1, name="probs")
+        self.tensors["preds"] = tf.argmax(logits, axis=-1, name="preds")
+        self.tensors["probs"] = tf.nn.softmax(logits, axis=-1, name="probs")
 
         log_probs = tf.nn.log_softmax(logits, axis=-1)
         one_hot_labels = tf.one_hot(label_ids, depth=label_size, dtype=tf.float32)
@@ -62,7 +62,7 @@ class SeqClsDecoder(BaseDecoder):
         if sample_weight is not None:
             per_example_loss *= tf.cast(sample_weight, dtype=tf.float32)
 
-        self._tensors["losses"] = per_example_loss
+        self.tensors["losses"] = per_example_loss
         self.train_loss = tf.reduce_mean(per_example_loss)
 
 
@@ -112,8 +112,8 @@ class SeqClsCrossDecoder(BaseDecoder):
             logits = tf.matmul(output_layer, output_weights, transpose_b=True)
             logits = tf.nn.bias_add(logits, output_bias)
             logits = tf.reshape(logits, [-1, seq_length, seq_cls_label_size])
-            self._tensors["seq_cls_preds"] = tf.argmax(logits, axis=-1, name="seq_cls_preds")
-            self._tensors["seq_cls_probs"] = tf.nn.softmax(logits, axis=-1, name="seq_cls_probs")
+            self.tensors["seq_cls_preds"] = tf.argmax(logits, axis=-1, name="seq_cls_preds")
+            self.tensors["seq_cls_probs"] = tf.nn.softmax(logits, axis=-1, name="seq_cls_probs")
             log_probs = tf.nn.log_softmax(logits, axis=-1)
             one_hot_labels = tf.one_hot(seq_cls_label_ids, depth=seq_cls_label_size, dtype=tf.float32)
             per_token_loss = - tf.reduce_sum(one_hot_labels * log_probs, axis=-1)
@@ -122,7 +122,7 @@ class SeqClsCrossDecoder(BaseDecoder):
             per_example_loss = tf.reduce_sum(per_token_loss, axis=-1)
             if sample_weight is not None:
                 per_example_loss *= tf.cast(sample_weight, dtype=tf.float32)
-            self._tensors["seq_cls_losses"] = per_example_loss
+            self.tensors["seq_cls_losses"] = per_example_loss
 
         # cls
         with tf.variable_scope(cls_scope):
@@ -141,16 +141,16 @@ class SeqClsCrossDecoder(BaseDecoder):
             output_layer = util.dropout(input_tensor, hidden_dropout_prob if is_training else 0.0)
             logits = tf.matmul(output_layer[:,0,:], output_weights, transpose_b=True)
             logits = tf.nn.bias_add(logits, output_bias)
-            self._tensors["cls_preds"] = tf.argmax(logits, axis=-1, name="cls_preds")
-            self._tensors["cls_probs"] = tf.nn.softmax(logits, axis=-1, name="cls_probs")
+            self.tensors["cls_preds"] = tf.argmax(logits, axis=-1, name="cls_preds")
+            self.tensors["cls_probs"] = tf.nn.softmax(logits, axis=-1, name="cls_probs")
             log_probs = tf.nn.log_softmax(logits, axis=-1)
             one_hot_labels = tf.one_hot(cls_label_ids, depth=cls_label_size, dtype=tf.float32)
             per_example_loss = - tf.reduce_sum(one_hot_labels * log_probs, axis=-1)
             if sample_weight is not None:
                 per_example_loss = tf.cast(sample_weight, dtype=tf.float32) * per_example_loss
-            self._tensors["cls_losses"] = per_example_loss
+            self.tensors["cls_losses"] = per_example_loss
 
-        self.train_loss = tf.reduce_mean(self._tensors["seq_cls_losses"]) + tf.reduce_mean(self._tensors["cls_losses"])
+        self.train_loss = tf.reduce_mean(self.tensors["seq_cls_losses"]) + tf.reduce_mean(self.tensors["cls_losses"])
 
 
 class SeqClassifierModule(BaseModule):
@@ -225,7 +225,7 @@ class SeqClassifierModule(BaseModule):
         return label_ids
 
     def _get_fit_ops(self, from_tfrecords=False):
-        ops = [self._tensors["preds"], self._tensors["losses"]]
+        ops = [self.tensors["preds"], self.tensors["losses"]]
         if from_tfrecords:
             ops.extend([self.placeholders["input_mask"], self.placeholders["label_ids"]])
         return ops
@@ -254,7 +254,7 @@ class SeqClassifierModule(BaseModule):
         return info
 
     def _get_predict_ops(self):
-        return [self._tensors["probs"]]
+        return [self.tensors["probs"]]
 
     def _get_predict_outputs(self, output_arrays, n_inputs):
 
@@ -279,7 +279,7 @@ class SeqClassifierModule(BaseModule):
         return outputs
 
     def _get_score_ops(self):
-        return [self._tensors["preds"], self._tensors["losses"]]
+        return [self.tensors["preds"], self.tensors["losses"]]
 
     def _get_score_outputs(self, output_arrays, n_inputs):
 

@@ -45,10 +45,10 @@ class BinaryClsDecoder(BaseDecoder):
                 output_layer = util.dropout(input_tensor, hidden_dropout_prob if is_training else 0.0)
                 logits = tf.matmul(output_layer, output_weights, transpose_b=True)
                 logits = tf.nn.bias_add(logits, output_bias)
-            
+
         probs = tf.nn.sigmoid(logits, name="probs")
-        self._tensors["probs"] = probs
-        self._tensors["preds"] = tf.greater(probs, 0.5, name="preds")
+        self.tensors["probs"] = probs
+        self.tensors["preds"] = tf.greater(probs, 0.5, name="preds")
 
         per_label_loss = tf.nn.sigmoid_cross_entropy_with_logits(logits=logits, labels=tf.cast(label_ids, dtype=tf.float32))
         if label_weight is not None:
@@ -59,7 +59,7 @@ class BinaryClsDecoder(BaseDecoder):
         if sample_weight is not None:
             per_example_loss *= sample_weight
 
-        self._tensors["losses"] = per_example_loss
+        self.tensors["losses"] = per_example_loss
         self.train_loss = tf.reduce_mean(per_example_loss)
 
 
@@ -71,7 +71,7 @@ class BinaryClassifierModule(BaseModule):
         "label_size": "An integer that defines number of possible labels of outputs",
         "init_checkpoint": "A string that directs to the checkpoint file used for initialization",
     }
-    
+
     def _convert_x(self, x, tokenized):
         """ Convert text sample. """
 
@@ -139,7 +139,7 @@ class BinaryClassifierModule(BaseModule):
         return label_ids
 
     def _get_fit_ops(self, from_tfrecords=False):
-        ops = [self._tensors["preds"], self._tensors["losses"]]
+        ops = [self.tensors["preds"], self.tensors["losses"]]
         if from_tfrecords:
             ops.extend([self.placeholders["label_ids"]])
         return ops
@@ -166,7 +166,7 @@ class BinaryClassifierModule(BaseModule):
         return info
 
     def _get_predict_ops(self):
-        return [self._tensors["probs"]]
+        return [self.tensors["probs"]]
 
     def _get_predict_outputs(self, output_arrays, n_inputs):
 
@@ -190,7 +190,7 @@ class BinaryClassifierModule(BaseModule):
         return outputs
 
     def _get_score_ops(self):
-        return [self._tensors["preds"], self._tensors["losses"]]
+        return [self.tensors["preds"], self.tensors["losses"]]
 
     def _get_score_outputs(self, output_arrays, n_inputs):
 

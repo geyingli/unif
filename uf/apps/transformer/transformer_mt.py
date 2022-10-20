@@ -135,10 +135,11 @@ class TransformerMT(MTModule):
             num_attention_heads=self._num_attention_heads,
             **kwargs,
         )
-        return model.get_forward_outputs()
+        train_loss, tensors = model.get_forward_outputs()
+        return train_loss, tensors
 
     def _get_fit_ops(self, from_tfrecords=False):
-        ops = [self._tensors["preds"], self._tensors["losses"]]
+        ops = [self.tensors["preds"], self.tensors["losses"]]
         if from_tfrecords:
             ops.extend([self.placeholders["target_ids"]])
         return ops
@@ -167,7 +168,7 @@ class TransformerMT(MTModule):
         return info
 
     def _get_predict_ops(self):
-        return [self._tensors["preds"]]
+        return [self.tensors["preds"]]
 
     def _get_predict_outputs(self, output_arrays, n_inputs):
 
@@ -189,7 +190,7 @@ class TransformerMT(MTModule):
         return outputs
 
     def _get_score_ops(self):
-        return [self._tensors["preds"], self._tensors["losses"]]
+        return [self.tensors["preds"], self.tensors["losses"]]
 
     def _get_score_outputs(self, output_arrays, n_inputs):
 

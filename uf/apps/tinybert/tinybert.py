@@ -98,7 +98,7 @@ class TinyBERTClsDistillor(BaseDecoder):
             distill_loss = (embedding_loss + attention_loss +
                             hidden_loss + pred_loss)
             self.train_loss = distill_loss
-            self._tensors["losses"] = tf.reshape(distill_loss, [1])
+            self.tensors["losses"] = tf.reshape(distill_loss, [1])
 
         else:
             self._infer(student_logits, label_ids, sample_weight, label_size)
@@ -193,8 +193,8 @@ class TinyBERTClsDistillor(BaseDecoder):
 
     def _infer(self, student_logits, label_ids, sample_weight, label_size):
         probs = tf.nn.softmax(student_logits, axis=-1, name="probs")
-        self._tensors["probs"] = probs
-        self._tensors["preds"] = tf.argmax(probs, axis=-1, name="preds")
+        self.tensors["probs"] = probs
+        self.tensors["preds"] = tf.argmax(probs, axis=-1, name="preds")
 
         if label_ids is not None:
             log_probs = tf.nn.log_softmax(student_logits, axis=-1)
@@ -206,7 +206,7 @@ class TinyBERTClsDistillor(BaseDecoder):
                 per_example_loss = tf.cast(
                     sample_weight, dtype=tf.float32) * per_example_loss
 
-            self._tensors["losses"] = per_example_loss
+            self.tensors["losses"] = per_example_loss
 
 
 class TinyBERTBinaryClsDistillor(TinyBERTClsDistillor):
@@ -221,8 +221,8 @@ class TinyBERTBinaryClsDistillor(TinyBERTClsDistillor):
 
     def _infer(self, student_logits, label_ids, sample_weight, label_size):
         probs = tf.nn.sigmoid(student_logits, name="probs")
-        self._tensors["probs"] = probs
-        self._tensors["preds"] = tf.greater(probs, 0.5, name="preds")
+        self.tensors["probs"] = probs
+        self.tensors["preds"] = tf.greater(probs, 0.5, name="preds")
 
         if label_ids is not None:
             per_label_loss = tf.nn.sigmoid_cross_entropy_with_logits(
@@ -232,4 +232,4 @@ class TinyBERTBinaryClsDistillor(TinyBERTClsDistillor):
             if sample_weight is not None:
                 per_example_loss *= sample_weight
 
-            self._tensors["losses"] = per_example_loss
+            self.tensors["losses"] = per_example_loss

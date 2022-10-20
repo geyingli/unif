@@ -172,10 +172,11 @@ class XLNetLM(BERTLM, LMModule):
             sample_weight=placeholders.get("sample_weight"),
             **kwargs,
         )
-        return model.get_forward_outputs()
+        train_loss, tensors = model.get_forward_outputs()
+        return train_loss, tensors
 
     def _get_fit_ops(self, from_tfrecords=False):
-        ops = [self._tensors["preds"], self._tensors["mask"], self._tensors["losses"]]
+        ops = [self.tensors["preds"], self.tensors["mask"], self.tensors["losses"]]
         if from_tfrecords:
             ops.extend([self.placeholders["target"]])
         return ops
@@ -206,7 +207,7 @@ class XLNetLM(BERTLM, LMModule):
         return info
 
     def _get_predict_ops(self):
-        return [self._tensors["preds"]]
+        return [self.tensors["preds"]]
 
     def _get_predict_outputs(self, output_arrays, n_inputs):
 

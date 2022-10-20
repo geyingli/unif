@@ -191,10 +191,11 @@ class DilatedLM(LMModule):
             sample_weight=placeholders.get("sample_weight"),
             **kwargs,
         )
-        return model.get_forward_outputs()
+        train_loss, tensors = model.get_forward_outputs()
+        return train_loss, tensors
 
     def _get_fit_ops(self, from_tfrecords=False):
-        ops = [self._tensors["LM"], self._tensors["LM"]]
+        ops = [self.tensors["LM"], self.tensors["LM"]]
         if from_tfrecords:
             ops.extend([self.placeholders["dilated_ids"], self.placeholders["label_ids"]])
         return ops
@@ -224,7 +225,7 @@ class DilatedLM(LMModule):
         return info
 
     def _get_predict_ops(self):
-        return [self._tensors["LM"]]
+        return [self.tensors["LM"]]
 
     def _get_predict_outputs(self, output_arrays, n_inputs):
 

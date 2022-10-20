@@ -5,10 +5,10 @@ class BaseEncoder:
     def __init__(self, *args, **kwargs):
         pass
 
-    def get_pooled_output(self):
+    def get_pooled_output(self, *args, **kwargs):
         raise NotImplementedError()
 
-    def get_sequence_output(self):
+    def get_sequence_output(self, *args, **kwargs):
         raise NotImplementedError()
 
 
@@ -19,7 +19,7 @@ class BaseDecoder:
         self.train_loss = None
 
         # supervised tensors of each example
-        self._tensors = collections.OrderedDict()
+        self.tensors = collections.OrderedDict()
 
     def get_forward_outputs(self):
-        return (self.train_loss, self._tensors)
+        return (self.train_loss, self.tensors)

@@ -58,10 +58,10 @@ class CRFDecoder(BaseDecoder):
                     per_example_loss *= tf.cast(
                         sample_weight, dtype=tf.float32)
                 self.train_loss = tf.reduce_mean(per_example_loss)
-                self._tensors["losses"] = per_example_loss
-                self._tensors["preds"] = tf.argmax(logits, axis=-1)
-                self._tensors["logits"] = logits
-                self._tensors["transition_matrix"] = transition_matrix
+                self.tensors["losses"] = per_example_loss
+                self.tensors["preds"] = tf.argmax(logits, axis=-1)
+                self.tensors["logits"] = logits
+                self.tensors["transition_matrix"] = transition_matrix
 
 
 def crf_log_likelihood(input_tensor,

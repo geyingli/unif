@@ -195,10 +195,11 @@ class BERTCRFCascadeNER(BERTCRFNER, NERModule):
             scope="cls/sequence",
             **kwargs,
         )
-        return decoder.get_forward_outputs()
+        train_loss, tensors = decoder.get_forward_outputs()
+        return train_loss, tensors
 
     def _get_fit_ops(self, from_tfrecords=False):
-        ops = [self._tensors["logits"], self._tensors["transition_matrix"], self._tensors["losses"]]
+        ops = [self.tensors["logits"], self.tensors["transition_matrix"], self.tensors["losses"]]
         if from_tfrecords:
             ops.extend([self.placeholders["input_mask"], self.placeholders["label_ids"]])
         return ops
@@ -234,7 +235,7 @@ class BERTCRFCascadeNER(BERTCRFNER, NERModule):
         return info
 
     def _get_predict_ops(self):
-        return [self._tensors["logits"], self._tensors["transition_matrix"]]
+        return [self.tensors["logits"], self.tensors["transition_matrix"]]
 
     def _get_predict_outputs(self, output_arrays, n_inputs):
 
@@ -292,7 +293,7 @@ class BERTCRFCascadeNER(BERTCRFNER, NERModule):
         return outputs
 
     def _get_score_ops(self):
-        return [self._tensors["logits"], self._tensors["transition_matrix"], self._tensors["losses"]]
+        return [self.tensors["logits"], self.tensors["transition_matrix"], self.tensors["losses"]]
 
     def _get_score_outputs(self, output_arrays, n_inputs):
 

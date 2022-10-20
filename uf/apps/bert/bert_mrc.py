@@ -167,4 +167,5 @@ class BERTMRC(MRCModule):
             scope="mrc",
             **kwargs,
         )
-        return decoder.get_forward_outputs()
+        train_loss, tensors = decoder.get_forward_outputs()
+        return train_loss, tensors

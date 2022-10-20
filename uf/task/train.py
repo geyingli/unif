@@ -11,8 +11,7 @@ from ._base_ import Task
 class Training(Task):
     """ Simply train, in a common neural-network manner. """
 
-    def __init__(self, module, **kwargs):
-        self.module = module
+    def run(self, target_steps, print_per_secs=60, save_per_steps=1000, **kwargs):
         self.grad_acc_steps = float(kwargs.get("grad_acc_steps", "1"))      # gradient accumulation
         self.shuffle = kwargs.get("shuffle", True)                          # if to shuffle the training data
         self.adversarial = kwargs.get("adversarial", "").lower()            # adversarial training algorithm
@@ -21,30 +20,8 @@ class Training(Task):
         self.n_jobs = kwargs.get("n_jobs", max(multiprocessing.cpu_count() - 1, 1))    # number of threads loading tfrecords
         self.max_to_keep = kwargs.get("max_to_keep", 1000000)
 
-        self.decorate(**kwargs)
-
-    def decorate(self, **kwargs):
-        self._init_placeholders()
-
-        # accumulate gradients for updation
-        if self.grad_acc_steps > 1:
-            self._accumulate_gradients(**kwargs)
-        else:
-            grads, self.module._tensors = self.module._parallel_forward(**kwargs)
-            update_params_op = com.update_global_params(
-                self.module.trainable_variables,
-                self.module._global_step,
-                self.module._optimizer,
-                grads,
-            )
-            update_step_op = self.module._global_step.assign(self.module._global_step + 1)
-            self.train_ops = [update_params_op, update_step_op]
-
-    def run(self, target_steps, print_per_secs=60, save_per_steps=1000):
-
-        # shuffle training samples
-        if self.shuffle and not self.tfrecords_files:
-            self._shuffle()
+        # build graph
+        self._build_graph(**kwargs)
 
         # init session/variables
         if not self.module._session_built:
@@ -57,6 +34,10 @@ class Training(Task):
             if variables:
                 self._init_variables(variables)
         self.module._session_mode = "train"
+
+        # shuffle training samples
+        if self.shuffle and not self.tfrecords_files:
+            self._shuffle()
 
         # print
         if self.adversarial:
@@ -91,7 +72,7 @@ class Training(Task):
             if (self.grad_acc_steps > 1) and (i % self.grad_acc_steps == 0):
                 self.module.sess.run(self.update_params_op)
 
-    def _init_placeholders(self):
+    def _init_inputs(self):
         if self.from_tfrecords:
             self.n_inputs = com.get_tfrecords_length(self.tfrecords_files)
 
@@ -136,8 +117,25 @@ class Training(Task):
         if not self.n_inputs:
             raise ValueError("0 input samples recognized.")
 
+    def _build_graph(self, **kwargs):
+        self._init_inputs()
+
+        # accumulate gradients for updation
+        if self.grad_acc_steps > 1:
+            self._accumulate_gradients(**kwargs)
+        else:
+            grads, self.module.tensors = self.module._parallel_forward(**kwargs)
+            update_params_op = com.update_global_params(
+                self.module.trainable_variables,
+                self.module._global_step,
+                self.module._optimizer,
+                grads,
+            )
+            update_step_op = self.module._global_step.assign(self.module._global_step + 1)
+            self.train_ops = [update_params_op, update_step_op]
+
     def _accumulate_gradients(self, **kwargs):
-        grads, self.module._tensors = self.module._parallel_forward(**kwargs)
+        grads, self.module.tensors = self.module._parallel_forward(**kwargs)
 
         params = []
         new_grads = []
@@ -227,9 +225,9 @@ class Training(Task):
         for key in self.module.data.keys():
             if key.startswith(com.BACKUP_DATA):
                 continue
-            
-            # Error may occurs when the system trying to unberably 
-            # allocate large memory for indexing. 
+
+            # Error may occurs when the system trying to unberably
+            # allocate large memory for indexing.
             try:
                 shuffled_data[key] = self.module.data[key][index_list]
             except:
@@ -279,26 +277,26 @@ class Training(Task):
 class AdversarialTraining(Training):
     """ Train with adversarial algorithms. """
 
-    def decorate(self, **kwargs):
-        self._init_placeholders()
+    def _build_graph(self, **kwargs):
+        self._init_inputs()
 
+        ok = True
         try:
-            ok = True
-            if self.adversarial == "fgm":
+            if self.adversarial.lower() == "fgm":
                 self._fgm(**kwargs)
-            elif self.adversarial == "pgd":
+            elif self.adversarial.lower() == "pgd":
                 self._pgd(**kwargs)
-            elif self.adversarial == "freelb":
+            elif self.adversarial.lower() == "freelb":
                 self._freelb(**kwargs)
-            elif self.adversarial == "freeat":
+            elif self.adversarial.lower() == "freeat":
                 self._freeat(**kwargs)
-            elif self.adversarial == "smart":
+            elif self.adversarial.lower() == "smart":
                 self._smart(**kwargs)
             else:
                 ok = False
         except Exception:
             raise ValueError(
-                "%s does not support adversarial algorithm `%s`." 
+                "%s does not support adversarial algorithm `%s`."
                 % (self.module.__class__.__name__, self.adversarial)
             )
         if not ok:
@@ -317,7 +315,7 @@ class AdversarialTraining(Training):
         # must be smaller than one)
 
         # attack
-        actual_grads, self.module._tensors = self.module._parallel_forward(**kwargs)
+        actual_grads, self.module.tensors = self.module._parallel_forward(**kwargs)
         grad, param = com.get_grad_and_param(self.module.trainable_variables, actual_grads, "word_embedding")
         r = tf.multiply(epsilon, grad / (tf.norm(grad) + 1e-9))
         attack_op = param.assign(param + r)
@@ -361,7 +359,7 @@ class AdversarialTraining(Training):
                 d_grads, tensors = self.module._parallel_forward(**kwargs)
                 if k == 0:
                     actual_grads = d_grads
-                    self.module._tensors = tensors
+                    self.module.tensors = tensors
                 grad, param = com.get_grad_and_param(self.module.trainable_variables, d_grads, "word_embedding")
                 tmp_r = tf.multiply(1 / n_loop, grad / (tf.norm(grad) + 1e-9))
 
@@ -411,7 +409,7 @@ class AdversarialTraining(Training):
         # norm of gradients)
 
         # initialize
-        d_grads, self.module._tensors = self.module._parallel_forward(**kwargs)
+        d_grads, self.module.tensors = self.module._parallel_forward(**kwargs)
         grad, param = com.get_grad_and_param(self.module.trainable_variables, d_grads, "word_embedding")
         init_r = tf.get_variable(
             "init_r",
@@ -482,7 +480,7 @@ class AdversarialTraining(Training):
             with tf.control_dependencies([attack_op]):
                 grads, tensors = self.module._parallel_forward(**kwargs)
                 if k == 0:
-                    self.module._tensors = tensors
+                    self.module.tensors = tensors
                 grad, param = com.get_grad_and_param(self.module.trainable_variables, grads, "word_embedding")
                 update_params_op = com.update_global_params(
                     self.module.trainable_variables,
@@ -521,8 +519,8 @@ class AdversarialTraining(Training):
         # the largest value of gradients)
 
         # initialize
-        unused_grads, self.module._tensors = self.module._parallel_forward(**kwargs)
-        cls_loss = tf.reduce_mean(self.module._tensors["losses"])
+        unused_grads, self.module.tensors = self.module._parallel_forward(**kwargs)
+        cls_loss = tf.reduce_mean(self.module.tensors["losses"])
 
         # Bregman proximal point optimization
         param = com.get_param(self.module.trainable_variables, "word_embedding")
@@ -534,12 +532,12 @@ class AdversarialTraining(Training):
             trainable=False,
         )
         _, breg_tensors = self.module._parallel_forward(tilda_embeddings=tilda_embeddings, **kwargs)
-        probs = self.module._tensors["probs"]
+        probs = self.module.tensors["probs"]
         probs_breg = breg_tensors["probs"]
         per_example_loss = tf.reduce_sum(probs_breg * (tf.log(probs_breg) - tf.log(probs)), axis=-1)
         per_example_loss_breg = tf.reduce_sum(probs * (tf.log(probs) - tf.log(probs_breg)), axis=-1)
         breg_loss = breg_miu * (tf.reduce_mean(per_example_loss) + tf.reduce_mean(per_example_loss_breg))
-        self.module._tensors["breg"] = breg_miu * (per_example_loss + per_example_loss_breg)
+        self.module.tensors["breg"] = breg_miu * (per_example_loss + per_example_loss_breg)
 
         # perturbation
         grad, param = com.get_grad_and_param(self.module.trainable_variables, unused_grads, "word_embedding")
@@ -569,7 +567,7 @@ class AdversarialTraining(Training):
                 per_example_loss = tf.reduce_sum(probs_prtb * (tf.log(probs_prtb) - tf.log(probs)), axis=-1)
                 per_example_loss_prtb = tf.reduce_sum(probs * (tf.log(probs) - tf.log(probs_prtb)), axis=-1)
                 prtb_loss = prtb_lambda * (tf.reduce_mean(per_example_loss) + tf.reduce_mean(per_example_loss_prtb))
-                self.module._tensors["prtb"] = prtb_lambda * (per_example_loss + per_example_loss_prtb)
+                self.module.tensors["prtb"] = prtb_lambda * (per_example_loss + per_example_loss_prtb)
 
                 # sum up
                 train_loss = cls_loss + breg_loss + prtb_loss

@@ -15,12 +15,12 @@ class BaseModule:
     """ Parent class of all the application processors. """
 
     # params whose value cannot be None in order to infer without training
-    _INFER_ATTRIBUTES = {    
+    _INFER_ATTRIBUTES = {
         "init_checkpoint": "A string that directs to the checkpoint file used for initialization",
     }
 
     # attributes to store in localization
-    _LOCALIZE_ATTRIBUTES = ["_id_to_label", "_label_to_id"]    
+    _LOCALIZE_ATTRIBUTES = ["_id_to_label", "_label_to_id"]
 
     def __init__(self, init_checkpoint, output_dir, gpu_ids):
 
@@ -209,13 +209,14 @@ class BaseModule:
             kwargs.update(tfrecords_files=tfrecords_files, n_jobs=n_jobs)
 
             if kwargs.get("adversarial"):
-                t = task.AdversarialTraining(self, **kwargs)
+                t = task.AdversarialTraining(self)
             else:
-                t = task.Training(self, **kwargs)
+                t = task.Training(self)
             return t.run(
                 target_steps,
                 print_per_secs=print_per_secs,
                 save_per_steps=save_per_steps,
+                **kwargs,
             )
 
     def fit(
@@ -306,13 +307,14 @@ class BaseModule:
             )
 
             if kwargs.get("adversarial"):
-                t = task.AdversarialTraining(self, **kwargs)
+                t = task.AdversarialTraining(self)
             else:
-                t = task.Training(self, **kwargs)
+                t = task.Training(self)
             return t.run(
                 target_steps,
                 print_per_secs=print_per_secs,
                 save_per_steps=save_per_steps,
+                **kwargs,
             )
 
     def predict(self, X=None, X_tokenized=None, batch_size=8):
@@ -361,8 +363,7 @@ class BaseModule:
 
         # Register the task, and then run.
         with self.graph.as_default(), tf.variable_scope("", reuse=tf.AUTO_REUSE):
-            t = task.Inference(self)
-            return t.run()
+            return task.Inference(self).run()
 
     def score(self, X=None, y=None, sample_weight=None, X_tokenized=None, batch_size=8):
         """ Inference on the model with scoring.
@@ -413,8 +414,7 @@ class BaseModule:
 
         # Register the task, and then run.
         with self.graph.as_default(), tf.variable_scope("", reuse=tf.AUTO_REUSE):
-            t = task.Scoring(self)
-            return t.run()
+            return task.Scoring(self).run()
 
     def save(self, max_to_keep=1000):
         """ Save model into checkpoint file.
@@ -532,8 +532,7 @@ class BaseModule:
 
         # Register the task, and then run.
         with self.graph.as_default(), tf.variable_scope("", reuse=tf.AUTO_REUSE):
-            t = task.Initialization(self)
-            return t.run(reinit_all, ignore_checkpoint)
+            return task.Initialization(self).run(reinit_all, ignore_checkpoint)
 
     def reinit_from_checkpoint(self, init_checkpoint=None, assignment_map=None):
         """ Reinitialize variables from checkpoint file.
@@ -634,8 +633,13 @@ class BaseModule:
 
         # Register the task, and then run.
         with self.graph.as_default(), tf.variable_scope("", reuse=tf.AUTO_REUSE):
-            t = task.Exportation(self)
-            t.run(export_dir, rename_inputs, rename_outputs, ignore_inputs, ignore_outputs)
+            return task.Exportation(self).run(
+                export_dir,
+                rename_inputs=rename_inputs,
+                rename_outputs=rename_outputs,
+                ignore_inputs=ignore_inputs,
+                ignore_outputs=ignore_outputs,
+            )
 
     def _parallel_convert(self, X=None, y=None, sample_weight=None, X_tokenized=None, is_training=False):
         """ Parallel data conversion in multi processes, a general method. """
@@ -732,55 +736,63 @@ class BaseModule:
     def _parallel_forward(self, is_training=True, **kwargs):
         """ Parallel foundation of computation graph in multi GPUs, a general method. """
 
-        # We implement data parallelization instead of model parallelization, for this design suits most real cases.
-        all_grads = []
-        all_tensors = []
+        # data parallelization
         n_device = len(self._gpu_ids) if self._gpu_ids else 1
-        split_placeholders = {key: {} for key in range(n_device)}
-        for name, placeholder in self.placeholders.items():
-            split_placeholder = tf.split(placeholder, n_device, axis=0)
-            for key in range(n_device):
-                split_placeholders[key][name] = split_placeholder[key]
+        parallel_placeholders = {key: {} for key in range(n_device)}
+        parallel_tensors = {}
+        parallel_grads = []
 
         # map
+        for name, placeholder in self.placeholders.items():
+            split_placeholder = tf.split(placeholder, n_device, axis=0)
+            for idx in range(n_device):
+                parallel_placeholders[idx][name] = split_placeholder[idx]
+
         # The `Null` class makes the following codes about running on GPUs
         # compatible with running on CPU.
         device = com.Null if n_device <= 1 else tf.device
         for idx in range(n_device):
-            _gpu_id = self._gpu_ids[idx] if self._gpu_ids else ""
+            _gpu_id = ""
+            if self._gpu_ids:
+                _gpu_id = self._gpu_ids[idx]
             with device("gpu:%s" % _gpu_id):
-                train_loss, d_tensors = self._forward(
+
+                # build forward
+                _train_loss, _tensors = self._forward(
                     is_training=is_training,
-                    placeholders=split_placeholders[idx],
+                    placeholders=parallel_placeholders[idx],
                     **kwargs,
                 )
 
+                # back propagation
                 if is_training:
-                    # This is the so-called "backward" process
-                    d_grads = tf.gradients(train_loss, self.trainable_variables)
-                    all_grads.append(d_grads)
+                    _grads = tf.gradients(_train_loss, self.trainable_variables)
+                    parallel_grads.append(_grads)
 
-                all_tensors.append(d_tensors)
+                # obtain output tensors
+                for key in _tensors:
+                    if key not in parallel_tensors:
+                        parallel_tensors[key] = []
+                    parallel_tensors[key].append(_tensors[key])
 
         # reduce
         tensors = collections.OrderedDict()
-        for key in d_tensors:
-            _tensors = [d_tensors[key] for d_tensors in all_tensors]
-            tensors[key] = tf.concat(_tensors, axis=0)
+        for key in parallel_tensors:
+            tensors[key] = tf.concat(parallel_tensors[key], axis=0)
 
         # average, clip, and apply gradients
         grads = None
         if is_training:
 
             # average gradients
-            # This process can be generalized to one device, so we do not
+            # The process can be generalized to one device, so we do not
             # add another `if` expression.
             average_grads = []
             for i in range(len(self.trainable_variables)):
                 split_grads = []
-                for d_grads in all_grads:
-                    if d_grads[i] is not None:
-                        split_grads.append(d_grads[i])
+                for _grads in parallel_grads:
+                    if _grads[i] is not None:
+                        split_grads.append(_grads[i])
                 if split_grads:
                     average_grad = com.average_n_grads(split_grads)
                     average_grads.append(average_grad)

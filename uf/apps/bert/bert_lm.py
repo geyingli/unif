@@ -269,14 +269,15 @@ class BERTLM(LMModule):
             scope_cls="cls/seq_relationship",
             **kwargs,
         )
-        return decoder.get_forward_outputs()
+        train_loss, tensors = decoder.get_forward_outputs()
+        return train_loss, tensors
 
     def _get_fit_ops(self, from_tfrecords=False):
         ops = [
-            self._tensors["MLM_preds"],
-            self._tensors["NSP_preds"],
-            self._tensors["MLM_losses"],
-            self._tensors["NSP_losses"],
+            self.tensors["MLM_preds"],
+            self.tensors["NSP_preds"],
+            self.tensors["MLM_losses"],
+            self.tensors["NSP_losses"],
         ]
         if from_tfrecords:
             ops.extend([
@@ -324,9 +325,9 @@ class BERTLM(LMModule):
 
     def _get_predict_ops(self):
         return [
-            self._tensors["MLM_preds"],
-            self._tensors["NSP_preds"],
-            self._tensors["NSP_probs"],
+            self.tensors["MLM_preds"],
+            self.tensors["NSP_preds"],
+            self.tensors["NSP_probs"],
         ]
 
     def _get_predict_outputs(self, output_arrays, n_inputs):

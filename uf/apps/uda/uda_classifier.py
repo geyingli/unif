@@ -276,10 +276,11 @@ class UDAClassifier(BERTClassifier, ClassifierModule):
             tsa_schedule=self._tsa_schedule,
             **kwargs,
         )
-        return decoder.get_forward_outputs()
+        train_loss, tensors = decoder.get_forward_outputs()
+        return train_loss, tensors
 
     def _get_fit_ops(self, from_tfrecords=False):
-        ops = [self._tensors["preds"], self._tensors["supervised"], self._tensors["unsupervised"]]
+        ops = [self.tensors["preds"], self.tensors["supervised"], self.tensors["unsupervised"]]
         if from_tfrecords:
             ops.extend([self.placeholders["is_supervised"], self.placeholders["label_ids"]])
         return ops

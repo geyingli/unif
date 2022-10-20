@@ -192,16 +192,16 @@ class ELECTRALM(BERTLM, LMModule):
             disc_weight=self.discriminator_weight,
             **kwargs,
         )
-
-        return model.get_forward_outputs()
+        train_loss, tensors = model.get_forward_outputs()
+        return train_loss, tensors
 
     def _get_fit_ops(self, from_tfrecords=False):
         ops = [
-            self._tensors["MLM_preds"],
-            self._tensors["RTD_preds"],
-            self._tensors["RTD_labels"],
-            self._tensors["MLM_losses"],
-            self._tensors["RTD_losses"],
+            self.tensors["MLM_preds"],
+            self.tensors["RTD_preds"],
+            self.tensors["RTD_labels"],
+            self.tensors["MLM_losses"],
+            self.tensors["RTD_losses"],
         ]
         if from_tfrecords:
             ops.extend([
@@ -249,7 +249,7 @@ class ELECTRALM(BERTLM, LMModule):
         return info
 
     def _get_predict_ops(self):
-        return [self._tensors["MLM_preds"], self._tensors["RTD_preds"], self._tensors["RTD_probs"]]
+        return [self.tensors["MLM_preds"], self.tensors["RTD_preds"], self.tensors["RTD_probs"]]
 
     def _get_predict_outputs(self, output_arrays, n_inputs):
 

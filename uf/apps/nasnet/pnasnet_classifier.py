@@ -129,4 +129,5 @@ class PNasNetClassifier(ClassifierModule):
             label_size=self.label_size,
             sample_weight=placeholders.get("sample_weight"),
         )
-        return decoder.get_forward_outputs()
+        train_loss, tensors = decoder.get_forward_outputs()
+        return train_loss, tensors

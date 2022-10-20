@@ -141,7 +141,7 @@ class Transformer(BaseDecoder, BaseEncoder):
                 logits = _forward(
                     target_ids, target_mask, target_max_seq_length)
 
-                self._tensors["preds"] = tf.argmax(logits, axis=-1)
+                self.tensors["preds"] = tf.argmax(logits, axis=-1)
 
             # forward loop
             else:
@@ -158,7 +158,7 @@ class Transformer(BaseDecoder, BaseEncoder):
                     pred_ids = tf.cast(pred_ids, tf.int32)
                     target_ids = tf.concat([target_ids, pred_ids], axis=-1)
 
-                self._tensors["preds"] = target_ids[:, 1:]
+                self.tensors["preds"] = target_ids[:, 1:]
 
             # loss
             log_probs = tf.nn.log_softmax(logits, axis=-1)
@@ -175,7 +175,7 @@ class Transformer(BaseDecoder, BaseEncoder):
                 per_example_loss *= tf.expand_dims(sample_weight, axis=-1)
 
             self.train_loss = tf.reduce_mean(per_example_loss)
-            self._tensors["losses"] = per_example_loss
+            self.tensors["losses"] = per_example_loss
 
 
 def embedding_lookup(input_ids,

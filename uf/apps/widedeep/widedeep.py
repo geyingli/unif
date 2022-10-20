@@ -72,8 +72,8 @@ class WideDeepClsDecoder(BaseDecoder):
             logits = tf.matmul(output_layer, output_weights, transpose_b=True)
             logits = tf.nn.bias_add(logits, output_bias)
 
-            self._tensors["preds"] = tf.argmax(logits, axis=-1)
-            self._tensors["probs"] = tf.nn.softmax(
+            self.tensors["preds"] = tf.argmax(logits, axis=-1)
+            self.tensors["probs"] = tf.nn.softmax(
                 logits, axis=-1, name="probs")
 
             log_probs = tf.nn.log_softmax(logits, axis=-1)
@@ -88,14 +88,14 @@ class WideDeepClsDecoder(BaseDecoder):
             if thresh is not None:
                 assert isinstance(thresh, float), (
                     "`tsa_thresh` must be a float between 0 and 1.")
-                uncertainty = tf.reduce_sum(self._tensors["probs"] * tf.log(
-                    self._tensors["probs"]), axis=-1)
+                uncertainty = tf.reduce_sum(self.tensors["probs"] * tf.log(
+                    self.tensors["probs"]), axis=-1)
                 uncertainty /= tf.log(1 / label_size)
                 per_example_loss = tf.cast(
                     tf.greater(uncertainty, thresh), dtype=tf.float32) * \
                     per_example_loss
 
-            self._tensors["losses"] = per_example_loss
+            self.tensors["losses"] = per_example_loss
             self.train_loss = tf.reduce_mean(per_example_loss)
 
 
@@ -164,7 +164,7 @@ class WideDeepRegDecoder(BaseDecoder):
                 name="preds",
             )
 
-            self._tensors["preds"] = preds
+            self.tensors["preds"] = preds
 
             per_example_loss = tf.reduce_sum(
                 tf.square(label_floats - preds), axis=-1)
@@ -172,7 +172,7 @@ class WideDeepRegDecoder(BaseDecoder):
                 per_example_loss = tf.cast(
                     sample_weight, dtype=tf.float32) * per_example_loss
 
-            self._tensors["losses"] = per_example_loss
+            self.tensors["losses"] = per_example_loss
             self.train_loss = tf.reduce_mean(per_example_loss)
 
 

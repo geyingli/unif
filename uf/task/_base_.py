@@ -11,9 +11,8 @@ class Task:
 
     This is an internal class that does not provide interface for outside requests."""
 
-    @abstractmethod
-    def __init__(self, *args, **kwargs):
-        raise NotImplementedError()
+    def __init__(self, module):
+        self.module = module
 
     @abstractmethod
     def run(self, *args, **kwargs):
@@ -22,10 +21,10 @@ class Task:
     def _init_session(self, ignore_checkpoint=False):
         """ Initialize Tensorflow session. """
         com.count_params(self.module.global_variables, self.module.trainable_variables)
-        
+
         if self.module._gpu_ids:
             os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(self.module._gpu_ids)
-        else:                                                   
+        else:
             os.environ["CUDA_VISIBLE_DEVICES"] = "-1"           # disable GPUs
         config = tf.ConfigProto(allow_soft_placement=True, gpu_options=tf.GPUOptions(visible_device_list=""))
         self.module.sess = tf.Session(graph=self.module.graph, config=config)
@@ -67,7 +66,7 @@ class Task:
             if uninited_vars:
                 tf.logging.info(
                     "%d (out of %d) local variables failed to match up with the checkpoint file. "
-                    "Check more details through `.uninited_vars`." 
+                    "Check more details through `.uninited_vars`."
                     % (len(uninited_vars), len(assignment_map) + len(uninited_vars))
                 )
 

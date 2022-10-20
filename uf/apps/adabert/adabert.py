@@ -99,14 +99,14 @@ class AdaBERTClsDistillor(BaseDecoder):
 
         if is_training:
             self.train_loss = student.train_loss
-            self._tensors["losses"] = tf.reshape(self.train_loss, [1])
+            self.tensors["losses"] = tf.reshape(self.train_loss, [1])
         else:
             self._infer(student_logits, label_ids, sample_weight, label_size)
 
     def _infer(self, student_logits, label_ids, sample_weight, label_size):
         probs = tf.nn.softmax(student_logits, axis=-1, name="probs")
-        self._tensors["probs"] = probs
-        self._tensors["preds"] = tf.argmax(probs, axis=-1, name="preds")
+        self.tensors["probs"] = probs
+        self.tensors["preds"] = tf.argmax(probs, axis=-1, name="preds")
 
         if label_ids is not None:
             log_probs = tf.nn.log_softmax(student_logits, axis=-1)
@@ -118,7 +118,7 @@ class AdaBERTClsDistillor(BaseDecoder):
                 per_example_loss = tf.cast(
                     sample_weight, dtype=tf.float32) * per_example_loss
 
-            self._tensors["losses"] = per_example_loss
+            self.tensors["losses"] = per_example_loss
 
 
 class AdaBERTStudent(object):

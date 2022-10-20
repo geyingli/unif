@@ -63,7 +63,7 @@ class RetroReaderDecoder(BaseDecoder):
                     per_example_loss = tf.cast(
                         sample_weight, dtype=tf.float32) * per_example_loss
 
-                self._tensors["sketchy_losses"] = per_example_loss
+                self.tensors["sketchy_losses"] = per_example_loss
                 sketchy_loss = tf.reduce_mean(per_example_loss)
 
                 score_ext = logits[:, 1] - logits[:, 0]
@@ -149,8 +149,8 @@ class RetroReaderDecoder(BaseDecoder):
                     logits = tf.transpose(logits, [0, 2, 1])
                     probs = tf.nn.softmax(logits, axis=-1, name="probs")
 
-                    self._tensors["mrc_probs"] = probs
-                    self._tensors["mrc_preds"] = tf.argmax(logits, axis=-1)
+                    self.tensors["mrc_probs"] = probs
+                    self.tensors["mrc_preds"] = tf.argmax(logits, axis=-1)
 
                     start_one_hot_labels = tf.one_hot(
                         label_ids[:, 0], depth=max_seq_length,
@@ -169,7 +169,7 @@ class RetroReaderDecoder(BaseDecoder):
                         per_example_loss *= sample_weight
 
                     intensive_loss = tf.reduce_mean(per_example_loss)
-                    self._tensors["intensive_losses"] = per_example_loss
+                    self.tensors["intensive_losses"] = per_example_loss
 
                     score_has = tf.norm(
                         probs[:, 0, 1:] + probs[:, 1, 1:], np.inf, axis=-1)
@@ -178,8 +178,8 @@ class RetroReaderDecoder(BaseDecoder):
 
             # rear verification
             v = beta_1 * score_diff + beta_2 * score_ext
-            self._tensors["verifier_preds"] = tf.cast(tf.greater(v, threshold), tf.int32)
-            self._tensors["verifier_probs"] = v
+            self.tensors["verifier_preds"] = tf.cast(tf.greater(v, threshold), tf.int32)
+            self.tensors["verifier_probs"] = v
 
             self.train_loss = sketchy_loss + intensive_loss
 

@@ -124,10 +124,11 @@ class TinyBERTBinaryClassifier(BERTBinaryClassifier, BinaryClassifierModule):
             label_size=self.label_size,
             **kwargs,
         )
-        return model.get_forward_outputs()
+        train_loss, tensors = model.get_forward_outputs()
+        return train_loss, tensors
 
     def _get_fit_ops(self, from_tfrecords=False):
-        return [self._tensors["losses"]]
+        return [self.tensors["losses"]]
 
     def _get_fit_info(self, output_arrays, feed_dict, from_tfrecords=False):
 

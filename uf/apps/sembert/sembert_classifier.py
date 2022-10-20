@@ -206,4 +206,5 @@ class SemBERTClassifier(BERTClassifier, ClassifierModule):
             scope="cls/seq_relationship",
             **kwargs,
         )
-        return decoder.get_forward_outputs()
+        train_loss, tensors = decoder.get_forward_outputs()
+        return train_loss, tensors

@@ -202,14 +202,15 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
             trainable=True,
             **kwargs,
         )
-        return decoder.get_forward_outputs()
+        train_loss, tensors = decoder.get_forward_outputs()
+        return train_loss, tensors
 
     def _get_fit_ops(self, from_tfrecords=False):
         ops = [
-            self._tensors["verifier_preds"],
-            self._tensors["mrc_preds"],
-            self._tensors["sketchy_losses"],
-            self._tensors["intensive_losses"],
+            self.tensors["verifier_preds"],
+            self.tensors["mrc_preds"],
+            self.tensors["sketchy_losses"],
+            self.tensors["intensive_losses"],
         ]
         if from_tfrecords:
             ops.extend([self.placeholders["label_ids"]])
@@ -255,10 +256,10 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
 
     def _get_predict_ops(self):
         return [
-            self._tensors["verifier_probs"],
-            self._tensors["verifier_preds"],
-            self._tensors["mrc_probs"],
-            self._tensors["mrc_preds"],
+            self.tensors["verifier_probs"],
+            self.tensors["verifier_preds"],
+            self.tensors["mrc_probs"],
+            self.tensors["mrc_preds"],
         ]
 
     def _get_predict_outputs(self, output_arrays, n_inputs):
@@ -310,10 +311,10 @@ class RetroReaderMRC(BERTVerifierMRC, MRCModule):
 
     def _get_score_ops(self):
         return [
-            self._tensors["verifier_preds"],
-            self._tensors["mrc_preds"],
-            self._tensors["sketchy_losses"],
-            self._tensors["intensive_losses"],
+            self.tensors["verifier_preds"],
+            self.tensors["mrc_preds"],
+            self.tensors["sketchy_losses"],
+            self.tensors["intensive_losses"],
         ]
 
     def _get_score_outputs(self, output_arrays, n_inputs):

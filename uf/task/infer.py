@@ -7,22 +7,15 @@ from ._base_ import Task
 class Inference(Task):
     """ Inference, as its name. """
 
-    def __init__(self, module):
-        self.module = module
-
-        # ignore redundant building of the work flow
-        if self.module._session_mode != "infer":
-            self.decorate()
-
-    def decorate(self):
-        self.module._set_placeholders()
-
-        _, self.module._tensors = self.module._parallel_forward(False)
-
     def run(self):
         n_inputs = len(list(self.module.data.values())[0])
         if not n_inputs:
             raise ValueError("0 input samples recognized.")
+
+        # build graph
+        if self.module._session_mode != "infer":
+            self.module._set_placeholders()
+            _, self.module.tensors = self.module._parallel_forward(is_training=False)
 
         # init session
         if not self.module._session_built:
@@ -31,6 +24,7 @@ class Inference(Task):
 
         tf.logging.info("Running inference on %d samples", n_inputs)
 
+        # inference
         self._ptr = 0
         last_tic = time.time()
         last_step = 0

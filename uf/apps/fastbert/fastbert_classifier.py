@@ -187,10 +187,11 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
             label_size=self.label_size,
             **kwargs,
         )
-        return model.get_forward_outputs()
+        train_loss, tensors = model.get_forward_outputs()
+        return train_loss, tensors
 
     def _get_fit_ops(self, from_tfrecords=False):
-        return [self._tensors["losses"]]
+        return [self.tensors["losses"]]
 
     def _get_fit_info(self, output_arrays, feed_dict, from_tfrecords=False):
 
@@ -204,7 +205,7 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
         return info
 
     def _get_predict_ops(self):
-        return [self._tensors["probs"]]
+        return [self.tensors["probs"]]
 
     def _get_predict_outputs(self, output_arrays, n_inputs):
 
@@ -266,7 +267,7 @@ class FastBERTClassifier(BERTClassifier, ClassifierModule):
         return outputs
 
     def _get_score_ops(self):
-        return [self._tensors["probs"]]
+        return [self.tensors["probs"]]
 
     def _get_score_outputs(self, output_arrays, n_inputs):
 

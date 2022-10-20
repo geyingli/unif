@@ -9,17 +9,11 @@ from ._base_ import Task
 class Exportation(Task):
     """ Export model into PB file. """
 
-    def __init__(self, module):
-        self.module = module
-
-        self.decorate()
-
-    def decorate(self):
-        self.module._set_placeholders()
-
-        _, self.module._tensors = self.module._parallel_forward(False)
-
     def run(self, export_dir, rename_inputs=None, rename_outputs=None, ignore_inputs=None, ignore_outputs=None):
+
+        # build graph
+        self.module._set_placeholders()
+        _, self.module.tensors = self.module._parallel_forward(is_training=False)
 
         # init session
         if not self.module._session_built:
@@ -49,7 +43,7 @@ class Exportation(Task):
         outputs = {}
         if not ignore_outputs:
             ignore_outputs = []
-        for key, value in self.module._tensors.items():
+        for key, value in self.module.tensors.items():
             if key in ignore_outputs:
                 continue
             if rename_outputs and key in rename_outputs:
@@ -70,6 +64,7 @@ class Exportation(Task):
         if sys.platform.startswith("win"):
             builder_path = builder_path.replace("/", "\\")
 
+        # exportation
         try:
             builder = tf.saved_model.builder.SavedModelBuilder(builder_path)
             builder.add_meta_graph_and_variables(

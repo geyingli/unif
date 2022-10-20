@@ -210,7 +210,7 @@ class NERModule(BaseModule):
         return label_ids
 
     def _get_fit_ops(self, from_tfrecords=False):
-        ops = [self._tensors["preds"], self._tensors["losses"]]
+        ops = [self.tensors["preds"], self.tensors["losses"]]
         if from_tfrecords:
             ops.extend([self.placeholders["input_mask"], self.placeholders["label_ids"]])
         return ops
@@ -240,7 +240,7 @@ class NERModule(BaseModule):
         return info
 
     def _get_predict_ops(self):
-        return [self._tensors["probs"]]
+        return [self.tensors["probs"]]
 
     def _get_predict_outputs(self, output_arrays, n_inputs):
 
@@ -294,7 +294,7 @@ class NERModule(BaseModule):
         return outputs
 
     def _get_score_ops(self):
-        return [self._tensors["preds"], self._tensors["losses"]]
+        return [self.tensors["preds"], self.tensors["losses"]]
 
     def _get_score_outputs(self, output_arrays, n_inputs):
 

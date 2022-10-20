@@ -246,8 +246,8 @@ class ALBERTDecoder(BaseDecoder):
             loss = numerator / denominator
 
             scalar_losses.append(loss)
-            self._tensors["MLM_losses"] = per_example_loss
-            self._tensors["MLM_preds"] = tf.argmax(probs, axis=-1)
+            self.tensors["MLM_losses"] = per_example_loss
+            self.tensors["MLM_preds"] = tf.argmax(probs, axis=-1)
 
         # next sentence prediction
         if sentence_order_labels is not None:
@@ -280,9 +280,9 @@ class ALBERTDecoder(BaseDecoder):
                 loss = tf.reduce_mean(per_example_loss)
 
                 scalar_losses.append(loss)
-                self._tensors["SOP_losses"] = per_example_loss
-                self._tensors["SOP_probs"] = probs
-                self._tensors["SOP_preds"] = tf.argmax(probs, axis=-1)
+                self.tensors["SOP_losses"] = per_example_loss
+                self.tensors["SOP_probs"] = probs
+                self.tensors["SOP_preds"] = tf.argmax(probs, axis=-1)
 
         self.train_loss = tf.add_n(scalar_losses)
 

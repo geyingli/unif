@@ -223,8 +223,8 @@ class RecBERT(BaseDecoder, BERTEncoder):
 
                 if prob != 0:
                     self.train_loss += tf.reduce_mean(per_example_loss)
-                self._tensors[name + "_loss"] = verifier_loss
-                self._tensors[name + "_preds"] = tf.argmax(logits, axis=-1) * verifier_preds
+                self.tensors[name + "_loss"] = verifier_loss
+                self.tensors[name + "_preds"] = tf.argmax(logits, axis=-1) * verifier_preds
 
     def _cls_forward(self,
                      is_training,
@@ -264,8 +264,8 @@ class RecBERT(BaseDecoder, BERTEncoder):
 
             if prob != 0:
                 self.train_loss += tf.reduce_mean(per_example_loss)
-            self._tensors[name + "_loss"] = per_example_loss
-            self._tensors[name + "_preds"] = tf.argmax(logits, axis=-1)
+            self.tensors[name + "_loss"] = per_example_loss
+            self.tensors[name + "_preds"] = tf.argmax(logits, axis=-1)
 
 
 def sample_wrong_tokens(_input_ids, _add_label_ids, _del_label_ids, max_add, max_del, nonpad_seq_length, vocab_size, vocab_ind, vocab_p):

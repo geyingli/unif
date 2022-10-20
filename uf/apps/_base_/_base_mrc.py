@@ -49,8 +49,8 @@ class MRCDecoder(BaseDecoder):
                 logits = tf.transpose(logits, [0, 2, 1])
 
         probs = tf.nn.softmax(logits, axis=-1, name="probs")
-        self._tensors["probs"] = probs
-        self._tensors["preds"] = tf.argmax(logits, axis=-1, name="preds")
+        self.tensors["probs"] = probs
+        self.tensors["preds"] = tf.argmax(logits, axis=-1, name="preds")
 
         start_one_hot_labels = tf.one_hot(label_ids[:, 0], depth=seq_length, dtype=tf.float32)
         end_one_hot_labels = tf.one_hot(label_ids[:, 1], depth=seq_length, dtype=tf.float32)
@@ -63,7 +63,7 @@ class MRCDecoder(BaseDecoder):
         if sample_weight is not None:
             per_example_loss *= sample_weight
 
-        self._tensors["losses"] = per_example_loss
+        self.tensors["losses"] = per_example_loss
         self.train_loss = tf.reduce_mean(per_example_loss)
 
 
@@ -186,7 +186,7 @@ class MRCModule(BaseModule):
         return label_ids
 
     def _get_fit_ops(self, from_tfrecords=False):
-        ops = [self._tensors["preds"], self._tensors["losses"]]
+        ops = [self.tensors["preds"], self.tensors["losses"]]
         if from_tfrecords:
             ops.extend([self.placeholders["label_ids"]])
         return ops
@@ -214,7 +214,7 @@ class MRCModule(BaseModule):
         return info
 
     def _get_predict_ops(self):
-        return [self._tensors["probs"], self._tensors["preds"]]
+        return [self.tensors["probs"], self.tensors["preds"]]
 
     def _get_predict_outputs(self, output_arrays, n_inputs):
 
@@ -260,7 +260,7 @@ class MRCModule(BaseModule):
         return outputs
 
     def _get_score_ops(self):
-        return [self._tensors["preds"], self._tensors["losses"]]
+        return [self.tensors["preds"], self.tensors["losses"]]
 
     def _get_score_outputs(self, output_arrays, n_inputs):
 

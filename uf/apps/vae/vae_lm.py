@@ -9,7 +9,7 @@ from ... import com
 
 class VAELM(LMModule):
     """ Text generator in VAE structure. """
-    
+
     def __init__(
         self,
         vocab_file,
@@ -176,10 +176,11 @@ class VAELM(LMModule):
             bias=self._bias,
             **kwargs,
         )
-        return model.get_forward_outputs()
+        train_loss, tensors = model.get_forward_outputs()
+        return train_loss, tensors
 
     def _get_fit_ops(self, from_tfrecords=False):
-        ops = [self._tensors["preds"], self._tensors["losses"]]
+        ops = [self.tensors["preds"], self.tensors["losses"]]
         if from_tfrecords:
             ops.extend([self.placeholders["input_ids"], self.placeholders["input_mask"]])
         return ops
@@ -208,7 +209,7 @@ class VAELM(LMModule):
         return info
 
     def _get_predict_ops(self):
-        return [self._tensors["miu"], self._tensors["sigma"], self._tensors["preds"]]
+        return [self.tensors["miu"], self.tensors["sigma"], self.tensors["preds"]]
 
     def _get_predict_outputs(self, output_arrays, n_inputs):
 

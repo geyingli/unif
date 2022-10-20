@@ -45,8 +45,8 @@ class ClsDecoder(BaseDecoder):
                 logits = tf.matmul(output_layer, output_weights, transpose_b=True)
                 logits = tf.nn.bias_add(logits, output_bias)
 
-        self._tensors["preds"] = tf.argmax(logits, axis=-1, name="preds")
-        self._tensors["probs"] = tf.nn.softmax(logits, axis=-1, name="probs")
+        self.tensors["preds"] = tf.argmax(logits, axis=-1, name="preds")
+        self.tensors["probs"] = tf.nn.softmax(logits, axis=-1, name="probs")
 
         log_probs = tf.nn.log_softmax(logits, axis=-1)
         one_hot_labels = tf.one_hot(label_ids, depth=label_size, dtype=tf.float32)
@@ -59,7 +59,7 @@ class ClsDecoder(BaseDecoder):
             largest_prob = tf.reduce_max(tf.exp(log_probs), axis=-1)
             per_example_loss = tf.cast(tf.less(largest_prob, thresh), dtype=tf.float32) * per_example_loss
 
-        self._tensors["losses"] = per_example_loss
+        self.tensors["losses"] = per_example_loss
         self.train_loss = tf.reduce_mean(per_example_loss)
 
 
@@ -127,7 +127,7 @@ class ClassifierModule(BaseModule):
         return label_ids
 
     def _get_fit_ops(self, from_tfrecords=False):
-        ops = [self._tensors["preds"], self._tensors["losses"]]
+        ops = [self.tensors["preds"], self.tensors["losses"]]
         if from_tfrecords:
             ops.extend([self.placeholders["label_ids"]])
         return ops
@@ -154,7 +154,7 @@ class ClassifierModule(BaseModule):
         return info
 
     def _get_predict_ops(self):
-        return [self._tensors["probs"]]
+        return [self.tensors["probs"]]
 
     def _get_predict_outputs(self, output_arrays, n_inputs):
 
@@ -173,7 +173,7 @@ class ClassifierModule(BaseModule):
         return outputs
 
     def _get_score_ops(self):
-        return [self._tensors["preds"], self._tensors["losses"]]
+        return [self.tensors["preds"], self.tensors["losses"]]
 
     def _get_score_outputs(self, output_arrays, n_inputs):
 

@@ -48,7 +48,7 @@ class VAE(BaseDecoder, BERTEncoder):
                         input_ids=input_ids,
                         vocab_size=config.vocab_size,
                         batch_size=batch_size,
-                        seq_length=seq_length,
+                        max_seq_length=seq_length,
                         embedding_size=config.hidden_size,
                         initializer_range=config.initializer_range,
                         word_embedding_name="word_embeddings",

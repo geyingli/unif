@@ -1,7 +1,6 @@
 from .albert import ALBERTEncoder, ALBERTConfig, get_decay_power
-from .._base_._base_classifier import ClassifierModule
+from .._base_._base_classifier import ClsDecoder, ClassifierModule
 from ..bert.bert_classifier import BERTClassifier
-from .._base_._base_ import ClsDecoder
 from ...token import WordPieceTokenizer
 from ...third import tf
 

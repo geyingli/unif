@@ -1,15 +1,13 @@
 import numpy as np
 
 from .bert import BERTEncoder, BERTConfig, get_decay_power
-from .bert_classifier import BERTClassifier
-from .._base_._base_classifier import ClassifierModule
-from .._base_._base_ import SeqClsCrossDecoder
+from .._base_._base_seq_classifier import SeqClsCrossDecoder, SeqClassifierModule
 from ...token import WordPieceTokenizer
 from ...third import tf
 from ... import com
 
 
-class BERTSeqCrossClassifier(BERTClassifier, ClassifierModule):
+class BERTSeqCrossClassifier(SeqClassifierModule):
     """ Sequence labeling and single-label (multi-task) classifier on BERT. """
 
     _INFER_ATTRIBUTES = {    # params whose value cannot be None in order to infer without training
@@ -39,7 +37,7 @@ class BERTSeqCrossClassifier(BERTClassifier, ClassifierModule):
         truncate_method="LIFO",
     ):
         self.__init_args__ = locals()
-        super(ClassifierModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
+        super(SeqClassifierModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.max_seq_length = max_seq_length
         self.seq_cls_label_size = seq_cls_label_size
@@ -126,17 +124,6 @@ class BERTSeqCrossClassifier(BERTClassifier, ClassifierModule):
             segment_ids.append(_segment_ids)
 
         return input_ids, input_mask, segment_ids
-
-    def _convert_x(self, x, tokenized):
-        if not tokenized:
-            raise ValueError("Inputs of sequence classifier must be already tokenized and fed into `X_tokenized`.")
-
-        # deal with tokenized inputs
-        if isinstance(x[0], str):
-            return x
-
-        # deal with tokenized and multiple inputs
-        raise ValueError("Sequence classifier does not support multi-segment inputs.")
 
     def _convert_y(self, y):
         try:

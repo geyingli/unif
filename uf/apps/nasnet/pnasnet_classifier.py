@@ -2,8 +2,7 @@ import numpy as np
 from PIL import Image
 
 from .pnasnet import build_pnasnet_mobile, build_pnasnet_large, get_decay_power
-from .._base_._base_classifier import ClassifierModule
-from .._base_._base_ import ClsDecoder
+from .._base_._base_classifier import ClsDecoder, ClassifierModule
 from ...third import tf
 
 

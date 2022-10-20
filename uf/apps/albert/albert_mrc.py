@@ -1,7 +1,6 @@
 from .albert import ALBERTEncoder, ALBERTConfig, get_decay_power
-from .._base_._base_mrc import MRCModule
 from ..bert.bert_mrc import BERTMRC
-from .._base_._base_ import MRCDecoder
+from .._base_._base_mrc import MRCDecoder, MRCModule
 from ...token import WordPieceTokenizer
 from ...third import tf
 

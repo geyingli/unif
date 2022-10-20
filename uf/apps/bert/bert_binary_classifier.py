@@ -1,13 +1,11 @@
 from .bert import BERTEncoder, BERTConfig, get_decay_power
-from .bert_classifier import BERTClassifier
-from .._base_._base_classifier import ClassifierModule
-from .._base_._base_ import BinaryClsDecoder
+from .._base_._base_binary_classifier import BinaryClsDecoder, BinaryClassifierModule
 from ...token import WordPieceTokenizer
 from ...third import tf
 from ... import com
 
 
-class BERTBinaryClassifier(BERTClassifier, ClassifierModule):
+class BERTBinaryClassifier(BinaryClassifierModule):
     """ Multi-label classifier on BERT. """
 
     def __init__(
@@ -25,7 +23,7 @@ class BERTBinaryClassifier(BERTClassifier, ClassifierModule):
         truncate_method="LIFO",
     ):
         self.__init_args__ = locals()
-        super(ClassifierModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
+        super(BinaryClassifierModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.max_seq_length = max_seq_length
         self.label_size = label_size
@@ -46,51 +44,80 @@ class BERTBinaryClassifier(BERTClassifier, ClassifierModule):
             self.bert_config.vocab_size += 1
             tf.logging.info("Add necessary token `[SEP]` into vocabulary.")
 
-    def _convert_y(self, y):
-        try:
-            label_set = set()
-            for sample in y:
-                _label_set = set()
-                for _y in sample:
-                    assert _y not in _label_set
-                    label_set.add(_y)
-                    _label_set.add(_y)
-        except Exception:
-            raise ValueError("The element of `y` should be a list of multiple answers. E.g. y=[[1, 3], [0], [0, 2]].")
+    def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None, is_training=False, is_parallel=False):
+        self._assert_legal(X, y, sample_weight, X_tokenized)
 
-        # automatically set `label_size`
-        if self.label_size:
-            assert len(label_set) <= self.label_size, "Number of unique labels exceeds `label_size`."
-        else:
-            self.label_size = len(label_set)
+        if is_training:
+            assert y is not None, "`y` can't be None."
+        if is_parallel:
+            assert self.label_size, "Can't parse data on multi-processing when `label_size` is None."
 
-        # automatically set `id_to_label`
-        if not self._id_to_label:
-            self._id_to_label = list(label_set)
+        n_inputs = None
+        data = {}
+
+        # convert X
+        if X is not None or X_tokenized is not None:
+            tokenized = False if X is not None else X_tokenized
+            input_ids, input_mask, segment_ids = self._convert_X(X_tokenized if tokenized else X, tokenized=tokenized)
+            data["input_ids"] = np.array(input_ids, dtype=np.int32)
+            data["input_mask"] = np.array(input_mask, dtype=np.int32)
+            data["segment_ids"] = np.array(segment_ids, dtype=np.int32)
+            n_inputs = len(input_ids)
+
+            if n_inputs < self.batch_size:
+                self.batch_size = max(n_inputs, len(self._gpu_ids))
+
+        # convert y
+        if y is not None:
+            label_ids = self._convert_y(y)
+            data["label_ids"] = np.array(label_ids, dtype=np.int32)
+
+        # convert sample_weight
+        if is_training or y is not None:
+            sample_weight = self._convert_sample_weight(sample_weight, n_inputs)
+            data["sample_weight"] = np.array(sample_weight, dtype=np.float32)
+
+        return data
+
+    def _convert_X(self, X_target, tokenized):
+
+        # tokenize input texts
+        segment_input_tokens = []
+        for idx, sample in enumerate(X_target):
             try:
-                # Allign if user inputs continual integers.
-                # e.g. [2, 0, 1]
-                self._id_to_label = list(sorted(self._id_to_label))
-            except Exception:
-                pass
+                segment_input_tokens.append(self._convert_x(sample, tokenized))
+            except Exception as e:
+                raise ValueError("Wrong input format (%s): %s." % (sample, e))
 
-        # automatically set `label_to_id` for prediction
-        if not self._label_to_id:
-            self._label_to_id = {label: index for index, label in enumerate(self._id_to_label)}
+        input_ids = []
+        input_mask = []
+        segment_ids = []
+        for idx, segments in enumerate(segment_input_tokens):
+            _input_tokens = ["[CLS]"]
+            _input_ids = []
+            _input_mask = [1]
+            _segment_ids = [0]
 
-        label_ids = []
-        for sample in y:
-            _label_ids = [0] * self.label_size
+            com.truncate_segments(segments, self.max_seq_length - len(segments) - 1, truncate_method=self.truncate_method)
+            for s_id, segment in enumerate(segments):
+                _segment_id = min(s_id, 1)
+                _input_tokens.extend(segment + ["[SEP]"])
+                _input_mask.extend([1] * (len(segment) + 1))
+                _segment_ids.extend([_segment_id] * (len(segment) + 1))
 
-            for label in sample:
-                if label not in self._label_to_id:
-                    assert len(self._label_to_id) < self.label_size, "Number of unique labels exceeds `label_size`."
-                    self._label_to_id[label] = len(self._label_to_id)
-                    self._id_to_label.append(label)
-                label_id = self._label_to_id[label]
-                _label_ids[label_id] = 1
-            label_ids.append(_label_ids)
-        return label_ids
+            _input_ids = self.tokenizer.convert_tokens_to_ids(_input_tokens)
+
+            # padding
+            for _ in range(self.max_seq_length - len(_input_ids)):
+                _input_ids.append(0)
+                _input_mask.append(0)
+                _segment_ids.append(0)
+
+            input_ids.append(_input_ids)
+            input_mask.append(_input_mask)
+            segment_ids.append(_segment_ids)
+
+        return input_ids, input_mask, segment_ids
 
     def _set_placeholders(self, **kwargs):
         self.placeholders = {
@@ -124,27 +151,3 @@ class BERTBinaryClassifier(BERTClassifier, ClassifierModule):
             **kwargs,
         )
         return decoder.get_forward_outputs()
-
-    def _get_predict_ops(self):
-        return [self._tensors["probs"]]
-
-    def _get_predict_outputs(self, output_arrays, n_inputs):
-
-        # probs
-        probs = com.transform(output_arrays[0], n_inputs)
-
-        # preds
-        preds = (probs >= 0.5)
-        if self._id_to_label:
-            preds = [[
-                self._id_to_label[i] for i in range(self.label_size)
-                if _preds[i] and i < len(self._id_to_label)
-            ] for _preds in preds]
-        else:
-            preds = [[i for i in range(self.label_size) if _preds[i]] for _preds in preds]
-
-        outputs = {}
-        outputs["preds"] = preds
-        outputs["probs"] = probs
-
-        return outputs

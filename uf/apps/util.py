@@ -122,7 +122,7 @@ def embedding_lookup(
     input_ids,
     vocab_size,
     batch_size,
-    seq_length,
+    max_seq_length,
     embedding_size=128,
     initializer_range=0.02,
     word_embedding_name="word_embeddings",
@@ -146,7 +146,7 @@ def embedding_lookup(
 
     flat_input_ids = tf.reshape(input_ids, [-1])
     output = tf.gather(embedding_table, flat_input_ids, name="embedding_look_up")
-    output = tf.reshape(output, [batch_size, seq_length, embedding_size])
+    output = tf.reshape(output, [batch_size, max_seq_length, embedding_size])
     return output, embedding_table
 
 

@@ -1,12 +1,11 @@
 from .albert import ALBERTEncoder, ALBERTConfig, get_decay_power
-from .._base_._base_classifier import ClassifierModule
+from .._base_._base_binary_classifier import BinaryClsDecoder, BinaryClassifierModule
 from ..bert.bert_binary_classifier import BERTBinaryClassifier
-from .._base_._base_ import BinaryClsDecoder
 from ...token import WordPieceTokenizer
 from ...third import tf
 
 
-class ALBERTBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
+class ALBERTBinaryClassifier(BERTBinaryClassifier, BinaryClassifierModule):
     """ Multi-label classifier on ALBERT. """
 
     def __init__(
@@ -24,7 +23,7 @@ class ALBERTBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
         truncate_method="LIFO",
     ):
         self.__init_args__ = locals()
-        super(ClassifierModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
+        super(BinaryClassifierModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.max_seq_length = max_seq_length
         self.label_size = label_size

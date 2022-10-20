@@ -1,12 +1,11 @@
 from .albert import ALBERTEncoder, ALBERTConfig,  get_decay_power
-from .._base_._base_classifier import ClassifierModule
+from .._base_._base_seq_classifier import SeqClsDecoder, SeqClassifierModule
 from ..bert.bert_seq_classifier import BERTSeqClassifier
-from .._base_._base_ import SeqClsDecoder
 from ...token import WordPieceTokenizer
 from ...third import tf
 
 
-class ALBERTSeqClassifier(BERTSeqClassifier, ClassifierModule):
+class ALBERTSeqClassifier(BERTSeqClassifier, SeqClassifierModule):
     """ Sequence labeling classifier on ALBERT. """
 
     def __init__(
@@ -22,7 +21,7 @@ class ALBERTSeqClassifier(BERTSeqClassifier, ClassifierModule):
         truncate_method="LIFO",
     ):
         self.__init_args__ = locals()
-        super(ClassifierModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
+        super(SeqClassifierModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.max_seq_length = max_seq_length
         self.label_size = label_size

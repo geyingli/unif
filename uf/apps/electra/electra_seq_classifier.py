@@ -1,12 +1,11 @@
-from .._base_._base_classifier import ClassifierModule
+from .._base_._base_seq_classifier import SeqClsDecoder, SeqClassifierModule
 from ..bert.bert_seq_classifier import BERTSeqClassifier
-from .._base_._base_ import SeqClsDecoder
 from ..bert.bert import BERTEncoder, BERTConfig, get_decay_power
 from ...token import WordPieceTokenizer
 from ...third import tf
 
 
-class ELECTRASeqClassifier(BERTSeqClassifier, ClassifierModule):
+class ELECTRASeqClassifier(BERTSeqClassifier, SeqClassifierModule):
     """ Sequence labeling classifier on ELECTRA. """
 
     def __init__(
@@ -22,7 +21,7 @@ class ELECTRASeqClassifier(BERTSeqClassifier, ClassifierModule):
         truncate_method="LIFO",
     ):
         self.__init_args__ = locals()
-        super(ClassifierModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
+        super(SeqClassifierModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.max_seq_length = max_seq_length
         self.label_size = label_size

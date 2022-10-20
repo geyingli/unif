@@ -11,6 +11,8 @@ from .spe.spe_lm import SPELM
 from .gpt2.gpt2_lm import GPT2LM
 from .unilm.unilm_lm import UniLM
 from .textcnn.textcnn_classifier import TextCNNClassifier
+from .rnn.rnn_classifier import RNNClassifier
+from .rnn.bi_rnn_classifier import BiRNNClassifier
 from .bert.bert_classifier import BERTClassifier
 from .roberta.roberta_classifier import RoBERTaClassifier
 from .albert.albert_classifier import ALBERTClassifier
@@ -80,6 +82,8 @@ __all__ = [
     "GPT2LM",
     "UniLM",
     "TextCNNClassifier",
+    "RNNClassifier",
+    "BiRNNClassifier",
     "BERTClassifier",
     "XLNetClassifier",
     "RoBERTaClassifier",

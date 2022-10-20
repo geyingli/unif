@@ -63,3 +63,23 @@ class LMModule(BaseModule):
 
     def score(self, *args, **kwargs):
         raise AttributeError("`score` method is not supported for unsupervised language modeling (LM) modules.")
+        
+    def _convert_x(self, x, tokenized):
+        """ Convert text sample. """
+
+        # deal with untokenized inputs
+        if not tokenized:
+
+            # deal with general inputs
+            if isinstance(x, str):
+                return [self.tokenizer.tokenize(x)]
+
+            # deal with multiple inputs
+            return [self.tokenizer.tokenize(seg) for seg in x]
+
+        # deal with tokenized inputs
+        if isinstance(x[0], str):
+            return [x]
+
+        # deal with tokenized and multiple inputs
+        return x

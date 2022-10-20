@@ -1,12 +1,11 @@
-from .._base_._base_classifier import ClassifierModule
+from .._base_._base_binary_classifier import BinaryClsDecoder, BinaryClassifierModule
 from ..bert.bert_binary_classifier import BERTBinaryClassifier
-from .._base_._base_ import BinaryClsDecoder
 from ..bert.bert import BERTEncoder, BERTConfig, get_decay_power
 from ...token import WordPieceTokenizer
 from ...third import tf
 
 
-class ELECTRABinaryClassifier(BERTBinaryClassifier, ClassifierModule):
+class ELECTRABinaryClassifier(BERTBinaryClassifier, BinaryClassifierModule):
     """ Multi-label classifier on ELECTRA. """
 
     def __init__(
@@ -23,7 +22,7 @@ class ELECTRABinaryClassifier(BERTBinaryClassifier, ClassifierModule):
         truncate_method="LIFO",
     ):
         self.__init_args__ = locals()
-        super(ClassifierModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
+        super(BinaryClassifierModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.max_seq_length = max_seq_length
         self.label_size = label_size

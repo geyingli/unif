@@ -1,15 +1,14 @@
 import numpy as np
 
 from .xlnet import XLNetEncoder, XLNetConfig, get_decay_power, SEG_ID_CLS, SEG_ID_PAD, CLS_ID, SEP_ID
-from .._base_._base_classifier import ClassifierModule
+from .._base_._base_binary_classifier import BinaryClsDecoder, BinaryClassifierModule
 from ..bert.bert_binary_classifier import BERTBinaryClassifier
-from .._base_._base_ import BinaryClsDecoder
 from ...token import SentencePieceTokenizer
 from ...third import tf
 from ... import com
 
 
-class XLNetBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
+class XLNetBinaryClassifier(BERTBinaryClassifier, BinaryClassifierModule):
     """ Multi-label classifier on XLNet. """
 
     def __init__(
@@ -26,7 +25,7 @@ class XLNetBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
         truncate_method="LIFO",
     ):
         self.__init_args__ = locals()
-        super(ClassifierModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
+        super(BinaryClassifierModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.max_seq_length = max_seq_length
         self.label_size = label_size

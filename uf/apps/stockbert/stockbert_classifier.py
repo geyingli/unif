@@ -1,8 +1,7 @@
 import numpy as np
 
 from .stockbert import StockBERTEncoder
-from .._base_._base_classifier import ClassifierModule
-from .._base_._base_ import ClsDecoder
+from .._base_._base_classifier import ClsDecoder, ClassifierModule
 from ..bert.bert import BERTConfig, get_decay_power
 from ...third import tf
 from ... import com

@@ -83,3 +83,19 @@ class MTModule(BaseModule):
             rouges.append(_rouge)
 
         return np.mean(rouges)
+
+    def _convert_x(self, x, tokenized):
+
+        # deal with untokenized inputs
+        if not tokenized:
+            
+            # deal with general inputs
+            if isinstance(x, str):
+                return self.tokenizer.tokenize(x)
+
+        # deal with tokenized inputs
+        elif isinstance(x[0], str):
+            return x
+
+        # deal with tokenized and multiple inputs
+        raise ValueError("Machine translation module only supports single sentence inputs.")

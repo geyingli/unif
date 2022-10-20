@@ -1,13 +1,12 @@
 from .xlnet import XLNetEncoder, XLNetConfig, get_decay_power, SEG_ID_CLS, SEG_ID_PAD, CLS_ID, SEP_ID
-from .._base_._base_classifier import ClassifierModule
+from .._base_._base_seq_classifier import SeqClsDecoder, SeqClassifierModule
 from ..bert.bert_seq_classifier import BERTSeqClassifier
-from .._base_._base_ import SeqClsDecoder
 from ...token import SentencePieceTokenizer
 from ...third import tf
 from ... import com
 
 
-class XLNetSeqClassifier(BERTSeqClassifier, ClassifierModule):
+class XLNetSeqClassifier(BERTSeqClassifier, SeqClassifierModule):
     """ Sequence labeling classifier on XLNet. """
 
     def __init__(
@@ -23,7 +22,7 @@ class XLNetSeqClassifier(BERTSeqClassifier, ClassifierModule):
         truncate_method="LIFO",
     ):
         self.__init_args__ = locals()
-        super(ClassifierModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
+        super(SeqClassifierModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.max_seq_length = max_seq_length
         self.label_size = label_size

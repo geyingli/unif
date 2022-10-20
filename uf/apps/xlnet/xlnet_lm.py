@@ -86,7 +86,7 @@ class XLNetLM(BERTLM, LMModule):
             try:
                 segment_input_tokens.append(self._convert_x(sample, tokenized))
             except Exception as e:
-                raise ValueError("Wrong input format %s: %s." % (sample, e))
+                raise ValueError("Wrong input format (%s): %s." % (sample, e))
 
         # assign sentence id
         token_ids = []

@@ -1,14 +1,13 @@
 import numpy as np
 
 from .bert import BERTEncoder, BERTConfig, get_decay_power
-from .._base_._base_classifier import ClassifierModule
-from .._base_._base_ import SeqClsDecoder
+from .._base_._base_seq_classifier import SeqClsDecoder, SeqClassifierModule
 from ...token import WordPieceTokenizer
 from ...third import tf
 from ... import com
 
 
-class BERTSeqClassifier(ClassifierModule):
+class BERTSeqClassifier(SeqClassifierModule):
     """ Sequence labeling classifier on BERT. """
 
     def __init__(
@@ -24,7 +23,7 @@ class BERTSeqClassifier(ClassifierModule):
         truncate_method="LIFO",
     ):
         self.__init_args__ = locals()
-        super(ClassifierModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
+        super(SeqClassifierModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.max_seq_length = max_seq_length
         self.label_size = label_size
@@ -105,68 +104,6 @@ class BERTSeqClassifier(ClassifierModule):
 
         return input_ids, input_mask, segment_ids
 
-    def _convert_x(self, x, tokenized):
-        if not tokenized:
-            raise ValueError("Inputs of sequence classifier must be already tokenized and fed into `X_tokenized`.")
-
-        # deal with tokenized inputs
-        if isinstance(x[0], str):
-            return x
-
-        # deal with tokenized and multiple inputs
-        raise ValueError("Sequence classifier does not support multi-segment inputs.")
-
-    def _convert_y(self, y):
-        try:
-            label_set = set()
-            for sample in y:
-                for _y in sample:
-                    label_set.add(_y)
-        except Exception:
-            raise ValueError("The element of `y` should be a list of labels.")
-
-        # automatically set `label_size`
-        if self.label_size:
-            assert len(label_set) <= self.label_size, "Number of unique `y`s exceeds `label_size`."
-        else:
-            self.label_size = len(label_set)
-
-        # automatically set `id_to_label`
-        if not self._id_to_label:
-            self._id_to_label = list(label_set)
-            try:
-                # Allign if user inputs continual integers.
-                # e.g. [2, 0, 1]
-                self._id_to_label = list(sorted(self._id_to_label))
-            except Exception:
-                pass
-
-        # automatically set `label_to_id` for prediction
-        if not self._label_to_id:
-            self._label_to_id = {label: index for index, label in enumerate(self._id_to_label)}
-
-        label_ids = []
-        for sample in y:
-            sample = [label for label in sample]
-
-            num_labels = len(sample)
-            if num_labels < self.max_seq_length:
-                sample.extend([0] * (self.max_seq_length - num_labels))
-            elif num_labels > self.max_seq_length:
-                sample = sample[:self.max_seq_length]
-
-                com.truncate_segments([sample], self.max_seq_length, truncate_method=self.truncate_method)
-
-            _label_ids = []
-            for label in sample:
-                if label not in self._label_to_id:
-                    assert len(self._label_to_id) < self.label_size, "Number of unique labels exceeds `label_size`."
-                    self._label_to_id[label] = len(self._label_to_id)
-                    self._id_to_label.append(label)
-                _label_ids.append(self._label_to_id[label])
-            label_ids.append(_label_ids)
-        return label_ids
-
     def _set_placeholders(self, **kwargs):
         self.placeholders = {
             "input_ids": tf.placeholder(tf.int32, [None, self.max_seq_length], "input_ids"),
@@ -198,78 +135,3 @@ class BERTSeqClassifier(ClassifierModule):
             **kwargs,
         )
         return decoder.get_forward_outputs()
-
-    def _get_fit_ops(self, from_tfrecords=False):
-        ops = [self._tensors["preds"], self._tensors["losses"]]
-        if from_tfrecords:
-            ops.extend([self.placeholders["input_mask"], self.placeholders["label_ids"]])
-        return ops
-
-    def _get_fit_info(self, output_arrays, feed_dict, from_tfrecords=False):
-
-        if from_tfrecords:
-            batch_mask = output_arrays[-2]
-            batch_labels = output_arrays[-1]
-        else:
-            batch_mask = feed_dict[self.placeholders["input_mask"]]
-            batch_labels = feed_dict[self.placeholders["label_ids"]]
-
-        # accuracy
-        batch_preds = output_arrays[0]
-        accuracy = (np.sum((batch_preds == batch_labels) * batch_mask) / batch_mask.sum())
-
-        # loss
-        batch_losses = output_arrays[1]
-        loss = np.mean(batch_losses)
-
-        info = ""
-        info += ", accuracy %.4f" % accuracy
-        info += ", loss %.6f" % loss
-
-        return info
-
-    def _get_predict_ops(self):
-        return [self._tensors["probs"]]
-
-    def _get_predict_outputs(self, output_arrays, n_inputs):
-
-        # probs
-        probs = com.transform(output_arrays[0], n_inputs)
-
-        # preds
-        all_preds = np.argmax(probs, axis=-1)
-        mask = self.data["input_mask"]
-        preds = []
-        for _preds, _mask in zip(all_preds, mask):
-            input_length = np.sum(_mask)
-            _preds = _preds[:input_length].tolist()
-            if self._id_to_label:
-                _preds = [self._id_to_label[idx] if idx < len(self._id_to_label) else None for idx in _preds]
-            preds.append(_preds)
-
-        outputs = {}
-        outputs["preds"] = preds
-        outputs["probs"] = probs
-
-        return outputs
-
-    def _get_score_ops(self):
-        return [self._tensors["preds"], self._tensors["losses"]]
-
-    def _get_score_outputs(self, output_arrays, n_inputs):
-
-        # accuracy
-        preds = com.transform(output_arrays[0], n_inputs)
-        labels = self.data["label_ids"]
-        mask = self.data["input_mask"]
-        accuracy = (np.sum((preds == labels) * mask) / mask.sum())
-
-        # loss
-        losses = com.transform(output_arrays[1], n_inputs)
-        loss = np.mean(losses)
-
-        outputs = {}
-        outputs["accuracy"] = accuracy
-        outputs["loss"] = loss
-
-        return outputs

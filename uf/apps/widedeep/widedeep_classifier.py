@@ -2,14 +2,13 @@ import numpy as np
 
 from .widedeep import WideDeepClsDecoder, get_decay_power
 from .._base_._base_classifier import ClassifierModule
-from ..bert.bert_classifier import BERTClassifier
 from ..bert.bert import BERTEncoder, BERTConfig
 from ...token import WordPieceTokenizer
 from ...third import tf
 from ... import com
 
 
-class WideDeepClassifier(BERTClassifier, ClassifierModule):
+class WideDeepClassifier(ClassifierModule):
     """ Single-label classifier on Wide & Deep model with BERT. """
 
     _INFER_ATTRIBUTES = {    # params whose value cannot be None in order to infer without training

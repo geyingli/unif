@@ -687,26 +687,6 @@ class BaseModule:
     def convert(self, *args, **kwargs):
         raise NotImplementedError()
 
-    def _convert_x(self, x, tokenized):
-        """ Convert text sample. """
-
-        # deal with untokenized inputs
-        if not tokenized:
-
-            # deal with general inputs
-            if isinstance(x, str):
-                return [self.tokenizer.tokenize(x)]
-
-            # deal with multiple inputs
-            return [self.tokenizer.tokenize(seg) for seg in x]
-
-        # deal with tokenized inputs
-        if isinstance(x[0], str):
-            return [x]
-
-        # deal with tokenized and multiple inputs
-        return x
-
     @staticmethod
     def _convert_sample_weight(sample_weight, n_inputs):
         """ Standardize `sample_weight`. """

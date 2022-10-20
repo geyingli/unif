@@ -2,12 +2,12 @@ import numpy as np
 
 from .uda import UDADecoder
 from .._base_._base_classifier import ClassifierModule
-from ..bert.bert_classifier import BERTClassifier
 from ..bert.bert import BERTEncoder, BERTConfig, get_decay_power
-from .. import util
+from ..bert.bert_classifier import BERTClassifier
 from ...token import WordPieceTokenizer
 from ...third import tf
 from ... import com
+from .. import util
 
 
 class UDAClassifier(BERTClassifier, ClassifierModule):

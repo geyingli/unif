@@ -1,7 +1,6 @@
 import numpy as np
 
 from .widedeep import WideDeepRegDecoder, get_decay_power
-from .widedeep_classifier import WideDeepClassifier
 from .._base_._base_regressor import RegressorModule
 from ..bert.bert import BERTEncoder, BERTConfig
 from ...token import WordPieceTokenizer
@@ -9,8 +8,8 @@ from ...third import tf
 from ... import com
 
 
-class WideDeepRegressor(WideDeepClassifier, RegressorModule):
-    """ Single-label classifier on Wide & Deep model with BERT. """
+class WideDeepRegressor(RegressorModule):
+    """ Single-label classifier on Wide & Deep structure with BERT. """
 
     _INFER_ATTRIBUTES = {    # params whose value cannot be None in order to infer without training
         "max_seq_length": "An integer that defines max sequence length of input tokens",
@@ -169,27 +168,6 @@ class WideDeepRegressor(WideDeepClassifier, RegressorModule):
 
         return (input_ids, input_mask, segment_ids, n_wide_features, wide_features)
 
-    def _convert_y(self, y):
-
-        sample = y[0]
-        if isinstance(sample, list):
-            self.label_size = len(sample)
-        elif isinstance(sample, float) or isinstance(sample, int) or isinstance(sample, str):
-            self.label_size = 1
-
-        label_floats = []
-        for idx, sample in enumerate(y):
-            try:
-                if isinstance(sample, list):
-                    _label_floats = [float(label) for label in sample]
-                elif isinstance(sample, float) or isinstance(sample, int) or isinstance(sample, str):
-                    _label_floats = [float(sample)]
-            except Exception:
-                raise ValueError("Wrong output format (line %d): \"%s\". An example: y = [[0.12, 0.09], [-0.53, 0.98], ...]" % (idx, sample))
-            label_floats.append(_label_floats)
-
-        return label_floats
-
     def _set_placeholders(self, **kwargs):
         self.placeholders = {
             "input_ids": tf.placeholder(tf.int32, [None, self.max_seq_length], "input_ids"),
@@ -224,53 +202,3 @@ class WideDeepRegressor(WideDeepClassifier, RegressorModule):
             **kwargs,
         )
         return decoder.get_forward_outputs()
-
-    def _get_fit_ops(self, from_tfrecords=False):
-        ops = [self._tensors["preds"]]
-        if from_tfrecords:
-            ops.extend([self.placeholders["label_floats"]])
-        return ops
-
-    def _get_fit_info(self, output_arrays, feed_dict, from_tfrecords=False):
-
-        if from_tfrecords:
-            batch_labels = output_arrays[-1]
-        else:
-            batch_labels = feed_dict[self.placeholders["label_floats"]]
-
-        # mse
-        batch_preds = output_arrays[0]
-        mse = np.mean(np.square(batch_preds - batch_labels))
-
-        info = ""
-        info += ", mse %.6f" % mse
-
-        return info
-
-    def _get_predict_ops(self):
-        return [self._tensors["preds"]]
-
-    def _get_predict_outputs(self, output_arrays, n_inputs):
-
-        # preds
-        preds = com.transform(output_arrays[0], n_inputs)
-
-        outputs = {}
-        outputs["preds"] = preds
-
-        return outputs
-
-    def _get_score_ops(self):
-        return [self._tensors["preds"], self._tensors["losses"]]
-
-    def _get_score_outputs(self, output_arrays, n_inputs):
-
-        # mse
-        preds = com.transform(output_arrays[0], n_inputs)
-        labels = self.data["label_floats"]
-        mse = np.mean(np.square(preds - labels))
-
-        outputs = {}
-        outputs["mse"] = mse
-
-        return outputs

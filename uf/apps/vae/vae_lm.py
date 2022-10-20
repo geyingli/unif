@@ -2,13 +2,12 @@ import numpy as np
 
 from .vae import VAE, get_decay_power
 from .._base_._base_lm import LMModule
-from ..bert.bert_classifier import BERTClassifier
 from ...token import WordPieceTokenizer
 from ...third import tf
 from ... import com
 
 
-class VAELM(BERTClassifier, LMModule):
+class VAELM(LMModule):
     """ Text generator in VAE structure. """
     
     def __init__(

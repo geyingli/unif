@@ -1,8 +1,7 @@
 import numpy as np
 
 from .rnn import RNNEncoder, get_decay_power
-from .._base_._base_classifier import ClassifierModule
-from .._base_._base_ import ClsDecoder
+from .._base_._base_classifier import ClsDecoder, ClassifierModule
 from ...token import WordPieceTokenizer
 from ...third import tf
 from ... import com
@@ -11,14 +10,10 @@ from ... import com
 class RNNClassifier(ClassifierModule):
     """ Single-label classifier on RNN/LSTM/GRU. """
 
-    _INFER_ATTRIBUTES = {    # params whose value cannot be None in order to infer without training
-        "label_size": "An integer that defines number of possible labels of outputs",
-        "init_checkpoint": "A string that directs to the checkpoint file used for initialization",
-    }
-
     def __init__(
         self,
         vocab_file,
+        max_seq_length=128,
         label_size=None,
         init_checkpoint=None,
         output_dir=None,
@@ -31,6 +26,7 @@ class RNNClassifier(ClassifierModule):
         self.__init_args__ = locals()
         super(ClassifierModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
+        self.max_seq_length = max_seq_length
         self.label_size = label_size
         self.truncate_method = truncate_method
         self._rnn_core = rnn_core
@@ -103,7 +99,7 @@ class RNNClassifier(ClassifierModule):
             _seq_length = len(_input_ids)
 
             # padding
-            _input_ids = [0] * (self.max_seq_length - len(_input_ids)) + _input_ids
+            _input_ids += [0] * (self.max_seq_length - len(_input_ids))
 
             input_ids.append(_input_ids)
             seq_length.append(_seq_length)
@@ -124,7 +120,7 @@ class RNNClassifier(ClassifierModule):
             is_training=is_training,
             input_ids=placeholders["input_ids"],
             seq_length=placeholders["seq_length"],
-            vocab_size=self.tokenizer.vocab,
+            vocab_size=len(self.tokenizer.vocab),
             rnn_core=self._rnn_core,
             hidden_size=self._hidden_size,
             scope=self._rnn_core,

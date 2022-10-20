@@ -7,7 +7,7 @@ from ... import com
 from .. import util
 
 
-class ClsDecoder(BaseDecoder):
+class BinaryClsDecoder(BaseDecoder):
     def __init__(
         self,
         is_training,
@@ -16,7 +16,8 @@ class ClsDecoder(BaseDecoder):
         is_logits=False,
         label_size=2,
         sample_weight=None,
-        scope="cls",
+        label_weight=None,
+        scope="cls/seq_relationship",
         hidden_dropout_prob=0.1,
         initializer_range=0.02,
         trainable=True,
@@ -44,26 +45,25 @@ class ClsDecoder(BaseDecoder):
                 output_layer = util.dropout(input_tensor, hidden_dropout_prob if is_training else 0.0)
                 logits = tf.matmul(output_layer, output_weights, transpose_b=True)
                 logits = tf.nn.bias_add(logits, output_bias)
+            
+        probs = tf.nn.sigmoid(logits, name="probs")
+        self._tensors["probs"] = probs
+        self._tensors["preds"] = tf.greater(probs, 0.5, name="preds")
 
-        self._tensors["preds"] = tf.argmax(logits, axis=-1, name="preds")
-        self._tensors["probs"] = tf.nn.softmax(logits, axis=-1, name="probs")
-
-        log_probs = tf.nn.log_softmax(logits, axis=-1)
-        one_hot_labels = tf.one_hot(label_ids, depth=label_size, dtype=tf.float32)
-        per_example_loss = - tf.reduce_sum(one_hot_labels * log_probs, axis=-1)
+        per_label_loss = tf.nn.sigmoid_cross_entropy_with_logits(logits=logits, labels=tf.cast(label_ids, dtype=tf.float32))
+        if label_weight is not None:
+            label_weight = tf.constant(label_weight, dtype=tf.float32)
+            label_weight = tf.reshape(label_weight, [1, label_size])
+            per_label_loss *= label_weight
+        per_example_loss = tf.reduce_sum(per_label_loss, axis=-1)
         if sample_weight is not None:
-            per_example_loss = tf.cast(sample_weight, dtype=tf.float32) * per_example_loss
-        thresh = kwargs.get("conf_thresh")
-        if thresh is not None:
-            assert isinstance(thresh, float), "`conf_thresh` must be a float between 0 and 1."
-            largest_prob = tf.reduce_max(tf.exp(log_probs), axis=-1)
-            per_example_loss = tf.cast(tf.less(largest_prob, thresh), dtype=tf.float32) * per_example_loss
+            per_example_loss *= sample_weight
 
         self._tensors["losses"] = per_example_loss
         self.train_loss = tf.reduce_mean(per_example_loss)
 
 
-class ClassifierModule(BaseModule):
+class BinaryClassifierModule(BaseModule):
     """ Application class of classification. """
 
     _INFER_ATTRIBUTES = {    # params whose value cannot be None in order to infer without training
@@ -71,7 +71,7 @@ class ClassifierModule(BaseModule):
         "label_size": "An integer that defines number of possible labels of outputs",
         "init_checkpoint": "A string that directs to the checkpoint file used for initialization",
     }
-
+    
     def _convert_x(self, x, tokenized):
         """ Convert text sample. """
 
@@ -93,13 +93,20 @@ class ClassifierModule(BaseModule):
         return x
 
     def _convert_y(self, y):
-        """ Convert categorical label. """
-
-        label_set = set(y)
+        try:
+            label_set = set()
+            for sample in y:
+                _label_set = set()
+                for _y in sample:
+                    assert _y not in _label_set
+                    label_set.add(_y)
+                    _label_set.add(_y)
+        except Exception:
+            raise ValueError("The element of `y` should be a list of multiple answers. E.g. y=[[1, 3], [0], [0, 2]].")
 
         # automatically set `label_size`
         if self.label_size:
-            assert len(label_set) <= self.label_size, "Number of unique `y`s exceeds `label_size`."
+            assert len(label_set) <= self.label_size, "Number of unique labels exceeds `label_size`."
         else:
             self.label_size = len(label_set)
 
@@ -118,12 +125,17 @@ class ClassifierModule(BaseModule):
             self._label_to_id = {label: index for index, label in enumerate(self._id_to_label)}
 
         label_ids = []
-        for label in y:
-            if label not in self._label_to_id:
-                assert len(self._label_to_id) < self.label_size, "Number of unique labels exceeds `label_size`."
-                self._label_to_id[label] = len(self._label_to_id)
-                self._id_to_label.append(label)
-            label_ids.append(self._label_to_id[label])
+        for sample in y:
+            _label_ids = [0] * self.label_size
+
+            for label in sample:
+                if label not in self._label_to_id:
+                    assert len(self._label_to_id) < self.label_size, "Number of unique labels exceeds `label_size`."
+                    self._label_to_id[label] = len(self._label_to_id)
+                    self._id_to_label.append(label)
+                label_id = self._label_to_id[label]
+                _label_ids[label_id] = 1
+            label_ids.append(_label_ids)
         return label_ids
 
     def _get_fit_ops(self, from_tfrecords=False):
@@ -162,9 +174,14 @@ class ClassifierModule(BaseModule):
         probs = com.transform(output_arrays[0], n_inputs)
 
         # preds
-        preds = np.argmax(probs, axis=-1).tolist()
+        preds = (probs >= 0.5)
         if self._id_to_label:
-            preds = [self._id_to_label[idx] if idx < len(self._id_to_label) else None for idx in preds]
+            preds = [[
+                self._id_to_label[i] for i in range(self.label_size)
+                if _preds[i] and i < len(self._id_to_label)
+            ] for _preds in preds]
+        else:
+            preds = [[i for i in range(self.label_size) if _preds[i]] for _preds in preds]
 
         outputs = {}
         outputs["preds"] = preds
@@ -191,3 +208,5 @@ class ClassifierModule(BaseModule):
         outputs["loss"] = loss
 
         return outputs
+
+

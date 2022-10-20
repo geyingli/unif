@@ -2,7 +2,7 @@ import os
 import copy
 import numpy as np
 
-from .._base_._base_classifier import ClassifierModule
+from .._base_._base_binary_classifier import BinaryClassifierModule
 from ..bert.bert_binary_classifier import BERTBinaryClassifier
 from ..bert.bert import BERTConfig
 from .tinybert import TinyBERTBinaryClsDistillor
@@ -10,7 +10,7 @@ from ...token import WordPieceTokenizer
 from ...third import tf
 
 
-class TinyBERTBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
+class TinyBERTBinaryClassifier(BERTBinaryClassifier, BinaryClassifierModule):
     """ Multi-label classifier on TinyBERT, a distillation model. """
 
     def __init__(
@@ -29,7 +29,7 @@ class TinyBERTBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
         truncate_method="LIFO",
     ):
         self.__init_args__ = locals()
-        super(ClassifierModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
+        super(BinaryClassifierModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.max_seq_length = max_seq_length
         self.label_size = label_size
@@ -97,8 +97,8 @@ class TinyBERTBinaryClassifier(BERTBinaryClassifier, ClassifierModule):
             if n_inputs < self.batch_size:
                 self.batch_size = max(n_inputs, len(self._gpu_ids))
 
+        # convert y
         if y is not None:
-            # convert y and sample_weight
             label_ids = self._convert_y(y)
             data["label_ids"] = np.array(label_ids, dtype=np.int32)
 

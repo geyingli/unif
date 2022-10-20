@@ -201,22 +201,6 @@ class BERTLM(LMModule):
 
         return (input_ids, input_mask, segment_ids, masked_lm_positions, masked_lm_ids, masked_lm_weights, next_sentence_labels)
 
-    def _convert_x(self, x, tokenized):
-        if not tokenized:
-            # deal with general inputs
-            if isinstance(x, str):
-                return [self.tokenizer.tokenize(x)]
-
-            # deal with multiple inputs
-            return [self.tokenizer.tokenize(seg) for seg in x]
-
-        # deal with tokenized inputs
-        if isinstance(x[0], str):
-            return [x]
-
-        # deal with tokenized and multiple inputs
-        return x
-
     def _convert_y(self, y):
         label_set = set(y)
 

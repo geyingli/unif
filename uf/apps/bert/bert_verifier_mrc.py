@@ -3,8 +3,8 @@ import numpy as np
 
 from .bert import BERTEncoder, BERTConfig, get_decay_power
 from .bert_mrc import BERTMRC
-from .._base_._base_mrc import MRCModule
-from .._base_._base_ import ClsDecoder, MRCDecoder
+from .._base_._base_mrc import MRCDecoder, MRCModule
+from .._base_._base_classifier import ClsDecoder
 from ...token import WordPieceTokenizer
 from ...third import tf
 from ... import com

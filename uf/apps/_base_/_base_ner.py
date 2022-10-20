@@ -1,6 +1,7 @@
 import numpy as np
 
 from ...core import BaseModule
+from ... import com
 
 
 class NERModule(BaseModule):
@@ -134,3 +135,183 @@ class NERModule(BaseModule):
                     elif ids[i] == S_id:
                         entities.append([i, i])
         return entities
+
+    def _convert_x(self, x, tokenized):
+        """ Convert text sample. """
+
+        # deal with untokenized inputs
+        if not tokenized:
+
+            # deal with general inputs
+            if isinstance(x, str):
+                return [self.tokenizer.tokenize(x)]
+
+            # deal with multiple inputs
+            return [self.tokenizer.tokenize(seg) for seg in x]
+
+        # deal with tokenized inputs
+        if isinstance(x[0], str):
+            return [x]
+
+        # deal with tokenized and multiple inputs
+        return x
+
+    def _convert_y(self, y, input_ids, tokenized=False):
+        label_ids = []
+
+        for idx, (_y, _input_ids) in enumerate(zip(y, input_ids)):
+            if not _y:
+                label_ids.append([self.O_ID] * self.max_seq_length)
+                continue
+
+            if isinstance(_y, str):
+                _entity_tokens = self.tokenizer.tokenize(_y)
+                _entity_ids = [self.tokenizer.convert_tokens_to_ids(_entity_tokens)]
+            elif isinstance(_y, list):
+                if isinstance(_y[0], str):
+                    if tokenized:
+                        _entity_ids = [self.tokenizer.convert_tokens_to_ids(_y)]
+                    else:
+                        _entity_ids = []
+                        for _entity in _y:
+                            _entity_ids.append(self.tokenizer.convert_tokens_to_ids(self.tokenizer.tokenize(_entity)))
+                elif isinstance(_y[0], list):
+                    _entity_ids = []
+                    for _entity in _y:
+                        _entity_ids.append(self.tokenizer.convert_tokens_to_ids(_entity))
+            else:
+                raise ValueError("`y` should be a list of entity strings.")
+
+            # tagging
+            _label_ids = [self.O_ID for _ in range(self.max_seq_length)]
+            for _entity in _entity_ids:
+                start_positions = com.find_all_boyer_moore(_input_ids, _entity)
+                if not start_positions:
+                    tf.logging.warning(
+                        "Failed to find the mapping of entity to "
+                        "inputs at line %d. A possible reason is "
+                        "that the entity span is truncated due "
+                        "to the `max_seq_length` setting." % (idx)
+                    )
+                    continue
+
+                for start_position in start_positions:
+                    end_position = start_position + len(_entity) - 1
+                    if start_position == end_position:
+                        _label_ids[start_position] = self.S_ID
+                    else:
+                        for i in range(start_position, end_position + 1):
+                            _label_ids[i] = self.I_ID
+                        _label_ids[start_position] = self.B_ID
+                        _label_ids[end_position] = self.E_ID
+
+            label_ids.append(_label_ids)
+
+        return label_ids
+
+    def _get_fit_ops(self, from_tfrecords=False):
+        ops = [self._tensors["preds"], self._tensors["losses"]]
+        if from_tfrecords:
+            ops.extend([self.placeholders["input_mask"], self.placeholders["label_ids"]])
+        return ops
+
+    def _get_fit_info(self, output_arrays, feed_dict, from_tfrecords=False):
+
+        if from_tfrecords:
+            batch_mask = output_arrays[-2]
+            batch_labels = output_arrays[-1]
+        else:
+            batch_mask = feed_dict[self.placeholders["input_mask"]]
+            batch_labels = feed_dict[self.placeholders["label_ids"]]
+
+        # f1
+        batch_preds = output_arrays[0]
+        f1_token, f1_entity = self._get_f1(batch_preds, batch_labels, batch_mask)
+
+        # loss
+        batch_losses = output_arrays[1]
+        loss = np.mean(batch_losses)
+
+        info = ""
+        info += ", f1/token %.4f" % f1_token
+        info += ", f1/entity %.4f" % f1_entity
+        info += ", loss %.6f" % loss
+
+        return info
+
+    def _get_predict_ops(self):
+        return [self._tensors["probs"]]
+
+    def _get_predict_outputs(self, output_arrays, n_inputs):
+
+        # probs
+        probs = com.transform(output_arrays[0], n_inputs)
+
+        # preds
+        all_preds = np.argmax(probs, axis=-1)
+        tokens = self.data[com.BACKUP_DATA + "input_tokens"]
+        mask = self.data["input_mask"]
+        text = self.data[com.BACKUP_DATA + "X_target"]
+        tokenized = self.data[com.BACKUP_DATA + "tokenized"][0]
+        preds = []
+        for i in range(len(all_preds)):
+            _preds = all_preds[i]
+            _tokens = tokens[i]
+            _mask = mask[i]
+            _text = text[i]
+
+            _input_length = int(np.sum(_mask))
+            _entities = self._get_entities(_preds[:_input_length])
+            _preds = []
+            if not _entities:
+                preds.append(_preds)
+                continue
+
+            if not tokenized:
+                if isinstance(_text, list):
+                    _text = " ".join(_text)
+                _mapping_start, _mapping_end = com.align_tokens_with_text(_tokens, _text, self._do_lower_case)
+
+            for _entity in _entities:
+                _start, _end = _entity[0], _entity[1]
+                if tokenized:
+                    _entity_tokens = _tokens[_start: _end + 1]
+                    _preds.append(_entity_tokens)
+                else:
+                    try:
+                        _text_start = _mapping_start[_start]
+                        _text_end = _mapping_end[_end]
+                    except Exception:
+                        continue
+                    _entity_text = _text[_text_start: _text_end]
+                    _preds.append(_entity_text)
+            preds.append(_preds)
+
+        outputs = {}
+        outputs["preds"] = preds
+        outputs["probs"] = probs
+
+        return outputs
+
+    def _get_score_ops(self):
+        return [self._tensors["preds"], self._tensors["losses"]]
+
+    def _get_score_outputs(self, output_arrays, n_inputs):
+
+        # f1
+        preds = com.transform(output_arrays[0], n_inputs)
+        labels = self.data["label_ids"]
+        mask = self.data["input_mask"]
+        f1_token, f1_entity = self._get_f1(preds, labels, mask)
+
+        # loss
+        losses = com.transform(output_arrays[1], n_inputs)
+        loss = np.mean(losses)
+
+        outputs = {}
+        outputs["f1/token"] = f1_token
+        outputs["f1/entity"] = f1_entity
+        outputs["loss"] = loss
+
+        return outputs
+

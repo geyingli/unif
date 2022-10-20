@@ -1,6 +1,7 @@
 import numpy as np
 
 from ...core import BaseModule
+from ...third import tf
 from ... import com
 
 

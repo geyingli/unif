@@ -155,19 +155,19 @@ class WideDeepRegDecoder(BaseDecoder):
                 kernel_initializer=util.create_initializer(initializer_range),
                 trainable=trainable,
             )
-            preds = tf.layers.dense(
+            probs = tf.layers.dense(
                 intermediate_output,
                 label_size,
                 use_bias=False,
                 kernel_initializer=util.create_initializer(initializer_range),
                 trainable=trainable,
-                name="preds",
+                name="probs",
             )
 
-            self.tensors["preds"] = preds
+            self.tensors["probs"] = probs
 
             per_example_loss = tf.reduce_sum(
-                tf.square(label_floats - preds), axis=-1)
+                tf.square(label_floats - probs), axis=-1)
             if sample_weight is not None:
                 per_example_loss = tf.cast(
                     sample_weight, dtype=tf.float32) * per_example_loss

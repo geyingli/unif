@@ -269,13 +269,23 @@ def layer_norm_and_dropout(input_tensor, dropout_prob, trainable=True):
     return output_tensor
 
 
+def bidirectional_kl_divergence(p, q):
+    """ Bidirectional Kullback-Leibler divergence. """
+    return kl_divergence(p, q) + kl_divergence(q, p)
+
+
+def kl_divergence(p, q):
+    """ Kullback-Leibler divergence. """
+    return tf.reduce_sum(p * (tf.log(p) - tf.log(q)), axis=-1)
+
+
 def create_initializer(initializer_range=0.02):
-    """Creates a truncated_normal_initializer with the given range."""
+    """ Creates a truncated_normal_initializer with the given range. """
     return tf.truncated_normal_initializer(stddev=initializer_range)
 
 
 def get_shape_list(tensor, expected_rank=None, name=None):
-    """Returns a list of the shape of tensor, preferring static dimensions."""
+    """ Returns a list of the shape of tensor, preferring static dimensions. """
     if name is None:
         name = tensor.name
 
@@ -299,7 +309,7 @@ def get_shape_list(tensor, expected_rank=None, name=None):
 
 
 def reshape_to_matrix(input_tensor):
-    """Reshapes a >= rank 2 tensor to a rank 2 tensor (i.e., a matrix)."""
+    """ Reshapes a >= rank 2 tensor to a rank 2 tensor (i.e., a matrix). """
     ndims = input_tensor.shape.ndims
     if ndims < 2:
         raise ValueError(
@@ -315,7 +325,7 @@ def reshape_to_matrix(input_tensor):
 
 def reshape_from_matrix(output_tensor, orig_shape_list,
                         original_shape=None):
-    """Reshapes a rank 2 tensor back to its original rank >= 2 tensor."""
+    """ Reshapes a rank 2 tensor back to its original rank >= 2 tensor. """
     if len(orig_shape_list) == 2:
         return output_tensor
 
@@ -329,7 +339,7 @@ def reshape_from_matrix(output_tensor, orig_shape_list,
 
 
 def assert_rank(tensor, expected_rank, name=None):
-    """Raises an exception if the tensor rank is not of the expected rank."""
+    """ Raises an exception if the tensor rank is not of the expected rank. """
     if name is None:
         name = tensor.name
 

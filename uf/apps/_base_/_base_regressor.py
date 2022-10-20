@@ -42,10 +42,10 @@ class RegDecoder(BaseDecoder):
                     use_bias=False,
                     kernel_initializer=util.create_initializer(initializer_range),
                     trainable=trainable,
-                    name="preds",
+                    name="probs",
                 )
 
-        self.tensors["preds"] = logits
+        self.tensors["probs"] = logits
 
         per_example_loss = tf.reduce_sum(tf.square(label_floats - logits), axis=-1)
         if sample_weight is not None:
@@ -105,7 +105,7 @@ class RegressorModule(BaseModule):
         return label_floats
 
     def _get_fit_ops(self, from_tfrecords=False):
-        ops = [self.tensors["preds"]]
+        ops = [self.tensors["probs"]]
         if from_tfrecords:
             ops.extend([self.placeholders["label_floats"]])
         return ops
@@ -127,27 +127,27 @@ class RegressorModule(BaseModule):
         return info
 
     def _get_predict_ops(self):
-        return [self.tensors["preds"]]
+        return [self.tensors["probs"]]
 
     def _get_predict_outputs(self, output_arrays, n_inputs):
 
-        # preds
-        preds = com.transform(output_arrays[0], n_inputs)
+        # probs
+        probs = com.transform(output_arrays[0], n_inputs)
 
         outputs = {}
-        outputs["preds"] = preds
+        outputs["probs"] = probs
 
         return outputs
 
     def _get_score_ops(self):
-        return [self.tensors["preds"], self.tensors["losses"]]
+        return [self.tensors["probs"], self.tensors["losses"]]
 
     def _get_score_outputs(self, output_arrays, n_inputs):
 
         # mse
-        preds = com.transform(output_arrays[0], n_inputs)
+        probs = com.transform(output_arrays[0], n_inputs)
         labels = self.data["label_floats"]
-        mse = np.mean(np.square(preds - labels))
+        mse = np.mean(np.square(probs - labels))
 
         outputs = {}
         outputs["mse"] = mse

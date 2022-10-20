@@ -223,40 +223,6 @@ model.fit_from_tfrecords(
 
 实际上，也就是把 `fit` 函数中预处理和模型训练的两个步骤给分开。因此如果需要反复使用同一套数据进行训练，通过以上方式处理能节省更多时间。
 
-### Tricks
-
-`fit` 和 `fit_from_tfrecords` 中的 `kwargs` 函数正是用来实现以下训练技巧：
-
-```python
-# 打乱：随机打乱训练数据
-model.fit(..., shuffle=True)          # 默认False
-
-# 优化器：`batch_size`大于512时推荐使用lamb
-model.fit(..., optimizer="gd")
-model.fit(..., optimizer="adam")
-model.fit(..., optimizer="adamw")     # 默认adamw
-model.fit(..., optimizer="lamb")
-
-# 分层学习率：应对迁移学习中的catastrophic forgetting问题 (少量模型不适用)
-model.fit(..., layerwise_lr_decay_ratio=0.85)
-print(model.decay_power)              # 衰减指数 (可按需修改)
-
-# 对抗式训练：在输入中添加扰动，以提高模型的鲁棒性和泛化能力
-model.fit(..., adversarial="fgm", epsilon=0.5)                  # FGM
-model.fit(..., adversarial="pgd", epsilon=0.05, n_loop=2)       # PGD
-model.fit(..., adversarial="freelb", epsilon=0.3, n_loop=3)     # FreeLB
-model.fit(..., adversarial="freeat", epsilon=0.001, n_loop=3)   # FreeAT
-model.fit(..., adversarial="smart", epsilon=0.01, n_loop=2, prtb_lambda=0.5, breg_miu=0.2, tilda_beta=0.3)    # SMART (仅Classifier可用)
-
-# 置信度过滤：样本置信度达到阈值后不再参与训练，避免过拟合 (仅Classifier可用)
-model.fit(..., conf_thresh=0.99)      # 默认None，不启用
-
-# 梯度累积：当`batch_size`过小以至于模型拟合困难时，梯度累积可以显著提高拟合表现 (功能尚在测试中)
-model.fit(..., grad_acc_steps=5)      # 默认1，不累积梯度
-```
-
-2020 年流行对抗式训练，2021 年流行对比学习，这些都属于模型训练的 trick。未来还会有更多 trick，都将在这一部分引入。
-
 ### 预训练参数
 
 预训练参数的 `ckpt` 文件中，每一个变量都有独立的命名和规格，如 `("layer_1/attention/self/query/kernel", [768, 768])`。在上文“模型列表”的详细链接中，我们列示了可以直接读取的公开预训练参数，从这些来源下载的预训练参数无需更多处理。但在其他地方获取的预训练参数，可能会存在与本框架中模型命名/规格不一致的情况。
@@ -304,6 +270,60 @@ model.score(X=X, y=y, sample_weight=None, X_tokenized=None, batch_size=8)
 ```
 
 与训练不同的是，推理/评分暂时不支持多进程加速和写入 TFRecords。如果需要推理海量数据，可以通过分批处理达成目的。
+
+## Tricks
+
+模型训练中包含的一些可改动的细节以及训练技巧，在 `fit` 和 `fit_from_tfrecords` 函数尾部添加参数即可实现。
+
+### 优化器
+
+自神经网络火热开始，逐渐演化出了一众优秀的最优化算法，包括 Gradient Descent (GD)、Momentum、Adaptive Gradient (AdaGrad)、Root Mean Square prop (RMSprop)、Adaptive Moment estimation (Adam) 等。时至今日，最常见的依然是 2018 年 BERT 所使用的 Adam Weight Decay Regularization (AdamW) 算法。但据实验表明，当训练的 `batch_size` 达到 512 以上时，AdamW 的收敛效率会极速下降，因而有了后来宣称能够支持大容量 batch 收敛，在 76 分钟内完成 BERT 预训练的 Layer-wise Adaptive Moments optimizer for Batching training (LAMB) 算法。这一套算法的表现基本优于 AdamW 或与之相当，推荐尝试。
+
+```python
+model.fit(..., optimizer="gd")
+model.fit(..., optimizer="adam")
+model.fit(..., optimizer="adamw")     # 默认adamw
+model.fit(..., optimizer="lamb")
+```
+
+### 分层学习率
+
+迁移学习中常见灾难性遗忘问题 (Catastrophic Forgetting)：模型急不可耐地适应新数据，而丢失了预训练中学到的知识。为了对抗这种过拟合，分层学习率是有效的 trick。越靠近输出层，学习率越大，反之亦然。启用方法是增加 `layerwise_lr_decay_ratio` 参数并设定一个 0 到 1 之间的浮点数。模型参数会通过 `.decay_power` 找到自己对应的指数，而后计算学习率：
+
+$$r(w) = r^* \times lldr^{decay\_power(w)}$$
+
+$r^*$ 是 `learning_rate` 参数对应的全局峰值学习率。实际使用中可按需求进行参数调整：
+```python
+model.fit(..., layerwise_lr_decay_ratio=0.85)
+print(model.decay_power)            # 可in-place修改
+```
+
+### 对抗式训练
+
+在 2020 年前后，对抗式训练因其较好的效果开始从小众变成人尽皆知。与 CV 领域通过 GAN 的范式进行图像生成的对抗式训练不同，NLP 领域的对抗式训练指的是在梯度正方向上添加扰动 (而不是随机扰动)，以增强 embedding 泛化性和鲁棒性的策略。从最经典的 FGSM 开始，对抗式训练算法也在随时间推进，逐渐优化。在 2020 年，微软推出 SMART 算法成为该领域的 SOTA，在 GLUE 榜单榜上有名。但由于该算法只能在单 label 分类的场景使用，且需要调节的参数较多，因而也存在诸多不便之处。
+
+```python
+model.fit(..., adversarial="fgm", epsilon=0.5)                  # FGM
+model.fit(..., adversarial="pgd", epsilon=0.05, n_loop=2)       # PGD
+model.fit(..., adversarial="freelb", epsilon=0.3, n_loop=3)     # FreeLB
+model.fit(..., adversarial="freeat", epsilon=0.001, n_loop=3)   # FreeAT
+model.fit(..., adversarial="smart", epsilon=0.01, n_loop=2, prtb_lambda=0.5, breg_miu=0.2, tilda_beta=0.3)    # SMART (仅Classifier可用)
+```
+
+### R-Drop
+
+全称 Regularized Dropout，同样是行之有效的在对抗过拟合的同时增强泛化能力的策略。策略思想极其简单，因而在大多数场景都能应用，在于将相同的数据经过不同的 dropout 后得到各自的概率分布，计算双向 KL 散度并加入到损失函数中。这一想法与对比学习、一致性学习颇为类似，但作用的变量是 dropout。
+```python
+model.fit(..., rdrop=True, alpha=1.0)     # alpha是损失项乘子
+```
+
+### 其他
+
+深度学习的变量极多，算法的可塑性也较大，未来有机会将引入更多的通用 trick。下面是其他的对下游表现未必有提升的 trick，有空不妨一试。
+```python
+# 置信度过滤：样本置信度达到阈值后不再参与训练，避免过拟合 (仅Classifier可用)
+model.fit(..., conf_thresh=0.99)      # 默认None，不启用
+```
 
 ## TFServing
 

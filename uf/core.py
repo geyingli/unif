@@ -6,6 +6,7 @@ import collections
 from abc import abstractmethod
 
 from .third import tf
+from .apps import util
 from . import task
 from . import opt
 from . import com
@@ -155,7 +156,7 @@ class BaseModule:
               to the number of cpu cores in the comping device.
             **kwargs: Other arguments about layer-wise learning rate decay,
               adversarial training or model-specific settings. See `README.md`
-              to obtain more
+              for more information
         Returns:
             None
         """
@@ -733,6 +734,40 @@ class BaseModule:
         """ As its name. """
         raise NotImplementedError()
 
+    def _single_forward(self, is_training, placeholders, **kwargs):
+        """ Foundation of computation graph in a single device, a general method. """
+
+        # build forward
+        train_loss, tensors = self._forward(
+            is_training=is_training,
+            placeholders=placeholders,
+            **kwargs,
+        )
+
+        # Regularized Dropout (R-Drop) algorithm
+        # Paper: https://arxiv.org/abs/2106.14448
+        if kwargs.get("rdrop"):
+            if sum([1 for key in tensors.keys() if key.endswith("probs")]) < 1:
+                raise ValueError(
+                    "%s does not support R-Drop algorithm."
+                    % (self.module.__class__.__name__)
+                )
+            alpha = kwargs.get("alpha", 1.0)
+            train_loss_1, _tensors_1 = self._forward(      # second forward
+                is_training=is_training,
+                placeholders=placeholders,
+                **kwargs,
+            )
+            train_loss += train_loss_1
+            for key in tensors.keys():
+                if not key.endswith("probs"):
+                    continue
+                train_loss += alpha * util.bidirectional_kl_divergence(
+                    tensors[key], _tensors_1[key],
+                )
+
+        return train_loss, tensors
+
     def _parallel_forward(self, is_training=True, **kwargs):
         """ Parallel foundation of computation graph in multi GPUs, a general method. """
 
@@ -758,10 +793,8 @@ class BaseModule:
             with device("gpu:%s" % _gpu_id):
 
                 # build forward
-                _train_loss, _tensors = self._forward(
-                    is_training=is_training,
-                    placeholders=parallel_placeholders[idx],
-                    **kwargs,
+                _train_loss, _tensors = self._single_forward(
+                    is_training, parallel_placeholders[idx], **kwargs,
                 )
 
                 # back propagation

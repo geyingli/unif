@@ -1,3 +1,5 @@
+import numpy as np
+
 from .bert import BERTEncoder, BERTConfig, get_decay_power
 from .._base_._base_binary_classifier import BinaryClsDecoder, BinaryClassifierModule
 from ...token import WordPieceTokenizer

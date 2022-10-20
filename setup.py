@@ -10,13 +10,13 @@ from setuptools import setup, find_packages
 
 setup(
     name="uf",
-    version="v2.5.7",
+    version="v2.5.8",
     description="Unified framework for NLP tasks.",
     url="https://github.com/geyingli/unif",
     long_description=open("README.md", "r", encoding="utf-8").read(),
     long_description_content_type="text/markdown",
     author="Geying Li",
-    author_email="geyingli@tencent.com",
+    author_email="luv_dusk@163.com",
     license="Apache-2.0",
     packages=find_packages(),
     install_requires=[

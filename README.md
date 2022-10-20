@@ -8,7 +8,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-v2.5.7-blue">
+        <img src="https://img.shields.io/badge/version-v2.5.8-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-1.x\2.x-yellow">
@@ -25,7 +25,7 @@
 
 - 高效调用：三行代码完成训练及推理
 - 高效运行：一行代码设置多进程/多 GPU 并行
-- 品类丰富：支持约 40 种模型类
+- 品类丰富：支持 40+ 模型类
 - 高分保证：提供分层学习率、对抗式训练等多项训练技巧
 - 可供部署：导出模型 PB 文件，供线上部署
 
@@ -69,8 +69,8 @@ print(model.predict(X))
 | |[`GPT2LM`](./examples/tutorial/GPT2LM.ipynb) | 自回归式文本生成 | - |
 | |[`UniLM`](./examples/tutorial/UniLM.ipynb) | 结合双向、单向及 Seq2Seq 建模的全能语言模型 |
 |文本分类 / 单label|[`TextCNNClassifier`](./examples/tutorial/TextCNNClassifier.ipynb) 		| 小而快 |
-|| [`RNNClassifier`](./examples/tutorial/TextCNNClassifier.ipynb) 		| 经典 RNN/LSTM/GRU |
-|| [`BiRNNClassifier`](./examples/tutorial/TextCNNClassifier.ipynb) 		| 双向获取更优表征 |
+|| [`RNNClassifier`](./examples/tutorial/RNNClassifier.ipynb) 		| 经典 RNN/LSTM/GRU |
+|| [`BiRNNClassifier`](./examples/tutorial/BiRNNClassifier.ipynb) 		| 双向获取更优表征 |
 || [`BERTClassifier`](./examples/tutorial/BERTClassifier.ipynb) 		| - |
 || [`XLNetClassifier`](./examples/tutorial/XLNetClassifier.ipynb) 		| - |
 || [`RoBERTaClassifier`](./examples/tutorial/RoBERTaClassifier.ipynb) 		| - |

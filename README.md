@@ -290,9 +290,9 @@ model.fit(..., optimizer="lamb")
 
 迁移学习中常见灾难性遗忘问题 (Catastrophic Forgetting)：模型急不可耐地适应新数据，而丢失了预训练中学到的知识。为了对抗这种过拟合，分层学习率是有效的 trick。越靠近输出层，学习率越大，反之亦然。启用方法是增加 `layerwise_lr_decay_ratio` 参数并设定一个 0 到 1 之间的浮点数。模型参数会通过 `.decay_power` 找到自己对应的指数，而后计算学习率：
 
-$$r(w) = r^* \times lldr^{decay\_ power(w)}$$
+$$r(w) = r^* \times lldr^{f(w)}$$
 
-$r^*$ 是 `learning_rate` 参数对应的全局峰值学习率。实际使用中可按需求进行参数调整：
+$r^*$ 是 `learning_rate` 参数对应的全局峰值学习率， $f$ 是参数到指数的映射。实际使用中可按需求调整参数的值：
 ```python
 model.fit(..., layerwise_lr_decay_ratio=0.85)
 print(model.decay_power)            # 可in-place修改

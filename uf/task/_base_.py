@@ -18,6 +18,11 @@ class Task:
     def run(self, *args, **kwargs):
         raise NotImplementedError()
 
+    def _build_graph(self):
+        """ Build computation graph. """
+        self.module._set_placeholders()
+        _, self.module.tensors = self.module._parallel_forward(is_training=False)
+
     def _init_session(self, ignore_checkpoint=False):
         """ Initialize Tensorflow session. """
         com.count_params(self.module.global_variables, self.module.trainable_variables)

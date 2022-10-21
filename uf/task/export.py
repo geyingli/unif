@@ -12,8 +12,7 @@ class Exportation(Task):
     def run(self, export_dir, rename_inputs=None, rename_outputs=None, ignore_inputs=None, ignore_outputs=None):
 
         # build graph
-        self.module._set_placeholders()
-        _, self.module.tensors = self.module._parallel_forward(is_training=False)
+        self._build_graph()
 
         # init session
         if not self.module._session_built:

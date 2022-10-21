@@ -49,6 +49,7 @@ class BaseModule:
                 )
 
         self.reset()
+        self._debug = False     # for convenicence of development, just ignore
 
     def reset(self):
         """ Reset existing session and graph. """

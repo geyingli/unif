@@ -22,7 +22,7 @@ uf.egg-info
 docs/*.pptx
 *.sh
 modify.py
-tmp.py
+tmp.*
 test.py
 replace.py
 alarm.mp3

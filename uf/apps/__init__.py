@@ -47,6 +47,7 @@ from .electra.electra_mrc import ELECTRAMRC
 from .retroreader.retroreader_mrc import RetroReaderMRC
 from .sanet.sanet_mrc import SANetMRC
 from .transformer.transformer_mt import TransformerMT
+from .chatbot.chatbot_mt import ChatbotMT
 try:
     from .xlnet.xlnet_classifier import XLNetClassifier
     from .xlnet.xlnet_binary_classifier import XLNetBinaryClassifier
@@ -126,4 +127,5 @@ __all__ = [
     "StockBERTClassifier",
     "PerformerClassifier",
     "AdaBERTClassifier",
+    "ChatbotMT",
 ]

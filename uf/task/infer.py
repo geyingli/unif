@@ -13,9 +13,8 @@ class Inference(Task):
             raise ValueError("0 input samples recognized.")
 
         # build graph
-        if self.module._session_mode != "infer":
-            self.module._set_placeholders()
-            _, self.module.tensors = self.module._parallel_forward(is_training=False)
+        if self.module._session_mode != "infer" and not self.module._debug:
+            self._build_graph()
 
         # init session
         if not self.module._session_built:

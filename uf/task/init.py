@@ -8,8 +8,8 @@ class Initialization(Task):
     def run(self, reinit_all, ignore_checkpoint):
 
         # build graph
-        self.module._set_placeholders()
-        _, self.module.tensors = self.module._parallel_forward(is_training=False)
+        if self.module._session_mode is None:
+            self._build_graph()
 
         # init session
         if reinit_all or not self.module._session_built:

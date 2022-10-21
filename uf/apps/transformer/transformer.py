@@ -41,14 +41,15 @@ class Transformer(BaseDecoder, BaseEncoder):
 
             # embedding
             with tf.variable_scope("embeddings"):
-                (enc, embedding_table) = embedding_lookup(
+                enc, embedding_table = embedding_lookup(
                     input_ids=source_ids,
                     vocab_size=vocab_size,
                     batch_size=batch_size,
                     max_seq_length=source_max_seq_length,
                     embedding_size=hidden_size,
                     word_embedding_name="word_embeddings",
-                    tilda_embeddings=kwargs.get("tilda_embeddings"))
+                    tilda_embeddings=kwargs.get("tilda_embeddings"),
+                )
                 enc *= hidden_size ** 0.5  # scale
                 enc += positional_encoding(enc, source_max_seq_length)
                 enc = util.dropout(enc, dropout_rate)
@@ -69,7 +70,8 @@ class Transformer(BaseDecoder, BaseEncoder):
                             dropout_rate=dropout_rate,
                             training=is_training,
                             causality=False,
-                            scope="self_attention")
+                            scope="self_attention",
+                        )
 
                         # feed forward
                         enc = ff(enc, num_units=[hidden_size * 4, hidden_size])
@@ -99,7 +101,8 @@ class Transformer(BaseDecoder, BaseEncoder):
                                 dropout_rate=dropout_rate,
                                 training=is_training,
                                 causality=True,
-                                scope="masked_self_attention")
+                                scope="masked_self_attention",
+                            )
 
                             # vanilla attention
                             dec = multihead_attention(
@@ -111,62 +114,42 @@ class Transformer(BaseDecoder, BaseEncoder):
                                 dropout_rate=dropout_rate,
                                 training=is_training,
                                 causality=False,
-                                scope="vanilla_attention")
+                                scope="vanilla_attention",
+                            )
 
                             # feed forward
-                            dec = ff(
-                                dec, num_units=[4 * hidden_size, hidden_size])
+                            dec = ff(dec, num_units=[4 * hidden_size, hidden_size])
 
                 # final linear projection (embedding weights are shared)
                 with tf.variable_scope("cls"):
                     output_bias = tf.get_variable(
-                        "output_bias", shape=[vocab_size],
-                        initializer=tf.zeros_initializer())
+                        "output_bias", 
+                        shape=[vocab_size],
+                        initializer=tf.zeros_initializer(),
+                    )
                     dec = tf.reshape(dec, [-1, hidden_size])
                     logits = tf.matmul(dec, embedding_table, transpose_b=True)
-                    logits = tf.reshape(
-                        logits, [-1, target_max_seq_length, vocab_size])
+                    logits = tf.reshape(logits, [-1, target_max_seq_length, vocab_size])
                     logits = tf.nn.bias_add(logits, output_bias)
 
                 return logits
 
+            # forward once: training
+            target_mask = tf.math.equal(target_ids, 0)  # (N, T2)
+            logits = _forward(target_ids, target_mask, target_max_seq_length)
+
             # convert to labels
             label_ids = tf.concat(
-                [target_ids[:, 1:],
-                 tf.zeros([batch_size, 1], dtype=tf.int32)], axis=-1)
-
-            # forward once
-            if is_training:
-                target_mask = tf.math.equal(target_ids, 0)  # (N, T2)
-                logits = _forward(
-                    target_ids, target_mask, target_max_seq_length)
-
-                self.tensors["preds"] = tf.argmax(logits, axis=-1)
-
-            # forward loop
-            else:
-                target_mask_base = tf.zeros([batch_size, 1], dtype=tf.int32)
-                target_ids = tf.ones([batch_size, 1], dtype=tf.int32) * sos_id
-
-                for cur_length in range(1, target_max_seq_length + 1):
-                    target_mask = tf.tile(target_mask_base, [1, cur_length])
-                    logits = _forward(target_ids, target_mask, cur_length)
-
-                    pred_ids = tf.argmax(
-                        logits[:, cur_length-1:cur_length, :],
-                        axis=-1)
-                    pred_ids = tf.cast(pred_ids, tf.int32)
-                    target_ids = tf.concat([target_ids, pred_ids], axis=-1)
-
-                self.tensors["preds"] = target_ids[:, 1:]
+                [target_ids[:, 1:], tf.zeros([batch_size, 1], dtype=tf.int32)], 
+                axis=-1,
+            )
 
             # loss
             log_probs = tf.nn.log_softmax(logits, axis=-1)
             one_hot_labels = tf.one_hot(label_ids, depth=vocab_size)
             if use_label_smoothing:
                 one_hot_labels = label_smoothing(one_hot_labels)
-            per_token_loss = -tf.reduce_sum(
-                one_hot_labels * log_probs, axis=-1)
+            per_token_loss = -tf.reduce_sum(one_hot_labels * log_probs, axis=-1)
             label_mask = tf.cast(tf.not_equal(label_ids, 0), tf.float32)
             per_example_loss = \
                 tf.reduce_sum(per_token_loss * label_mask, axis=-1) / \
@@ -176,6 +159,23 @@ class Transformer(BaseDecoder, BaseEncoder):
 
             self.train_loss = tf.reduce_mean(per_example_loss)
             self.tensors["losses"] = per_example_loss
+
+            # forward loop: prediction
+            target_mask_base = tf.zeros([batch_size, 1], dtype=tf.int32)
+            target_ids = tf.ones([batch_size, 1], dtype=tf.int32) * sos_id
+
+            for cur_length in range(1, target_max_seq_length + 1):
+                target_mask = tf.tile(target_mask_base, [1, cur_length])
+                logits = _forward(target_ids, target_mask, cur_length)
+
+                pred_ids = tf.argmax(
+                    logits[:, cur_length-1:cur_length, :],
+                    axis=-1)
+                pred_ids = tf.cast(pred_ids, tf.int32)
+                target_ids = tf.concat([target_ids, pred_ids], axis=-1)
+
+            self.tensors["preds"] = target_ids[:, 1:]
+
 
 
 def embedding_lookup(input_ids,

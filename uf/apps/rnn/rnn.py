@@ -36,9 +36,9 @@ class RNNEncoder(BaseEncoder):
                 vocab_size=vocab_size,
                 batch_size=batch_size,
                 max_seq_length=max_seq_length,
+                embeddings=kwargs.get("tilda_embeddings"),
                 embedding_size=hidden_size,
                 word_embedding_name="word_embeddings",
-                tilda_embeddings=kwargs.get("tilda_embeddings"),
                 trainable=trainable,
             )
 

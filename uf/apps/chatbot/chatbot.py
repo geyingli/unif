@@ -1,12 +1,12 @@
-""" Revised from Transformer. """
+""" Revised from Transformer, especially for chatbot. """
 
 from ...third import tf
 from ..transformer.transformer import *
-from .._base_._base_ import BaseDecoder
+from .._base_._base_ import BaseEncoder, BaseDecoder
 from .. import util
 
 
-class Chatbot(Transformer, BaseDecoder):
+class Chatbot(BaseDecoder, BaseEncoder):
     def __init__(self,
                  vocab_size,
                  is_training,
@@ -126,6 +126,26 @@ class Chatbot(Transformer, BaseDecoder):
                     dec = tf.reshape(dec, [-1, hidden_size])
                     logits = tf.matmul(dec, embedding_table, transpose_b=True)
                     logits = tf.reshape(logits, [-1, target_max_seq_length, vocab_size])
+
+                    # Accelerate training by eliminating bias with transition 
+                    # probabilities in real world.
+                    self.transition_matrix = tf.get_variable(
+                        "transition_matrix",
+                        shape=[vocab_size, vocab_size],
+                        initializer=util.create_initializer(),
+                        dtype=tf.float32,
+                        trainable=False,
+                    )
+                    transition_probs, _ = util.embedding_lookup(
+                        target_ids,
+                        vocab_size=vocab_size,
+                        batch_size=batch_size,
+                        max_seq_length=target_max_seq_length,
+                        embeddings=self.transition_matrix,
+                        embedding_size=vocab_size,
+                    )
+                    logits *= transition_probs
+
                     logits = tf.nn.bias_add(logits, output_bias)
 
                 return logits
@@ -141,9 +161,7 @@ class Chatbot(Transformer, BaseDecoder):
             )
 
             # loss
-            probs = tf.nn.softmax(logits, axis=-1)
-            probs *= (1.0 - tf.expand_dims(sample_weight, axis=-1))
-            log_probs = tf.log(probs)
+            log_probs = tf.nn.log_softmax(logits, axis=-1)
             one_hot_labels = tf.one_hot(label_ids, depth=vocab_size)
             if use_label_smoothing:
                 one_hot_labels = label_smoothing(one_hot_labels)
@@ -152,6 +170,8 @@ class Chatbot(Transformer, BaseDecoder):
             per_example_loss = \
                 tf.reduce_sum(per_token_loss * label_mask, axis=-1) / \
                 tf.reduce_sum(label_mask, axis=-1)
+            if sample_weight is not None:
+                per_example_loss *= tf.expand_dims(sample_weight, axis=-1)
 
             self.train_loss = tf.reduce_mean(per_example_loss)
             self.tensors["losses"] = per_example_loss
@@ -166,8 +186,7 @@ class Chatbot(Transformer, BaseDecoder):
 
                 pred_ids = tf.argmax(
                     logits[:, cur_length-1:cur_length, :],
-                    axis=-1,
-                )
+                    axis=-1)
                 pred_ids = tf.cast(pred_ids, tf.int32)
                 target_ids = tf.concat([target_ids, pred_ids], axis=-1)
 

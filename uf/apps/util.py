@@ -123,18 +123,18 @@ def embedding_lookup(
     vocab_size,
     batch_size,
     max_seq_length,
+    embeddings=None,
     embedding_size=128,
     initializer_range=0.02,
     word_embedding_name="word_embeddings",
     dtype=tf.float32,
     trainable=True,
-    tilda_embeddings=None,
 ):
     if input_ids.shape.ndims == 2:
         input_ids = tf.expand_dims(input_ids, axis=[-1])
 
-    if tilda_embeddings is not None:
-        embedding_table = tilda_embeddings
+    if embeddings is not None:
+        embedding_table = embeddings
     else:
         embedding_table = tf.get_variable(
             name=word_embedding_name,

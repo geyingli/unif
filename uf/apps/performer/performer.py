@@ -61,10 +61,10 @@ class PerformerEncoder(BERTEncoder):
                         vocab_size=bert_config.vocab_size,
                         batch_size=batch_size,
                         max_seq_length=max_seq_length,
+                        embeddings=kwargs.get("tilda_embeddings"),
                         embedding_size=bert_config.hidden_size,
                         initializer_range=bert_config.initializer_range,
                         word_embedding_name="word_embeddings",
-                        tilda_embeddings=kwargs.get("tilda_embeddings"),
                         trainable=trainable)
 
                 # Add positional embeddings and token type embeddings

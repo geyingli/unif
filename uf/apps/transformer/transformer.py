@@ -2,7 +2,7 @@
   Code revised from Kyubyong's implementation.
   See `https://github.com/Kyubyong/transformer`.
 """
-import math
+
 import numpy as np
 
 from ...third import tf

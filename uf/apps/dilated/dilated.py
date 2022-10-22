@@ -142,12 +142,12 @@ class DLM(BaseDecoder, BERTEncoder):
                 vocab_size=bert_config.vocab_size,
                 batch_size=batch_size,
                 max_seq_length=dilated_seq_length,
+                embeddings=tilda_embeddings,
                 embedding_size=bert_config.hidden_size,
                 initializer_range=bert_config.initializer_range,
                 word_embedding_name="word_embeddings",
                 dtype=dtype,
-                trainable=trainable,
-                tilda_embeddings=tilda_embeddings)
+                trainable=trainable)
 
             # Add positional embeddings and token type embeddings
             # layer normalize and perform dropout.

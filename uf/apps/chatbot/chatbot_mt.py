@@ -22,20 +22,6 @@ class ChatbotMT(TransformerMT, MTModule):
             num_attention_heads=self._num_attention_heads,
             **kwargs,
         )
+        self.transition_matrix = model.transition_matrix
         train_loss, tensors = model.get_forward_outputs()
         return train_loss, tensors
-
-    def _get_fit_ops(self, from_tfrecords=False):
-        ops = [self.tensors["losses"]]
-        return ops
-
-    def _get_fit_info(self, output_arrays, feed_dict, from_tfrecords=False):
-
-        # loss
-        batch_losses = output_arrays[0]
-        loss = np.mean(batch_losses)
-
-        info = ""
-        info += ", loss %.6f" % loss
-
-        return info

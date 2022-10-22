@@ -49,10 +49,10 @@ class VAE(BaseDecoder, BERTEncoder):
                         vocab_size=config.vocab_size,
                         batch_size=batch_size,
                         max_seq_length=seq_length,
+                        embeddings=kwargs.get("tilda_embeddings"),
                         embedding_size=config.hidden_size,
                         initializer_range=config.initializer_range,
                         word_embedding_name="word_embeddings",
-                        tilda_embeddings=kwargs.get("tilda_embeddings"),
                         trainable=trainable)
                 self.embedding_output = self.embedding_postprocessor(
                     input_tensor=self.embedding_output,

@@ -51,12 +51,12 @@ class FastBERTClsDistillor(BaseDecoder, BERTEncoder):
                         vocab_size=bert_config.vocab_size,
                         batch_size=batch_size,
                         max_seq_length=max_seq_length,
+                        embeddings=None,
                         embedding_size=bert_config.hidden_size,
                         initializer_range=bert_config.initializer_range,
                         word_embedding_name="word_embeddings",
                         dtype=dtype,
-                        trainable=False,
-                        tilda_embeddings=None)
+                        trainable=False)
 
                 # Add positional embeddings and token type embeddings
                 # layer normalize and perform dropout.

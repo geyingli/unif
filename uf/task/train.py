@@ -21,7 +21,7 @@ class Training(Task):
         self.max_to_keep = kwargs.get("max_to_keep", 1000000)
 
         # build graph
-        if self.module._session_mode is None or not self.module._debug:
+        if self.module._session_mode != "train" or not self.module._debug:
             self._build_graph(**kwargs)
 
         # init session/variables

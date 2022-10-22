@@ -31,7 +31,10 @@ class Task:
             os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(self.module._gpu_ids)
         else:
             os.environ["CUDA_VISIBLE_DEVICES"] = "-1"           # disable GPUs
-        config = tf.ConfigProto(allow_soft_placement=True, gpu_options=tf.GPUOptions(visible_device_list=""))
+        config = tf.ConfigProto(
+            allow_soft_placement=True, 
+            gpu_options=tf.GPUOptions(allow_growth=True, per_process_gpu_memory_fraction=1.0),
+        )
         self.module.sess = tf.Session(graph=self.module.graph, config=config)
         self._init_variables(self.module.global_variables, ignore_checkpoint=ignore_checkpoint)
         self.module._session_built = True

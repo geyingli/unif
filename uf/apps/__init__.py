@@ -93,6 +93,7 @@ __all__ = [
     "WideDeepClassifier",
     "SemBERTClassifier",
     "UDAClassifier",
+    "PerformerClassifier",
     "TinyBERTClassifier",
     "TinyBERTBinaryClassifier",
     "FastBERTClassifier",
@@ -125,7 +126,6 @@ __all__ = [
     "RecBERTLM",
     "SPELM",
     "StockBERTClassifier",
-    "PerformerClassifier",
     "AdaBERTClassifier",
     "ChatbotMT",
 ]

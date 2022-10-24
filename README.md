@@ -8,7 +8,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-v2.5.10-blue">
+        <img src="https://img.shields.io/badge/version-v2.5.11-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-1.x\2.x-yellow">
@@ -79,12 +79,12 @@ print(model.predict(X))
 | |[`WideDeepClassifier`](./examples/tutorial/WideDeepClassifier.ipynb) | 通过 Wide & Deep 架构融合句子级别特征 |
 | |[`SemBERTClassifier`](./examples/tutorial/SemBERTClassifier.ipynb) 		| 通过 SemBERT 架构融合字级别的特征 |
 | |[`UDAClassifier`](./examples/tutorial/UDAClassifier.ipynb) 		| 结合一致性学习的半监督学习算法 |
+| |[`PerformerClassifier`](./examples/tutorial/PerformerClassifier.ipynb) 		| 基于正交随机向量快速计算 Attention，实现加速 |
 |文本分类 / 多label| [`BERTBinaryClassifier`](./examples/tutorial/BERTBinaryClassifier.ipynb) 		| -  |
 || [`XLNetBinaryClassifier`](./examples/tutorial/XLNetBinaryClassifier.ipynb) 		| - |
 | |[`RoBERTaBinaryClassifier`](./examples/tutorial/RoBERTaBinaryClassifier.ipynb) 		| - |
 | |[`ALBERTBinaryClassifier`](./examples/tutorial/ALBERTBinaryClassifier.ipynb) 		| - |
 | |[`ELECTRABinaryClassifier`](./examples/tutorial/ELECTRABinaryClassifier.ipynb) 		| - |
-| 图像分类 / 单label | [`PNasNetClassifier`](./examples/tutorial/PNasNetClassifier.ipynb) 		| 基于 AutoML 搜索最佳网络结构 |
 | 回归| [`WideDeepRegressor`](./examples/tutorial/WideDeepRegressor.ipynb) | 通过 Wide & Deep 架构融合句子级别特征 |
 |序列标注|[`BERTSeqClassifier`](./examples/tutorial/BERTSeqClassifier.ipynb) 		| - |
 || [`RoBERTaSeqClassifier`](./examples/tutorial/RoBERTaSeqClassifier.ipynb) 		| - |
@@ -105,6 +105,7 @@ print(model.predict(X))
 | 模型蒸馏|[`TinyBERTClassifier`](./examples/tutorial/TinyBERTClassifier.ipynb) 		| 大幅压缩模型参数，提速十倍以上 |
 || [`TinyBERTBinaryClassifier`](./examples/tutorial/TinyBERTBinaryClassifier.ipynb)     | - |
 || [`FastBERTClassifier`](./examples/tutorial/FastBERTClassifier.ipynb) 		| 动态推理，易分样本提前离开模型 |
+| 图像分类 / 单label | [`PNasNetClassifier`](./examples/tutorial/PNasNetClassifier.ipynb) 		| 基于 AutoML 搜索最佳网络结构 |
 
 
 ## 建模

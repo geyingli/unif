@@ -481,18 +481,17 @@ class BERTDecoder(BaseDecoder):
 
             label_ids = tf.reshape(masked_lm_ids, [-1])
             if sample_weight is not None:
-                sample_weight = tf.expand_dims(tf.cast(sample_weight, dtype=tf.float32), axis=-1)
+                sample_weight = tf.expand_dims(sample_weight, axis=-1)
                 masked_lm_weights *= sample_weight
             label_weights = tf.reshape(masked_lm_weights, [-1])
-            one_hot_labels = tf.one_hot(label_ids, depth=bert_config.vocab_size, dtype=tf.float32)
-            per_example_loss = - tf.reduce_sum(log_probs * one_hot_labels, axis=[-1])
-            per_example_loss = label_weights * per_example_loss
+            per_example_loss = util.cross_entropy(logits, label_ids, bert_config.vocab_size, **kwargs)
+            per_example_loss *= label_weights
 
             numerator = tf.reduce_sum(per_example_loss)
             denominator = tf.reduce_sum(label_weights) + 1e-5
-            loss = numerator / denominator
+            scalar_loss = numerator / denominator
 
-            scalar_losses.append(loss)
+            scalar_losses.append(scalar_loss)
             self.tensors["MLM_losses"] = per_example_loss
             self.tensors["MLM_preds"] = tf.argmax(probs, axis=-1)
 
@@ -514,17 +513,15 @@ class BERTDecoder(BaseDecoder):
                 logits = tf.matmul(encoder.get_pooled_output(), output_weights, transpose_b=True)
                 logits = tf.nn.bias_add(logits, output_bias)
                 probs = tf.nn.softmax(logits, axis=-1, name="probs")
-                log_probs = tf.nn.log_softmax(logits, axis=-1)
 
-                labels = tf.reshape(next_sentence_labels, [-1])
-                one_hot_labels = tf.one_hot(labels, depth=2, dtype=tf.float32)
-                per_example_loss = -tf.reduce_sum(one_hot_labels * log_probs, axis=-1)
+                label_ids = tf.reshape(next_sentence_labels, [-1])
+                per_example_loss = util.cross_entropy(logits, label_ids, 2, **kwargs)
                 if sample_weight is not None:
-                    per_example_loss = tf.cast(sample_weight, dtype=tf.float32) * per_example_loss
-                loss = tf.reduce_mean(per_example_loss)
+                    per_example_loss *= sample_weight
+                scalar_loss = tf.reduce_mean(per_example_loss)
 
                 if use_nsp_loss:
-                    scalar_losses.append(loss)
+                    scalar_losses.append(scalar_loss)
                 self.tensors["NSP_losses"] = per_example_loss
                 self.tensors["NSP_probs"] = probs
                 self.tensors["NSP_preds"] = tf.argmax(probs, axis=-1)

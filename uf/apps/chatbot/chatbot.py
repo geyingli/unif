@@ -119,7 +119,7 @@ class Chatbot(BaseDecoder, BaseEncoder):
                 # final linear projection (embedding weights are shared)
                 with tf.variable_scope("cls"):
                     output_bias = tf.get_variable(
-                        "output_bias", 
+                        "output_bias",
                         shape=[vocab_size],
                         initializer=tf.zeros_initializer(),
                     )
@@ -127,7 +127,7 @@ class Chatbot(BaseDecoder, BaseEncoder):
                     logits = tf.matmul(dec, embedding_table, transpose_b=True)
                     logits = tf.reshape(logits, [-1, target_max_seq_length, vocab_size])
 
-                    # Accelerate training by eliminating bias with transition 
+                    # Accelerate training by eliminating bias with transition
                     # probabilities in real world.
                     self.transition_matrix = tf.get_variable(
                         "transition_matrix",
@@ -156,16 +156,15 @@ class Chatbot(BaseDecoder, BaseEncoder):
 
             # convert to labels
             label_ids = tf.concat(
-                [target_ids[:, 1:], tf.zeros([batch_size, 1], dtype=tf.int32)], 
+                [target_ids[:, 1:], tf.zeros([batch_size, 1], dtype=tf.int32)],
                 axis=-1,
             )
 
             # loss
-            log_probs = tf.nn.log_softmax(logits, axis=-1)
-            one_hot_labels = tf.one_hot(label_ids, depth=vocab_size)
-            if use_label_smoothing:
-                one_hot_labels = label_smoothing(one_hot_labels)
-            per_token_loss = -tf.reduce_sum(one_hot_labels * log_probs, axis=-1)
+            per_token_loss = util.cross_entropy(
+                logits, label_ids, vocab_size,
+                label_smoothing=label_smoothing, **kwargs,
+            )
             label_mask = tf.cast(tf.not_equal(label_ids, 0), tf.float32)
             per_example_loss = \
                 tf.reduce_sum(per_token_loss * label_mask, axis=-1) / \

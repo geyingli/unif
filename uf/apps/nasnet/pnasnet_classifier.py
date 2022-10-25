@@ -123,8 +123,8 @@ class PNasNetClassifier(ClassifierModule):
             )
         decoder = ClsDecoder(
             is_training,
-            logits,
-            placeholders["label_ids"],
+            input_tensor=logits,
+            label_ids=placeholders["label_ids"],
             is_logits=True,
             label_size=self.label_size,
             sample_weight=placeholders.get("sample_weight"),

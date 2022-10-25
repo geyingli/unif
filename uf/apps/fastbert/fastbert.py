@@ -150,11 +150,9 @@ class FastBERTClsDistillor(BaseDecoder, BERTEncoder):
             for cls_probs in self.all_cls_layers.values():
 
                 # KL-Divergence
-                per_example_loss = tf.reduce_sum(
-                    cls_probs * (tf.log(cls_probs) - tf.log(probs)), axis=-1)
+                per_example_loss = util.kl_divergence(cls_probs, probs)
                 if sample_weight is not None:
-                    per_example_loss *= tf.cast(
-                        sample_weight, dtype=tf.float32)
+                    per_example_loss *= sample_weight
                 loss = tf.reduce_mean(per_example_loss)
                 losses.append(loss)
 

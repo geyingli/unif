@@ -44,16 +44,9 @@ class DLM(BaseDecoder, BERTEncoder):
                 self.tensors["LM"] = tf.argmax(logits, axis=-1)
 
                 # LM loss
-                log_probs = tf.nn.log_softmax(logits, axis=-1)
-                one_hot_labels = tf.one_hot(
-                    label_ids, depth=bert_config.vocab_size)
-                per_token_loss = -tf.reduce_sum(
-                    one_hot_labels * log_probs, axis=-1)
-
-                input_length = tf.reduce_sum(
-                    dilated_mask, axis=-1) * 2
-                label_mask = tf.sequence_mask(
-                    input_length, max_seq_length * 2, dtype=tf.float32)
+                per_token_loss = util.cross_entropy(logits, label_ids, bert_config.vocab_size, **kwargs)
+                input_length = tf.reduce_sum(dilated_mask, axis=-1) * 2
+                label_mask = tf.sequence_mask(input_length, max_seq_length * 2, dtype=tf.float32)
                 per_example_loss = \
                     tf.reduce_sum(per_token_loss * label_mask, axis=-1) / \
                     tf.reduce_sum(label_mask, axis=-1)

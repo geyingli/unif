@@ -68,17 +68,10 @@ class SANetDecoder(BaseDecoder):
             self.tensors["probs"] = probs
             self.tensors["preds"] = tf.argmax(logits, axis=-1)
 
-            start_one_hot_labels = tf.one_hot(
-                label_ids[:, 0], depth=seq_length, dtype=tf.float32)
-            end_one_hot_labels = tf.one_hot(
-                label_ids[:, 1], depth=seq_length, dtype=tf.float32)
-            start_log_probs = tf.nn.log_softmax(logits[:, 0, :], axis=-1)
-            end_log_probs = tf.nn.log_softmax(logits[:, 1, :], axis=-1)
             per_example_loss = (
-                - 0.5 * tf.reduce_sum(
-                    start_one_hot_labels * start_log_probs, axis=-1)
-                - 0.5 * tf.reduce_sum(
-                    end_one_hot_labels * end_log_probs, axis=-1))
+                0.5 * util.cross_entropy(logits[:, 0, :], label_ids[:, 0], seq_length, **kwargs) +
+                0.5 * util.cross_entropy(logits[:, 1, :], label_ids[:, 1], seq_length, **kwargs)
+            )
             if sample_weight is not None:
                 per_example_loss *= sample_weight
 

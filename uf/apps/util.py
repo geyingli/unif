@@ -269,6 +269,60 @@ def layer_norm_and_dropout(input_tensor, dropout_prob, trainable=True):
     return output_tensor
 
 
+def cross_entropy(logits, label_ids, label_size, **kwargs):
+    """ Cross Entropy Loss for single-label classification. """
+
+    log_probs = tf.nn.log_softmax(logits, axis=-1)
+    one_hot_labels = tf.one_hot(label_ids, depth=label_size, dtype=tf.float32)
+
+    # focal loss
+    if kwargs.get("focal_loss"):
+        gamma = kwargs.get("gamma", 1.0)
+        log_probs *= tf.pow(1 - tf.nn.softmax(logits, axis=-1), gamma)
+
+    # label smoothing
+    if kwargs.get("label_smoothing"):
+        smoothing_rate = kwargs.get("smoothing_rate", 0.1)
+        one_hot_labels = ((1 - smoothing_rate) * one_hot_labels) + (smoothing_rate / label_size)
+
+    per_example_loss = - tf.reduce_sum(one_hot_labels * log_probs, axis=-1)
+
+    # training signal annealing
+    thresh = kwargs.get("tsa_thresh")
+    if thresh is not None:
+        assert isinstance(thresh, float), "`tsa_thresh` must be a float between 0 and 1."
+        probs = tf.nn.softmax(logits, axis=-1)
+        uncertainty = tf.reduce_sum(probs * tf.log(probs), axis=-1)
+        uncertainty /= tf.log(1 / label_size)
+        per_example_loss *= tf.cast(tf.greater(uncertainty, thresh), dtype=tf.float32)
+
+    # cut extreme loss
+    thresh = kwargs.get("conf_thresh")
+    if thresh is not None:
+        assert isinstance(thresh, float), "`conf_thresh` must be a float between 0 and 1."
+        largest_prob = tf.reduce_max(tf.exp(log_probs), axis=-1)
+        per_example_loss *= tf.cast(tf.less(largest_prob, thresh), dtype=tf.float32)
+
+    return per_example_loss
+
+
+def sigmoid_cross_entropy(logits, label_ids, label_size=None, label_weight=None, keep_dims=False, **kwargs):
+    """ Cross Entropy Loss for multi-label classification. """
+
+    per_label_loss = tf.nn.sigmoid_cross_entropy_with_logits(logits=logits, labels=tf.cast(label_ids, dtype=tf.float32))
+
+    # label_weight
+    if label_weight is not None:
+        label_weight = tf.constant(label_weight, dtype=tf.float32)
+        label_weight = tf.reshape(label_weight, [1, label_size])
+        per_label_loss *= label_weight
+
+    if keep_dims:
+        return per_label_loss
+    per_example_loss = tf.reduce_sum(per_label_loss, axis=-1)
+    return per_example_loss
+
+
 def bidirectional_kl_divergence(p, q):
     """ Bidirectional Kullback-Leibler divergence. """
     return kl_divergence(p, q) + kl_divergence(q, p)
@@ -277,6 +331,14 @@ def bidirectional_kl_divergence(p, q):
 def kl_divergence(p, q):
     """ Kullback-Leibler divergence. """
     return tf.reduce_sum(p * (tf.log(p) - tf.log(q)), axis=-1)
+
+
+def mean_squared_error(logits, label_floats, **kwargs):
+    """ MSE loss for regression. """
+
+    per_float_loss = tf.square(logits - label_floats)
+    per_example_loss = tf.reduce_sum(per_float_loss, axis=-1)
+    return per_example_loss
 
 
 def create_initializer(initializer_range=0.02):

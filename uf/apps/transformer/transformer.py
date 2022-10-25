@@ -123,7 +123,7 @@ class Transformer(BaseDecoder, BaseEncoder):
                 # final linear projection (embedding weights are shared)
                 with tf.variable_scope("cls"):
                     output_bias = tf.get_variable(
-                        "output_bias", 
+                        "output_bias",
                         shape=[vocab_size],
                         initializer=tf.zeros_initializer(),
                     )
@@ -140,16 +140,12 @@ class Transformer(BaseDecoder, BaseEncoder):
 
             # convert to labels
             label_ids = tf.concat(
-                [target_ids[:, 1:], tf.zeros([batch_size, 1], dtype=tf.int32)], 
+                [target_ids[:, 1:], tf.zeros([batch_size, 1], dtype=tf.int32)],
                 axis=-1,
             )
 
             # loss
-            log_probs = tf.nn.log_softmax(logits, axis=-1)
-            one_hot_labels = tf.one_hot(label_ids, depth=vocab_size)
-            if use_label_smoothing:
-                one_hot_labels = label_smoothing(one_hot_labels)
-            per_token_loss = -tf.reduce_sum(one_hot_labels * log_probs, axis=-1)
+            per_token_loss = util.cross_entropy(logits, label_ids, vocab_size, **kwargs)
             label_mask = tf.cast(tf.not_equal(label_ids, 0), tf.float32)
             per_example_loss = \
                 tf.reduce_sum(per_token_loss * label_mask, axis=-1) / \

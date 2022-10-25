@@ -54,15 +54,9 @@ class RetroReaderDecoder(BaseDecoder):
                     output_layer, output_weights, transpose_b=True)
                 logits = tf.nn.bias_add(logits, output_bias)
 
-                log_probs = tf.nn.log_softmax(logits, axis=-1)
-                one_hot_labels = tf.one_hot(
-                    has_answer, depth=2, dtype=tf.float32)
-                per_example_loss = - tf.reduce_sum(
-                    one_hot_labels * log_probs, axis=-1)
+                per_example_loss = util.cross_entropy(logits, has_answer, 2, **kwargs)
                 if sample_weight is not None:
-                    per_example_loss = tf.cast(
-                        sample_weight, dtype=tf.float32) * per_example_loss
-
+                    per_example_loss *= sample_weight
                 self.tensors["sketchy_losses"] = per_example_loss
                 sketchy_loss = tf.reduce_mean(per_example_loss)
 
@@ -79,19 +73,15 @@ class RetroReaderDecoder(BaseDecoder):
                 # cross-attention
                 if matching_mechanism == "cross-attention":
                     with tf.variable_scope("cross_attention"):
-                        attention_mask = \
-                            self.create_attention_mask_from_input_mask(
-                                query_mask, batch_size, max_seq_length)
-                        (H_prime, _) = self.attention_layer(
+                        attention_mask = self.create_attention_mask_from_input_mask(
+                            query_mask, batch_size, max_seq_length)
+                        H_prime, _ = self.attention_layer(
                             from_tensor=H,
                             to_tensor=H_Q,
                             attention_mask=attention_mask,
-                            num_attention_heads=\
-                                bert_config.num_attention_heads,
-                            size_per_head=\
-                                hidden_size // bert_config.num_attention_heads,
-                            attention_probs_dropout_prob=\
-                                bert_config.hidden_dropout_prob,
+                            num_attention_heads=bert_config.num_attention_heads,
+                            size_per_head=hidden_size // bert_config.num_attention_heads,
+                            attention_probs_dropout_prob=bert_config.hidden_dropout_prob,
                             initializer_range=bert_config.initializer_range,
                             do_return_2d_tensor=False,
                             batch_size=batch_size,
@@ -127,8 +117,7 @@ class RetroReaderDecoder(BaseDecoder):
                     output_weights = tf.get_variable(
                         "output_weights",
                         shape=[2, hidden_size],
-                        initializer=util.create_initializer(
-                            bert_config.initializer_range),
+                        initializer=util.create_initializer(bert_config.initializer_range),
                         trainable=trainable)
                     output_bias = tf.get_variable(
                         "output_bias",
@@ -136,43 +125,27 @@ class RetroReaderDecoder(BaseDecoder):
                         initializer=tf.zeros_initializer(),
                         trainable=trainable)
 
-                    output_layer = util.dropout(
-                        H_prime, bert_config.hidden_dropout_prob \
-                            if is_training else 0.0)
-                    output_layer = tf.reshape(
-                        output_layer,
-                        [batch_size * max_seq_length, hidden_size])
+                    output_layer = util.dropout(H_prime, bert_config.hidden_dropout_prob if is_training else 0.0)
+                    output_layer = tf.reshape(output_layer, [batch_size * max_seq_length, hidden_size])
                     logits = tf.matmul(output_layer, output_weights, transpose_b=True)
                     logits = tf.nn.bias_add(logits, output_bias)
-                    logits = tf.reshape(
-                        logits, [batch_size, max_seq_length, 2])
+                    logits = tf.reshape(logits, [batch_size, max_seq_length, 2])
                     logits = tf.transpose(logits, [0, 2, 1])
                     probs = tf.nn.softmax(logits, axis=-1, name="probs")
 
                     self.tensors["mrc_probs"] = probs
                     self.tensors["mrc_preds"] = tf.argmax(logits, axis=-1)
 
-                    start_one_hot_labels = tf.one_hot(
-                        label_ids[:, 0], depth=max_seq_length,
-                        dtype=tf.float32)
-                    end_one_hot_labels = tf.one_hot(
-                        label_ids[:, 1], depth=max_seq_length,
-                        dtype=tf.float32)
-                    start_log_probs = tf.nn.log_softmax(logits[:, 0, :], axis=-1)
-                    end_log_probs = tf.nn.log_softmax(logits[:, 1, :], axis=-1)
                     per_example_loss = (
-                        - 0.5 * tf.reduce_sum(
-                            start_one_hot_labels * start_log_probs, axis=-1)
-                        - 0.5 * tf.reduce_sum(
-                            end_one_hot_labels * end_log_probs, axis=-1))
+                        0.5 * util.cross_entropy(logits[:, 0, :], label_ids[:, 0], max_seq_length, **kwargs) +
+                        0.5 * util.cross_entropy(logits[:, 1, :], label_ids[:, 1], max_seq_length, **kwargs)
+                    )
                     if sample_weight is not None:
                         per_example_loss *= sample_weight
-
                     intensive_loss = tf.reduce_mean(per_example_loss)
                     self.tensors["intensive_losses"] = per_example_loss
 
-                    score_has = tf.norm(
-                        probs[:, 0, 1:] + probs[:, 1, 1:], np.inf, axis=-1)
+                    score_has = tf.norm(probs[:, 0, 1:] + probs[:, 1, 1:], np.inf, axis=-1)
                     score_null = probs[:, 0, 0] + probs[:, 1, 0]
                     score_diff = score_has - score_null
 

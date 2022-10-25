@@ -230,11 +230,10 @@ class XLNet(BaseDecoder):
                 lookup_table=model.get_embedding_table(),
                 tie_weight=True,
                 bi_data=run_config.bi_data,
-                use_tpu=run_config.use_tpu)
+                use_tpu=run_config.use_tpu,
+                **kwargs)
             if sample_weight is not None:
-                sample_weight = tf.expand_dims(
-                    tf.cast(sample_weight, dtype=tf.float32), axis=-1)
-                per_example_loss *= sample_weight
+                per_example_loss *= tf.expand_dims(sample_weight, axis=-1)
 
         self.train_loss = tf.reduce_sum(per_example_loss * target_mask) / tf.reduce_sum(target_mask)
         self.tensors["losses"] = per_example_loss * target_mask
@@ -977,7 +976,7 @@ def transformer_xl(inp_k, n_token, n_layer, d_model, n_head,
 
 
 def lm_loss(hidden, target, n_token, d_model, initializer, lookup_table=None,
-            tie_weight=False, bi_data=True, use_tpu=False):
+            tie_weight=False, bi_data=True, use_tpu=False, **kwargs):
     """doc."""
 
     with tf.variable_scope("lm_loss"):

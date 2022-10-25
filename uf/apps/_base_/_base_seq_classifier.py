@@ -53,14 +53,12 @@ class SeqClsDecoder(BaseDecoder):
         self.tensors["preds"] = tf.argmax(logits, axis=-1, name="preds")
         self.tensors["probs"] = tf.nn.softmax(logits, axis=-1, name="probs")
 
-        log_probs = tf.nn.log_softmax(logits, axis=-1)
-        one_hot_labels = tf.one_hot(label_ids, depth=label_size, dtype=tf.float32)
-        per_token_loss = - tf.reduce_sum(one_hot_labels * log_probs, axis=-1)
+        per_token_loss = util.cross_entropy(logits, label_ids, label_size, **kwargs)
         input_mask = tf.cast(input_mask, tf.float32)
         per_token_loss *= input_mask / tf.reduce_sum(input_mask, keepdims=True, axis=-1)
         per_example_loss = tf.reduce_sum(per_token_loss, axis=-1)
         if sample_weight is not None:
-            per_example_loss *= tf.cast(sample_weight, dtype=tf.float32)
+            per_example_loss *= sample_weight
 
         self.tensors["losses"] = per_example_loss
         self.train_loss = tf.reduce_mean(per_example_loss)
@@ -121,7 +119,7 @@ class SeqClsCrossDecoder(BaseDecoder):
             per_token_loss *= input_mask / tf.reduce_sum(input_mask, keepdims=True, axis=-1)
             per_example_loss = tf.reduce_sum(per_token_loss, axis=-1)
             if sample_weight is not None:
-                per_example_loss *= tf.cast(sample_weight, dtype=tf.float32)
+                per_example_loss *= sample_weight
             self.tensors["seq_cls_losses"] = per_example_loss
 
         # cls
@@ -147,7 +145,7 @@ class SeqClsCrossDecoder(BaseDecoder):
             one_hot_labels = tf.one_hot(cls_label_ids, depth=cls_label_size, dtype=tf.float32)
             per_example_loss = - tf.reduce_sum(one_hot_labels * log_probs, axis=-1)
             if sample_weight is not None:
-                per_example_loss = tf.cast(sample_weight, dtype=tf.float32) * per_example_loss
+                per_example_loss *= sample_weight
             self.tensors["cls_losses"] = per_example_loss
 
         self.train_loss = tf.reduce_mean(self.tensors["seq_cls_losses"]) + tf.reduce_mean(self.tensors["cls_losses"])

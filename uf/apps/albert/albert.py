@@ -222,30 +222,24 @@ class ALBERTDecoder(BaseDecoder):
                 initializer=tf.zeros_initializer(),
                 trainable=trainable)
 
-            logits = tf.matmul(
-                input_tensor, encoder.get_embedding_table(), transpose_b=True)
+            logits = tf.matmul(input_tensor, encoder.get_embedding_table(), transpose_b=True)
             logits = tf.nn.bias_add(logits, output_bias)
             probs = tf.nn.softmax(logits, axis=-1, name="MLM_probs")
             probs = tf.reshape(probs, [-1, masked_lm_positions.shape[-1], albert_config.vocab_size])
-            log_probs = tf.nn.log_softmax(logits, axis=-1)
 
             label_ids = tf.reshape(masked_lm_ids, [-1])
             if sample_weight is not None:
-                sample_weight = tf.expand_dims(
-                    tf.cast(sample_weight, dtype=tf.float32), axis=-1)
+                sample_weight = tf.expand_dims(sample_weight, axis=-1)
                 masked_lm_weights *= sample_weight
             label_weights = tf.reshape(masked_lm_weights, [-1])
-            one_hot_labels = tf.one_hot(
-                label_ids, depth=albert_config.vocab_size, dtype=tf.float32)
-            per_example_loss = - tf.reduce_sum(
-                log_probs * one_hot_labels, axis=[-1])
-            per_example_loss = label_weights * per_example_loss
+            per_example_loss = util.cross_entropy(logits, label_ids, albert_config.vocab_size, **kwargs)
+            per_example_loss *= tf.reshape(masked_lm_weights, [-1])
 
             numerator = tf.reduce_sum(per_example_loss)
             denominator = tf.reduce_sum(label_weights) + 1e-5
-            loss = numerator / denominator
+            scalar_loss = numerator / denominator
 
-            scalar_losses.append(loss)
+            scalar_losses.append(scalar_loss)
             self.tensors["MLM_losses"] = per_example_loss
             self.tensors["MLM_preds"] = tf.argmax(probs, axis=-1)
 
@@ -267,19 +261,14 @@ class ALBERTDecoder(BaseDecoder):
                                    output_weights, transpose_b=True)
                 logits = tf.nn.bias_add(logits, output_bias)
                 probs = tf.nn.softmax(logits, axis=-1, name="probs")
-                log_probs = tf.nn.log_softmax(logits, axis=-1)
 
-                labels = tf.reshape(sentence_order_labels, [-1])
-                one_hot_labels = tf.one_hot(labels, depth=2, dtype=tf.float32)
-                per_example_loss = -tf.reduce_sum(
-                    one_hot_labels * log_probs, axis=-1)
+                label_ids = tf.reshape(sentence_order_labels, [-1])
+                per_example_loss = util.cross_entropy(logits, label_ids, 2, **kwargs)
                 if sample_weight is not None:
-                    per_example_loss = (
-                        tf.cast(sample_weight, dtype=tf.float32) *
-                        per_example_loss)
-                loss = tf.reduce_mean(per_example_loss)
+                    per_example_loss *= sample_weight
+                scalar_loss = tf.reduce_mean(per_example_loss)
 
-                scalar_losses.append(loss)
+                scalar_losses.append(scalar_loss)
                 self.tensors["SOP_losses"] = per_example_loss
                 self.tensors["SOP_probs"] = probs
                 self.tensors["SOP_preds"] = tf.argmax(probs, axis=-1)

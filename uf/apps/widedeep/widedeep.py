@@ -76,24 +76,9 @@ class WideDeepClsDecoder(BaseDecoder):
             self.tensors["probs"] = tf.nn.softmax(
                 logits, axis=-1, name="probs")
 
-            log_probs = tf.nn.log_softmax(logits, axis=-1)
-            one_hot_labels = tf.one_hot(
-                label_ids, depth=label_size, dtype=tf.float32)
-            per_example_loss = - tf.reduce_sum(
-                one_hot_labels * log_probs, axis=-1)
+            per_example_loss = util.cross_entropy(logits, label_ids, label_size, **kwargs)
             if sample_weight is not None:
-                per_example_loss = tf.cast(
-                    sample_weight, dtype=tf.float32) * per_example_loss
-            thresh = kwargs.get("tsa_thresh")
-            if thresh is not None:
-                assert isinstance(thresh, float), (
-                    "`tsa_thresh` must be a float between 0 and 1.")
-                uncertainty = tf.reduce_sum(self.tensors["probs"] * tf.log(
-                    self.tensors["probs"]), axis=-1)
-                uncertainty /= tf.log(1 / label_size)
-                per_example_loss = tf.cast(
-                    tf.greater(uncertainty, thresh), dtype=tf.float32) * \
-                    per_example_loss
+                per_example_loss *= sample_weight
 
             self.tensors["losses"] = per_example_loss
             self.train_loss = tf.reduce_mean(per_example_loss)
@@ -166,11 +151,9 @@ class WideDeepRegDecoder(BaseDecoder):
 
             self.tensors["probs"] = probs
 
-            per_example_loss = tf.reduce_sum(
-                tf.square(label_floats - probs), axis=-1)
+            per_example_loss = util.mean_squared_error(probs, label_floats, **kwargs)
             if sample_weight is not None:
-                per_example_loss = tf.cast(
-                    sample_weight, dtype=tf.float32) * per_example_loss
+                per_example_loss *= sample_weight
 
             self.tensors["losses"] = per_example_loss
             self.train_loss = tf.reduce_mean(per_example_loss)

@@ -48,17 +48,9 @@ class ClsDecoder(BaseDecoder):
         self.tensors["preds"] = tf.argmax(logits, axis=-1, name="preds")
         self.tensors["probs"] = tf.nn.softmax(logits, axis=-1, name="probs")
 
-        log_probs = tf.nn.log_softmax(logits, axis=-1)
-        one_hot_labels = tf.one_hot(label_ids, depth=label_size, dtype=tf.float32)
-        per_example_loss = - tf.reduce_sum(one_hot_labels * log_probs, axis=-1)
+        per_example_loss = util.cross_entropy(logits, label_ids, label_size, **kwargs)
         if sample_weight is not None:
-            per_example_loss = tf.cast(sample_weight, dtype=tf.float32) * per_example_loss
-        thresh = kwargs.get("conf_thresh")
-        if thresh is not None:
-            assert isinstance(thresh, float), "`conf_thresh` must be a float between 0 and 1."
-            largest_prob = tf.reduce_max(tf.exp(log_probs), axis=-1)
-            per_example_loss = tf.cast(tf.less(largest_prob, thresh), dtype=tf.float32) * per_example_loss
-
+            per_example_loss *= sample_weight
         self.tensors["losses"] = per_example_loss
         self.train_loss = tf.reduce_mean(per_example_loss)
 

@@ -109,14 +109,9 @@ class AdaBERTClsDistillor(BaseDecoder):
         self.tensors["preds"] = tf.argmax(probs, axis=-1, name="preds")
 
         if label_ids is not None:
-            log_probs = tf.nn.log_softmax(student_logits, axis=-1)
-            one_hot_labels = tf.one_hot(
-                label_ids, depth=label_size, dtype=tf.float32)
-            per_example_loss = - tf.reduce_sum(
-                one_hot_labels * log_probs, axis=-1)
+            per_example_loss = util.cross_entropy(student_logits, label_ids, label_size)
             if sample_weight is not None:
-                per_example_loss = tf.cast(
-                    sample_weight, dtype=tf.float32) * per_example_loss
+                per_example_loss *= sample_weight
 
             self.tensors["losses"] = per_example_loss
 

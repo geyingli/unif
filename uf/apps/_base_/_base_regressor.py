@@ -47,10 +47,9 @@ class RegDecoder(BaseDecoder):
 
         self.tensors["probs"] = logits
 
-        per_example_loss = tf.reduce_sum(tf.square(label_floats - logits), axis=-1)
+        per_example_loss = util.mean_squared_error(logits, label_floats, **kwargs)
         if sample_weight is not None:
-            per_example_loss = tf.cast(sample_weight, dtype=tf.float32) * per_example_loss
-
+            per_example_loss *= sample_weight
         self.tensors["losses"] = per_example_loss
         self.train_loss = tf.reduce_mean(per_example_loss)
 

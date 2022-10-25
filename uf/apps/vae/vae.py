@@ -212,13 +212,10 @@ class VAE(BaseDecoder, BERTEncoder):
             logits = tf.reshape(
                 logits, [batch_size, seq_length, config.vocab_size])
             probs = tf.nn.softmax(logits, axis=-1, name="probs")
-            lm_log_probs = tf.nn.log_softmax(logits, axis=-1)
 
             self.tensors["preds"] = tf.argmax(probs, axis=-1)
-            one_hot_labels = tf.one_hot(
-                input_ids, depth=config.vocab_size, dtype=tf.float32)
-            per_example_loss = -tf.reduce_sum(
-                lm_log_probs * one_hot_labels, axis=[-1])
+
+            per_example_loss = util.cross_entropy(logits, input_ids, config.vocab_size, **kwargs)
             if sample_weight is not None:
                 per_example_loss *= tf.expand_dims(sample_weight, axis=-1)
 

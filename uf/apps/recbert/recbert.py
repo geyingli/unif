@@ -69,7 +69,8 @@ class RecBERT(BaseDecoder, BERTEncoder):
                 prob=add_prob,
                 scope="cls/add",
                 name="add",
-                sample_weight=sample_weight)
+                sample_weight=sample_weight,
+                **kwargs)
             self._cls_forward(
                 is_training,
                 input_tensor=hidden,
@@ -162,7 +163,8 @@ class RecBERT(BaseDecoder, BERTEncoder):
                     name,
                     sample_weight=None,
                     hidden_dropout_prob=0.1,
-                    initializer_range=0.02):
+                    initializer_range=0.02,
+                    **kwargs):
 
         with tf.variable_scope(scope):
 
@@ -211,10 +213,7 @@ class RecBERT(BaseDecoder, BERTEncoder):
                 logits = tf.reshape(logits, [-1, max_seq_length, bert_config.vocab_size])
 
                 # loss
-                log_probs = tf.nn.log_softmax(logits, axis=-1)
-                one_hot_labels = tf.one_hot(label_ids, depth=bert_config.vocab_size)
-                per_token_loss = -tf.reduce_sum(one_hot_labels * log_probs, axis=-1)
-
+                per_token_loss = util.cross_entropy(logits, label_ids, bert_config.vocab_size, **kwargs)
                 input_mask *= tf.cast(verifier_preds, tf.float32)
                 per_token_loss *= input_mask / (tf.reduce_sum(input_mask, keepdims=True, axis=-1) + 1e-6)
                 per_example_loss = tf.reduce_sum(per_token_loss, axis=-1)

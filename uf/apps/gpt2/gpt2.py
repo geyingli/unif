@@ -86,10 +86,7 @@ class GPT2(BaseDecoder, BaseEncoder):
                 self.tensors["preds"] = input_ids
 
             # loss
-            log_probs = tf.nn.log_softmax(logits, axis=-1)
-            one_hot_labels = tf.one_hot(label_ids, depth=hparams.n_vocab)
-            per_token_loss = -tf.reduce_sum(
-                one_hot_labels * log_probs, axis=-1)
+            per_token_loss = util.cross_entropy(logits, label_ids, hparams.n_vocab, **kwargs)
             label_mask = tf.cast(tf.not_equal(label_ids, 0), tf.float32)
             per_example_loss = \
                 tf.reduce_sum(per_token_loss * label_mask, axis=-1) / \

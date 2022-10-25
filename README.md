@@ -8,7 +8,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-v2.5.11-blue">
+        <img src="https://img.shields.io/badge/version-v2.5.12-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-1.x\2.x-yellow">
@@ -73,7 +73,6 @@ print(model.predict(X))
 || [`BiRNNClassifier`](./examples/tutorial/BiRNNClassifier.ipynb) 		| 双向获取更优表征 |
 || [`BERTClassifier`](./examples/tutorial/BERTClassifier.ipynb) 		| - |
 || [`XLNetClassifier`](./examples/tutorial/XLNetClassifier.ipynb) 		| - |
-|| [`RoBERTaClassifier`](./examples/tutorial/RoBERTaClassifier.ipynb) 		| - |
 || [`ALBERTClassifier`](./examples/tutorial/ALBERTClassifier.ipynb) 		| - |
 | |[`ELECTRAClassifier`](./examples/tutorial/ELECTRAClassifier.ipynb) 		| - |
 | |[`WideDeepClassifier`](./examples/tutorial/WideDeepClassifier.ipynb) | 通过 Wide & Deep 架构融合句子级别特征 |
@@ -82,12 +81,10 @@ print(model.predict(X))
 | |[`PerformerClassifier`](./examples/tutorial/PerformerClassifier.ipynb) 		| 基于正交随机向量快速计算 Attention，实现加速 |
 |文本分类 / 多label| [`BERTBinaryClassifier`](./examples/tutorial/BERTBinaryClassifier.ipynb) 		| -  |
 || [`XLNetBinaryClassifier`](./examples/tutorial/XLNetBinaryClassifier.ipynb) 		| - |
-| |[`RoBERTaBinaryClassifier`](./examples/tutorial/RoBERTaBinaryClassifier.ipynb) 		| - |
 | |[`ALBERTBinaryClassifier`](./examples/tutorial/ALBERTBinaryClassifier.ipynb) 		| - |
 | |[`ELECTRABinaryClassifier`](./examples/tutorial/ELECTRABinaryClassifier.ipynb) 		| - |
 | 回归| [`WideDeepRegressor`](./examples/tutorial/WideDeepRegressor.ipynb) | 通过 Wide & Deep 架构融合句子级别特征 |
 |序列标注|[`BERTSeqClassifier`](./examples/tutorial/BERTSeqClassifier.ipynb) 		| - |
-|| [`RoBERTaSeqClassifier`](./examples/tutorial/RoBERTaSeqClassifier.ipynb) 		| - |
 || [`ALBERTSeqClassifier`](./examples/tutorial/ALBERTSeqClassifier.ipynb) 		| - |
 || [`ELECTRASeqClassifier`](./examples/tutorial/ELECTRASeqClassifier.ipynb) 		| - |
 || [`BERTSeqCrossClassifier`](./examples/tutorial/BERTSeqCrossClassifier.ipynb) 		| 序列标注与文本分类相结合的多任务学习 |
@@ -95,9 +92,7 @@ print(model.predict(X))
 || [`BERTCRFNER`](./examples/tutorial/BERTCRFNER.ipynb) 		| 结合 CRF |
 || [`BERTCRFCascadeNER`](./examples/tutorial/BERTCRFCascadeNER.ipynb) | 实体识别与分类同时进行的级联架构 |
 |机器阅读理解| [`BERTMRC`](./examples/tutorial/BERTMRC.ipynb) 		| -  |
-|| [`RoBERTaMRC`](./examples/tutorial/RoBERTaMRC.ipynb) 		| - |
 | |[`ALBERTMRC`](./examples/tutorial/ALBERTMRC.ipynb) 		| - |
-| |[`ELECTRAMRC`](./examples/tutorial/ELECTRAMRC.ipynb) 		| - |
 | |[`SANetMRC`](./examples/tutorial/SANetMRC.ipynb) 		| 引入 Sentence Attention |
 | |[`BERTVerifierMRC`](./examples/tutorial/BERTVerifierMRC.ipynb) | 抽取 answer span 的同时判断可答性 |
 | |[`RetroReaderMRC`](./examples/tutorial/RetroReaderMRC.ipynb) | 抽取 answer span 的同时判断可答性 |
@@ -314,17 +309,29 @@ model.fit(..., adversarial="smart", epsilon=0.01, n_loop=2, prtb_lambda=0.5, bre
 ### R-Drop
 
 全称 Regularized Dropout，同样是行之有效的在对抗过拟合的同时增强泛化能力的策略。策略思想极其简单，因而在大多数场景都能应用，在于将相同的数据经过不同的 dropout 后得到各自的概率分布，计算双向 KL 散度并加入到损失函数中。这一想法与对比学习、一致性学习颇为类似，但作用的变量是 dropout。
+
 ```python
 model.fit(..., rdrop=True, alpha=1.0)     # alpha是损失项乘子
 ```
 
-### 其他
+### Focal Loss
 
-深度学习的变量极多，算法的可塑性也较大，未来有机会将引入更多的通用 trick。下面是其他的对下游表现未必有提升的 trick，有空也不妨一试。
+在基于交叉熵损失的分类场景下，动态调节易/难分样本的损失大小，从而使训练将更多的注意力放在难分样本上。是解决类型不平衡问题的绝佳手段，原论文引用次数已超过 1.5w。
+
+$$CE(p)=-log(p)$$
+
+$$FL(p)=-\alpha(1-p)^{\gamma} log(p)$$
+
+$\gamma$ 即为下述函数中的参数 `gamma`，可取任意大于 0 的值；$\alpha$ 代表类别权重，同一 label 下的 $\alpha$ 是一致的。由于 $\alpha$ 与本框架的 `sample_weight` 理念重合，使用参数 `sample_weight` 即可达到调节 $\alpha$ 的目的。
+
 ```python
-# 置信度过滤：样本置信度达到阈值后不再参与训练，避免过拟合 (仅Classifier可用)
-model.fit(..., conf_thresh=0.99)      # 默认None，不启用
+X = ["孔雀东南飞", "五里一徘徊", "不知天上宫阙", "今夕是何年"]
+y = [2, 0, 1, 1]
+alpha_map = {0: 1.8, 1: 1.0, 2: 1.5}
+sample_weight = [alpha_map[_y] for _y in y]     # 样本权重，上文中有介绍
+model.fit(X, y, sample_weight, focal_loss=True, gamma=1.0)
 ```
+
 
 ## TFServing
 

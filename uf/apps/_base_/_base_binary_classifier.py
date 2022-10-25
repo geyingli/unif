@@ -50,12 +50,7 @@ class BinaryClsDecoder(BaseDecoder):
         self.tensors["probs"] = probs
         self.tensors["preds"] = tf.greater(probs, 0.5, name="preds")
 
-        per_label_loss = tf.nn.sigmoid_cross_entropy_with_logits(logits=logits, labels=tf.cast(label_ids, dtype=tf.float32))
-        if label_weight is not None:
-            label_weight = tf.constant(label_weight, dtype=tf.float32)
-            label_weight = tf.reshape(label_weight, [1, label_size])
-            per_label_loss *= label_weight
-        per_example_loss = tf.reduce_sum(per_label_loss, axis=-1)
+        per_example_loss = util.sigmoid_cross_entropy(logits, label_ids, label_size, label_weight, **kwargs)
         if sample_weight is not None:
             per_example_loss *= sample_weight
 

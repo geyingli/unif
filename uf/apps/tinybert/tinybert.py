@@ -101,7 +101,7 @@ class TinyBERTClsDistillor(BaseDecoder):
             self.tensors["losses"] = tf.reshape(distill_loss, [1])
 
         else:
-            self._infer(student_logits, label_ids, sample_weight, label_size)
+            self._infer(student_logits, label_ids, sample_weight, label_size, **kwargs)
 
     def _get_embedding_loss(self, teacher, student, bert_config, sample_weight):
         teacher_embedding = teacher.get_embedding_output()
@@ -191,20 +191,15 @@ class TinyBERTClsDistillor(BaseDecoder):
         pred_loss = tf.reduce_mean(pred_loss)
         return pred_loss
 
-    def _infer(self, student_logits, label_ids, sample_weight, label_size):
+    def _infer(self, student_logits, label_ids, sample_weight, label_size, **kwargs):
         probs = tf.nn.softmax(student_logits, axis=-1, name="probs")
         self.tensors["probs"] = probs
         self.tensors["preds"] = tf.argmax(probs, axis=-1, name="preds")
 
         if label_ids is not None:
-            log_probs = tf.nn.log_softmax(student_logits, axis=-1)
-            one_hot_labels = tf.one_hot(
-                label_ids, depth=label_size, dtype=tf.float32)
-            per_example_loss = - tf.reduce_sum(
-                one_hot_labels * log_probs, axis=-1)
+            per_example_loss = util.cross_entropy(student_logits, label_ids, label_size, **kwargs)
             if sample_weight is not None:
-                per_example_loss = tf.cast(
-                    sample_weight, dtype=tf.float32) * per_example_loss
+                per_example_loss *= sample_weight
 
             self.tensors["losses"] = per_example_loss
 
@@ -219,16 +214,13 @@ class TinyBERTBinaryClsDistillor(TinyBERTClsDistillor):
         pred_loss = tf.reduce_mean(pred_loss)
         return pred_loss
 
-    def _infer(self, student_logits, label_ids, sample_weight, label_size):
+    def _infer(self, student_logits, label_ids, sample_weight, label_size, **kwargs):
         probs = tf.nn.sigmoid(student_logits, name="probs")
         self.tensors["probs"] = probs
         self.tensors["preds"] = tf.greater(probs, 0.5, name="preds")
 
         if label_ids is not None:
-            per_label_loss = tf.nn.sigmoid_cross_entropy_with_logits(
-                logits=student_logits,
-                labels=tf.cast(label_ids, dtype=tf.float32))
-            per_example_loss = tf.reduce_sum(per_label_loss, axis=-1)
+            per_example_loss = util.sigmoid_cross_entropy(student_logits, label_ids, **kwargs)
             if sample_weight is not None:
                 per_example_loss *= sample_weight
 

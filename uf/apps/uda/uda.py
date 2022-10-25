@@ -84,7 +84,7 @@ class UDADecoder(BaseDecoder):
                         1 - tf.cast(larger_than_threshold, tf.float32))
 
                 loss_mask = tf.stop_gradient(loss_mask)
-                per_example_loss = per_example_loss * loss_mask
+                per_example_loss *= loss_mask
                 if sample_weight is not None:
                     sup_sample_weight = tf.boolean_mask(
                         sample_weight, mask=is_supervised, axis=0)

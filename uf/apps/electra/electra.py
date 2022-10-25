@@ -60,7 +60,7 @@ class ELECTRA(BaseDecoder):
             untied_embeddings=False,
             name="generator")
         mlm_output = self._get_generator_output(
-            masked_inputs, sample_weight, generator)
+            masked_inputs, sample_weight, generator, **kwargs)
         self.train_loss = self.config.gen_weight * mlm_output.loss
         self.tensors["MLM_losses"] = mlm_output.per_example_loss
         self.tensors["MLM_preds"] = tf.reshape(
@@ -80,7 +80,7 @@ class ELECTRA(BaseDecoder):
             name="electra")
         disc_output = self._get_discriminator_output(
             disc_input, sample_weight, discriminator,
-            fake_data.is_fake_tokens)
+            fake_data.is_fake_tokens, **kwargs)
         if electra_objective:
             self.train_loss += self.config.disc_weight * disc_output.loss
         self.tensors["RTD_losses"] = disc_output.per_example_loss
@@ -88,7 +88,7 @@ class ELECTRA(BaseDecoder):
         self.tensors["RTD_preds"] = disc_output.preds
         self.tensors["RTD_labels"] = disc_output.labels
 
-    def _get_generator_output(self, inputs, sample_weight, generator):
+    def _get_generator_output(self, inputs, sample_weight, generator, **kwargs):
         """Masked language modeling softmax layer."""
 
         def gather_indexes(sequence_tensor, positions):
@@ -127,20 +127,15 @@ class ELECTRA(BaseDecoder):
             probs = tf.reshape(
                 probs, [-1, inputs.masked_lm_positions.shape[-1], self.bert_config.vocab_size])
             preds = tf.argmax(logits, axis=-1)
-            log_probs = tf.nn.log_softmax(logits, axis=-1)
 
             label_ids = tf.reshape(inputs.masked_lm_ids, [-1])
             masked_lm_weights = inputs.masked_lm_weights
             if sample_weight is not None:
-                sample_weight = tf.expand_dims(
-                    tf.cast(sample_weight, dtype=tf.float32), axis=-1)
+                sample_weight = tf.expand_dims(sample_weight, axis=-1)
                 masked_lm_weights *= sample_weight
             label_weights = tf.reshape(masked_lm_weights, [-1])
-            one_hot_labels = tf.one_hot(
-                label_ids, depth=self.bert_config.vocab_size, dtype=tf.float32)
-            per_example_loss = - tf.reduce_sum(
-                log_probs * one_hot_labels, axis=[-1])
-            per_example_loss = label_weights * per_example_loss
+            per_example_loss = util.cross_entropy(logits, label_ids, self.bert_config.vocab_size, **kwargs)
+            per_example_loss *= label_weights
 
             numerator = tf.reduce_sum(per_example_loss)
             denominator = tf.reduce_sum(label_weights) + 1e-6
@@ -157,26 +152,23 @@ class ELECTRA(BaseDecoder):
                 preds=preds)
 
     def _get_discriminator_output(self, inputs, sample_weight, discriminator,
-                                  labels):
+                                  labels, **kwargs):
         """Discriminator binary classifier."""
         with tf.variable_scope("discriminator_predictions"):
             hidden = tf.layers.dense(
                 discriminator.get_sequence_output(),
                 units=self.bert_config.hidden_size,
                 activation=util.get_activation(self.bert_config.hidden_act),
-                kernel_initializer=util.create_initializer(
-                    self.bert_config.initializer_range))
+                kernel_initializer=util.create_initializer(self.bert_config.initializer_range))
             logits = tf.squeeze(tf.layers.dense(hidden, units=1), -1)
             weights = tf.cast(inputs.input_mask, tf.float32)
-            labelsf = tf.cast(labels, tf.float32)
-            losses = tf.nn.sigmoid_cross_entropy_with_logits(
-                logits=logits, labels=labelsf) * weights
-            per_example_loss = (tf.reduce_sum(losses, axis=-1) /
+
+            per_token_loss = util.sigmoid_cross_entropy(logits, labels, keep_dims=True, **kwargs)
+            per_example_loss = (tf.reduce_sum(per_token_loss * weights, axis=-1) /
                                 (1e-6 + tf.reduce_sum(weights, axis=-1)))
             if sample_weight is not None:
-                sample_weight = tf.cast(sample_weight, dtype=tf.float32)
                 per_example_loss *= sample_weight
-            loss = tf.reduce_sum(losses) / (1e-6 + tf.reduce_sum(weights))
+            loss = tf.reduce_mean(per_example_loss)
             probs = tf.nn.sigmoid(logits)
             preds = tf.cast(tf.greater(probs, 0.5), tf.int32)
             DiscOutput = collections.namedtuple(

@@ -322,7 +322,7 @@ $$CE(p)=-log(p)$$
 
 $$FL(p)=-\alpha(1-p)^{\gamma} log(p)$$
 
-$\gamma$ 即为下述函数中的参数 `gamma`，可取任意大于 0 的值；$\alpha$ 代表类别权重，同一 label 下的 $\alpha$ 是一致的。由于 $\alpha$ 与本框架的 `sample_weight` 理念重合，使用参数 `sample_weight` 即可达到调节 $\alpha$ 的目的。
+$\gamma$ 即为下述函数中的参数 `gamma`，可取任意大于 0 的值； $\alpha$ 代表类别权重，同一 label 下的 $\alpha$ 是一致的。由于 $\alpha$ 与本框架的 `sample_weight` 理念重合，使用参数 `sample_weight` 即可达到调节 $\alpha$ 的目的。
 
 ```python
 X = ["孔雀东南飞", "五里一徘徊", "不知天上宫阙", "今夕是何年"]

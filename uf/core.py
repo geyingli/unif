@@ -67,8 +67,8 @@ class BaseModule:
         self.graph = tf.Graph()
 
         # Before we register the task, fast prediction or scoring is not allowed.
-        self.step = 0                           # current training step
-        self._session_mode = None               # one of None, "train" and "infer"
+        self.step = 0                         # current training step
+        self._graph_mode = None               # one of None, "train" and "infer"
         self._session_built = False
         self._inited_vars = set()
 

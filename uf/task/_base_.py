@@ -20,6 +20,7 @@ class Task:
 
     def _build_graph(self):
         """ Build computation graph. """
+        self.module._graph_mode = "infer"
         self.module._set_placeholders()
         _, self.module.tensors = self.module._parallel_forward(is_training=False)
 
@@ -32,7 +33,7 @@ class Task:
         else:
             os.environ["CUDA_VISIBLE_DEVICES"] = "-1"           # disable GPUs
         config = tf.ConfigProto(
-            allow_soft_placement=True, 
+            allow_soft_placement=True,
             gpu_options=tf.GPUOptions(allow_growth=True, per_process_gpu_memory_fraction=1.0),
         )
         self.module.sess = tf.Session(graph=self.module.graph, config=config)

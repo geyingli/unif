@@ -8,7 +8,7 @@ class Initialization(Task):
     def run(self, reinit_all, ignore_checkpoint):
 
         # build graph
-        if self.module._session_mode is None:
+        if self.module._graph_mode is None:
             self._build_graph()
 
         # init session
@@ -28,4 +28,3 @@ class Initialization(Task):
                     "Global variables already initialized. To re-initialize all, "
                     "pass `reinit_all` to True."
                 )
-        self.module._session_mode = "infer"

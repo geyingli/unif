@@ -9,8 +9,14 @@ class AdversarialTraining(Training):
     """ Train with adversarial algorithms. """
 
     def _build_graph(self, **kwargs):
-        self._init_inputs()
+        self.module._graph_mode = "train"
+        self.module._set_placeholders(is_training=True)
 
+        # convert placeholders into TFRecords-features
+        if self.from_tfrecords:
+            self._convert_placeholders()
+
+        # adversarial training
         ok = True
         try:
             if self.adversarial.lower() == "fgm":

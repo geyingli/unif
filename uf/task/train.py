@@ -19,8 +19,16 @@ class Training(Task):
         self.n_jobs = kwargs.get("n_jobs", max(multiprocessing.cpu_count() - 1, 1))    # number of threads loading tfrecords
         self.max_to_keep = kwargs.get("max_to_keep", 1000000)
 
+        # confirm inputs
+        if self.from_tfrecords:
+            self.n_inputs = com.get_tfrecords_length(self.tfrecords_files)
+        else:
+            self.n_inputs = len(list(self.module.data.values())[0])
+        if not self.n_inputs:
+            raise ValueError("0 input samples recognized.")
+
         # build graph
-        if self.module._session_mode != "train" or not self.module._debug:
+        if self.module._graph_mode != "train" or not self._debug:
             self._build_graph(**kwargs)
 
         # init session/variables
@@ -33,7 +41,6 @@ class Training(Task):
                     variables.append(var)
             if variables:
                 self._init_variables(variables)
-        self.module._session_mode = "train"
 
         # shuffle training samples
         if self.shuffle and not self.tfrecords_files:
@@ -72,53 +79,46 @@ class Training(Task):
             if (self.grad_acc_steps > 1) and (i % self.grad_acc_steps == 0):
                 self.module.sess.run(self.update_params_op)
 
-    def _init_inputs(self):
-        if self.from_tfrecords:
-            self.n_inputs = com.get_tfrecords_length(self.tfrecords_files)
+    def _convert_placeholders(self):
+        features = {}
+        for key in com.get_tfrecords_keys(self.tfrecords_files[0]):
+            feature = self.module.placeholders[key]
+            if not isinstance(feature, tf.FixedLenFeature):
+                feature = com.convert_placeholder_to_feature(feature)
+            features[key] = feature
 
-            self.module._set_placeholders(is_training=True)
+        def decode_record(record):
+            example = tf.parse_single_example(record, features)
+            for name in list(example.keys()):
+                _t = example[name]
+                if _t.dtype == tf.int64:
+                    _t = tf.to_int32(_t)
+                example[name] = _t
+            return example
 
-            # convert placeholders into features
-            features = {}
-            for key in com.get_tfrecords_keys(self.tfrecords_files[0]):
-                feature = self.module.placeholders[key]
-                if not isinstance(feature, tf.FixedLenFeature):
-                    feature = com.convert_placeholder_to_feature(feature)
-                features[key] = feature
-
-            def decode_record(record):
-                example = tf.parse_single_example(record, features)
-                for name in list(example.keys()):
-                    _t = example[name]
-                    if _t.dtype == tf.int64:
-                        _t = tf.to_int32(_t)
-                    example[name] = _t
-                return example
-
-            dataset = tf.data.TFRecordDataset(self.tfrecords_files)
-            dataset = dataset.repeat()
-            if tf.__version__.startswith("1"):
-                map_and_batch = tf.contrib.data.map_and_batch
-            elif tf.__version__.startswith("2"):
-                map_and_batch = tf.data.experimental.map_and_batch
-            dataset = dataset.apply(map_and_batch(
-                decode_record,
-                batch_size=self.module.batch_size,
-                num_parallel_batches=self.n_jobs,
-                drop_remainder=True),
-            )
-            dataset = dataset.shuffle(buffer_size=100)
-            iterator = dataset.make_one_shot_iterator()    # never stop
-            self.module.placeholders = iterator.get_next()
-        else:
-            self.n_inputs = len(list(self.module.data.values())[0])
-            self.module._set_placeholders(is_training=True)
-
-        if not self.n_inputs:
-            raise ValueError("0 input samples recognized.")
+        dataset = tf.data.TFRecordDataset(self.tfrecords_files)
+        dataset = dataset.repeat()
+        if tf.__version__.startswith("1"):
+            map_and_batch = tf.contrib.data.map_and_batch
+        elif tf.__version__.startswith("2"):
+            map_and_batch = tf.data.experimental.map_and_batch
+        dataset = dataset.apply(map_and_batch(
+            decode_record,
+            batch_size=self.module.batch_size,
+            num_parallel_batches=self.n_jobs,
+            drop_remainder=True),
+        )
+        dataset = dataset.shuffle(buffer_size=100)
+        iterator = dataset.make_one_shot_iterator()    # never stop
+        self.module.placeholders = iterator.get_next()
 
     def _build_graph(self, **kwargs):
-        self._init_inputs()
+        self.module._graph_mode = "train"
+        self.module._set_placeholders(is_training=True)
+
+        # convert placeholders into TFRecords-features
+        if self.from_tfrecords:
+            self._convert_placeholders()
 
         # accumulate gradients for updation
         if self.grad_acc_steps > 1:

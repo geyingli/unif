@@ -82,7 +82,7 @@ class UniLM(BERTLM, LMModule):
         )
 
         if mode != self.mode:
-            self._session_mode = None
+            self._graph_mode = None
         self.mode = mode
 
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None, is_training=False, is_parallel=False):

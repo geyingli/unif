@@ -197,9 +197,9 @@ class AdaBERTStudent(object):
         self.pretrained_pos_embeddings = pretrained_pos_embeddings
         self.given_arch = given_arch
 
-        self._build_graph(inputs, is_training)
+        self._build(inputs, is_training)
 
-    def _build_graph(self, inputs, is_training):
+    def _build(self, inputs, is_training):
         """Create the computation graph
         """
 

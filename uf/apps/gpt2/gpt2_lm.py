@@ -63,7 +63,7 @@ class GPT2LM(LMModule):
 
         if given != self._given:
             self._given = given
-            self._session_mode = None
+            self._graph_mode = None
 
         return super(LMModule, self).predict(X, X_tokenized, batch_size)
 
@@ -82,7 +82,7 @@ class GPT2LM(LMModule):
 
         if given != self._given:
             self._given = given
-            self._session_mode = None
+            self._graph_mode = None
 
         return super(LMModule, self).export(export_dir, rename_inputs, rename_outputs, ignore_outputs)
 

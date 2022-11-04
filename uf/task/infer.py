@@ -8,18 +8,19 @@ class Inference(Task):
     """ Inference, as its name. """
 
     def run(self):
+
+        # confirm inputs
         n_inputs = len(list(self.module.data.values())[0])
         if not n_inputs:
             raise ValueError("0 input samples recognized.")
 
         # build graph
-        if self.module._session_mode != "infer" and not self.module._debug:
+        if self.module._graph_mode != "infer" and not self.module._debug:
             self._build_graph()
 
         # init session
         if not self.module._session_built:
             self._init_session()
-        self.module._session_mode = "infer"
 
         tf.logging.info("Running inference on %d samples", n_inputs)
 

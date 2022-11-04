@@ -17,7 +17,6 @@ class Exportation(Task):
         # init session
         if not self.module._session_built:
             self._init_session()
-        self.module._session_mode = "infer"
 
         def set_input(key, value):
             inputs[key] = tf.saved_model.utils.build_tensor_info(value)

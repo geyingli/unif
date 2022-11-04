@@ -66,7 +66,7 @@ class DilatedLM(LMModule):
 
         if loop != self._loop:
             self._loop = loop
-            self._session_mode = None
+            self._graph_mode = None
 
         return super(LMModule, self).predict(X, X_tokenized, batch_size)
 
@@ -81,7 +81,7 @@ class DilatedLM(LMModule):
 
         if loop != self._loop:
             self._loop = loop
-            self._session_mode = None
+            self._graph_mode = None
 
         return super(LMModule, self).export(export_dir)
 

@@ -438,6 +438,7 @@ class BERTDecoder(BaseDecoder):
         scope_cls="cls/seq_relationship",
         trainable=True,
         use_nsp_loss=True,
+        whole_probs=False,
         **kwargs,
     ):
         super(BERTDecoder, self).__init__(**kwargs)
@@ -493,7 +494,7 @@ class BERTDecoder(BaseDecoder):
             scalar_losses.append(scalar_loss)
             self.tensors["MLM_losses"] = per_example_loss
             self.tensors["MLM_preds"] = tf.argmax(probs, axis=-1)
-            self.tensors["MLM_probs"] = tf.reduce_max(probs, axis=-1)
+            self.tensors["MLM_probs"] = probs if whole_probs else tf.reduce_max(probs, axis=-1)
 
         # next sentence prediction
         if next_sentence_labels is not None:

@@ -39,6 +39,7 @@ class BERTLM(LMModule):
         self.truncate_method = truncate_method
         self._drop_pooler = drop_pooler
         self._max_predictions_per_seq = max_predictions_per_seq
+        self._whole_probs = False
 
         self.bert_config = BERTConfig.from_json_file(config_file)
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
@@ -52,6 +53,26 @@ class BERTLM(LMModule):
             self.tokenizer.add("[SEP]")
             self.bert_config.vocab_size += 1
             tf.logging.info("Add necessary token `[SEP]` into vocabulary.")
+
+    def predict(self, X=None, X_tokenized=None, batch_size=8, whole_probs=False):
+        """ Inference on the model.
+
+        Args:
+            X: list. A list object consisting untokenized inputs.
+            X_tokenized: list. A list object consisting tokenized inputs.
+              Either `X` or `X_tokenized` should be None.
+            batch_size: int. The size of batch in each step.
+            whole_probs: float. Include probabilities of the whole 
+              vocabulary in outputs if True.
+        Returns:
+            A dict object of model outputs.
+        """
+
+        if whole_probs != self._whole_probs:
+            self._whole_probs = whole_probs
+            self._graph_mode = None
+
+        return super(LMModule, self).predict(X, X_tokenized, batch_size)
 
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None, is_training=False, is_parallel=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
@@ -267,6 +288,7 @@ class BERTLM(LMModule):
             sample_weight=placeholders.get("sample_weight"),
             scope_lm="cls/predictions",
             scope_cls="cls/seq_relationship",
+            whole_probs=self._whole_probs,
             **kwargs,
         )
         train_loss, tensors = decoder.get_forward_outputs()
@@ -337,8 +359,8 @@ class BERTLM(LMModule):
         mlm_preds = []
         mlm_probs = []
         mlm_positions = self.data["masked_lm_positions"]
-        all_preds = com.transform(output_arrays[0], n_inputs).tolist()
-        all_probs = com.transform(output_arrays[1], n_inputs).tolist()
+        all_preds = com.transform(output_arrays[0], n_inputs)
+        all_probs = com.transform(output_arrays[1], n_inputs)
         for idx, (_preds, _probs) in enumerate(zip(all_preds, all_probs)):
             _mlm_preds = []
             _mlm_probs = []
@@ -346,6 +368,10 @@ class BERTLM(LMModule):
                 if mlm_positions[idx][p_id] == 0:
                     break
                 _mlm_preds.append(_id)
+                try:
+                    _prob = _prob.tolist()
+                except:
+                    pass
                 _mlm_probs.append(_prob)
             mlm_preds.append(self.tokenizer.convert_ids_to_tokens(_mlm_preds))
             mlm_probs.append(_mlm_probs)

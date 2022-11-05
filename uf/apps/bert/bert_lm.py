@@ -326,32 +326,39 @@ class BERTLM(LMModule):
     def _get_predict_ops(self):
         return [
             self.tensors["MLM_preds"],
+            self.tensors["MLM_probs"],
             self.tensors["NSP_preds"],
             self.tensors["NSP_probs"],
         ]
 
     def _get_predict_outputs(self, output_arrays, n_inputs):
 
-        # MLM preds
+        # MLM preds/probs
         mlm_preds = []
+        mlm_probs = []
         mlm_positions = self.data["masked_lm_positions"]
         all_preds = com.transform(output_arrays[0], n_inputs).tolist()
-        for idx, _preds in enumerate(all_preds):
-            _ids = []
-            for p_id, _id in enumerate(_preds):
+        all_probs = com.transform(output_arrays[1], n_inputs).tolist()
+        for idx, (_preds, _probs) in enumerate(zip(all_preds, all_probs)):
+            _mlm_preds = []
+            _mlm_probs = []
+            for p_id, (_id, _prob) in enumerate(zip(_preds, _probs)):
                 if mlm_positions[idx][p_id] == 0:
                     break
-                _ids.append(_id)
-            mlm_preds.append(self.tokenizer.convert_ids_to_tokens(_ids))
+                _mlm_preds.append(_id)
+                _mlm_probs.append(_prob)
+            mlm_preds.append(self.tokenizer.convert_ids_to_tokens(_mlm_preds))
+            mlm_probs.append(_mlm_probs)
 
         # NSP preds
-        nsp_preds = com.transform(output_arrays[1], n_inputs).tolist()
+        nsp_preds = com.transform(output_arrays[2], n_inputs).tolist()
 
         # NSP probs
-        nsp_probs = com.transform(output_arrays[2], n_inputs)
+        nsp_probs = com.transform(output_arrays[3], n_inputs)
 
         outputs = {}
         outputs["mlm_preds"] = mlm_preds
+        outputs["mlm_probs"] = mlm_probs
         outputs["nsp_preds"] = nsp_preds
         outputs["nsp_probs"] = nsp_probs
 

@@ -28,7 +28,7 @@ class Training(Task):
             raise ValueError("0 input samples recognized.")
 
         # build graph
-        if self.module._graph_mode != "train" or not self._debug:
+        if self.module._graph_mode != "train" or not self.module._debug:
             self._build_graph(**kwargs)
 
         # init session/variables

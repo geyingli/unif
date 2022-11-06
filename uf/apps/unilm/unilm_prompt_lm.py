@@ -9,7 +9,7 @@ from ...third import tf
 from ... import com
 
 
-class UniPropmtLM(BERTLM, LMModule):
+class UniPromptLM(BERTLM, LMModule):
     """ Prompt Language modeling on UniLM. """
 
     def __init__(

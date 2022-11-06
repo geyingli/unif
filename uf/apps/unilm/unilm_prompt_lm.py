@@ -9,8 +9,8 @@ from ...third import tf
 from ... import com
 
 
-class UniLM(BERTLM, LMModule):
-    """ Language modeling on UniLM. """
+class UniPropmtLM(BERTLM, LMModule):
+    """ Prompt Language modeling on UniLM. """
 
     def __init__(
         self,
@@ -34,6 +34,7 @@ class UniLM(BERTLM, LMModule):
         super(LMModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.max_seq_length = max_seq_length
+        self.label_size = 2
         self.do_sample_next_sentence = do_sample_next_sentence
         self.masked_lm_prob = masked_lm_prob
         self.short_seq_prob = short_seq_prob
@@ -133,20 +134,30 @@ class UniLM(BERTLM, LMModule):
 
         # tokenize input texts
         segment_input_tokens = []
-        for idx, sample in enumerate(X_target):
-            if self.mode in ("l2r", "r2l"):
-                info = "`l2r` or `r2l` only supports single sentence inputs."
-                if not tokenized:
-                    assert isinstance(sample, str), info
-                else:
-                    assert isinstance(sample[0], str), info
-            elif self.mode == "s2s":
-                info = "`s2s` only supports 2-sentence inputs."
-                assert len(sample) == 2, info
+        for idx, sample in enumerate(X_target): 
             try:
-                segment_input_tokens.append(self._convert_x(sample, tokenized))
+                soft_prompt = sample["soft"]
+                verbalizer_prompt = sample["verb"]
+                description_prompt = sample["desc"]
+                text = sample["text"]
+                if self.mode in ("l2r", "r2l"):
+                    info = "`l2r` or `r2l` only supports single sentence inputs."
+                    if not tokenized:
+                        assert isinstance(text, str), info
+                    else:
+                        assert isinstance(text[0], str), info
+                elif self.mode == "s2s":
+                    info = "`s2s` only supports 2-sentence inputs."
+                    assert len(text) == 2, info
+                segment_input_tokens.append(self._convert_x(text, tokenized))
             except Exception as e:
-                raise ValueError("Wrong input format (%s): %s." % (sample, e))
+                raise ValueError(
+                    "Wrong input format (%s): %s. An example: X = [{"
+                    "\"soft\": [\"[sentiment]\"], "
+                    "\"verb\": [\"positive\", \"negative\"], "
+                    "\"desc\": \"Is this statement positive or negative\", "
+                    "\"text\": \"It a terrible day.\""
+                    "}, ...]" % (sample, e))
 
         input_ids = []
         input_mask = []

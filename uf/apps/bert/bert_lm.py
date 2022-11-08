@@ -62,7 +62,7 @@ class BERTLM(LMModule):
             X_tokenized: list. A list object consisting tokenized inputs.
               Either `X` or `X_tokenized` should be None.
             batch_size: int. The size of batch in each step.
-            whole_probs: float. Include probabilities of the whole 
+            whole_probs: float. Include probabilities of the whole
               vocabulary in outputs if True.
         Returns:
             A dict object of model outputs.

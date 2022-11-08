@@ -9,7 +9,7 @@ from ...token import WordPieceTokenizer
 from ... import com
 
 
-class SPELM(BERTLM, LMModule):
+class SPELM(LMModule):
     """ Language modeling on Semantic-Parsing-Enhanced. """
 
     def __init__(
@@ -28,7 +28,7 @@ class SPELM(BERTLM, LMModule):
         truncate_method="LIFO",
     ):
         self.__init_args__ = locals()
-        super(BERTLM, self).__init__(init_checkpoint, output_dir, gpu_ids)
+        super(LMModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.max_seq_length = max_seq_length
         self.masked_lm_prob = masked_lm_prob

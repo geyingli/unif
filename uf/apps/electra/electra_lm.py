@@ -9,7 +9,7 @@ from ...third import tf
 from ... import com
 
 
-class ELECTRALM(BERTLM, LMModule):
+class ELECTRALM(LMModule):
     """ Language modeling on ELECTRA. """
 
     def __init__(

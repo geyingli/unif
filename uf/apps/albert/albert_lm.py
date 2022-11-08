@@ -8,7 +8,7 @@ from ...third import tf
 from ... import com
 
 
-class ALBERTLM(BERTLM, LMModule):
+class ALBERTLM(LMModule):
     """ Language modeling on ALBERT. """
 
     def __init__(

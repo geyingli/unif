@@ -8,7 +8,7 @@ from ...third import tf
 from ... import com
 
 
-class XLNetLM(BERTLM, LMModule):
+class XLNetLM(LMModule):
     """ Language modeling on XLNet. """
 
     def __init__(

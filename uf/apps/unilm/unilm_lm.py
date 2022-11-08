@@ -9,7 +9,7 @@ from ...third import tf
 from ... import com
 
 
-class UniLM(BERTLM, LMModule):
+class UniLM(LMModule):
     """ Language modeling on UniLM. """
 
     def __init__(
@@ -245,6 +245,50 @@ class UniLM(BERTLM, LMModule):
             masked_lm_weights.append(_masked_lm_weights)
 
         return (input_ids, input_mask, segment_ids, masked_lm_positions, masked_lm_ids, masked_lm_weights, next_sentence_labels)
+
+    def _convert_y(self, y):
+        label_set = set(y)
+
+        # automatically set `label_size`
+        if self.label_size:
+            assert len(label_set) <= self.label_size, "Number of unique `y`s exceeds 2."
+        else:
+            self.label_size = len(label_set)
+
+        # automatically set `id_to_label`
+        if not self._id_to_label:
+            self._id_to_label = list(label_set)
+            try:
+                # Allign if user inputs continual integers.
+                # e.g. [2, 0, 1]
+                self._id_to_label = list(sorted(self._id_to_label))
+            except Exception:
+                pass
+
+        # automatically set `label_to_id` for prediction
+        if not self._label_to_id:
+            self._label_to_id = {label: index for index, label in enumerate(self._id_to_label)}
+
+        label_ids = []
+        for label in y:
+            if label not in self._label_to_id:
+                assert len(self._label_to_id) < self.label_size, "Number of unique labels exceeds `label_size`."
+                self._label_to_id[label] = len(self._label_to_id)
+                self._id_to_label.append(label)
+            label_ids.append(self._label_to_id[label])
+        return label_ids
+
+    def _set_placeholders(self, **kwargs):
+        self.placeholders = {
+            "input_ids": tf.placeholder(tf.int32, [None, self.max_seq_length], "input_ids"),
+            "input_mask": tf.placeholder(tf.int32, [None, self.max_seq_length], "input_mask"),
+            "segment_ids": tf.placeholder(tf.int32, [None, self.max_seq_length], "segment_ids"),
+            "masked_lm_positions": tf.placeholder(tf.int32, [None, self._max_predictions_per_seq], "masked_lm_positions"),
+            "masked_lm_ids": tf.placeholder(tf.int32, [None, self._max_predictions_per_seq], "masked_lm_ids"),
+            "masked_lm_weights": tf.placeholder(tf.float32, [None, self._max_predictions_per_seq], "masked_lm_weights"),
+            "next_sentence_labels": tf.placeholder(tf.int32, [None], "next_sentence_labels"),
+            "sample_weight": tf.placeholder(tf.float32, [None], "sample_weight"),
+        }
 
     def _forward(self, is_training, placeholders, **kwargs):
 

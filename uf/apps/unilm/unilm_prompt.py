@@ -9,7 +9,7 @@ from ...third import tf
 from ... import com
 
 
-class UniLMPrompt(BERTLM, LMModule):
+class UniLMPrompt(LMModule):
     """ Prompt Language modeling on UniLM. """
 
     def __init__(
@@ -85,13 +85,15 @@ class UniLMPrompt(BERTLM, LMModule):
         if is_training:
             if not self.masked_lm_prob:
                 assert y is not None, "`y` can't be None when `masked_lm_prob` is 0." % (self.__class__.__name__)
+            else:
+                assert y is None, "`y` must be None when `masked_lm_prob` is larger than 0" % (self.__class__.__name__)
 
         n_inputs = None
         data = {}
 
         # convert X
         if X_tokenized is not None:
-            (input_ids, input_mask, segment_ids, prompt_length, 
+            (input_ids, input_mask, segment_ids, prompt_length,
             masked_lm_positions, masked_lm_ids, masked_lm_weights) = self._convert_X(X_tokenized, y, is_training)
 
             data["input_ids"] = np.array(input_ids, dtype=np.int32)
@@ -130,7 +132,6 @@ class UniLMPrompt(BERTLM, LMModule):
             if self.mode == "s2s":
                 _prompts = _X[:-2]
                 _text = _X[-2:]
-            _y = y[idx]
 
             # process prompt
             _prompt_tokens = ["[CLS]"]
@@ -161,12 +162,11 @@ class UniLMPrompt(BERTLM, LMModule):
                 )
                 _masked_lm_positions = [p + _prompt_length for p in _masked_lm_positions]
             else:
-                j = 0
                 for i in range(len(_text_tokens)):
                     if _text_tokens[i] == "[MASK]":
                         _masked_lm_positions.append(i + _prompt_length)
-                        _masked_lm_labels.append(_y[j])
-                        j += 1
+                if is_training:
+                    _masked_lm_labels = y[idx]
 
             _input_ids = self.tokenizer.convert_tokens_to_ids(_prompt_tokens + _text_tokens)
             _input_mask = [1] * len(_input_ids)

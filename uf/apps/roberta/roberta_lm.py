@@ -9,7 +9,7 @@ from ...third import tf
 from ... import com
 
 
-class RoBERTaLM(BERTLM, LMModule):
+class RoBERTaLM(LMModule):
     """ Language modeling on RoBERTa. """
 
     def __init__(

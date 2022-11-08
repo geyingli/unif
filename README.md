@@ -8,7 +8,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-v2.5.13-blue">
+        <img src="https://img.shields.io/badge/version-v2.5.14-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-1.x\2.x-yellow">
@@ -68,6 +68,7 @@ print(model.predict(X))
 | |[`VAELM`](./examples/tutorial/VAELM.ipynb) | 可生成语言文本负样本，也可提取向量用于聚类 |
 | |[`GPT2LM`](./examples/tutorial/GPT2LM.ipynb) | 自回归式文本生成 | - |
 | |[`UniLM`](./examples/tutorial/UniLM.ipynb) | 结合双向、单向及 Seq2Seq 建模的全能语言模型 |
+| |[`UniLMPrompt`](./examples/tutorial/UniLMPrompt.ipynb) | 加入 prompt，进一步实现语言模型与下游任务的统一 |
 |文本分类 / 单label|[`TextCNNClassifier`](./examples/tutorial/TextCNNClassifier.ipynb) 		| 小而快 |
 || [`RNNClassifier`](./examples/tutorial/RNNClassifier.ipynb) 		| 经典 RNN/LSTM/GRU |
 || [`BiRNNClassifier`](./examples/tutorial/BiRNNClassifier.ipynb) 		| 双向获取更优表征 |
@@ -78,7 +79,7 @@ print(model.predict(X))
 | |[`WideDeepClassifier`](./examples/tutorial/WideDeepClassifier.ipynb) | 通过 Wide & Deep 架构融合句子级别特征 |
 | |[`SemBERTClassifier`](./examples/tutorial/SemBERTClassifier.ipynb) 		| 通过 SemBERT 架构融合字级别的特征 |
 | |[`UDAClassifier`](./examples/tutorial/UDAClassifier.ipynb) 		| 结合一致性学习的半监督学习算法 |
-| |[`PerformerClassifier`](./examples/tutorial/PerformerClassifier.ipynb) 		| 基于正交随机向量快速计算 Attention，实现加速 |
+| |[`PerformerClassifier`](./examples/tutorial/PerformerClassifier.ipynb) 		| 基于正交随机向量快速计算 attention，实现加速 |
 |文本分类 / 多label| [`BERTBinaryClassifier`](./examples/tutorial/BERTBinaryClassifier.ipynb) 		| -  |
 || [`XLNetBinaryClassifier`](./examples/tutorial/XLNetBinaryClassifier.ipynb) 		| - |
 | |[`ALBERTBinaryClassifier`](./examples/tutorial/ALBERTBinaryClassifier.ipynb) 		| - |
@@ -93,7 +94,7 @@ print(model.predict(X))
 || [`BERTCRFCascadeNER`](./examples/tutorial/BERTCRFCascadeNER.ipynb) | 实体识别与分类同时进行的级联架构 |
 |机器阅读理解| [`BERTMRC`](./examples/tutorial/BERTMRC.ipynb) 		| -  |
 | |[`ALBERTMRC`](./examples/tutorial/ALBERTMRC.ipynb) 		| - |
-| |[`SANetMRC`](./examples/tutorial/SANetMRC.ipynb) 		| 引入 Sentence Attention |
+| |[`SANetMRC`](./examples/tutorial/SANetMRC.ipynb) 		| 引入 sentence attention |
 | |[`BERTVerifierMRC`](./examples/tutorial/BERTVerifierMRC.ipynb) | 抽取 answer span 的同时判断可答性 |
 | |[`RetroReaderMRC`](./examples/tutorial/RetroReaderMRC.ipynb) | 抽取 answer span 的同时判断可答性 |
 | 机器翻译| [`TransformerMT`](./examples/tutorial/TransformerMT.ipynb) | 共享词表，标准 Seq2Seq 架构 | - |

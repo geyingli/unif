@@ -84,9 +84,9 @@ class UniLMPrompt(LMModule):
         assert X is None, "`%s` only supports tokenized inputs. Please pass `X_tokenized`." % (self.__class__.__name__)
         if is_training:
             if not self.masked_lm_prob:
-                assert y is not None, "`y` can't be None when `masked_lm_prob` is 0." % (self.__class__.__name__)
+                assert y is not None, "`y` can't be None when `masked_lm_prob` is 0."
             else:
-                assert y is None, "`y` must be None when `masked_lm_prob` is larger than 0" % (self.__class__.__name__)
+                assert y is None, "`y` must be None when `masked_lm_prob` is larger than 0"
 
         n_inputs = None
         data = {}
@@ -160,15 +160,21 @@ class UniLMPrompt(LMModule):
                     vocab_words=list(self.tokenizer.vocab.keys()),
                     do_whole_word_mask=self.do_whole_word_mask,
                 )
+                _input_tokens = _prompt_tokens + _text_tokens
                 _masked_lm_positions = [p + _prompt_length for p in _masked_lm_positions]
             else:
-                for i in range(len(_text_tokens)):
-                    if _text_tokens[i] == "[MASK]":
+                _input_tokens = _prompt_tokens + _text_tokens
+                for i in range(len(_input_tokens)):
+                    if _input_tokens[i] == "[MASK]":
                         _masked_lm_positions.append(i + _prompt_length)
                 if is_training:
                     _masked_lm_labels = y[idx]
+                    assert len(_masked_lm_positions) == len(_masked_lm_labels), (
+                        "Wrong label format (%s): number of labels not equal to the number of \"[MASK]\" in inputs (%s)."
+                        % (_masked_lm_labels, _X)
+                    )
 
-            _input_ids = self.tokenizer.convert_tokens_to_ids(_prompt_tokens + _text_tokens)
+            _input_ids = self.tokenizer.convert_tokens_to_ids(_input_tokens)
             _input_mask = [1] * len(_input_ids)
             _segment_ids = [0] * len(_input_ids)
             _masked_lm_ids = self.tokenizer.convert_tokens_to_ids(_masked_lm_labels)

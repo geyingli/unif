@@ -21,6 +21,7 @@ uf.egg-info
 */*/*/*/__pycache__
 docs/*.pptx
 *.sh
+PLAN.md
 modify.py
 tmp.*
 test.py

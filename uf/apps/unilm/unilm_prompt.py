@@ -9,7 +9,7 @@ from ...third import tf
 from ... import com
 
 
-class UniPromptLM(BERTLM, LMModule):
+class UniLMPrompt(BERTLM, LMModule):
     """ Prompt Language modeling on UniLM. """
 
     def __init__(
@@ -21,7 +21,6 @@ class UniPromptLM(BERTLM, LMModule):
         output_dir=None,
         gpu_ids=None,
         drop_pooler=False,
-        do_sample_next_sentence=True,
         max_predictions_per_seq=20,
         masked_lm_prob=0.15,
         short_seq_prob=0.1,
@@ -34,8 +33,6 @@ class UniPromptLM(BERTLM, LMModule):
         super(LMModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.max_seq_length = max_seq_length
-        self.label_size = 2
-        self.do_sample_next_sentence = do_sample_next_sentence
         self.masked_lm_prob = masked_lm_prob
         self.short_seq_prob = short_seq_prob
         self.do_whole_word_mask = do_whole_word_mask
@@ -84,44 +81,32 @@ class UniPromptLM(BERTLM, LMModule):
     def convert(self, X=None, y=None, sample_weight=None, X_tokenized=None, is_training=False, is_parallel=False):
         self._assert_legal(X, y, sample_weight, X_tokenized)
 
+        assert X is None, "`%s` only supports tokenized inputs. Please pass `X_tokenized`." % (self.__class__.__name__)
         if is_training:
-            if self.mode == "bi":
-                if y is not None:
-                    assert not self.do_sample_next_sentence, "`y` should be None when `do_sample_next_sentence` is True."
-                else:
-                    assert self.do_sample_next_sentence, "`y` can't be None when `do_sample_next_sentence` is False."
-            else:
-                assert y is None, "Only training of bidirectional LM is supervised. `y` should be None."
+            if not self.masked_lm_prob:
+                assert y is not None, "`y` can't be None when `masked_lm_prob` is 0." % (self.__class__.__name__)
 
         n_inputs = None
         data = {}
 
         # convert X
-        if X is not None or X_tokenized is not None:
-            tokenized = False if X is not None else X_tokenized
-
-            (input_ids, input_mask, segment_ids,
-             masked_lm_positions, masked_lm_ids, masked_lm_weights,
-             next_sentence_labels) = self._convert_X(X_tokenized if tokenized else X, is_training, tokenized=tokenized)
+        if X_tokenized is not None:
+            (input_ids, input_mask, segment_ids, prompt_length, 
+            masked_lm_positions, masked_lm_ids, masked_lm_weights) = self._convert_X(X_tokenized, y, is_training)
 
             data["input_ids"] = np.array(input_ids, dtype=np.int32)
             data["input_mask"] = np.array(input_mask, dtype=np.int32)
             data["segment_ids"] = np.array(segment_ids, dtype=np.int32)
+            data["prompt_length"] = np.array(prompt_length, dtype=np.int32)
             data["masked_lm_positions"] = np.array(masked_lm_positions, dtype=np.int32)
 
             if is_training:
                 data["masked_lm_ids"] = np.array(masked_lm_ids, dtype=np.int32)
                 data["masked_lm_weights"] = np.array(masked_lm_weights, dtype=np.float32)
-                data["next_sentence_labels"] = np.array(next_sentence_labels, dtype=np.int32)
 
             n_inputs = len(input_ids)
             if n_inputs < self.batch_size:
                 self.batch_size = max(n_inputs, len(self._gpu_ids))
-
-        # convert y
-        if y is not None:
-            next_sentence_labels = self._convert_y(y)
-            data["next_sentence_labels"] = np.array(next_sentence_labels, dtype=np.int32)
 
         # convert sample_weight
         if is_training or y is not None:
@@ -130,121 +115,80 @@ class UniPromptLM(BERTLM, LMModule):
 
         return data
 
-    def _convert_X(self, X_target, is_training, tokenized):
-
-        # tokenize input texts
-        segment_input_tokens = []
-        for idx, sample in enumerate(X_target): 
-            try:
-                soft_prompt = sample["soft"]
-                verbalizer_prompt = sample["verb"]
-                description_prompt = sample["desc"]
-                text = sample["text"]
-                if self.mode in ("l2r", "r2l"):
-                    info = "`l2r` or `r2l` only supports single sentence inputs."
-                    if not tokenized:
-                        assert isinstance(text, str), info
-                    else:
-                        assert isinstance(text[0], str), info
-                elif self.mode == "s2s":
-                    info = "`s2s` only supports 2-sentence inputs."
-                    assert len(text) == 2, info
-                segment_input_tokens.append(self._convert_x(text, tokenized))
-            except Exception as e:
-                raise ValueError(
-                    "Wrong input format (%s): %s. An example: X = [{"
-                    "\"soft\": [\"[sentiment]\"], "
-                    "\"verb\": [\"positive\", \"negative\"], "
-                    "\"desc\": \"Is this statement positive or negative\", "
-                    "\"text\": \"It a terrible day.\""
-                    "}, ...]" % (sample, e))
-
+    def _convert_X(self, X_target, y, is_training):
         input_ids = []
         input_mask = []
         segment_ids = []
+        prompt_length = []
         masked_lm_positions = []
         masked_lm_ids = []
         masked_lm_weights = []
-        next_sentence_labels = []
 
-        # random sampling of next sentence
-        if is_training and self.mode == "bi" and self.do_sample_next_sentence:
-            new_segment_input_tokens = []
-            for idx in range(len(segment_input_tokens)):
-                instances = create_instances_from_document(
-                    all_documents=segment_input_tokens,
-                    document_index=idx,
-                    max_seq_length=self.max_seq_length - 3,
-                    masked_lm_prob=self.masked_lm_prob,
-                    max_predictions_per_seq=self._max_predictions_per_seq,
-                    short_seq_prob=self.short_seq_prob,
-                    vocab_words=list(self.tokenizer.vocab.keys()),
-                )
-                for (segments, is_random_next) in instances:
-                    new_segment_input_tokens.append(segments)
-                    next_sentence_labels.append(is_random_next)
-            segment_input_tokens = new_segment_input_tokens
-        else:
-            next_sentence_labels = [1] * len(segment_input_tokens)
-
-        for idx, segments in enumerate(segment_input_tokens):
-            _input_tokens = ["[CLS]"]
-            _input_ids = []
-            _input_mask = [1]
-            _segment_ids = [0]
-            _masked_lm_positions = []
-            _masked_lm_ids = []
-            _masked_lm_weights = []
-
-            com.truncate_segments(segments, self.max_seq_length - len(segments) - 1, truncate_method=self.truncate_method)
-
-            for s_id, segment in enumerate(segments):
-                _segment_id = min(s_id, 1)
-                _input_tokens.extend(segment + ["[SEP]"])
-                _input_mask.extend([1] * (len(segment) + 1))
-                _segment_ids.extend([_segment_id] * (len(segment) + 1))
-
-            # special values for `_input_tokens` and `input_mask`
+        for idx, _X in enumerate(X_target):
+            _prompts = _X[:-1]
+            _text = _X[-1:]
             if self.mode == "s2s":
-                _input_tokens.pop()
-                _input_tokens.append("[SEP]")
-                _input_mask = [len(_input_ids)] * (len(segments[0]) + 2)
-                for i in range(len(segments[1]) + 1):
-                    _input_mask.append(_input_mask[0] + i + 1)
+                _prompts = _X[:-2]
+                _text = _X[-2:]
+            _y = y[idx]
 
-            # random sampling of masked tokens
-            if is_training:
+            # process prompt
+            _prompt_tokens = ["[CLS]"]
+            for i, segment in enumerate(_prompts):
+                _prompt_tokens += segment
+                _prompt_tokens.append("[SEP]")
+            _prompt_length = len(_prompt_tokens)
+
+            # process text
+            com.truncate_segments(_text, self.max_seq_length - _prompt_length - len(_text), truncate_method=self.truncate_method)
+            _text_tokens = []
+            for i, segment in enumerate(_text):
+                _text_tokens += segment
+                _text_tokens.append("[SEP]")
+
+            # process label
+            _masked_lm_positions = []
+            _masked_lm_labels = []
+            if is_training and self.masked_lm_prob > 0:
                 if (idx + 1) % 10000 == 0:
                     tf.logging.info("Sampling masks of input %d" % (idx + 1))
-                _input_tokens, _masked_lm_positions, _masked_lm_labels = create_masked_lm_predictions(
-                    tokens=_input_tokens,
+                _text_tokens, _masked_lm_positions, _masked_lm_labels = create_masked_lm_predictions(
+                    tokens=_text_tokens,
                     masked_lm_prob=self.masked_lm_prob,
                     max_predictions_per_seq=self._max_predictions_per_seq,
                     vocab_words=list(self.tokenizer.vocab.keys()),
                     do_whole_word_mask=self.do_whole_word_mask,
                 )
-                _masked_lm_ids = self.tokenizer.convert_tokens_to_ids(_masked_lm_labels)
-                _masked_lm_weights = [1.0] * len(_masked_lm_positions)
-
-                # padding
-                for _ in range(self._max_predictions_per_seq - len(_masked_lm_positions)):
-                    _masked_lm_positions.append(0)
-                    _masked_lm_ids.append(0)
-                    _masked_lm_weights.append(0.0)
+                _masked_lm_positions = [p + _prompt_length for p in _masked_lm_positions]
             else:
-                # `masked_lm_positions` is required for both training
-                # and inference of BERT language modeling.
-                for i in range(len(_input_tokens)):
-                    if _input_tokens[i] == "[MASK]":
-                        _masked_lm_positions.append(i)
+                j = 0
+                for i in range(len(_text_tokens)):
+                    if _text_tokens[i] == "[MASK]":
+                        _masked_lm_positions.append(i + _prompt_length)
+                        _masked_lm_labels.append(_y[j])
+                        j += 1
 
-                # padding
-                for _ in range(self._max_predictions_per_seq - len(_masked_lm_positions)):
-                    _masked_lm_positions.append(0)
+            _input_ids = self.tokenizer.convert_tokens_to_ids(_prompt_tokens + _text_tokens)
+            _input_mask = [1] * len(_input_ids)
+            _segment_ids = [0] * len(_input_ids)
+            _masked_lm_ids = self.tokenizer.convert_tokens_to_ids(_masked_lm_labels)
+            _masked_lm_weights = [1.0] * len(_masked_lm_positions)
 
-            _input_ids = self.tokenizer.convert_tokens_to_ids(_input_tokens)
+            # special values for `input_mask`
+            if self.mode == "r2l":
+                _input_mask = [_prompt_length] * (len(_input_ids) - len(_text[-1]) - 1)
+                for i in range(len(_text[-1]) + 1):
+                    _input_mask.append(_prompt_length + i)
+            elif self.mode == "s2s":
+                _input_mask = [len(_input_ids) - len(_X[-1]) - 1] * (len(_input_ids) - len(_text[-1]) - 1)
+                for i in range(len(_text[-1]) + 1):
+                    _input_mask.append(_input_mask[0] + i + 1)
 
             # padding
+            for _ in range(self._max_predictions_per_seq - len(_masked_lm_positions)):
+                _masked_lm_positions.append(0)
+                _masked_lm_ids.append(0)
+                _masked_lm_weights.append(0.0)
             for _ in range(self.max_seq_length - len(_input_ids)):
                 _input_ids.append(0)
                 _input_mask.append(0)
@@ -253,11 +197,24 @@ class UniPromptLM(BERTLM, LMModule):
             input_ids.append(_input_ids)
             input_mask.append(_input_mask)
             segment_ids.append(_segment_ids)
+            prompt_length.append(_prompt_length)
             masked_lm_positions.append(_masked_lm_positions)
             masked_lm_ids.append(_masked_lm_ids)
             masked_lm_weights.append(_masked_lm_weights)
 
-        return (input_ids, input_mask, segment_ids, masked_lm_positions, masked_lm_ids, masked_lm_weights, next_sentence_labels)
+        return (input_ids, input_mask, segment_ids, prompt_length, masked_lm_positions, masked_lm_ids, masked_lm_weights)
+
+    def _set_placeholders(self, **kwargs):
+        self.placeholders = {
+            "input_ids": tf.placeholder(tf.int32, [None, self.max_seq_length], "input_ids"),
+            "input_mask": tf.placeholder(tf.int32, [None, self.max_seq_length], "input_mask"),
+            "segment_ids": tf.placeholder(tf.int32, [None, self.max_seq_length], "segment_ids"),
+            "prompt_length": tf.placeholder(tf.int32, [None], "prompt_length"),
+            "masked_lm_positions": tf.placeholder(tf.int32, [None, self._max_predictions_per_seq], "masked_lm_positions"),
+            "masked_lm_ids": tf.placeholder(tf.int32, [None, self._max_predictions_per_seq], "masked_lm_ids"),
+            "masked_lm_weights": tf.placeholder(tf.float32, [None, self._max_predictions_per_seq], "masked_lm_weights"),
+            "sample_weight": tf.placeholder(tf.float32, [None], "sample_weight"),
+        }
 
     def _forward(self, is_training, placeholders, **kwargs):
 
@@ -268,6 +225,7 @@ class UniPromptLM(BERTLM, LMModule):
             input_ids=placeholders["input_ids"],
             input_mask=placeholders["input_mask"],
             segment_ids=placeholders["segment_ids"],
+            prompt_length=placeholders["prompt_length"],
             drop_pooler=self._drop_pooler,
             **kwargs,
         )
@@ -278,7 +236,6 @@ class UniPromptLM(BERTLM, LMModule):
             masked_lm_positions=placeholders["masked_lm_positions"],
             masked_lm_ids=placeholders["masked_lm_ids"],
             masked_lm_weights=placeholders["masked_lm_weights"],
-            next_sentence_labels=placeholders["next_sentence_labels"],
             sample_weight=placeholders.get("sample_weight"),
             scope_lm="cls/predictions",
             scope_cls="cls/seq_relationship",
@@ -289,22 +246,18 @@ class UniPromptLM(BERTLM, LMModule):
 
     def _get_fit_ops(self, from_tfrecords=False):
         ops = [self.tensors["MLM_preds"], self.tensors["MLM_losses"]]
-        if self.mode == "bi":
-            ops.extend([self.tensors["NSP_preds"], self.tensors["NSP_losses"]])
         if from_tfrecords:
-            ops.extend([self.placeholders["masked_lm_positions"], self.placeholders["masked_lm_ids"], self.placeholders["next_sentence_labels"]])
+            ops.extend([self.placeholders["masked_lm_positions"], self.placeholders["masked_lm_ids"]])
         return ops
 
     def _get_fit_info(self, output_arrays, feed_dict, from_tfrecords=False):
 
         if from_tfrecords:
-            batch_mlm_positions = output_arrays[-3]
-            batch_mlm_labels = output_arrays[-2]
-            batch_nsp_labels = output_arrays[-1]
+            batch_mlm_positions = output_arrays[-2]
+            batch_mlm_labels = output_arrays[-1]
         else:
             batch_mlm_positions = feed_dict[self.placeholders["masked_lm_positions"]]
             batch_mlm_labels = feed_dict[self.placeholders["masked_lm_ids"]]
-            batch_nsp_labels = feed_dict[self.placeholders["next_sentence_labels"]]
 
         # MLM accuracy
         batch_mlm_preds = output_arrays[0]
@@ -319,25 +272,10 @@ class UniPromptLM(BERTLM, LMModule):
         info += ", MLM accuracy %.4f" % mlm_accuracy
         info += ", MLM loss %.6f" % mlm_loss
 
-        if self.mode == "bi":
-
-            # NSP accuracy
-            batch_nsp_preds = output_arrays[2]
-            nsp_accuracy = np.mean(batch_nsp_preds == batch_nsp_labels)
-
-            # NSP loss
-            batch_nsp_losses = output_arrays[3]
-            nsp_loss = np.mean(batch_nsp_losses)
-
-            info += ", NSP accuracy %.4f" % nsp_accuracy
-            info += ", NSP loss %.6f" % nsp_loss
-
         return info
 
     def _get_predict_ops(self):
         ops = [self.tensors["MLM_preds"]]
-        if self.mode == "bi":
-            ops += [self.tensors["NSP_preds"], self.tensors["NSP_probs"]]
         return ops
 
     def _get_predict_outputs(self, output_arrays, n_inputs):
@@ -356,16 +294,5 @@ class UniPromptLM(BERTLM, LMModule):
 
         outputs = {}
         outputs["mlm_preds"] = mlm_preds
-
-        if self.mode == "bi":
-
-            # NSP preds
-            nsp_preds = com.transform(output_arrays[1], n_inputs).tolist()
-
-            # NSP probs
-            nsp_probs = com.transform(output_arrays[2], n_inputs)
-
-            outputs["nsp_preds"] = nsp_preds
-            outputs["nsp_probs"] = nsp_probs
 
         return outputs

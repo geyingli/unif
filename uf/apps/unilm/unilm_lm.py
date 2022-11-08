@@ -193,11 +193,9 @@ class UniLM(BERTLM, LMModule):
                 _input_mask.extend([1] * (len(segment) + 1))
                 _segment_ids.extend([_segment_id] * (len(segment) + 1))
 
-            # special values for `_input_tokens` and `input_mask`
+            # special values for `input_mask`
             if self.mode == "s2s":
-                _input_tokens.pop()
-                _input_tokens.append("[SEP]")
-                _input_mask = [len(_input_ids)] * (len(segments[0]) + 2)
+                _input_mask = [len(segments[0]) + 2] * (len(segments[0]) + 2)
                 for i in range(len(segments[1]) + 1):
                     _input_mask.append(_input_mask[0] + i + 1)
 

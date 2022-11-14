@@ -2,8 +2,13 @@ import multiprocessing
 
 from ..third import tf
 
-NUM_PROCESSES = 1
-pool = None
+
+class MultiProcessInstance():
+    def __init__(self):
+        self.n = 1
+        self.pool = None
+
+mp = MultiProcessInstance()
 
 
 class MultiProcess:
@@ -16,18 +21,16 @@ class MultiProcess:
         self.n = n_process
 
     def __enter__(self):
-        global NUM_PROCESSES, pool
         if self.n > 1:
-            pool = multiprocessing.Pool(self.n)
-        NUM_PROCESSES = self.n
+            mp.pool = multiprocessing.Pool(self.n)
+        mp.n = self.n
 
     def __exit__(self, *args, **kwargs):
-        global NUM_PROCESSES, pool
-        if pool is not None:
-            pool.close()
-            pool.join()
-            pool = None
-        NUM_PROCESSES = 1
+        if mp.pool is not None:
+            mp.pool.close()
+            mp.pool.join()
+            mp.pool = None
+        mp.n = 1
 
 
 def parallel_convert_single_process(args):

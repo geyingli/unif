@@ -646,13 +646,13 @@ class BaseModule:
     def _parallel_convert(self, X=None, y=None, sample_weight=None, X_tokenized=None, is_training=False):
         """ Parallel data conversion in multi processes, a general method. """
 
-        if com.NUM_PROCESSES <= 1:
+        if com.mp.n <= 1:
             return self.convert(X, y, sample_weight, X_tokenized, is_training)
 
-        tf.logging.info("Parsing input data on %d parallel processes" % com.NUM_PROCESSES)
+        tf.logging.info("Parsing input data on %d parallel processes" % com.mp.n)
 
         n_inputs = len(X if X is not None else X_tokenized)
-        n_buckets = max(min(n_inputs, com.NUM_PROCESSES), 1)
+        n_buckets = max(min(n_inputs, com.mp.n), 1)
         bucket_size = (n_inputs - 1) // n_buckets + 1
 
         buckets = [{
@@ -680,7 +680,7 @@ class BaseModule:
             buckets,
             [is_training for _ in range(n_buckets)],
         )
-        data_buckets = com.pool.map(com.parallel_convert_single_process, args)
+        data_buckets = com.mp.pool.map(com.parallel_convert_single_process, args)
 
         data = {}
         data_buckets.sort(key=lambda x: x[0])    # re-order inputs

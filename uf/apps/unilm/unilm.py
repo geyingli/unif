@@ -23,6 +23,7 @@ class UniLMEncoder(BERTEncoder, BaseEncoder):
                  trainable=True,
                  **kwargs):
         self._mode = mode
+        self.prompt_length = prompt_length
         super().__init__(
             bert_config,
             is_training,
@@ -33,7 +34,6 @@ class UniLMEncoder(BERTEncoder, BaseEncoder):
             drop_pooler,
             trainable,
             **kwargs)
-        self.prompt_length = prompt_length
 
     def create_attention_mask_from_input_mask(self,
                                               input_mask,

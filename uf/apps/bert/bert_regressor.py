@@ -1,20 +1,19 @@
 import numpy as np
 
-from .widedeep import WideDeepRegDecoder, get_decay_power
-from .._base_._base_regressor import RegressorModule
+from .bert import get_decay_power
+from .._base_._base_regressor import RegressorModule, RegDecoder
 from ..bert.bert import BERTEncoder, BERTConfig
 from ...token import WordPieceTokenizer
 from ...third import tf
 from ... import com
 
 
-class WideDeepRegressor(RegressorModule):
-    """ Regressor on Wide & Deep structure with BERT. """
+class BERTRegressor(RegressorModule):
+    """ Regressor on BERT. """
 
     _INFER_ATTRIBUTES = {    # params whose value cannot be None in order to infer without training
         "max_seq_length": "An integer that defines max sequence length of input tokens",
         "init_checkpoint": "A string that directs to the checkpoint file used for initialization",
-        "wide_features": "A list of possible values for `Wide` features (integer or string)",
     }
 
     def __init__(
@@ -26,7 +25,6 @@ class WideDeepRegressor(RegressorModule):
         init_checkpoint=None,
         output_dir=None,
         gpu_ids=None,
-        wide_features=None,
         do_lower_case=True,
         truncate_method="LIFO",
     ):
@@ -36,7 +34,6 @@ class WideDeepRegressor(RegressorModule):
         self.max_seq_length = max_seq_length
         self.label_size = label_size
         self.truncate_method = truncate_method
-        self.wide_features = wide_features
 
         self.bert_config = BERTConfig.from_json_file(config_file)
         self.tokenizer = WordPieceTokenizer(vocab_file, do_lower_case)
@@ -65,12 +62,10 @@ class WideDeepRegressor(RegressorModule):
         # convert X
         if X is not None or X_tokenized is not None:
             tokenized = False if X is not None else X_tokenized
-            (input_ids, input_mask, segment_ids, n_wide_features, wide_features) = self._convert_X(X_tokenized if tokenized else X, tokenized=tokenized)
+            input_ids, input_mask, segment_ids = self._convert_X(X_tokenized if tokenized else X, tokenized=tokenized)
             data["input_ids"] = np.array(input_ids, dtype=np.int32)
             data["input_mask"] = np.array(input_mask, dtype=np.int32)
             data["segment_ids"] = np.array(segment_ids, dtype=np.int32)
-            data["n_wide_features"] = np.array(n_wide_features, dtype=np.int32)
-            data["wide_features"] = np.array(wide_features, dtype=np.int32)
             n_inputs = len(input_ids)
 
             if n_inputs < self.batch_size:
@@ -94,55 +89,23 @@ class WideDeepRegressor(RegressorModule):
         segment_inputs = []
         for idx, sample in enumerate(X_target):
             try:
-                segment_inputs.append({
-                    "Wide": sample["Wide"],
-                    "Deep": self._convert_x(sample["Deep"], tokenized),
-                })
+                segment_inputs.append(self._convert_x(sample, tokenized))
             except Exception as e:
                 raise ValueError(
                     "Wrong input format (%s): %s. An untokenized "
-                    "example: X = [{\"Wide\": [1, 5, \"positive\"], "
-                    "\"Deep\": \"I bet she will win.\"}, ...]"
+                    "example: X = [\"I bet she will win.\", ...]"
                     % (sample, e)
                 )
-
-        if self.wide_features is None:
-            self.wide_features = set()
-            for segments in segment_inputs:
-                for feature in segments["Wide"]:
-                    self.wide_features.add(feature)
-            self.wide_features = list(self.wide_features)
-        elif not isinstance(self.wide_features, list):
-            raise ValueError(
-                "`wide_features` should be a list of possible values "
-                "(integer or string). "
-                "E.g. [1, \"Positive\", \"Subjective\"]."
-            )
-        wide_features_map = {
-            self.wide_features[i]: i + 1
-            for i in range(len(self.wide_features))
-        }
 
         input_ids = []
         input_mask = []
         segment_ids = []
-        n_wide_features = []
-        wide_features = []
         for idx, segments in enumerate(segment_inputs):
             _input_tokens = ["[CLS]"]
             _input_ids = []
             _input_mask = [1]
             _segment_ids = [0]
-            _wide_features = []
-            for feature in segments["Wide"]:
-                try:
-                    _wide_features.append(wide_features_map[feature])
-                except Exception:
-                    tf.logging.warning("Unregistered wide feature: %s. Ignored." % feature)
-                    continue
-            _n_wide_features = len(_wide_features)
 
-            segments = segments["Deep"]
             com.truncate_segments(segments, self.max_seq_length - len(segments) - 1, truncate_method=self.truncate_method)
             for s_id, segment in enumerate(segments):
                 _segment_id = min(s_id, 1)
@@ -157,24 +120,18 @@ class WideDeepRegressor(RegressorModule):
                 _input_ids.append(0)
                 _input_mask.append(0)
                 _segment_ids.append(0)
-            for _ in range(len(self.wide_features) - _n_wide_features):
-                _wide_features.append(0)
 
             input_ids.append(_input_ids)
             input_mask.append(_input_mask)
             segment_ids.append(_segment_ids)
-            n_wide_features.append(_n_wide_features)
-            wide_features.append(_wide_features)
 
-        return (input_ids, input_mask, segment_ids, n_wide_features, wide_features)
+        return (input_ids, input_mask, segment_ids)
 
     def _set_placeholders(self, **kwargs):
         self.placeholders = {
             "input_ids": tf.placeholder(tf.int32, [None, self.max_seq_length], "input_ids"),
             "input_mask": tf.placeholder(tf.int32, [None, self.max_seq_length], "input_mask"),
             "segment_ids": tf.placeholder(tf.int32, [None, self.max_seq_length], "segment_ids"),
-            "n_wide_features": tf.placeholder(tf.int32, [None], "n_wide_features"),
-            "wide_features": tf.placeholder(tf.int32, [None, len(self.wide_features)], "wide_features"),
             "label_floats": tf.placeholder(tf.float32, [None, self.label_size], "label_floats"),
             "sample_weight": tf.placeholder(tf.float32, [None], "sample_weight"),
         }
@@ -190,11 +147,9 @@ class WideDeepRegressor(RegressorModule):
             **kwargs,
         )
         encoder_output = encoder.get_pooled_output()
-        decoder = WideDeepRegDecoder(
+        decoder = RegDecoder(
             is_training=is_training,
             input_tensor=encoder_output,
-            n_wide_features=placeholders["n_wide_features"],
-            wide_features=placeholders["wide_features"],
             label_floats=placeholders["label_floats"],
             label_size=self.label_size,
             sample_weight=placeholders.get("sample_weight"),

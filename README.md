@@ -8,7 +8,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-v2.5.15-blue">
+        <img src="https://img.shields.io/badge/version-v2.5.16-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-1.x\2.x-yellow">
@@ -84,7 +84,8 @@ print(model.predict(X))
 || [`XLNetBinaryClassifier`](./examples/tutorial/XLNetBinaryClassifier.ipynb) 		| - |
 | |[`ALBERTBinaryClassifier`](./examples/tutorial/ALBERTBinaryClassifier.ipynb) 		| - |
 | |[`ELECTRABinaryClassifier`](./examples/tutorial/ELECTRABinaryClassifier.ipynb) 		| - |
-| 回归| [`WideDeepRegressor`](./examples/tutorial/WideDeepRegressor.ipynb) | 通过 Wide & Deep 架构融合句子级别特征 |
+| 回归| [`BERTRegressor`](./examples/tutorial/BERTRegressor.ipynb) | - |
+|| [`WideDeepRegressor`](./examples/tutorial/WideDeepRegressor.ipynb) | 通过 Wide & Deep 架构融合句子级别特征 |
 |序列标注|[`BERTSeqClassifier`](./examples/tutorial/BERTSeqClassifier.ipynb) 		| - |
 || [`ALBERTSeqClassifier`](./examples/tutorial/ALBERTSeqClassifier.ipynb) 		| - |
 || [`ELECTRASeqClassifier`](./examples/tutorial/ELECTRASeqClassifier.ipynb) 		| - |

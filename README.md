@@ -332,8 +332,6 @@ model.fit(..., info_nce_loss=True, tau=1.0, alpha=1.0)     # alpha是损失项�
 
 在基于交叉熵损失的分类场景下，动态调节易/难分样本的损失大小，从而使训练将更多的注意力放在难分样本上。是解决类型不平衡问题的绝佳手段，原论文引用次数已超过 1.5w。
 
-$$CrossEntropy_i(p)=-log(p)$$
-
 $$L_i(p)=-\alpha(1-p)^{\gamma} log(p)$$
 
 $\gamma$ 即为下述函数中的参数 `gamma`，可取任意大于 0 的值； $\alpha$ 代表类别权重，同一 label 下的 $\alpha$ 是一致的。由于 $\alpha$ 与本框架的 `sample_weight` 理念重合，使用参数 `sample_weight` 即可达到调节 $\alpha$ 的目的。

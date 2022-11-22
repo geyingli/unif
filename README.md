@@ -320,7 +320,7 @@ model.fit(..., rdrop=True, alpha=1.0)     # alpha是损失项乘子
 
 凝聚了对比学习的核心思想 —— 在编码上推远负例、拉进正例。正例是相同样本在两次前馈中不同 dropout 下的结果，负例是同一 batch 下的其他样本。私以为，对比学习作为当前 sentence embedding 领域的 SOTA，值得作为多任务学习的 trick，加入到有监督的训练任务中。这里我们实现了 SimCSE 原论文中无监督的训练方案：
 
-$$L_i=-log\frac{e^{sim(h_i,h_i')/\tau}}{\sum_{j=1}^N e^{sim(h_i,h_j')/\tau}}$$
+$$L_i=-log\frac{e^{sim(h_i,h_i')/\tau}}{\sum_j e^{sim(h_i,h_j')/\tau}}$$
 
 $\tau$ 为温度系数，即为下面函数中的 `tau`。
 

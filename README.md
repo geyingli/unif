@@ -8,7 +8,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-v2.5.16-blue">
+        <img src="https://img.shields.io/badge/version-v2.5.17-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-1.x\2.x-yellow">
@@ -26,7 +26,7 @@
 - 高效调用：三行代码完成训练及推理
 - 高效运行：一行代码设置多进程/多 GPU 并行
 - 品类丰富：支持 40+ 模型类
-- 高分保证：提供 R-Drop、对抗式训练等多项训练技巧
+- 高分保证：提供 Focal loss、对抗式训练等多项训练技巧
 - 可供部署：导出模型 PB 文件，供线上部署
 
 ### 安装
@@ -288,9 +288,9 @@ model.fit(..., optimizer="lamb")
 
 迁移学习中常见灾难性遗忘问题 (Catastrophic Forgetting)：模型急不可耐地适应新数据，而丢失了预训练中学到的知识。为了对抗这种过拟合，分层学习率是有效的 trick。越靠近输出层，学习率越大，反之亦然。启用方法是增加 `layerwise_lr_decay_ratio` 参数并设定一个 0 到 1 之间的浮点数。模型参数会通过 `.decay_power` 找到自己对应的指数，而后计算学习率：
 
-$$r(w) = r^* \times lldr^{f(w)}$$
+$$r_t(w) = r_t^* \times LLDR^{f(w)}$$
 
-$r^*$ 是 `learning_rate` 参数对应的全局峰值学习率， $f$ 是参数到指数的映射。实际使用中可按需求调整参数的值：
+$r^*$ 是当前训练阶段的全局学习率， $f$ 是参数到指数的映射。实际使用中可按需求调整参数的值：
 ```python
 model.fit(..., layerwise_lr_decay_ratio=0.85)
 print(model.decay_power)            # 可in-place修改
@@ -316,13 +316,25 @@ model.fit(..., adversarial="smart", epsilon=0.01, n_loop=2, prtb_lambda=0.5, bre
 model.fit(..., rdrop=True, alpha=1.0)     # alpha是损失项乘子
 ```
 
+### InfoNCE Loss
+
+凝聚了对比学习的核心思想 —— 在编码上推远负例、拉进正例。正例是相同样本在两次前馈中不同 dropout 下的结果，负例是同一 batch 下的其他样本。私以为，对比学习作为当前 sentence embedding 领域的 SOTA，值得作为多任务学习的 trick，加入到有监督的训练任务中。这里我们实现了 SimCSE 原论文中无监督的训练方案：
+
+$$L_i=-log\frac{e^{sim(h_i,h_i')/\tau}}{\sum_{j=1}^N e^{sim(h_i,h_j')/\tau}}$$
+
+$\tau$ 为温度系数，即为下面函数中的 `tau`。
+
+```py
+model.fit(..., info_nce_loss=True, tau=1.0, alpha=1.0)     # alpha是损失项乘子
+```
+
 ### Focal Loss
 
 在基于交叉熵损失的分类场景下，动态调节易/难分样本的损失大小，从而使训练将更多的注意力放在难分样本上。是解决类型不平衡问题的绝佳手段，原论文引用次数已超过 1.5w。
 
-$$CE(p)=-log(p)$$
+$$CrossEntropy_i(p)=-log(p)$$
 
-$$FL(p)=-\alpha(1-p)^{\gamma} log(p)$$
+$$L_i(p)=-\alpha(1-p)^{\gamma} log(p)$$
 
 $\gamma$ 即为下述函数中的参数 `gamma`，可取任意大于 0 的值； $\alpha$ 代表类别权重，同一 label 下的 $\alpha$ 是一致的。由于 $\alpha$ 与本框架的 `sample_weight` 理念重合，使用参数 `sample_weight` 即可达到调节 $\alpha$ 的目的。
 

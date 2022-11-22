@@ -23,6 +23,9 @@ class SANetDecoder(BaseDecoder):
                  **kwargs):
         super().__init__(**kwargs)
 
+        if kwargs.get("return_hidden"):
+            self.tensors["hidden"] = input_tensor[:, 0, :]
+
         shape = util.get_shape_list(input_tensor)
         batch_size = shape[0]
         seq_length = shape[1]
@@ -64,6 +67,7 @@ class SANetDecoder(BaseDecoder):
             logits = tf.nn.bias_add(logits, output_bias)
             logits = tf.reshape(logits, [-1, seq_length, 2])
             logits = tf.transpose(logits, [0, 2, 1])
+
             probs = tf.nn.softmax(logits, axis=-1, name="probs")
             self.tensors["probs"] = probs
             self.tensors["preds"] = tf.argmax(logits, axis=-1)

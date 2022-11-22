@@ -27,6 +27,9 @@ class RetroReaderDecoder(BaseDecoder):
                  **kwargs):
         super().__init__(**kwargs)
 
+        if kwargs.get("return_hidden"):
+            self.tensors["hidden"] = intensive_encoder.get_sequence_output()[:, 0, :]
+
         # verifier
         with tf.variable_scope(scope):
 

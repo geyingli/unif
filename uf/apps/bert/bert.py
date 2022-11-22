@@ -443,6 +443,9 @@ class BERTDecoder(BaseDecoder):
     ):
         super(BERTDecoder, self).__init__(**kwargs)
 
+        if kwargs.get("return_hidden"):
+            self.tensors["hidden"] = encoder.get_pooled_output()
+
         def gather_indexes(sequence_tensor, positions):
             sequence_shape = util.get_shape_list(sequence_tensor, 3)
             batch_size = sequence_shape[0]

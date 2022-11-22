@@ -330,15 +330,34 @@ def bidirectional_kl_divergence(p, q):
 
 def kl_divergence(p, q):
     """ Kullback-Leibler divergence. """
-    return tf.reduce_sum(p * (tf.log(p) - tf.log(q)), axis=-1)
+    per_example_loss = tf.reduce_sum(p * (tf.log(p) - tf.log(q)), axis=-1)
+    return per_example_loss
 
 
 def mean_squared_error(logits, label_floats, **kwargs):
     """ MSE loss for regression. """
-
     per_float_loss = tf.square(logits - label_floats)
     per_example_loss = tf.reduce_sum(per_float_loss, axis=-1)
     return per_example_loss
+
+
+def info_nce(p, q, tau=1.0):
+    """ InfoNCE loss. """
+    batch_size = get_shape_list(p)[0]
+    sim_matrix = cosine_similarity(p, q) / tau
+    nom = tf.reduce_sum(tf.eye(batch_size) * sim_matrix, axis=-1)
+    denom = tf.reduce_sum(sim_matrix, axis=-1)
+    per_example_loss = - tf.log(nom / denom)
+    return per_example_loss
+
+
+def cosine_similarity(p, q):
+    """ Cosine similarity. """
+    dot_product = tf.matmul(p, q, transpose_b=True)
+    l2_norm_p = tf.reshape(tf.sqrt(tf.reduce_sum(tf.square(p), axis=-1)), [-1, 1])
+    l2_norm_q = tf.reshape(tf.sqrt(tf.reduce_sum(tf.square(q), axis=-1)), [1, -1])
+    sim_matrix = dot_product / (l2_norm_p * l2_norm_q)
+    return sim_matrix
 
 
 def create_initializer(initializer_range=0.02):

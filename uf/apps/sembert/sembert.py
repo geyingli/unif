@@ -26,6 +26,9 @@ class SemBERTDecoder(BaseDecoder):
                  **kwargs):
         super().__init__(**kwargs)
 
+        if kwargs.get("return_hidden"):
+            self.tensors["hidden"] = input_tensor
+
         input_shape = util.get_shape_list(input_tensor)
         batch_size = input_shape[0]
         hidden_size = input_shape[-1]

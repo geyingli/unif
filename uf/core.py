@@ -738,6 +738,9 @@ class BaseModule:
     def _single_forward(self, is_training, placeholders, **kwargs):
         """ Foundation of computation graph in a single device, a general method. """
 
+        if kwargs.get("info_nce_loss"):
+            kwargs["return_hidden"] = True
+
         # build forward
         train_loss, tensors = self._forward(
             is_training=is_training,
@@ -749,11 +752,9 @@ class BaseModule:
         # Paper: https://arxiv.org/abs/2106.14448
         if kwargs.get("rdrop"):
             keys = [key for key in tensors.keys() if key.endswith("probs")]
-            if len(keys) < 1:
-                raise ValueError(
-                    "%s does not support R-Drop algorithm."
-                    % (self.module.__class__.__name__)
-                )
+            assert len(keys) > 0, (
+                "%s does not support R-Drop algorithm." % (self.module.__class__.__name__)
+            )
 
             # build forward twice
             train_loss_tmp, _tensors_tmp = self._forward(
@@ -765,9 +766,27 @@ class BaseModule:
             train_loss += train_loss_tmp
             alpha = kwargs.get("alpha", 1.0)
             for key in keys:
-                train_loss += alpha * util.bidirectional_kl_divergence(
-                    tensors[key], _tensors_tmp[key],
-                )
+                per_example_loss = util.bidirectional_kl_divergence(tensors[key], _tensors_tmp[key])
+                train_loss += alpha * tf.reduce_mean(per_example_loss)
+
+        # Unsupervised InfoNCE loss
+        if kwargs.get("info_nce_loss"):
+            assert "hidden" in tensors, (
+                "%s does not support InfoNCE loss." % (self.module.__class__.__name__)
+            )
+
+            # build forward twice
+            train_loss_tmp, _tensors_tmp = self._forward(
+                is_training=is_training,
+                placeholders=placeholders,
+                **kwargs,
+            )
+
+            train_loss += train_loss_tmp
+            alpha = kwargs.get("alpha", 1.0)
+            tau = kwargs.get("tau", 1.0)
+            per_example_loss = util.info_nce(tensors["hidden"], _tensors_tmp["hidden"], tau=tau)
+            train_loss += alpha * tf.reduce_mean(per_example_loss)
 
         return train_loss, tensors
 

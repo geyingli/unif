@@ -26,6 +26,9 @@ class ClsDecoder(BaseDecoder):
         if kwargs.get("is_logits"):
             logits = input_tensor
         else:
+            if kwargs.get("return_hidden"):
+                self.tensors["hidden"] = input_tensor
+
             hidden_size = input_tensor.shape.as_list()[-1]
             with tf.variable_scope(scope):
                 output_weights = tf.get_variable(
@@ -44,7 +47,6 @@ class ClsDecoder(BaseDecoder):
                 logits = tf.matmul(output_layer, output_weights, transpose_b=True)
                 logits = tf.nn.bias_add(logits, output_bias)
 
-        self.tensors["logits"] = logits
         self.tensors["preds"] = tf.argmax(logits, axis=-1, name="preds")
         self.tensors["probs"] = tf.nn.softmax(logits, axis=-1, name="probs")
 

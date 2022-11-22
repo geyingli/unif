@@ -25,6 +25,9 @@ class CRFDecoder(BaseDecoder):
                  **kwargs):
         super().__init__(**kwargs)
 
+        if kwargs.get("return_hidden"):
+            self.tensors["hidden"] = input_tensor[:, 0, :]
+
         seq_length = input_tensor.shape.as_list()[-2]
         hidden_size = input_tensor.shape.as_list()[-1]
         with tf.variable_scope(scope):

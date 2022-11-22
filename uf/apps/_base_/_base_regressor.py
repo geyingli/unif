@@ -26,6 +26,9 @@ class RegDecoder(BaseDecoder):
         if kwargs.get("is_logits"):
             logits = input_tensor
         else:
+            if kwargs.get("return_hidden"):
+                self.tensors["hidden"] = input_tensor
+
             with tf.variable_scope(scope):
                 output_layer = util.dropout(input_tensor, hidden_dropout_prob if is_training else 0.0)
                 intermediate_output = tf.layers.dense(

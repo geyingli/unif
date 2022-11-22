@@ -29,6 +29,9 @@ class UDADecoder(BaseDecoder):
                  **kwargs):
         super().__init__(**kwargs)
 
+        if kwargs.get("return_hidden"):
+            self.tensors["hidden"] = input_tensor
+
         is_supervised = tf.cast(is_supervised, tf.float32)
         is_expanded = tf.cast(is_expanded, tf.float32)
 

@@ -27,6 +27,9 @@ class SeqClsDecoder(BaseDecoder):
         if kwargs.get("is_logits"):
             logits = input_tensor
         else:
+            if kwargs.get("return_hidden"):
+                self.tensors["hidden"] = input_tensor[:, 0, :]
+
             shape = input_tensor.shape.as_list()
             seq_length = shape[-2]
             hidden_size = shape[-1]
@@ -85,6 +88,9 @@ class SeqClsCrossDecoder(BaseDecoder):
 
         assert not kwargs.get("is_logits"), "%s does not support logits convertion right now." % self.__class__.__name__
 
+        if kwargs.get("return_hidden"):
+            self.tensors["hidden"] = input_tensor[:, 0, :]
+
         shape = input_tensor.shape.as_list()
         seq_length = shape[-2]
         hidden_size = shape[-1]
@@ -108,6 +114,7 @@ class SeqClsCrossDecoder(BaseDecoder):
             logits = tf.matmul(output_layer, output_weights, transpose_b=True)
             logits = tf.nn.bias_add(logits, output_bias)
             logits = tf.reshape(logits, [-1, seq_length, seq_cls_label_size])
+
             self.tensors["seq_cls_preds"] = tf.argmax(logits, axis=-1, name="seq_cls_preds")
             self.tensors["seq_cls_probs"] = tf.nn.softmax(logits, axis=-1, name="seq_cls_probs")
             log_probs = tf.nn.log_softmax(logits, axis=-1)
@@ -137,6 +144,7 @@ class SeqClsCrossDecoder(BaseDecoder):
             output_layer = util.dropout(input_tensor, hidden_dropout_prob if is_training else 0.0)
             logits = tf.matmul(output_layer[:,0,:], output_weights, transpose_b=True)
             logits = tf.nn.bias_add(logits, output_bias)
+
             self.tensors["cls_preds"] = tf.argmax(logits, axis=-1, name="cls_preds")
             self.tensors["cls_probs"] = tf.nn.softmax(logits, axis=-1, name="cls_probs")
             log_probs = tf.nn.log_softmax(logits, axis=-1)

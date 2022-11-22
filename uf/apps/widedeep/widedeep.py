@@ -23,6 +23,9 @@ class WideDeepClsDecoder(BaseDecoder):
                  **kwargs):
         super().__init__(**kwargs)
 
+        if kwargs.get("return_hidden"):
+            self.tensors["hidden"] = input_tensor
+
         hidden_size = input_tensor.shape.as_list()[-1]
         feature_size = wide_features.shape.as_list()[-1]
         with tf.variable_scope("wide"):
@@ -99,6 +102,9 @@ class WideDeepRegDecoder(BaseDecoder):
                  trainable=True,
                  **kwargs):
         super().__init__(**kwargs)
+
+        if kwargs.get("return_hidden"):
+            self.tensors["hidden"] = input_tensor
 
         hidden_size = input_tensor.shape.as_list()[-1]
         feature_size = wide_features.shape.as_list()[-1]

@@ -24,9 +24,13 @@ class BinaryClsDecoder(BaseDecoder):
     ):
         super().__init__(**kwargs)
 
+
         if kwargs.get("is_logits"):
             logits = input_tensor
         else:
+            if kwargs.get("return_hidden"):
+                self.tensors["hidden"] = input_tensor[:, 0, :]
+
             hidden_size = input_tensor.shape.as_list()[-1]
             with tf.variable_scope(scope):
                 output_weights = tf.get_variable(

@@ -56,10 +56,14 @@ class TinyBERTClsDistillor(BaseDecoder):
             drop_pooler=drop_pooler,
             trainable=True,
             **kwargs)
+        student_hidden = student.get_pooled_output()
         student_logits = _get_logits(
-            student.get_pooled_output(),
+            student_hidden,
             student_config.hidden_size, "tiny/cls/seq_relationship", trainable=trainable,
         )
+
+        if kwargs.get("return_hidden"):
+            self.tensors["hidden"] = student_hidden
 
         if is_training:
             teacher = BERTEncoder(
@@ -78,25 +82,12 @@ class TinyBERTClsDistillor(BaseDecoder):
                 bert_config.hidden_size, "cls/seq_relationship", trainable=False,
             )
 
-            # embedding loss
-            embedding_loss = self._get_embedding_loss(
-                teacher, student, bert_config, sample_weight)
+            embedding_loss = self._get_embedding_loss(teacher, student, bert_config, sample_weight)
+            attention_loss = self._get_attention_loss(teacher, student, bert_config, student_config, sample_weight)
+            hidden_loss = self._get_hidden_loss(teacher, student, bert_config, student_config, sample_weight)
+            pred_loss = self._get_pred_loss(teacher_logits, student_logits, sample_weight)
+            distill_loss = embedding_loss + attention_loss + hidden_loss + pred_loss
 
-            # attention loss
-            attention_loss = self._get_attention_loss(
-                teacher, student, bert_config, student_config, sample_weight)
-
-            # hidden loss
-            hidden_loss = self._get_hidden_loss(
-                teacher, student, bert_config, student_config, sample_weight)
-
-            # prediction loss
-            pred_loss = self._get_pred_loss(
-                teacher_logits, student_logits, sample_weight)
-
-            # sum up
-            distill_loss = (embedding_loss + attention_loss +
-                            hidden_loss + pred_loss)
             self.train_loss = distill_loss
             self.tensors["losses"] = tf.reshape(distill_loss, [1])
 

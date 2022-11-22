@@ -1063,7 +1063,7 @@ def summarize_sequence(summary_type, hidden, d_model, n_head, d_head, dropout,
 
 
 def classification_loss(hidden, labels, n_class, initializer, scope,
-                        reuse=None, return_logits=False):
+                        reuse=None, return_hidden=False):
     """
     Different classification tasks should use different scope names to ensure
     different dense layers (parameters) are used to produce the logits.
@@ -1082,14 +1082,14 @@ def classification_loss(hidden, labels, n_class, initializer, scope,
         one_hot_target = tf.one_hot(labels, n_class, dtype=hidden.dtype)
         loss = -tf.reduce_sum(tf.nn.log_softmax(logits) * one_hot_target, -1)
 
-        if return_logits:
+        if return_hidden:
             return loss, logits
 
         return loss
 
 
 def regression_loss(hidden, labels, initializer, scope, reuse=None,
-                    return_logits=False):
+                    return_hidden=False):
     with tf.variable_scope(scope, reuse=reuse):
         logits = tf.layers.dense(
             hidden,
@@ -1100,7 +1100,7 @@ def regression_loss(hidden, labels, initializer, scope, reuse=None,
         logits = tf.squeeze(logits, axis=-1)
         loss = tf.square(logits - labels)
 
-        if return_logits:
+        if return_hidden:
             return loss, logits
 
         return loss

@@ -13,7 +13,6 @@ class RegDecoder(BaseDecoder):
         is_training,
         input_tensor,
         label_floats,
-        is_logits=False,
         label_size=2,
         sample_weight=None,
         scope="reg",
@@ -24,8 +23,8 @@ class RegDecoder(BaseDecoder):
     ):
         super().__init__(**kwargs)
 
-        if is_logits:
-            logits = is_logits
+        if kwargs.get("is_logits"):
+            logits = input_tensor
         else:
             with tf.variable_scope(scope):
                 output_layer = util.dropout(input_tensor, hidden_dropout_prob if is_training else 0.0)

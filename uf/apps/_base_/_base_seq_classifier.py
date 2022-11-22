@@ -14,7 +14,6 @@ class SeqClsDecoder(BaseDecoder):
         input_tensor,
         input_mask,
         label_ids,
-        is_logits=False,
         label_size=2,
         sample_weight=None,
         scope="cls/sequence",
@@ -25,7 +24,7 @@ class SeqClsDecoder(BaseDecoder):
     ):
         super().__init__(**kwargs)
 
-        if is_logits:
+        if kwargs.get("is_logits"):
             logits = input_tensor
         else:
             shape = input_tensor.shape.as_list()
@@ -72,7 +71,6 @@ class SeqClsCrossDecoder(BaseDecoder):
         input_mask,
         seq_cls_label_ids,
         cls_label_ids,
-        is_logits=False,
         seq_cls_label_size=2,
         cls_label_size=2,
         sample_weight=None,
@@ -85,7 +83,7 @@ class SeqClsCrossDecoder(BaseDecoder):
     ):
         super().__init__(**kwargs)
 
-        assert not is_logits, "%s does not support logits convertion right now." % self.__class__.__name__
+        assert not kwargs.get("is_logits"), "%s does not support logits convertion right now." % self.__class__.__name__
 
         shape = input_tensor.shape.as_list()
         seq_length = shape[-2]

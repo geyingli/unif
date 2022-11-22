@@ -13,7 +13,6 @@ class BinaryClsDecoder(BaseDecoder):
         is_training,
         input_tensor,
         label_ids,
-        is_logits=False,
         label_size=2,
         sample_weight=None,
         label_weight=None,
@@ -25,7 +24,7 @@ class BinaryClsDecoder(BaseDecoder):
     ):
         super().__init__(**kwargs)
 
-        if is_logits:
+        if kwargs.get("is_logits"):
             logits = input_tensor
         else:
             hidden_size = input_tensor.shape.as_list()[-1]

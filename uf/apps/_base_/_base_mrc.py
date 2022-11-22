@@ -13,7 +13,6 @@ class MRCDecoder(BaseDecoder):
         is_training,
         input_tensor,
         label_ids,
-        is_logits=False,
         sample_weight=None,
         scope="mrc",
         hidden_dropout_prob=0.1,
@@ -23,7 +22,7 @@ class MRCDecoder(BaseDecoder):
     ):
         super().__init__(**kwargs)
 
-        if is_logits:
+        if kwargs.get("is_logits"):
             logits = input_tensor
         else:
             seq_length = input_tensor.shape.as_list()[-2]

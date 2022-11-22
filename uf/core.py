@@ -748,23 +748,25 @@ class BaseModule:
         # Regularized Dropout (R-Drop) algorithm
         # Paper: https://arxiv.org/abs/2106.14448
         if kwargs.get("rdrop"):
-            if sum([1 for key in tensors.keys() if key.endswith("probs")]) < 1:
+            keys = [key for key in tensors.keys() if key.endswith("probs")]
+            if len(keys) < 1:
                 raise ValueError(
                     "%s does not support R-Drop algorithm."
                     % (self.module.__class__.__name__)
                 )
-            alpha = kwargs.get("alpha", 1.0)
-            train_loss_1, _tensors_1 = self._forward(      # second forward
+
+            # build forward twice
+            train_loss_tmp, _tensors_tmp = self._forward(
                 is_training=is_training,
                 placeholders=placeholders,
                 **kwargs,
             )
-            train_loss += train_loss_1
-            for key in tensors.keys():
-                if not key.endswith("probs"):
-                    continue
+
+            train_loss += train_loss_tmp
+            alpha = kwargs.get("alpha", 1.0)
+            for key in keys:
                 train_loss += alpha * util.bidirectional_kl_divergence(
-                    tensors[key], _tensors_1[key],
+                    tensors[key], _tensors_tmp[key],
                 )
 
         return train_loss, tensors

@@ -395,7 +395,7 @@ model.export(
 
 - 问：无意义的 warning 信息太多，该怎么剔除？
 
-  答：这是 tensorflow 一直饱受诟病之处，我也与你一同深受困扰。暂时没有有效的同时，又兼容各个 tf 版本的解决方案。
+  答：这是 tensorflow 一直饱受诟病之处，我也与你一同深受困扰。可以试着在运行时屏蔽 WARNING 类型的信息：`python3 train.py | grep "WARNING" -v`。
 
 ## Tips
 

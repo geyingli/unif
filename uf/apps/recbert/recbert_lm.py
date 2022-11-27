@@ -97,7 +97,7 @@ class RecBERTLM(LMModule):
 
             # skip noise training data
             if is_training:
-                if len(_input_tokens) == 0 or len(_input_tokens) > self.max_seq_length:
+                if len(_input_tokens) == 0 or len(_input_tokens) > self.max_seq_length - 2:
                     continue
             else:
                 com.truncate_segments([_input_tokens], self.max_seq_length - 2, truncate_method=self.truncate_method)

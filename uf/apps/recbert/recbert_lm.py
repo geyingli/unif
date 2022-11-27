@@ -90,6 +90,8 @@ class RecBERTLM(LMModule):
         vocab_size = len(self.tokenizer.vocab)
         vocab_ind = list(range(vocab_size))
         vocab_p = [0] * vocab_size
+        cls_id = self.tokenizer.convert_tokens_to_ids(["[CLS]"])[0]
+        sep_id = self.tokenizer.convert_tokens_to_ids(["[SEP]"])[0]
         for idx, sample in enumerate(X_target):
             _input_tokens = self._convert_x(sample, tokenized)
 
@@ -98,14 +100,14 @@ class RecBERTLM(LMModule):
                 if len(_input_tokens) == 0 or len(_input_tokens) > self.max_seq_length:
                     continue
             else:
-                com.truncate_segments([_input_tokens], self.max_seq_length - 1, truncate_method=self.truncate_method)
+                com.truncate_segments([_input_tokens], self.max_seq_length - 2, truncate_method=self.truncate_method)
 
             # count char
             _input_ids = self.tokenizer.convert_tokens_to_ids(_input_tokens)
             if is_training:
                 for _input_id in _input_ids:
                     vocab_p[_input_id] += 1
-            _input_ids.insert(0, 1)
+            _input_ids.insert(0, cls_id)
 
             input_tokens.append(_input_tokens)
             tokenized_input_ids.append(_input_ids)
@@ -118,10 +120,7 @@ class RecBERTLM(LMModule):
         del_label_ids = []
         for idx in range(len(tokenized_input_ids)):
             _input_ids = tokenized_input_ids[idx]
-
             nonpad_seq_length = len(_input_ids)
-            for _ in range(self.max_seq_length - nonpad_seq_length):
-                _input_ids.append(0)
 
             _add_label_ids = []
             _del_label_ids = []
@@ -131,8 +130,8 @@ class RecBERTLM(LMModule):
                 if (idx + 1) % 10000 == 0:
                     tf.logging.info("Sampling wrong tokens of input %d" % (idx + 1))
 
-                _add_label_ids = [0] * self.max_seq_length
-                _del_label_ids = [0] * self.max_seq_length
+                _add_label_ids = [0] * nonpad_seq_length
+                _del_label_ids = [0] * nonpad_seq_length
 
                 max_add = np.sum(np.random.random(nonpad_seq_length) < self._add_prob)
                 max_del = np.sum(np.random.random(nonpad_seq_length) < self._del_prob)
@@ -145,6 +144,13 @@ class RecBERTLM(LMModule):
                     vocab_ind=vocab_ind,
                     vocab_p=vocab_p,
                 )
+
+            _input_ids.append(sep_id)
+
+            # padding
+            _input_ids += [0] * (self.max_seq_length - len(_input_ids))
+            _add_label_ids += [0] * (self.max_seq_length - len(_add_label_ids))
+            _del_label_ids += [0] * (self.max_seq_length - len(_del_label_ids))
 
             input_ids.append(_input_ids)
             add_label_ids.append(_add_label_ids)

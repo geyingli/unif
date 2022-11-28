@@ -34,8 +34,7 @@ class WideDeepClsDecoder(BaseDecoder):
                 shape=[feature_size + 1, hidden_size],
                 initializer=util.create_initializer(initializer_range),
                 trainable=trainable)
-            wide_output = tf.gather(
-                feature_embeddings, wide_features)  # [B, N, H]
+            wide_output = tf.gather(feature_embeddings, wide_features)  # [B, N, H]
 
         with tf.variable_scope("wide_and_deep"):
             deep_output = tf.expand_dims(input_tensor, -1)                      # [B, H, 1]
@@ -106,29 +105,22 @@ class WideDeepRegDecoder(BaseDecoder):
                 shape=[feature_size + 1, hidden_size],
                 initializer=util.create_initializer(initializer_range),
                 trainable=trainable)
-            wide_output = tf.gather(
-                feature_embeddings, wide_features)  # [B, N, H]
+            wide_output = tf.gather(feature_embeddings, wide_features)  # [B, N, H]
 
         with tf.variable_scope("wide_and_deep"):
             deep_output = tf.expand_dims(input_tensor, -1)  # [B, H, 1]
             attention_scores = tf.matmul(wide_output, deep_output)  # [B, N, 1]
-            attention_scores = tf.transpose(
-                attention_scores, [0, 2, 1])  # [B, 1, N]
-            attention_scores = tf.multiply(
-                attention_scores, 1.0 / math.sqrt(hidden_size))
-            feature_mask = tf.cast(
-                tf.sequence_mask(n_wide_features, feature_size), tf.float32)    # [B, N]
+            attention_scores = tf.transpose(attention_scores, [0, 2, 1])  # [B, 1, N]
+            attention_scores = tf.multiply(attention_scores, 1.0 / math.sqrt(hidden_size))
+            feature_mask = tf.cast(tf.sequence_mask(n_wide_features, feature_size), tf.float32)    # [B, N]
             feature_mask = tf.expand_dims(feature_mask, 1)  # [B, 1, N]
             attention_scores += (1.0 - feature_mask) * -10000.0
             attention_matrix = tf.nn.softmax(attention_scores, axis=-1)
-            attention_output = tf.matmul(
-                attention_matrix, wide_output)  # [B, 1, H]
+            attention_output = tf.matmul(attention_matrix, wide_output)  # [B, 1, H]
             attention_output = attention_output[:, 0, :]  # [B, H]
             # attention_output = util.dropout(
             #     attention_output, hidden_dropout_prob)
-            input_tensor = util.layer_norm(
-                attention_output + input_tensor,
-                trainable=trainable)
+            input_tensor = util.layer_norm(attention_output + input_tensor, trainable=trainable)
 
         with tf.variable_scope(scope):
             intermediate_output = tf.layers.dense(

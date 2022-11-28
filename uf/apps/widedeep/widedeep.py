@@ -11,8 +11,9 @@ class WideDeepClsDecoder(BaseDecoder):
     def __init__(self,
                  is_training,
                  input_tensor,
-                 n_wide_features,
-                 wide_features,
+                 wide_ids,
+                 wide_weights,
+                 wide_length,
                  label_ids,
                  label_size=2,
                  sample_weight=None,
@@ -27,21 +28,22 @@ class WideDeepClsDecoder(BaseDecoder):
             self.tensors["hidden"] = input_tensor
 
         hidden_size = input_tensor.shape.as_list()[-1]
-        feature_size = wide_features.shape.as_list()[-1]
+        feature_size = wide_ids.shape.as_list()[-1]
         with tf.variable_scope("wide"):
             feature_embeddings = tf.get_variable(
                 name="feature_embeddings",
                 shape=[feature_size + 1, hidden_size],
                 initializer=util.create_initializer(initializer_range),
                 trainable=trainable)
-            wide_output = tf.gather(feature_embeddings, wide_features)  # [B, N, H]
+            wide_output = tf.gather(feature_embeddings, wide_ids)               # [B, N, H]
+            wide_output *= tf.expand_dims(wide_weights, 1)
 
         with tf.variable_scope("wide_and_deep"):
             deep_output = tf.expand_dims(input_tensor, -1)                      # [B, H, 1]
             attention_scores = tf.matmul(wide_output, deep_output)              # [B, N, 1]
             attention_scores = tf.transpose(attention_scores, [0, 2, 1])        # [B, 1, N]
             attention_scores = tf.multiply(attention_scores, 1.0 / math.sqrt(hidden_size))
-            feature_mask = tf.cast(tf.sequence_mask(n_wide_features, feature_size), tf.float32)    # [B, N]
+            feature_mask = tf.cast(tf.sequence_mask(wide_length, feature_size), tf.float32)    # [B, N]
             feature_mask = tf.expand_dims(feature_mask, 1)                      # [B, 1, N]
             attention_scores += (1.0 - feature_mask) * -10000.0
             attention_matrix = tf.nn.softmax(attention_scores, axis=-1)
@@ -82,8 +84,9 @@ class WideDeepRegDecoder(BaseDecoder):
     def __init__(self,
                  is_training,
                  input_tensor,
-                 n_wide_features,
-                 wide_features,
+                 wide_ids,
+                 wide_weights,
+                 wide_length,
                  label_floats,
                  label_size=1,
                  sample_weight=None,
@@ -98,21 +101,21 @@ class WideDeepRegDecoder(BaseDecoder):
             self.tensors["hidden"] = input_tensor
 
         hidden_size = input_tensor.shape.as_list()[-1]
-        feature_size = wide_features.shape.as_list()[-1]
+        feature_size = wide_ids.shape.as_list()[-1]
         with tf.variable_scope("wide"):
             feature_embeddings = tf.get_variable(
                 name="feature_embeddings",
                 shape=[feature_size + 1, hidden_size],
                 initializer=util.create_initializer(initializer_range),
                 trainable=trainable)
-            wide_output = tf.gather(feature_embeddings, wide_features)  # [B, N, H]
+            wide_output = tf.gather(feature_embeddings, wide_ids)  # [B, N, H]
 
         with tf.variable_scope("wide_and_deep"):
             deep_output = tf.expand_dims(input_tensor, -1)  # [B, H, 1]
             attention_scores = tf.matmul(wide_output, deep_output)  # [B, N, 1]
             attention_scores = tf.transpose(attention_scores, [0, 2, 1])  # [B, 1, N]
             attention_scores = tf.multiply(attention_scores, 1.0 / math.sqrt(hidden_size))
-            feature_mask = tf.cast(tf.sequence_mask(n_wide_features, feature_size), tf.float32)    # [B, N]
+            feature_mask = tf.cast(tf.sequence_mask(wide_length, feature_size), tf.float32)    # [B, N]
             feature_mask = tf.expand_dims(feature_mask, 1)  # [B, 1, N]
             attention_scores += (1.0 - feature_mask) * -10000.0
             attention_matrix = tf.nn.softmax(attention_scores, axis=-1)

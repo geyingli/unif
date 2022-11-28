@@ -36,7 +36,7 @@ class WideDeepClsDecoder(BaseDecoder):
                 initializer=util.create_initializer(initializer_range),
                 trainable=trainable)
             wide_output = tf.gather(feature_embeddings, wide_ids)               # [B, N, H]
-            wide_output *= tf.expand_dims(wide_weights, 1)
+            wide_output *= tf.expand_dims(wide_weights, 2)
 
         with tf.variable_scope("wide_and_deep"):
             deep_output = tf.expand_dims(input_tensor, -1)                      # [B, H, 1]

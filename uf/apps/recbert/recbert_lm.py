@@ -110,6 +110,7 @@ class RecBERTLM(LMModule):
                 for _input_id in _input_ids:
                     vocab_p[_input_id] += 1
             _input_ids.insert(0, cls_id)
+            _input_ids.append(sep_id)
 
             input_tokens.append(_input_tokens)
             tokenized_input_ids.append(_input_ids)
@@ -139,8 +140,6 @@ class RecBERTLM(LMModule):
 
                 max_add = np.sum(np.random.random(nonpad_seq_length) < self._add_prob)
                 max_del = np.sum(np.random.random(nonpad_seq_length) < self._del_prob)
-                if max_add + max_del > 0:
-                    _cls_label_ids = 1
 
                 sample_wrong_tokens(
                     _input_ids, _add_label_ids, _del_label_ids,
@@ -150,8 +149,8 @@ class RecBERTLM(LMModule):
                     vocab_ind=vocab_ind,
                     vocab_p=vocab_p,
                 )
-
-            _input_ids.append(sep_id)
+                if max(_add_label_ids + _del_label_ids) > 0:
+                    _cls_label_ids = 1
 
             # padding
             _input_ids += [0] * (self.max_seq_length - len(_input_ids))

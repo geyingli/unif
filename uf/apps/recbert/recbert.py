@@ -312,10 +312,10 @@ def sample_wrong_tokens(_input_ids, _add_label_ids, _del_label_ids, max_add, max
 
     # `add`, remove padding for prediction of adding tokens
     # e.g. input_ids: 124 591 9521 -> 124 9521
-    #      add_label_ids: 0 0 0 -> 1 0
+    #      add_label_ids: 0 0 0 -> 591 0
     for _ in range(max_add):
         cand_indicies = [
-            i for i in range(0, len(_input_ids) - 1)
+            i for i in range(0, len(_input_ids) - 2)
             if _input_ids[i + 1] != 0 and _add_label_ids[i] == 0 and _add_label_ids[i + 1] == 0
         ]
         if not cand_indicies:
@@ -342,7 +342,7 @@ def sample_wrong_tokens(_input_ids, _add_label_ids, _del_label_ids, max_add, max
         if _input_ids[-1] != 0:  # no more space
             break
 
-        index = random.randint(1, nonpad_seq_length)
+        index = random.randint(1, nonpad_seq_length - 1)
         _id = np.random.choice(vocab_ind, p=vocab_p)  # sample from distribution of vocabulary
 
         _input_ids.insert(index, _id)

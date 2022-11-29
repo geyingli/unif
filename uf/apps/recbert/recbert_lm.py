@@ -1,8 +1,8 @@
 import numpy as np
 
-from .recbert import RecBERT, sample_wrong_tokens
+from .recbert import RecBERT, sample_wrong_tokens, get_decay_power
 from .._base_._base_lm import LMModule
-from ..bert.bert import BERTConfig, get_decay_power
+from ..bert.bert import BERTConfig
 from ...token import WordPieceTokenizer
 from ...third import tf
 from ... import com
@@ -59,12 +59,14 @@ class RecBERTLM(LMModule):
         if X is not None or X_tokenized is not None:
             tokenized = False if X is not None else X_tokenized
             X_target = X_tokenized if tokenized else X
-            (input_tokens, input_ids, add_label_ids, del_label_ids) = self._convert_X(X_target, tokenized=tokenized, is_training=is_training)
+            (input_tokens, input_ids,
+             add_label_ids, del_label_ids, cls_label_ids) = self._convert_X(X_target, tokenized=tokenized, is_training=is_training)
             data["input_ids"] = np.array(input_ids, dtype=np.int32)
 
             if is_training:
                 data["add_label_ids"] = np.array(add_label_ids, dtype=np.int32)
                 data["del_label_ids"] = np.array(del_label_ids, dtype=np.int32)
+                data["cls_label_ids"] = np.array(cls_label_ids, dtype=np.int32)
 
             # backup for answer mapping
             data[com.BACKUP_DATA + "input_tokens"] = input_tokens
@@ -118,12 +120,14 @@ class RecBERTLM(LMModule):
         input_ids = []
         add_label_ids = []
         del_label_ids = []
+        cls_label_ids = []
         for idx in range(len(tokenized_input_ids)):
             _input_ids = tokenized_input_ids[idx]
             nonpad_seq_length = len(_input_ids)
 
             _add_label_ids = []
             _del_label_ids = []
+            _cls_label_ids = 0
 
             # add/del
             if is_training:
@@ -135,6 +139,8 @@ class RecBERTLM(LMModule):
 
                 max_add = np.sum(np.random.random(nonpad_seq_length) < self._add_prob)
                 max_del = np.sum(np.random.random(nonpad_seq_length) < self._del_prob)
+                if max_add + max_del > 0:
+                    _cls_label_ids = 1
 
                 sample_wrong_tokens(
                     _input_ids, _add_label_ids, _del_label_ids,
@@ -155,8 +161,9 @@ class RecBERTLM(LMModule):
             input_ids.append(_input_ids)
             add_label_ids.append(_add_label_ids)
             del_label_ids.append(_del_label_ids)
+            cls_label_ids.append(_cls_label_ids)
 
-        return input_tokens, input_ids, add_label_ids, del_label_ids
+        return input_tokens, input_ids, add_label_ids, del_label_ids, cls_label_ids
 
     def _convert_x(self, x, tokenized):
         try:
@@ -179,6 +186,7 @@ class RecBERTLM(LMModule):
             "input_ids": tf.placeholder(tf.int32, [None, self.max_seq_length], "input_ids"),
             "add_label_ids": tf.placeholder(tf.int32, [None, self.max_seq_length], "add_label_ids"),
             "del_label_ids": tf.placeholder(tf.int32, [None, self.max_seq_length], "del_label_ids"),
+            "cls_label_ids": tf.placeholder(tf.int32, [None], "cls_label_ids"),
             "sample_weight": tf.placeholder(tf.float32, [None], "sample_weight"),
         }
 
@@ -190,6 +198,7 @@ class RecBERTLM(LMModule):
             input_ids=placeholders["input_ids"],
             add_label_ids=placeholders["add_label_ids"],
             del_label_ids=placeholders["del_label_ids"],
+            cls_label_ids=placeholders["cls_label_ids"],
             sample_weight=placeholders.get("sample_weight"),
             add_prob=self._add_prob,
             del_prob=self._del_prob,
@@ -202,27 +211,32 @@ class RecBERTLM(LMModule):
         ops = [
             self.tensors["add_preds"],
             self.tensors["del_preds"],
+            self.tensors["cls_preds"],
             self.tensors["add_loss"],
             self.tensors["del_loss"],
+            self.tensors["cls_loss"],
         ]
         if from_tfrecords:
             ops.extend([
                 self.placeholders["input_ids"],
                 self.placeholders["add_label_ids"],
                 self.placeholders["del_label_ids"],
+                self.placeholders["cls_label_ids"],
             ])
         return ops
 
     def _get_fit_info(self, output_arrays, feed_dict, from_tfrecords=False):
 
         if from_tfrecords:
-            batch_inputs = output_arrays[-3]
-            batch_add_labels = output_arrays[-2]
-            batch_del_labels = output_arrays[-1]
+            batch_inputs = output_arrays[-4]
+            batch_add_labels = output_arrays[-3]
+            batch_del_labels = output_arrays[-2]
+            batch_cls_labels = output_arrays[-1]
         else:
             batch_inputs = feed_dict[self.placeholders["input_ids"]]
             batch_add_labels = feed_dict[self.placeholders["add_label_ids"]]
             batch_del_labels = feed_dict[self.placeholders["del_label_ids"]]
+            batch_cls_labels = feed_dict[self.placeholders["cls_label_ids"]]
         batch_mask = (batch_inputs != 0)
 
         # add accuracy
@@ -233,13 +247,21 @@ class RecBERTLM(LMModule):
         batch_del_preds = output_arrays[1]
         del_accuracy = np.sum((batch_del_preds == batch_del_labels) * batch_mask) / (np.sum(batch_mask) + 1e-6)
 
+        # cls accuracy
+        batch_cls_preds = output_arrays[2]
+        cls_accuracy = np.mean((batch_cls_preds == batch_cls_labels))
+
         # add loss
-        batch_add_losses = output_arrays[2]
+        batch_add_losses = output_arrays[3]
         add_loss = np.mean(batch_add_losses)
 
         # del loss
-        batch_del_losses = output_arrays[3]
+        batch_del_losses = output_arrays[4]
         del_loss = np.mean(batch_del_losses)
+
+        # cls loss
+        batch_cls_losses = output_arrays[5]
+        cls_loss = np.mean(batch_cls_losses)
 
         info = ""
         if self._add_prob > 0:
@@ -248,11 +270,13 @@ class RecBERTLM(LMModule):
         if self._del_prob > 0:
             info += ", del_accuracy %.4f" % del_accuracy
             info += ", del_loss %.6f" % del_loss
+        info += ", cls_accuracy %.4f" % cls_accuracy
+        info += ", cls_loss %.6f" % cls_loss
 
         return info
 
     def _get_predict_ops(self):
-        return [self.tensors["add_preds"], self.tensors["del_preds"]]
+        return [self.tensors["add_preds"], self.tensors["del_preds"], self.tensors["cls_probs"]]
 
     def _get_predict_outputs(self, output_arrays, n_inputs):
         input_ids = self.data["input_ids"]
@@ -303,7 +327,13 @@ class RecBERTLM(LMModule):
                         n += len(_token)
                 preds.append(_text)
 
+        # cls
+        cls_probs = com.transform(output_arrays[2], n_inputs)
+        cls_preds = np.argmax(cls_probs, axis=-1).tolist()
+
         outputs = {}
-        outputs["preds"] = preds
+        outputs["lm_preds"] = preds
+        outputs["cls_probs"] = cls_probs
+        outputs["cls_preds"] = cls_preds
 
         return outputs

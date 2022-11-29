@@ -102,7 +102,7 @@ class WideDeepClassifier(ClassifierModule):
                     "d": self._convert_x(sample["d"], tokenized),
                 })
                 for v in sample["w"].values():
-                    assert -1 <= float(v) <= 1
+                    float(v)
             except Exception as e:
                 raise ValueError(
                     "Wrong input format (%s): %s. An untokenized "

@@ -8,7 +8,7 @@
         <img src="https://img.shields.io/badge/build-passing-brightgreen">
     </a>
     <a>
-        <img src="https://img.shields.io/badge/version-v2.5.18-blue">
+        <img src="https://img.shields.io/badge/version-v2.5.19-blue">
     </a>
     <a>
         <img src="https://img.shields.io/badge/tensorflow-1.x\2.x-yellow">
@@ -26,7 +26,7 @@
 - 高效调用：三行代码完成训练及推理
 - 高效运行：一行代码设置多进程/多 GPU 并行
 - 品类丰富：支持 40+ 模型类
-- 高分保证：提供 Focal loss、对抗式训练等多项训练技巧
+- 高分保证：提供对比学习、对抗式训练等多项训练技巧
 - 可供部署：导出模型 PB 文件，供线上部署
 
 ### 安装
@@ -325,7 +325,7 @@ $$L_i=-log\frac{e^{sim(h_i,h_i')/\tau}}{\sum_j e^{sim(h_i,h_j')/\tau}}$$
 $\tau$ 为温度系数，即为下面函数中的 `tau`。
 
 ```py
-model.fit(..., info_nce_loss=True, tau=1.0, alpha=1.0)     # alpha是损失项乘子
+model.fit(..., info_nce_loss=True, tau=1.0, alpha=0.05)     # alpha是损失项乘子
 ```
 
 ### Focal Loss

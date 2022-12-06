@@ -783,7 +783,7 @@ class BaseModule:
             )
 
             train_loss += train_loss_tmp
-            alpha = kwargs.get("alpha", 1.0)
+            alpha = kwargs.get("alpha", 0.05)
             tau = kwargs.get("tau", 1.0)
             per_example_loss = util.info_nce(tensors["hidden"], _tensors_tmp["hidden"], tau=tau)
             train_loss += alpha * tf.reduce_mean(per_example_loss)

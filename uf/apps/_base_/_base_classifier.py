@@ -66,6 +66,72 @@ class ClassifierModule(BaseModule):
         "init_checkpoint": "A string that directs to the checkpoint file used for initialization",
     }
 
+    def _get_f1(preds, labels, label_index=1):
+        """ F1. """
+        assert len(preds) == len(labels)
+        preds = np.array(preds)
+        labels = np.array(labels)
+
+        tp, fp, fn, tn = 0, 0, 0, 0
+        for pred, label in zip(preds, labels):
+            if pred == label == label_index:
+                tp += 1
+            elif pred == label_index and label != label_index:
+                fp += 1
+            elif pred != label_index and label == label_index:
+                fn += 1
+            else:
+                tn += 1
+        n = tp + fn
+
+        tp = np.sum(labels == label_index)
+        accuracy = (tp + tn) / max(tp + tn + fp + fn, 1)
+        precision = tp / max(tp + fp, 1)
+        recall = tp / max(tp + fn, 1)
+        f1 = 2 * precision * recall / max(precision + recall, 1)
+        return (n, accuracy, precision, recall, f1)
+
+    def _get_best_f1(probs, labels, label_index=1):
+        """ Best F1 with a certain threshold. """
+        assert len(probs) == len(labels)
+        probs = np.array(probs)
+        labels = np.array(labels)
+
+        # initialize metrics
+        n = np.sum(labels == label_index)
+        tp = n
+        fp = len(labels) - n
+        fn = 0
+        tn = 0
+        accuracy = (tp + tn) / max(tp + tn + fp + fn, 1)
+        precision = tp / max(tp + fp, 1)
+        recall = tp / max(tp + fn, 1)
+        f1 = 2 * precision * recall / max(precision + recall, 1)
+        threshold = 0
+
+        ids = sorted(range(len(probs)), key=lambda i: probs[i])
+        for i in ids:
+            prob = probs[i]
+            label = labels[i]
+            if label == label_index:
+                tp -= 1
+                fn += 1
+            elif label != label_index:
+                fp -= 1
+                tn += 1
+
+            _accuracy = (tp + tn) / max(tp + tn + fp + fn, 1)
+            _precision = tp / max(tp + fp, 1)
+            _recall = tp / max(tp + fn, 1)
+            _f1 = 2 * _precision * _recall / max(_precision + _recall, 1)
+            if _f1 > f1:
+                accuracy = _accuracy
+                precision = _precision
+                recall = _recall
+                f1 = _f1
+                threshold = prob
+        return (n, accuracy, precision, recall, f1, threshold)
+
     def _convert_x(self, x, tokenized):
         """ Convert text sample. """
 

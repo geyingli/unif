@@ -66,7 +66,7 @@ class ClassifierModule(BaseModule):
         "init_checkpoint": "A string that directs to the checkpoint file used for initialization",
     }
 
-    def _get_f1(preds, labels, label_index=1):
+    def _get_f1(self, preds, labels, label_index=1):
         """ F1. """
         assert len(preds) == len(labels)
         preds = np.array(preds)
@@ -91,7 +91,7 @@ class ClassifierModule(BaseModule):
         f1 = 2 * precision * recall / max(precision + recall, 1)
         return (n, accuracy, precision, recall, f1)
 
-    def _get_best_f1(probs, labels, label_index=1):
+    def _get_best_f1(self, probs, labels, label_index=1):
         """ Best F1 with a certain threshold. """
         assert len(probs) == len(labels)
         probs = np.array(probs)

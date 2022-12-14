@@ -82,9 +82,8 @@ class ClassifierModule(BaseModule):
                 fn += 1
             else:
                 tn += 1
-        n = tp + fn
 
-        tp = np.sum(labels == label_index)
+        n = np.sum(labels == label_index)
         accuracy = (tp + tn) / max(tp + tn + fp + fn, 1)
         precision = tp / max(tp + fp, 1)
         recall = tp / max(tp + fn, 1)

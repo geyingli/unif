@@ -735,7 +735,7 @@ def create_masked_lm_predictions(tokens, masked_lm_prob, max_predictions_per_seq
         masked_lm_positions.append(p.index)
         masked_lm_labels.append(p.label)
 
-    # remove `##`` for Chinese characters
+    # remove `##` for Chinese characters
     output_tokens = [token[2:] if token.startswith("##") and len(token) == 3 and com.is_chinese_char(ord(token[2])) else token for token in output_tokens]
     masked_lm_labels = [token[2:] if token.startswith("##") and len(token) == 3 and com.is_chinese_char(ord(token[2])) else token for token in masked_lm_labels]
 

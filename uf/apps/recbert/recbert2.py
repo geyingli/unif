@@ -10,16 +10,18 @@ from ..bert.bert import BERTEncoder
 from .. import util
 
 
-class RecBERT(BaseDecoder, BERTEncoder):
+class RecBERT2(BaseDecoder, BERTEncoder):
     def __init__(self,
                  bert_config,
                  is_training,
                  input_ids,
                  add_label_ids,
+                 rep_label_ids,
                  del_label_ids,
                  cls_label_ids,
                  sample_weight=None,
                  add_prob=0,
+                 rep_prob=0,
                  del_prob=0,
                  scope="bert",
                  **kwargs):
@@ -58,6 +60,20 @@ class RecBERT(BaseDecoder, BERTEncoder):
                 prob=add_prob,
                 scope="add",
                 name="add",
+                sample_weight=sample_weight,
+                **kwargs,
+            )
+            self._lm_forward(
+                is_training,
+                input_tensor=hidden,
+                input_mask=input_mask,
+                label_ids=rep_label_ids,
+                bert_config=bert_config,
+                batch_size=batch_size,
+                max_seq_length=max_seq_length,
+                prob=rep_prob,
+                scope="rep",
+                name="rep",
                 sample_weight=sample_weight,
                 **kwargs,
             )
@@ -309,19 +325,36 @@ class RecBERT(BaseDecoder, BERTEncoder):
 
 
 def sample_wrong_tokens(
-    _input_ids, _add_label_ids, _del_label_ids,
-    max_add, max_del, nonpad_seq_length, vocab_size, vocab_ind, vocab_p,
+    _input_ids, _add_label_ids, _rep_label_ids, _del_label_ids,
+    max_add, max_rep, max_del, nonpad_seq_length, vocab_size, vocab_ind, vocab_p,
 ):
     ok = False
 
-    # `add`, remove padding for prediction of adding tokens
+    # `rep`, replace tokens
+    # e.g. input_ids: 591 9521 -> 981 9521
+    #      rep_label_ids: 0 0 -> 591 0
+    for _ in range(max_rep):
+        cand_indicies = [i for i in range(1, len(_input_ids) - 1) if (
+            _input_ids[i + 1] != 0 and
+            _rep_label_ids[i] == 0
+        )]
+        if not cand_indicies:
+            break
+
+        index = random.choice(cand_indicies)
+        _rep_label_ids[index] = _input_ids[index]
+        _input_ids[index] = np.random.choice(vocab_ind, p=vocab_p)    # sample from distribution of vocabulary
+        ok = True
+
+    # `add`, remove tokens
     # e.g. input_ids: 124 591 9521 -> 124 9521
     #      add_label_ids: 0 0 0 -> 591 0
     for _ in range(max_add):
         cand_indicies = [i for i in range(0, len(_input_ids) - 2) if (
             _input_ids[i + 2] != 0 and
             _add_label_ids[i] == 0 and
-            _add_label_ids[i + 1] == 0
+            _add_label_ids[i + 1] == 0 and
+            _rep_label_ids[i + 1] == 0
         )]
         if not cand_indicies:
             break
@@ -329,14 +362,16 @@ def sample_wrong_tokens(
         index = random.choice(cand_indicies)
         _add_label_ids[index] = _input_ids.pop(index + 1)
         _add_label_ids.pop(index + 1)
+        _rep_label_ids.pop(index + 1)
         _del_label_ids.pop(index + 1)
         _input_ids.append(0)
         _add_label_ids.append(0)
+        _rep_label_ids.append(0)
         _del_label_ids.append(0)
         nonpad_seq_length -= 1
         ok = True
 
-    # `del`, add wrong tokens for prediction of deleted tokens
+    # `del`, add wrong tokens
     # e.g. input_ids: 124 591 -> 92 124 591
     #      del_label_ids: 0 0 -> 1 0 0
     for _ in range(max_del):
@@ -344,10 +379,11 @@ def sample_wrong_tokens(
             break
 
         index = random.randint(1, nonpad_seq_length - 1)
-        _id = np.random.choice(vocab_ind, p=vocab_p)  # sample from distribution of vocabulary
+        _id = np.random.choice(vocab_ind, p=vocab_p)    # sample from distribution of vocabulary
 
         _input_ids.insert(index, _id)
         _add_label_ids.insert(index, 0)
+        _rep_label_ids.insert(index, 0)
         _del_label_ids.insert(index, 1)
 
         # when new token is the same with the right one, only delete the right
@@ -356,6 +392,7 @@ def sample_wrong_tokens(
 
         _input_ids.pop()
         _add_label_ids.pop()
+        _rep_label_ids.pop()
         _del_label_ids.pop()
         nonpad_seq_length += 1
         ok = True
@@ -368,6 +405,7 @@ def get_decay_power(num_hidden_layers):
         "/embeddings": num_hidden_layers + 2,
         "/pooler/": 1,
         "add/": 0,
+        "rep/": 0,
         "del/": 0,
         "cls/": 0,
     }

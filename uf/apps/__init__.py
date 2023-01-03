@@ -6,6 +6,7 @@ from .albert.albert_lm import ALBERTLM
 from .electra.electra_lm import ELECTRALM
 from .dilated.dilated_lm import DilatedLM
 from .recbert.recbert_lm import RecBERTLM
+from .recbert.recbert2_lm import RecBERT2LM
 from .vae.vae_lm import VAELM
 from .spe.spe_lm import SPELM
 from .gpt2.gpt2_lm import GPT2LM
@@ -127,6 +128,7 @@ __all__ = [
     # trial
     "DilatedLM",
     "RecBERTLM",
+    "RecBERT2LM",
     "SPELM",
     "StockBERTClassifier",
     "AdaBERTClassifier",

@@ -17,6 +17,7 @@ class UniLM(LMModule):
         config_file,
         vocab_file,
         max_seq_length=128,
+        label_size=None,
         init_checkpoint=None,
         output_dir=None,
         gpu_ids=None,
@@ -34,6 +35,7 @@ class UniLM(LMModule):
         super(LMModule, self).__init__(init_checkpoint, output_dir, gpu_ids)
 
         self.max_seq_length = max_seq_length
+        self.label_size = label_size
         self.do_sample_next_sentence = do_sample_next_sentence
         self.masked_lm_prob = masked_lm_prob
         self.short_seq_prob = short_seq_prob

@@ -7,6 +7,7 @@ import numpy as np
 from .._base_._base_ import BaseEncoder
 from ..bert.bert import BERTEncoder
 from ...third import tf
+from ... import com
 
 
 class UniLMEncoder(BERTEncoder, BaseEncoder):
@@ -185,6 +186,11 @@ def create_masked_lm_predictions(tokens, masked_lm_prob, max_predictions_per_seq
     for p in masked_lms:
         masked_lm_positions.append(p.index)
         masked_lm_labels.append(p.label)
+
+    # remove `##` for Chinese characters
+    output_tokens = [token[2:] if token.startswith("##") and len(token) == 3 and com.is_chinese_char(ord(token[2])) else token for token in output_tokens]
+    masked_lm_labels = [token[2:] if token.startswith("##") and len(token) == 3 and com.is_chinese_char(ord(token[2])) else token for token in masked_lm_labels]
+
     return (output_tokens, masked_lm_positions, masked_lm_labels)
 
 

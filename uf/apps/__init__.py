@@ -23,6 +23,7 @@ from .widedeep.widedeep_classifier import WideDeepClassifier
 from .sembert.sembert_classifier import SemBERTClassifier
 from .performer.performer_classifier import PerformerClassifier
 from .uda.uda_classifier import UDAClassifier
+from .motian.motian_classifier import MotianClassifier
 from .tinybert.tinybert_classifier import TinyBERTClassifier
 from .tinybert.tinybert_binary_classifier import TinyBERTBinaryClassifier
 from .fastbert.fastbert_classifier import FastBERTClassifier
@@ -134,4 +135,5 @@ __all__ = [
     "AdaBERTClassifier",
     "ChatbotMT",
     "UniLMPrompt",
+    "MotianClassifier",
 ]

@@ -299,11 +299,6 @@ class RecBERT3LM(LMModule):
             _input_length = np.sum(_input_ids > 0)
             _add_preds = add_preds[idx]
             _rep_preds = rep_preds[idx]
-            print("")
-            print(f"_input_tokens: {_input_tokens}")
-            print(f"_input_ids: {_input_ids}")
-            print(f"_add_preds: {_add_preds}")
-            print(f"_rep_preds: {_rep_preds}")
 
             if tokenized:
                 n = 0

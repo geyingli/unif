@@ -137,7 +137,6 @@ class RecBERT3LM(LMModule):
 
                 _add_label_ids = [0] * nonpad_seq_length
                 _rep_label_ids = [0] * nonpad_seq_length
-                # _rep_label_ids = [_input_id for _input_id in _input_ids]
 
                 max_add = np.sum(np.random.random(nonpad_seq_length) < self._add_prob)
                 max_rep = np.sum(np.random.random(nonpad_seq_length) < self._rep_prob / 2)

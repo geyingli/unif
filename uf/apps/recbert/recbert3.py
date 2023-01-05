@@ -321,7 +321,6 @@ def sample_wrong_tokens(
         cand_indicies = [i for i in range(1, len(_input_ids) - 1) if (
             _input_ids[i + 1] != 0 and
             _rep_label_ids[i] == 0
-            # _input_ids[i] == _rep_label_ids[i]
         )]
         if not cand_indicies:
             break
@@ -340,7 +339,6 @@ def sample_wrong_tokens(
             _add_label_ids[i] == 0 and
             _add_label_ids[i + 1] == 0 and
             _rep_label_ids[i + 1] == 0
-            # _input_ids[i + 1] == _rep_label_ids[i + 1]
         )]
         if not cand_indicies:
             break
@@ -368,7 +366,6 @@ def sample_wrong_tokens(
         _input_ids.insert(index, _id)
         _add_label_ids.insert(index, 0)
         _rep_label_ids.insert(index, 1)
-        # _rep_label_ids.insert(index, 0)
 
         # when new token is the same with the right one, only delete the right
         if _id == _input_ids[index + 1]:

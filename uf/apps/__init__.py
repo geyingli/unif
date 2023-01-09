@@ -13,6 +13,7 @@ from .spe.spe_lm import SPELM
 from .gpt2.gpt2_lm import GPT2LM
 from .unilm.unilm_lm import UniLM
 from .unilm.unilm_prompt import UniLMPrompt
+from .sqp.sqp_lm import SQPLM
 from .textcnn.textcnn_classifier import TextCNNClassifier
 from .rnn.rnn_classifier import RNNClassifier
 from .rnn.bi_rnn_classifier import BiRNNClassifier
@@ -138,4 +139,5 @@ __all__ = [
     "ChatbotMT",
     "UniLMPrompt",
     "MotianClassifier",
+    "SQPLM",
 ]

@@ -1,5 +1,3 @@
-以下为原README.md内容：
-
 <p align="center">
     <br>
     	<img src="./docs/pics/logo.png" style="zoom:74%"/>

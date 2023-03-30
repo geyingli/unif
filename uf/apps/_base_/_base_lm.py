@@ -1,3 +1,5 @@
+import copy
+
 from ...core import BaseModule
 
 
@@ -63,7 +65,7 @@ class LMModule(BaseModule):
 
     def score(self, *args, **kwargs):
         raise AttributeError("`score` method is not supported for unsupervised language modeling (LM) modules.")
-        
+
     def _convert_x(self, x, tokenized):
         """ Convert text sample. """
 
@@ -79,7 +81,7 @@ class LMModule(BaseModule):
 
         # deal with tokenized inputs
         if isinstance(x[0], str):
-            return [x]
+            return [copy.deepcopy(x)]
 
         # deal with tokenized and multiple inputs
-        return x
+        return copy.deepcopy(x)

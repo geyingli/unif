@@ -1,3 +1,4 @@
+import copy
 import numpy as np
 
 from ._base_ import BaseDecoder
@@ -172,7 +173,7 @@ class SeqClassifierModule(BaseModule):
 
         # deal with tokenized inputs
         if isinstance(x[0], str):
-            return x
+            return copy.deepcopy(x)
 
         # deal with tokenized and multiple inputs
         raise ValueError("Sequence classifier does not support multi-segment inputs.")

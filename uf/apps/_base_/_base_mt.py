@@ -1,3 +1,4 @@
+import copy
 import numpy as np
 
 from ...core import BaseModule
@@ -88,14 +89,14 @@ class MTModule(BaseModule):
 
         # deal with untokenized inputs
         if not tokenized:
-            
+
             # deal with general inputs
             if isinstance(x, str):
                 return self.tokenizer.tokenize(x)
 
         # deal with tokenized inputs
         elif isinstance(x[0], str):
-            return x
+            return copy.deepcopy(x)
 
         # deal with tokenized and multiple inputs
         raise ValueError("Machine translation module only supports single sentence inputs.")

@@ -1,3 +1,4 @@
+import copy
 import numpy as np
 
 from .stockbert import StockBERTEncoder
@@ -115,7 +116,7 @@ class StockBERTClassifier(ClassifierModule):
 
     def _convert_x(self, x):
         assert isinstance(x[0], list) and isinstance(x[0][0], float)
-        return x
+        return copy.deepcopy(x)
 
     def _convert_y(self, y):
         label_set = set(y)

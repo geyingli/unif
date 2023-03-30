@@ -1,3 +1,4 @@
+import copy
 import numpy as np
 
 from .dilated import DLM, sample_wrong_tokens
@@ -166,7 +167,7 @@ class DilatedLM(LMModule):
 
         # deal with tokenized inputs
         elif isinstance(x[0], str):
-            return x
+            return copy.deepcopy(x)
 
         # deal with tokenized and multiple inputs
         raise ValueError("%s only supports single sentence inputs." % self.__class__.__name__)

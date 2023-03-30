@@ -136,6 +136,7 @@ class SemBERTClassifier(BERTClassifier, ClassifierModule):
             _segment_ids = [0]
             _sem_features = [1]  # same as [CLS]
 
+            com.truncate_segments(segments["Sem"], self.max_seq_length - len(segments["Text"]) - 1, truncate_method=self.truncate_method)
             com.truncate_segments(segments["Text"], self.max_seq_length - len(segments["Text"]) - 1, truncate_method=self.truncate_method)
             for s_id, segment in enumerate(segments["Text"]):
                 _segment_id = min(s_id, 1)
@@ -146,9 +147,7 @@ class SemBERTClassifier(BERTClassifier, ClassifierModule):
             _input_ids = self.tokenizer.convert_tokens_to_ids(_input_tokens)
 
             for i in range(len(segments["Sem"])):
-                segment = segments["Sem"][i]
-                n = len(segments["Text"][i])
-                for feature in segment[:n]:
+                for feature in segments["Sem"][i]:
                     try:
                         _sem_features.append(sem_features_map[feature])
                     except Exception:

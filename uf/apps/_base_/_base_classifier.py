@@ -1,3 +1,4 @@
+import copy
 import numpy as np
 
 from ._base_ import BaseDecoder
@@ -146,10 +147,10 @@ class ClassifierModule(BaseModule):
 
         # deal with tokenized inputs
         if isinstance(x[0], str):
-            return [x]
+            return [copy.deepcopy(x)]
 
         # deal with tokenized and multiple inputs
-        return x
+        return copy.deepcopy(x)
 
     def _convert_y(self, y):
         """ Convert categorical label. """

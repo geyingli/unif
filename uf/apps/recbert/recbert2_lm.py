@@ -1,3 +1,4 @@
+import copy
 import numpy as np
 
 from .recbert2 import RecBERT2, sample_wrong_tokens, get_decay_power
@@ -182,7 +183,7 @@ class RecBERT2LM(LMModule):
 
             # deal with tokenized inputs
             elif isinstance(x[0], str):
-                return x
+                return copy.deepcopy(x)
         except Exception:
             raise ValueError("Wrong input format (%s)." % (x))
 

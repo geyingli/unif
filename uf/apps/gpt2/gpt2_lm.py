@@ -1,3 +1,4 @@
+import copy
 import numpy as np
 
 from .gpt2 import GPT2, GPT2Config, get_decay_power
@@ -138,7 +139,7 @@ class GPT2LM(LMModule):
 
         # deal with tokenized inputs
         elif isinstance(x[0], str):
-            return x
+            return copy.deepcopy(x)
 
         # deal with tokenized and multiple inputs
         raise ValueError("GPT2 only supports single sentence inputs.")

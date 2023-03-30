@@ -151,6 +151,7 @@ class SemBERTClassifier(BERTClassifier, ClassifierModule):
                     try:
                         _sem_features.append(sem_features_map[feature])
                     except Exception:
+                        _sem_features.append(0)
                         tf.logging.warning("Unregistered semantic feature: %s. Ignored." % feature)
                         continue
                 _sem_features.append(2)  # same as [SEP]

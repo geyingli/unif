@@ -88,7 +88,7 @@ class ClassifierModule(BaseModule):
         accuracy = (tp + tn) / max(tp + tn + fp + fn, 1)
         precision = tp / max(tp + fp, 1)
         recall = tp / max(tp + fn, 1)
-        f1 = 2 * precision * recall / max(precision + recall, 1)
+        f1 = 2 * precision * recall / max(precision + recall, 1e-3)
         return (n, accuracy, precision, recall, f1)
 
     def _get_best_f1(self, probs, labels, label_index=1):
@@ -106,7 +106,7 @@ class ClassifierModule(BaseModule):
         accuracy = (tp + tn) / max(tp + tn + fp + fn, 1)
         precision = tp / max(tp + fp, 1)
         recall = tp / max(tp + fn, 1)
-        f1 = 2 * precision * recall / max(precision + recall, 1)
+        f1 = 2 * precision * recall / max(precision + recall, 1e-3)
         threshold = 0
 
         ids = sorted(range(len(probs)), key=lambda i: probs[i])

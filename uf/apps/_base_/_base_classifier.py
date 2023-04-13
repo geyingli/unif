@@ -123,7 +123,7 @@ class ClassifierModule(BaseModule):
             _accuracy = (tp + tn) / max(tp + tn + fp + fn, 1)
             _precision = tp / max(tp + fp, 1)
             _recall = tp / max(tp + fn, 1)
-            _f1 = 2 * _precision * _recall / max(_precision + _recall, 1)
+            _f1 = 2 * _precision * _recall / max(_precision + _recall, 1e-3)
             if _f1 > f1:
                 accuracy = _accuracy
                 precision = _precision

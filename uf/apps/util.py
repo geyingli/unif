@@ -306,7 +306,7 @@ def cross_entropy(logits, label_ids, label_size, **kwargs):
     return per_example_loss
 
 
-def sigmoid_cross_entropy(logits, label_ids, label_size=None, label_weight=None, keep_dims=False, **kwargs):
+def sigmoid_cross_entropy(logits, label_ids, label_size=None, label_weight=None, label_weights=None, keep_dims=False, **kwargs):
     """ Cross Entropy Loss for multi-label classification. """
 
     per_label_loss = tf.nn.sigmoid_cross_entropy_with_logits(logits=logits, labels=tf.cast(label_ids, dtype=tf.float32))
@@ -316,6 +316,10 @@ def sigmoid_cross_entropy(logits, label_ids, label_size=None, label_weight=None,
         label_weight = tf.constant(label_weight, dtype=tf.float32)
         label_weight = tf.reshape(label_weight, [1, label_size])
         per_label_loss *= label_weight
+
+    # label_weights
+    if label_weights is not None:
+        per_label_loss *= label_weights
 
     if keep_dims:
         return per_label_loss

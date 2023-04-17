@@ -32,6 +32,7 @@ from .fastbert.fastbert_classifier import FastBERTClassifier
 from .adabert.adabert_classifier import AdaBERTClassifier
 from .stockbert.stockbert_classifier import StockBERTClassifier
 from .bert.bert_binary_classifier import BERTBinaryClassifier
+from .bert.bert_tmp_binary_classifier import BERTTmpBinaryClassifier
 from .roberta.roberta_binary_classifier import RoBERTaBinaryClassifier
 from .albert.albert_binary_classifier import ALBERTBinaryClassifier
 from .electra.electra_binary_classifier import ELECTRABinaryClassifier
@@ -140,4 +141,5 @@ __all__ = [
     "UniLMPrompt",
     "MotianClassifier",
     "SQPLM",
+    "BERTTmpBinaryClassifier",
 ]
